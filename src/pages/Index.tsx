@@ -7,6 +7,7 @@ import Despesas from '@/components/sections/Despesas';
 import Impostos from '@/components/sections/Impostos';
 import Relatorios from '@/components/sections/Relatorios';
 import Fechamento from '@/components/sections/Fechamento';
+import Assinatura from '@/components/sections/Assinatura';
 import Configuracoes from '@/components/sections/Configuracoes';
 import Ajuda from '@/components/sections/Ajuda';
 import Footer from '@/components/Footer';
@@ -42,6 +43,8 @@ const Index = () => {
         return <Relatorios />;
       case 'fechamento':
         return <Fechamento />;
+      case 'assinatura':
+        return <Assinatura />;
       case 'configuracoes':
         return <Configuracoes />;
       case 'ajuda':

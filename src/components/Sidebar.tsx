@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Layout, 
@@ -7,7 +6,8 @@ import {
   Receipt, 
   PieChart, 
   Settings, 
-  HelpCircle 
+  HelpCircle,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -25,6 +25,7 @@ const menuItems = [
   { id: 'impostos', label: 'Impostos e Taxas', icon: Receipt },
   { id: 'relatorios', label: 'Relatórios', icon: PieChart },
   { id: 'fechamento', label: 'Fechamento de Caixa', icon: Receipt },
+  { id: 'assinatura', label: 'Assinatura', icon: CreditCard },
   { id: 'configuracoes', label: 'Configurações', icon: Settings },
   { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle }
 ];
