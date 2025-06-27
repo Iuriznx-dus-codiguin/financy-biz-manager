@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,9 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Filter, Search } from 'lucide-react';
+import { useAppContext } from '@/contexts/AppContext';
 
 const Receitas = () => {
-  const [receitas, setReceitas] = useState([]);
+  const { receitas, addReceita } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [novaReceita, setNovaReceita] = useState({
     data: '',
@@ -23,12 +23,10 @@ const Receitas = () => {
 
   const handleAddReceita = () => {
     if (novaReceita.descricao && novaReceita.valor) {
-      const receita = {
-        id: Date.now(),
+      addReceita({
         ...novaReceita,
         valor: parseFloat(novaReceita.valor)
-      };
-      setReceitas([...receitas, receita]);
+      });
       setNovaReceita({
         data: '',
         descricao: '',
@@ -168,7 +166,7 @@ const Receitas = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foregreen">Média por Transação</p>
+                <p className="text-sm text-muted-foreground">Média por Transação</p>
                 <p className="text-2xl font-bold">R$ {receitas.length > 0 ? (totalReceitas / receitas.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}</p>
               </div>
               <div className="text-purple-600 text-2xl">📈</div>
