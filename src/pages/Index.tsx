@@ -17,7 +17,6 @@ const Index = () => {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // Apply theme to document
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
@@ -29,9 +28,31 @@ const Index = () => {
     setIsDark(!isDark);
   };
 
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'painel':
+        return <Dashboard />;
+      case 'receitas':
+        return <Receitas />;
+      case 'despesas':
+        return <Despesas />;
+      case 'impostos':
+        return <Impostos />;
+      case 'relatorios':
+        return <Relatorios />;
+      case 'fechamento':
+        return <Fechamento />;
+      case 'configuracoes':
+        return <Configuracoes />;
+      case 'ajuda':
+        return <Ajuda />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Sidebar */}
       <Sidebar 
         activeSection={activeSection}
         onSectionChange={setActiveSection}
@@ -39,23 +60,13 @@ const Index = () => {
         onThemeToggle={handleThemeToggle}
       />
 
-      {/* Main Content */}
       <main className="ml-72 min-h-screen">
-        <div className="container mx-auto px-8 py-8 space-y-16">
-          <Dashboard />
-          <Receitas />
-          <Despesas />
-          <Impostos />
-          <Relatorios />
-          <Fechamento />
-          <Configuracoes />
-          <Ajuda />
+        <div className="container mx-auto px-8 py-8">
+          {renderActiveSection()}
         </div>
-        
         <Footer />
       </main>
 
-      {/* Floating Action Button */}
       <FloatingActionButton />
     </div>
   );

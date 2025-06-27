@@ -2,9 +2,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const Ajuda = () => {
@@ -62,41 +59,13 @@ const Ajuda = () => {
     }
   ];
 
-  const recursos = [
-    {
-      titulo: 'Tutorial em Vídeo',
-      descricao: 'Assista nossos tutoriais completos',
-      link: '#',
-      icon: '🎥'
-    },
-    {
-      titulo: 'Base de Conhecimento',
-      descricao: 'Artigos detalhados sobre cada função',
-      link: '#',
-      icon: '📚'
-    },
-    {
-      titulo: 'Webinars Gratuitos',
-      descricao: 'Participe de nossos treinamentos ao vivo',
-      link: '#',
-      icon: '🎓'
-    },
-    {
-      titulo: 'Templates Excel',
-      descricao: 'Baixe planilhas prontas para uso',
-      link: '#',
-      icon: '📋'
-    }
-  ];
-
   return (
-    <section id="ajuda" className="space-y-8">
+    <section className="space-y-8">
       <div>
         <h2 className="text-3xl font-bold text-foreground">Ajuda e Suporte</h2>
         <p className="text-muted-foreground">Central de instruções e suporte para micro e pequenas empresas</p>
       </div>
 
-      {/* Contato Rápido */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="rounded-2xl shadow-sm border-green-200 dark:border-green-800">
           <CardContent className="p-6 text-center">
@@ -132,7 +101,6 @@ const Ajuda = () => {
         </Card>
       </div>
 
-      {/* Guias Principais */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
           <CardTitle>📖 Guias Essenciais para PMEs</CardTitle>
@@ -157,7 +125,6 @@ const Ajuda = () => {
         </CardContent>
       </Card>
 
-      {/* FAQ */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
           <CardTitle>❓ Perguntas Frequentes</CardTitle>
@@ -175,113 +142,6 @@ const Ajuda = () => {
               </AccordionItem>
             ))}
           </Accordion>
-        </CardContent>
-      </Card>
-
-      {/* Recursos Adicionais */}
-      <Card className="rounded-2xl shadow-sm">
-        <CardHeader>
-          <CardTitle>🎯 Recursos Educacionais</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recursos.map((recurso, index) => (
-              <div key={index} className="text-center p-6 border border-border rounded-xl hover:bg-muted/30 transition-colors cursor-pointer">
-                <div className="text-4xl mb-4">{recurso.icon}</div>
-                <h4 className="font-semibold mb-2">{recurso.titulo}</h4>
-                <p className="text-sm text-muted-foreground mb-4">{recurso.descricao}</p>
-                <Button variant="outline" size="sm" className="rounded-lg">
-                  Acessar
-                </Button>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Formulário de Contato */}
-      <Card className="rounded-2xl shadow-sm">
-        <CardHeader>
-          <CardTitle>📝 Formulário de Contato</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="nome">Nome Completo</Label>
-                <Input id="nome" placeholder="Seu nome completo" className="rounded-xl" />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="seu@email.com" className="rounded-xl" />
-              </div>
-              <div>
-                <Label htmlFor="empresa">Empresa</Label>
-                <Input id="empresa" placeholder="Nome da sua empresa" className="rounded-xl" />
-              </div>
-              <div>
-                <Label htmlFor="assunto">Assunto</Label>
-                <Input id="assunto" placeholder="Sobre o que você precisa de ajuda?" className="rounded-xl" />
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="mensagem">Mensagem</Label>
-                <Textarea 
-                  id="mensagem" 
-                  placeholder="Descreva detalhadamente sua dúvida ou problema..."
-                  className="rounded-xl h-32"
-                />
-              </div>
-              <Button className="w-full rounded-xl">
-                Enviar Mensagem
-              </Button>
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">
-                  Tempo médio de resposta: <span className="font-semibold">2-4 horas úteis</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Status do Sistema */}
-      <Card className="rounded-2xl shadow-sm border-green-200 dark:border-green-800">
-        <CardHeader>
-          <CardTitle className="text-green-600">🟢 Status do Sistema</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-              <div className="text-2xl mb-2">🟢</div>
-              <p className="font-semibold">Sistema Principal</p>
-              <p className="text-sm text-green-600">Operacional</p>
-            </div>
-            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-              <div className="text-2xl mb-2">🟢</div>
-              <p className="font-semibold">Relatórios</p>
-              <p className="text-sm text-green-600">Operacional</p>
-            </div>
-            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-              <div className="text-2xl mb-2">🟢</div>
-              <p className="font-semibold">Integrações</p>
-              <p className="text-sm text-green-600">Operacional</p>
-            </div>
-            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-              <div className="text-2xl mb-2">🟢</div>
-              <p className="font-semibold">Backups</p>
-              <p className="text-sm text-green-600">Operacional</p>
-            </div>
-          </div>
-          <div className="mt-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              Última atualização: 15 de Janeiro, 2025 - 14:30 BRT
-            </p>
-            <Button variant="link" className="text-sm">
-              Ver Histórico Completo
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </section>

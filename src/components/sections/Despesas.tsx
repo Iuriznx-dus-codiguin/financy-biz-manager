@@ -3,265 +3,239 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Plus, Filter, Search } from 'lucide-react';
 
 const Despesas = () => {
+  const [despesas, setDespesas] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [novaDespesa, setNovaDespesa] = useState({
+    data: '',
+    descricao: '',
+    categoria: '',
+    valor: '',
+    status: 'em_aberto'
+  });
 
-  const stats = [
-    { title: 'Total Despesas do Mês', value: 'R$ 18.750,00' },
-    { title: 'Despesa Fixa Mensal', value: 'R$ 12.400,00' },
-    { title: 'Média Gastos por Dia', value: 'R$ 625,00' }
-  ];
-
-  const despesas = [
-    { 
-      date: '2025-01-15', 
-      description: 'Pagamento Fornecedor A', 
-      category: 'Fornecedores', 
-      value: 'R$ 2.500,00', 
-      status: 'Pago' 
-    },
-    { 
-      date: '2025-01-18', 
-      description: 'Conta de Energia Elétrica', 
-      category: 'Utilidades', 
-      value: 'R$ 450,00', 
-      status: 'Em aberto' 
-    },
-    { 
-      date: '2025-01-12', 
-      description: 'Aluguel do Escritório', 
-      category: 'Infraestrutura', 
-      value: 'R$ 3.200,00', 
-      status: 'Pago' 
-    },
-    { 
-      date: '2025-01-20', 
-      description: 'Material de Escritório', 
-      category: 'Suprimentos', 
-      value: 'R$ 180,00', 
-      status: 'Em aberto' 
-    },
-    { 
-      date: '2025-01-08', 
-      description: 'Salários Funcionários', 
-      category: 'Pessoal', 
-      value: 'R$ 8.500,00', 
-      status: 'Pago' 
+  const handleAddDespesa = () => {
+    if (novaDespesa.descricao && novaDespesa.valor) {
+      const despesa = {
+        id: Date.now(),
+        ...novaDespesa,
+        valor: parseFloat(novaDespesa.valor)
+      };
+      setDespesas([...despesas, despesa]);
+      setNovaDespesa({
+        data: '',
+        descricao: '',
+        categoria: '',
+        valor: '',
+        status: 'em_aberto'
+      });
+      setIsDialogOpen(false);
     }
-  ];
-
-  const getStatusColor = (status: string) => {
-    return status === 'Pago' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' : 
-           'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200';
   };
 
+  const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
+  const despesasPagas = despesas.filter(d => d.status === 'pago');
+  const despesasEmAberto = despesas.filter(d => d.status === 'em_aberto');
+
   return (
-    <section id="despesas" className="space-y-8">
+    <section className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Despesas</h2>
-          <p className="text-muted-foreground">Registro de todos os gastos empresariais</p>
+          <p className="text-muted-foreground">Controle total dos seus gastos empresariais</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 py-3 font-semibold">
-              + Nova Despesa
+            <Button className="rounded-xl">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Despesa
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg rounded-2xl">
+          <DialogContent className="rounded-2xl">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold">Adicionar Nova Despesa</DialogTitle>
+              <DialogTitle>Adicionar Nova Despesa</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="description">Descrição</Label>
-                  <Input id="description" placeholder="Ex: Pagamento fornecedor" className="rounded-xl" />
-                </div>
-                <div>
-                  <Label htmlFor="value">Valor</Label>
-                  <Input id="value" placeholder="R$ 0,00" className="rounded-xl" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="category">Categoria</Label>
-                  <Select>
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fornecedores">Fornecedores</SelectItem>
-                      <SelectItem value="utilidades">Utilidades</SelectItem>
-                      <SelectItem value="pessoal">Pessoal</SelectItem>
-                      <SelectItem value="infraestrutura">Infraestrutura</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select>
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pago">Pago</SelectItem>
-                      <SelectItem value="aberto">Em aberto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label htmlFor="data">Data</Label>
+                <Input
+                  id="data"
+                  type="date"
+                  value={novaDespesa.data}
+                  onChange={(e) => setNovaDespesa({...novaDespesa, data: e.target.value})}
+                  className="rounded-xl"
+                />
               </div>
               <div>
-                <Label htmlFor="date">Data de Vencimento</Label>
-                <Input id="date" type="date" className="rounded-xl" />
+                <Label htmlFor="descricao">Descrição</Label>
+                <Input
+                  id="descricao"
+                  placeholder="Descrição da despesa"
+                  value={novaDespesa.descricao}
+                  onChange={(e) => setNovaDespesa({...novaDespesa, descricao: e.target.value})}
+                  className="rounded-xl"
+                />
               </div>
-              <Button 
-                className="w-full rounded-xl" 
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Salvar Despesa
+              <div>
+                <Label htmlFor="categoria">Categoria</Label>
+                <Select value={novaDespesa.categoria} onValueChange={(value) => setNovaDespesa({...novaDespesa, categoria: value})}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Selecione uma categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="escritorio">Escritório</SelectItem>
+                    <SelectItem value="marketing">Marketing</SelectItem>
+                    <SelectItem value="fornecedores">Fornecedores</SelectItem>
+                    <SelectItem value="impostos">Impostos</SelectItem>
+                    <SelectItem value="outros">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="valor">Valor (R$)</Label>
+                <Input
+                  id="valor"
+                  type="number"
+                  placeholder="0,00"
+                  value={novaDespesa.valor}
+                  onChange={(e) => setNovaDespesa({...novaDespesa, valor: e.target.value})}
+                  className="rounded-xl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <Select value={novaDespesa.status} onValueChange={(value) => setNovaDespesa({...novaDespesa, status: value})}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pago">Pago</SelectItem>
+                    <SelectItem value="em_aberto">Em Aberto</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleAddDespesa} className="w-full rounded-xl">
+                Adicionar Despesa
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat, index) => (
-          <Card key={index} className="rounded-2xl shadow-sm border-border/50">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground mb-2">{stat.title}</p>
-                <p className="text-2xl font-bold text-red-600">{stat.value}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total de Despesas</p>
+                <p className="text-2xl font-bold text-red-600">R$ {totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              <div className="text-red-600 text-2xl">💳</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Despesas Pagas</p>
+                <p className="text-2xl font-bold text-green-600">{despesasPagas.length}</p>
+              </div>
+              <div className="text-green-600 text-2xl">✅</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Em Aberto</p>
+                <p className="text-2xl font-bold text-orange-600">{despesasEmAberto.length}</p>
+              </div>
+              <div className="text-orange-600 text-2xl">⏰</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Média por Despesa</p>
+                <p className="text-2xl font-bold">R$ {despesas.length > 0 ? (totalDespesas / despesas.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}</p>
+              </div>
+              <div className="text-blue-600 text-2xl">📊</div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Alertas */}
-      <Card className="rounded-2xl shadow-sm border-orange-200 dark:border-orange-800">
-        <CardHeader>
-          <CardTitle className="text-orange-600">⚠️ Alertas Importantes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
-              <p className="font-medium">Conta de Energia vencendo em 3 dias</p>
-              <p className="text-sm text-muted-foreground">Valor: R$ 450,00 - Vencimento: 18/01/2025</p>
-            </div>
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
-              <p className="font-medium">Material de Escritório vencido há 2 dias</p>
-              <p className="text-sm text-muted-foreground">Valor: R$ 180,00 - Venceu: 20/01/2025</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Filtros */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <Select>
-              <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hoje">Hoje</SelectItem>
-                <SelectItem value="semana">Esta Semana</SelectItem>
-                <SelectItem value="mes">Este Mês</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas</SelectItem>
-                <SelectItem value="fornecedores">Fornecedores</SelectItem>
-                <SelectItem value="utilidades">Utilidades</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="pago">Pago</SelectItem>
-                <SelectItem value="aberto">Em aberto</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Método Pagto" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="pix">PIX</SelectItem>
-                <SelectItem value="transferencia">Transferência</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" className="rounded-xl">
-              Limpar Filtros
-            </Button>
+          <div className="flex justify-between items-center">
+            <CardTitle>Histórico de Despesas</CardTitle>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm" className="rounded-lg">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtrar
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-lg">
+                <Search className="h-4 w-4 mr-2" />
+                Buscar
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Tabela de Despesas */}
-      <Card className="rounded-2xl shadow-sm">
-        <CardHeader>
-          <CardTitle>Histórico de Despesas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left p-4 font-semibold">Data</th>
-                  <th className="text-left p-4 font-semibold">Descrição</th>
-                  <th className="text-left p-4 font-semibold">Categoria</th>
-                  <th className="text-left p-4 font-semibold">Status</th>
-                  <th className="text-right p-4 font-semibold">Valor</th>
-                  <th className="text-center p-4 font-semibold">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {despesas.map((despesa, index) => (
-                  <tr key={index} className="border-b border-border/50 hover:bg-muted/30">
-                    <td className="p-4">{despesa.date}</td>
-                    <td className="p-4">{despesa.description}</td>
-                    <td className="p-4">
-                      <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-lg text-sm">
-                        {despesa.category}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <Badge className={getStatusColor(despesa.status)}>
-                        {despesa.status}
+          {despesas.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">💳</div>
+              <h3 className="text-xl font-semibold mb-2">Nenhuma despesa cadastrada</h3>
+              <p className="text-muted-foreground mb-4">Comece adicionando sua primeira despesa</p>
+              <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl">
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Primeira Despesa
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {despesas.map((despesa) => (
+                  <TableRow key={despesa.id}>
+                    <TableCell>{despesa.data}</TableCell>
+                    <TableCell>{despesa.descricao}</TableCell>
+                    <TableCell>{despesa.categoria}</TableCell>
+                    <TableCell>
+                      <Badge variant={despesa.status === 'pago' ? 'default' : 'secondary'}>
+                        {despesa.status === 'pago' ? 'Pago' : 'Em Aberto'}
                       </Badge>
-                    </td>
-                    <td className="p-4 text-right font-bold text-red-600">{despesa.value}</td>
-                    <td className="p-4 text-center">
-                      <Button variant="outline" size="sm" className="rounded-lg">
-                        Editar
-                      </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="text-right font-medium text-red-600">
+                      R$ {despesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </section>

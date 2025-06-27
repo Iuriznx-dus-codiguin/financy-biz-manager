@@ -3,256 +3,235 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, Filter, Search } from 'lucide-react';
 
 const Receitas = () => {
+  const [receitas, setReceitas] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [novaReceita, setNovaReceita] = useState({
+    data: '',
+    descricao: '',
+    categoria: '',
+    cliente: '',
+    valor: '',
+    formaPagamento: ''
+  });
 
-  const stats = [
-    { title: 'Receita do Mês', value: 'R$ 28.450,00' },
-    { title: 'Receita por Cliente', value: 'R$ 1.890,00' },
-    { title: 'Receita Recorrente', value: 'R$ 12.300,00' }
-  ];
-
-  const receitas = [
-    { 
-      date: '2025-01-15', 
-      description: 'Venda de Produto Premium', 
-      category: 'Vendas', 
-      client: 'Cliente A', 
-      value: 'R$ 2.500,00', 
-      payment: 'Cartão de Crédito' 
-    },
-    { 
-      date: '2025-01-14', 
-      description: 'Serviço de Consultoria', 
-      category: 'Serviços', 
-      client: 'Empresa XYZ', 
-      value: 'R$ 3.200,00', 
-      payment: 'Transferência' 
-    },
-    { 
-      date: '2025-01-13', 
-      description: 'Licenciamento Software', 
-      category: 'Licenças', 
-      client: 'StartupABC', 
-      value: 'R$ 1.800,00', 
-      payment: 'PIX' 
-    },
-    { 
-      date: '2025-01-12', 
-      description: 'Venda Produto Básico', 
-      category: 'Vendas', 
-      client: 'Cliente B', 
-      value: 'R$ 890,00', 
-      payment: 'Boleto' 
+  const handleAddReceita = () => {
+    if (novaReceita.descricao && novaReceita.valor) {
+      const receita = {
+        id: Date.now(),
+        ...novaReceita,
+        valor: parseFloat(novaReceita.valor)
+      };
+      setReceitas([...receitas, receita]);
+      setNovaReceita({
+        data: '',
+        descricao: '',
+        categoria: '',
+        cliente: '',
+        valor: '',
+        formaPagamento: ''
+      });
+      setIsDialogOpen(false);
     }
-  ];
+  };
 
-  const chartData = [
-    { name: 'Vendas', value: 45, color: '#22C55E' },
-    { name: 'Serviços', value: 35, color: '#3B82F6' },
-    { name: 'Licenças', value: 20, color: '#F59E0B' }
-  ];
+  const totalReceitas = receitas.reduce((sum, receita) => sum + receita.valor, 0);
 
   return (
-    <section id="receitas" className="space-y-8">
+    <section className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Receitas</h2>
-          <p className="text-muted-foreground">Gestão completa das entradas de dinheiro</p>
+          <p className="text-muted-foreground">Gestão completa das suas entradas de dinheiro</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 py-3 font-semibold">
-              + Nova Receita
+            <Button className="rounded-xl">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Receita
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg rounded-2xl">
+          <DialogContent className="rounded-2xl">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold">Adicionar Nova Receita</DialogTitle>
+              <DialogTitle>Adicionar Nova Receita</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="description">Descrição</Label>
-                  <Input id="description" placeholder="Ex: Venda de produto" className="rounded-xl" />
-                </div>
-                <div>
-                  <Label htmlFor="value">Valor</Label>
-                  <Input id="value" placeholder="R$ 0,00" className="rounded-xl" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="category">Categoria</Label>
-                  <Select>
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="vendas">Vendas</SelectItem>
-                      <SelectItem value="servicos">Serviços</SelectItem>
-                      <SelectItem value="licencas">Licenças</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="client">Cliente</Label>
-                  <Input id="client" placeholder="Nome do cliente" className="rounded-xl" />
-                </div>
+              <div>
+                <Label htmlFor="data">Data</Label>
+                <Input
+                  id="data"
+                  type="date"
+                  value={novaReceita.data}
+                  onChange={(e) => setNovaReceita({...novaReceita, data: e.target.value})}
+                  className="rounded-xl"
+                />
               </div>
               <div>
-                <Label htmlFor="payment">Forma de Pagamento</Label>
-                <Select>
+                <Label htmlFor="descricao">Descrição</Label>
+                <Input
+                  id="descricao"
+                  placeholder="Descrição da receita"
+                  value={novaReceita.descricao}
+                  onChange={(e) => setNovaReceita({...novaReceita, descricao: e.target.value})}
+                  className="rounded-xl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="categoria">Categoria</Label>
+                <Select value={novaReceita.categoria} onValueChange={(value) => setNovaReceita({...novaReceita, categoria: value})}>
                   <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Selecione..." />
+                    <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pix">PIX</SelectItem>
-                    <SelectItem value="cartao">Cartão</SelectItem>
-                    <SelectItem value="transferencia">Transferência</SelectItem>
-                    <SelectItem value="boleto">Boleto</SelectItem>
+                    <SelectItem value="vendas">Vendas</SelectItem>
+                    <SelectItem value="servicos">Serviços</SelectItem>
+                    <SelectItem value="consultoria">Consultoria</SelectItem>
+                    <SelectItem value="outros">Outros</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <Button 
-                className="w-full rounded-xl" 
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Salvar Receita
+              <div>
+                <Label htmlFor="cliente">Cliente</Label>
+                <Input
+                  id="cliente"
+                  placeholder="Nome do cliente"
+                  value={novaReceita.cliente}
+                  onChange={(e) => setNovaReceita({...novaReceita, cliente: e.target.value})}
+                  className="rounded-xl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="valor">Valor (R$)</Label>
+                <Input
+                  id="valor"
+                  type="number"
+                  placeholder="0,00"
+                  value={novaReceita.valor}
+                  onChange={(e) => setNovaReceita({...novaReceita, valor: e.target.value})}
+                  className="rounded-xl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
+                <Select value={novaReceita.formaPagamento} onValueChange={(value) => setNovaReceita({...novaReceita, formaPagamento: value})}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Selecione a forma de pagamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                    <SelectItem value="pix">PIX</SelectItem>
+                    <SelectItem value="cartao">Cartão</SelectItem>
+                    <SelectItem value="transferencia">Transferência</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleAddReceita} className="w-full rounded-xl">
+                Adicionar Receita
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat, index) => (
-          <Card key={index} className="rounded-2xl shadow-sm border-border/50">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground mb-2">{stat.title}</p>
-                <p className="text-2xl font-bold text-green-600">{stat.value}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Gráfico e Filtros */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <Card className="rounded-2xl shadow-sm">
-            <CardHeader>
-              <CardTitle>Filtros</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Select>
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Período" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="hoje">Hoje</SelectItem>
-                    <SelectItem value="semana">Esta Semana</SelectItem>
-                    <SelectItem value="mes">Este Mês</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select>
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="clientea">Cliente A</SelectItem>
-                    <SelectItem value="empresaxyz">Empresa XYZ</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select>
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todas">Todas</SelectItem>
-                    <SelectItem value="vendas">Vendas</SelectItem>
-                    <SelectItem value="servicos">Serviços</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" className="rounded-xl">
-                  Limpar Filtros
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
         <Card className="rounded-2xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Receitas por Origem</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={60}
-                  dataKey="value"
-                  label={({ value }) => `${value}%`}
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Receita Total</p>
+                <p className="text-2xl font-bold text-green-600">R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              </div>
+              <div className="text-green-600 text-2xl">💰</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total de Transações</p>
+                <p className="text-2xl font-bold">{receitas.length}</p>
+              </div>
+              <div className="text-blue-600 text-2xl">📊</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foregreen">Média por Transação</p>
+                <p className="text-2xl font-bold">R$ {receitas.length > 0 ? (totalReceitas / receitas.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}</p>
+              </div>
+              <div className="text-purple-600 text-2xl">📈</div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabela de Receitas */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>Histórico de Receitas</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Histórico de Receitas</CardTitle>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm" className="rounded-lg">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtrar
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-lg">
+                <Search className="h-4 w-4 mr-2" />
+                Buscar
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left p-4 font-semibold">Data</th>
-                  <th className="text-left p-4 font-semibold">Descrição</th>
-                  <th className="text-left p-4 font-semibold">Categoria</th>
-                  <th className="text-left p-4 font-semibold">Cliente</th>
-                  <th className="text-left p-4 font-semibold">Forma Pagto</th>
-                  <th className="text-right p-4 font-semibold">Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {receitas.map((receita, index) => (
-                  <tr key={index} className="border-b border-border/50 hover:bg-muted/30">
-                    <td className="p-4">{receita.date}</td>
-                    <td className="p-4">{receita.description}</td>
-                    <td className="p-4">
-                      <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-lg text-sm">
-                        {receita.category}
-                      </span>
-                    </td>
-                    <td className="p-4">{receita.client}</td>
-                    <td className="p-4">{receita.payment}</td>
-                    <td className="p-4 text-right font-bold text-green-600">{receita.value}</td>
-                  </tr>
+          {receitas.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📊</div>
+              <h3 className="text-xl font-semibold mb-2">Nenhuma receita cadastrada</h3>
+              <p className="text-muted-foreground mb-4">Comece adicionando sua primeira receita</p>
+              <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl">
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Primeira Receita
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Forma de Pagamento</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {receitas.map((receita) => (
+                  <TableRow key={receita.id}>
+                    <TableCell>{receita.data}</TableCell>
+                    <TableCell>{receita.descricao}</TableCell>
+                    <TableCell>{receita.categoria}</TableCell>
+                    <TableCell>{receita.cliente}</TableCell>
+                    <TableCell>{receita.formaPagamento}</TableCell>
+                    <TableCell className="text-right font-medium text-green-600">
+                      R$ {receita.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </section>

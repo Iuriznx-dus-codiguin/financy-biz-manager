@@ -35,18 +35,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isDark, 
   onThemeToggle 
 }) => {
-  const scrollToSection = (sectionId: string) => {
-    onSectionChange(sectionId);
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   return (
     <aside className="fixed left-0 top-0 h-screen w-72 bg-card border-r border-border shadow-lg z-50">
       <div className="flex flex-col h-full">
-        {/* Logo */}
         <div className="p-6 border-b border-border">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
@@ -59,7 +50,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -74,7 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? 'bg-primary text-primary-foreground shadow-md' 
                     : 'hover:bg-accent hover:text-accent-foreground'
                 }`}
-                onClick={() => scrollToSection(item.id)}
+                onClick={() => onSectionChange(item.id)}
               >
                 <Icon className="mr-3 h-5 w-5" />
                 <span className="font-medium">{item.label}</span>
@@ -83,7 +73,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </nav>
 
-        {/* Theme Toggle */}
         <div className="p-4 border-t border-border">
           <Button
             variant="outline"
