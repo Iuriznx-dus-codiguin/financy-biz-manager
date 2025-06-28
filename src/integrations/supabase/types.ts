@@ -9,7 +9,138 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      despesas: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          data: string
+          descricao: string
+          forma_pagamento: string
+          fornecedor: string | null
+          id: number
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria: string
+          created_at?: string | null
+          data: string
+          descricao: string
+          forma_pagamento: string
+          fornecedor?: string | null
+          id?: number
+          user_id: string
+          valor: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          data?: string
+          descricao?: string
+          forma_pagamento?: string
+          fornecedor?: string | null
+          id?: number
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      impostos: {
+        Row: {
+          created_at: string | null
+          descricao: string
+          id: number
+          pago: boolean | null
+          recorrente: boolean | null
+          tipo: string
+          user_id: string
+          valor: number
+          vencimento: string
+        }
+        Insert: {
+          created_at?: string | null
+          descricao: string
+          id?: number
+          pago?: boolean | null
+          recorrente?: boolean | null
+          tipo: string
+          user_id: string
+          valor: number
+          vencimento: string
+        }
+        Update: {
+          created_at?: string | null
+          descricao?: string
+          id?: number
+          pago?: boolean | null
+          recorrente?: boolean | null
+          tipo?: string
+          user_id?: string
+          valor?: number
+          vencimento?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          nome_completo: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          nome_completo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome_completo?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      receitas: {
+        Row: {
+          categoria: string
+          cliente: string | null
+          created_at: string | null
+          data: string
+          descricao: string
+          forma_pagamento: string
+          id: number
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria: string
+          cliente?: string | null
+          created_at?: string | null
+          data: string
+          descricao: string
+          forma_pagamento: string
+          id?: number
+          user_id: string
+          valor: number
+        }
+        Update: {
+          categoria?: string
+          cliente?: string | null
+          created_at?: string | null
+          data?: string
+          descricao?: string
+          forma_pagamento?: string
+          id?: number
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

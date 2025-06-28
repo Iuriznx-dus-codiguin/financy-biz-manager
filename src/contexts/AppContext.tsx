@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Receita {
   id: number;
@@ -42,20 +44,23 @@ interface AppContextType {
   despesas: Despesa[];
   impostos: Imposto[];
   configuracoes: Configuracoes;
-  addReceita: (receita: Omit<Receita, 'id'>) => void;
-  addDespesa: (despesa: Omit<Despesa, 'id'>) => void;
-  addImposto: (imposto: Omit<Imposto, 'id'>) => void;
-  updateImposto: (id: number, updates: Partial<Imposto>) => void;
+  addReceita: (receita: Omit<Receita, 'id'>) => Promise<void>;
+  addDespesa: (despesa: Omit<Despesa, 'id'>) => Promise<void>;
+  addImposto: (imposto: Omit<Imposto, 'id'>) => Promise<void>;
+  updateImposto: (id: number, updates: Partial<Imposto>) => Promise<void>;
   updateConfiguracoes: (configuracoes: Partial<Configuracoes>) => void;
   zerarSaldo: () => void;
+  loading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [receitas, setReceitas] = useState<Receita[]>([]);
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   const [impostos, setImpostos] = useState<Imposto[]>([]);
+  const [loading, setLoading] = useState(false);
   const [configuracoes, setConfiguracoes] = useState<Configuracoes>({
     tema: 'light',
     moeda: 'BRL',
@@ -71,25 +76,222 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [configuracoes.tema]);
 
-  const addReceita = (receita: Omit<Receita, 'id'>) => {
-    const newReceita = { ...receita, id: Date.now() };
-    setReceitas(prev => [...prev, newReceita]);
+  // Carregar dados quando usuário estiver autenticado
+  useEffect(() => {
+    if (user) {
+      loadData();
+    } else {
+      // Limpar dados quando usuário não estiver autenticado
+      setReceitas([]);
+      setDespesas([]);
+      setImpostos([]);
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // Carregar receitas
+      const { data: receitasData } = await supabase
+        .from('receitas')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      // Carregar despesas
+      const { data: despesasData } = await supabase
+        .from('despesas')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      // Carregar impostos
+      const { data: impostosData } = await supabase
+        .from('impostos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (receitasData) {
+        setReceitas(receitasData.map(r => ({
+          id: r.id,
+          data: r.data,
+          descricao: r.descricao,
+          categoria: r.categoria,
+          cliente: r.cliente || '',
+          valor: parseFloat(r.valor),
+          formaPagamento: r.forma_pagamento
+        })));
+      }
+
+      if (despesasData) {
+        setDespesas(despesasData.map(d => ({
+          id: d.id,
+          data: d.data,
+          descricao: d.descricao,
+          categoria: d.categoria,
+          fornecedor: d.fornecedor || '',
+          valor: parseFloat(d.valor),
+          formaPagamento: d.forma_pagamento
+        })));
+      }
+
+      if (impostosData) {
+        setImpostos(impostosData.map(i => ({
+          id: i.id,
+          tipo: i.tipo,
+          descricao: i.descricao,
+          valor: parseFloat(i.valor),
+          vencimento: i.vencimento,
+          pago: i.pago,
+          recorrente: i.recorrente
+        })));
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const addDespesa = (despesa: Omit<Despesa, 'id'>) => {
-    const newDespesa = { ...despesa, id: Date.now() };
-    setDespesas(prev => [...prev, newDespesa]);
+  const addReceita = async (receita: Omit<Receita, 'id'>) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('receitas')
+        .insert({
+          user_id: user.id,
+          data: receita.data,
+          descricao: receita.descricao,
+          categoria: receita.categoria,
+          cliente: receita.cliente,
+          valor: receita.valor,
+          forma_pagamento: receita.formaPagamento
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const newReceita = {
+          id: data.id,
+          data: data.data,
+          descricao: data.descricao,
+          categoria: data.categoria,
+          cliente: data.cliente || '',
+          valor: parseFloat(data.valor),
+          formaPagamento: data.forma_pagamento
+        };
+        setReceitas(prev => [newReceita, ...prev]);
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar receita:', error);
+    }
   };
 
-  const addImposto = (imposto: Omit<Imposto, 'id'>) => {
-    const newImposto = { ...imposto, id: Date.now() };
-    setImpostos(prev => [...prev, newImposto]);
+  const addDespesa = async (despesa: Omit<Despesa, 'id'>) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('despesas')
+        .insert({
+          user_id: user.id,
+          data: despesa.data,
+          descricao: despesa.descricao,
+          categoria: despesa.categoria,
+          fornecedor: despesa.fornecedor,
+          valor: despesa.valor,
+          forma_pagamento: despesa.formaPagamento
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const newDespesa = {
+          id: data.id,
+          data: data.data,
+          descricao: data.descricao,
+          categoria: data.categoria,
+          fornecedor: data.fornecedor || '',
+          valor: parseFloat(data.valor),
+          formaPagamento: data.forma_pagamento
+        };
+        setDespesas(prev => [newDespesa, ...prev]);
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar despesa:', error);
+    }
   };
 
-  const updateImposto = (id: number, updates: Partial<Imposto>) => {
-    setImpostos(prev => prev.map(imposto => 
-      imposto.id === id ? { ...imposto, ...updates } : imposto
-    ));
+  const addImposto = async (imposto: Omit<Imposto, 'id'>) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('impostos')
+        .insert({
+          user_id: user.id,
+          tipo: imposto.tipo,
+          descricao: imposto.descricao,
+          valor: imposto.valor,
+          vencimento: imposto.vencimento,
+          pago: imposto.pago,
+          recorrente: imposto.recorrente
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const newImposto = {
+          id: data.id,
+          tipo: data.tipo,
+          descricao: data.descricao,
+          valor: parseFloat(data.valor),
+          vencimento: data.vencimento,
+          pago: data.pago,
+          recorrente: data.recorrente
+        };
+        setImpostos(prev => [newImposto, ...prev]);
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar imposto:', error);
+    }
+  };
+
+  const updateImposto = async (id: number, updates: Partial<Imposto>) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('impostos')
+        .update({
+          tipo: updates.tipo,
+          descricao: updates.descricao,
+          valor: updates.valor,
+          vencimento: updates.vencimento,
+          pago: updates.pago,
+          recorrente: updates.recorrente
+        })
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setImpostos(prev => prev.map(imposto => 
+        imposto.id === id ? { ...imposto, ...updates } : imposto
+      ));
+    } catch (error) {
+      console.error('Erro ao atualizar imposto:', error);
+    }
   };
 
   const updateConfiguracoes = (novasConfiguracoes: Partial<Configuracoes>) => {
@@ -113,7 +315,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addImposto,
       updateImposto,
       updateConfiguracoes,
-      zerarSaldo
+      zerarSaldo,
+      loading
     }}>
       {children}
     </AppContext.Provider>
