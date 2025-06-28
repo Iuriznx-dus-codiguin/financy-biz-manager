@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Filter, Search, CheckCircle, XCircle } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 const Impostos = () => {
@@ -22,7 +22,8 @@ const Impostos = () => {
     recorrente: false
   });
 
-  const handleAddImposto = () => {
+  const handleAddImposto = (e: React.FormEvent) => {
+    e.preventDefault();
     if (novoImposto.tipo && novoImposto.valor) {
       addImposto({
         ...novoImposto,
@@ -40,31 +41,24 @@ const Impostos = () => {
     }
   };
 
-  const handlePagar = (id: number) => {
-    updateImposto(id, { pago: true });
+  const handleTipoChange = (value: string) => {
+    setNovoImposto(prev => ({ ...prev, tipo: value }));
   };
 
-  const totalEmAberto = impostos.filter(i => !i.pago).reduce((sum, i) => sum + i.valor, 0);
-  const totalPago = impostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);
-
-  const getStatusBadge = (pago: boolean) => {
-    return pago ? 
-      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">Pago</Badge> :
-      <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200">Em aberto</Badge>;
+  const togglePago = (id: number, pago: boolean) => {
+    updateImposto(id, { pago: !pago });
   };
 
-  const getTipoBadge = (recorrente: boolean) => {
-    return recorrente ? 
-      <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Recorrente</Badge> :
-      <Badge variant="outline" className="bg-gray-50 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300">Único</Badge>;
-  };
+  const totalImpostos = impostos.reduce((sum, imposto) => sum + imposto.valor, 0);
+  const impostosPagos = impostos.filter(imposto => imposto.pago);
+  const impostosVencidos = impostos.filter(imposto => !imposto.pago && new Date(imposto.vencimento) < new Date());
 
   return (
     <section className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Impostos e Taxas</h2>
-          <p className="text-muted-foreground">Controle suas obrigações fiscais</p>
+          <p className="text-muted-foreground">Gerencie seus impostos e taxas de forma simples</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -75,26 +69,18 @@ const Impostos = () => {
           </DialogTrigger>
           <DialogContent className="rounded-2xl">
             <DialogHeader>
-              <DialogTitle>Adicionar Imposto ou Taxa</DialogTitle>
+              <DialogTitle>Adicionar Novo Imposto ou Taxa</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <form onSubmit={handleAddImposto} className="space-y-4">
               <div>
                 <Label htmlFor="tipo">Tipo</Label>
-                <Select 
-                  value={novoImposto.tipo} 
-                  onValueChange={(value) => setNovoImposto({...novoImposto, tipo: value})}
-                >
+                <Select value={novoImposto.tipo} onValueChange={handleTipoChange}>
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="DAS">DAS</SelectItem>
-                    <SelectItem value="ISS">ISS</SelectItem>
-                    <SelectItem value="ICMS">ICMS</SelectItem>
-                    <SelectItem value="IRPF">IRPF</SelectItem>
-                    <SelectItem value="Taxa de Limpeza">Taxa de Limpeza</SelectItem>
-                    <SelectItem value="IPTU">IPTU</SelectItem>
-                    <SelectItem value="Outro">Outro</SelectItem>
+                    <SelectItem value="imposto">Imposto</SelectItem>
+                    <SelectItem value="taxa">Taxa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -102,10 +88,11 @@ const Impostos = () => {
                 <Label htmlFor="descricao">Descrição</Label>
                 <Input
                   id="descricao"
-                  placeholder="Descrição do imposto ou taxa"
+                  placeholder="Ex: DAS, IPTU, Taxa de bombeiros..."
                   value={novoImposto.descricao}
-                  onChange={(e) => setNovoImposto({...novoImposto, descricao: e.target.value})}
+                  onChange={(e) => setNovoImposto(prev => ({...prev, descricao: e.target.value}))}
                   className="rounded-xl"
+                  required
                 />
               </div>
               <div>
@@ -113,10 +100,12 @@ const Impostos = () => {
                 <Input
                   id="valor"
                   type="number"
+                  step="0.01"
                   placeholder="0,00"
                   value={novoImposto.valor}
-                  onChange={(e) => setNovoImposto({...novoImposto, valor: e.target.value})}
+                  onChange={(e) => setNovoImposto(prev => ({...prev, valor: e.target.value}))}
                   className="rounded-xl"
+                  required
                 />
               </div>
               <div>
@@ -125,68 +114,102 @@ const Impostos = () => {
                   id="vencimento"
                   type="date"
                   value={novoImposto.vencimento}
-                  onChange={(e) => setNovoImposto({...novoImposto, vencimento: e.target.value})}
+                  onChange={(e) => setNovoImposto(prev => ({...prev, vencimento: e.target.value}))}
                   className="rounded-xl"
+                  required
                 />
               </div>
-              <div>
-                <Label htmlFor="recorrencia">Tipo de Gasto</Label>
-                <Select 
-                  value={novoImposto.recorrente ? 'recorrente' : 'unico'} 
-                  onValueChange={(value) => setNovoImposto({...novoImposto, recorrente: value === 'recorrente'})}
-                >
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="unico">Gasto Único</SelectItem>
-                    <SelectItem value="recorrente">Gasto Recorrente</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="recorrente"
+                  checked={novoImposto.recorrente}
+                  onCheckedChange={(checked) => setNovoImposto(prev => ({...prev, recorrente: checked}))}
+                />
+                <Label htmlFor="recorrente">É um gasto recorrente?</Label>
               </div>
-              <Button onClick={handleAddImposto} className="w-full rounded-xl">
-                Adicionar
+              <Button type="submit" className="w-full rounded-xl">
+                Adicionar {novoImposto.tipo || 'Imposto/Taxa'}
               </Button>
-            </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-6">
-            <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
-              <p className="text-sm text-muted-foreground">Total em Aberto</p>
-              <p className="text-2xl font-bold text-red-600">R$ {totalEmAberto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total de Impostos</p>
+                <p className="text-2xl font-bold text-orange-600">R$ {totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              </div>
+              <div className="text-orange-600 text-2xl">🏛️</div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-6">
-            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-              <p className="text-sm text-muted-foreground">Já Pagos</p>
-              <p className="text-2xl font-bold text-green-600">R$ {totalPago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Pagos</p>
+                <p className="text-2xl font-bold text-green-600">{impostosPagos.length}</p>
+              </div>
+              <div className="text-green-600 text-2xl">✅</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Vencidos</p>
+                <p className="text-2xl font-bold text-red-600">{impostosVencidos.length}</p>
+              </div>
+              <div className="text-red-600 text-2xl">⚠️</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total de Itens</p>
+                <p className="text-2xl font-bold">{impostos.length}</p>
+              </div>
+              <div className="text-blue-600 text-2xl">📊</div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabela de Impostos */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>Lista de Impostos e Taxas</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Lista de Impostos e Taxas</CardTitle>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm" className="rounded-lg">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtrar
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-lg">
+                <Search className="h-4 w-4 mr-2" />
+                Buscar
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {impostos.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">📋</div>
+              <div className="text-6xl mb-4">🏛️</div>
               <h3 className="text-xl font-semibold mb-2">Nenhum imposto ou taxa cadastrado</h3>
-              <p className="text-muted-foreground mb-4">Comece adicionando o primeiro</p>
+              <p className="text-muted-foreground mb-4">Comece adicionando seu primeiro imposto ou taxa</p>
               <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl">
                 <Plus className="mr-2 h-4 w-4" />
-                Adicionar Primeiro
+                Adicionar Primeiro Item
               </Button>
             </div>
           ) : (
@@ -196,33 +219,38 @@ const Impostos = () => {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Vencimento</TableHead>
-                  <TableHead>Recorrência</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Recorrente</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {impostos.map((imposto) => (
                   <TableRow key={imposto.id}>
-                    <TableCell className="font-semibold">{imposto.tipo}</TableCell>
+                    <TableCell className="capitalize">{imposto.tipo}</TableCell>
                     <TableCell>{imposto.descricao}</TableCell>
-                    <TableCell>{imposto.vencimento}</TableCell>
-                    <TableCell>{getTipoBadge(imposto.recorrente)}</TableCell>
-                    <TableCell>{getStatusBadge(imposto.pago)}</TableCell>
-                    <TableCell className="text-right font-bold">
+                    <TableCell>{new Date(imposto.vencimento).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell>{imposto.recorrente ? 'Sim' : 'Não'}</TableCell>
+                    <TableCell className="text-right font-medium">
                       R$ {imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-center">
-                      {!imposto.pago && (
-                        <Button 
-                          size="sm" 
-                          className="rounded-lg"
-                          onClick={() => handlePagar(imposto.id)}
-                        >
-                          Marcar como Pago
-                        </Button>
+                      {imposto.pago ? (
+                        <CheckCircle className="h-5 w-5 text-green-600 mx-auto" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-600 mx-auto" />
                       )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => togglePago(imposto.id, imposto.pago)}
+                        className="rounded-lg"
+                      >
+                        {imposto.pago ? 'Marcar como Pendente' : 'Marcar como Pago'}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

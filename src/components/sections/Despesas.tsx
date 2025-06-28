@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,8 @@ const Despesas = () => {
     formaPagamento: ''
   });
 
-  const handleAddDespesa = () => {
+  const handleAddDespesa = (e: React.FormEvent) => {
+    e.preventDefault();
     if (novaDespesa.descricao && novaDespesa.valor) {
       addDespesa({
         ...novaDespesa,
@@ -38,6 +38,14 @@ const Despesas = () => {
       });
       setIsDialogOpen(false);
     }
+  };
+
+  const handleCategoriaChange = (value: string) => {
+    setNovaDespesa(prev => ({ ...prev, categoria: value }));
+  };
+
+  const handleFormaPagamentoChange = (value: string) => {
+    setNovaDespesa(prev => ({ ...prev, formaPagamento: value }));
   };
 
   const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
@@ -60,14 +68,14 @@ const Despesas = () => {
             <DialogHeader>
               <DialogTitle>Adicionar Nova Despesa</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <form onSubmit={handleAddDespesa} className="space-y-4">
               <div>
                 <Label htmlFor="data">Data</Label>
                 <Input
                   id="data"
                   type="date"
                   value={novaDespesa.data}
-                  onChange={(e) => setNovaDespesa({...novaDespesa, data: e.target.value})}
+                  onChange={(e) => setNovaDespesa(prev => ({...prev, data: e.target.value}))}
                   className="rounded-xl"
                 />
               </div>
@@ -77,13 +85,14 @@ const Despesas = () => {
                   id="descricao"
                   placeholder="Descrição da despesa"
                   value={novaDespesa.descricao}
-                  onChange={(e) => setNovaDespesa({...novaDespesa, descricao: e.target.value})}
+                  onChange={(e) => setNovaDespesa(prev => ({...prev, descricao: e.target.value}))}
                   className="rounded-xl"
+                  required
                 />
               </div>
               <div>
                 <Label htmlFor="categoria">Categoria</Label>
-                <Select value={novaDespesa.categoria} onValueChange={(value) => setNovaDespesa({...novaDespesa, categoria: value})}>
+                <Select value={novaDespesa.categoria} onValueChange={handleCategoriaChange}>
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
@@ -102,7 +111,7 @@ const Despesas = () => {
                   id="fornecedor"
                   placeholder="Nome do fornecedor"
                   value={novaDespesa.fornecedor}
-                  onChange={(e) => setNovaDespesa({...novaDespesa, fornecedor: e.target.value})}
+                  onChange={(e) => setNovaDespesa(prev => ({...prev, fornecedor: e.target.value}))}
                   className="rounded-xl"
                 />
               </div>
@@ -111,15 +120,17 @@ const Despesas = () => {
                 <Input
                   id="valor"
                   type="number"
+                  step="0.01"
                   placeholder="0,00"
                   value={novaDespesa.valor}
-                  onChange={(e) => setNovaDespesa({...novaDespesa, valor: e.target.value})}
+                  onChange={(e) => setNovaDespesa(prev => ({...prev, valor: e.target.value}))}
                   className="rounded-xl"
+                  required
                 />
               </div>
               <div>
                 <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
-                <Select value={novaDespesa.formaPagamento} onValueChange={(value) => setNovaDespesa({...novaDespesa, formaPagamento: value})}>
+                <Select value={novaDespesa.formaPagamento} onValueChange={handleFormaPagamentoChange}>
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Selecione a forma de pagamento" />
                   </SelectTrigger>
@@ -131,10 +142,10 @@ const Despesas = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleAddDespesa} className="w-full rounded-xl">
+              <Button type="submit" className="w-full rounded-xl">
                 Adicionar Despesa
               </Button>
-            </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>

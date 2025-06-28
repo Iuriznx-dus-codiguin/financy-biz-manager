@@ -58,6 +58,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     });
   };
 
+  const handleSectionChange = (sectionId: string) => {
+    console.log('Changing section to:', sectionId);
+    onSectionChange(sectionId);
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -86,7 +91,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
-                      onClick={() => onSectionChange(item.id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSectionChange(item.id);
+                      }}
                       isActive={isActive}
                       tooltip={isCollapsed ? item.label : undefined}
                     >
