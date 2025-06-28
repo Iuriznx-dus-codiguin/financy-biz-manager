@@ -1,12 +1,13 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Filter, Search } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 const Receitas = () => {
@@ -22,7 +23,7 @@ const Receitas = () => {
   });
 
   const handleAddReceita = () => {
-    if (novaReceita.descricao && novaReceita.valor) {
+    if (novaReceita.descricao && novaReceita.valor && novaReceita.categoria) {
       addReceita({
         ...novaReceita,
         valor: parseFloat(novaReceita.valor)
@@ -46,13 +47,13 @@ const Receitas = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Receitas</h2>
-          <p className="text-muted-foreground">Gestão completa das suas entradas de dinheiro</p>
+          <p className="text-muted-foreground">Gerencie suas entradas de dinheiro</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="rounded-xl">
               <Plus className="mr-2 h-4 w-4" />
-              Nova Receita
+              Adicionar Receita
             </Button>
           </DialogTrigger>
           <DialogContent className="rounded-2xl">
@@ -74,7 +75,7 @@ const Receitas = () => {
                 <Label htmlFor="descricao">Descrição</Label>
                 <Input
                   id="descricao"
-                  placeholder="Descrição da receita"
+                  placeholder="Descreva a receita"
                   value={novaReceita.descricao}
                   onChange={(e) => setNovaReceita({...novaReceita, descricao: e.target.value})}
                   className="rounded-xl"
@@ -82,15 +83,20 @@ const Receitas = () => {
               </div>
               <div>
                 <Label htmlFor="categoria">Categoria</Label>
-                <Select value={novaReceita.categoria} onValueChange={(value) => setNovaReceita({...novaReceita, categoria: value})}>
+                <Select 
+                  value={novaReceita.categoria} 
+                  onValueChange={(value) => setNovaReceita({...novaReceita, categoria: value})}
+                >
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="vendas">Vendas</SelectItem>
-                    <SelectItem value="servicos">Serviços</SelectItem>
+                    <SelectItem value="venda">Venda</SelectItem>
+                    <SelectItem value="servico">Serviço</SelectItem>
                     <SelectItem value="consultoria">Consultoria</SelectItem>
-                    <SelectItem value="outros">Outros</SelectItem>
+                    <SelectItem value="comissao">Comissão</SelectItem>
+                    <SelectItem value="investimento">Investimento</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -117,84 +123,50 @@ const Receitas = () => {
               </div>
               <div>
                 <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
-                <Select value={novaReceita.formaPagamento} onValueChange={(value) => setNovaReceita({...novaReceita, formaPagamento: value})}>
+                <Select 
+                  value={novaReceita.formaPagamento} 
+                  onValueChange={(value) => setNovaReceita({...novaReceita, formaPagamento: value})}
+                >
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Selecione a forma de pagamento" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="dinheiro">Dinheiro</SelectItem>
                     <SelectItem value="pix">PIX</SelectItem>
-                    <SelectItem value="cartao">Cartão</SelectItem>
+                    <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                    <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
                     <SelectItem value="transferencia">Transferência</SelectItem>
+                    <SelectItem value="boleto">Boleto</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <Button onClick={handleAddReceita} className="w-full rounded-xl">
-                Adicionar Receita
+                Adicionar
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="rounded-2xl shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Receita Total</p>
-                <p className="text-2xl font-bold text-green-600">R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-              </div>
-              <div className="text-green-600 text-2xl">💰</div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Resumo */}
+      <Card className="rounded-2xl shadow-sm">
+        <CardContent className="p-6">
+          <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+            <p className="text-sm text-muted-foreground">Total de Receitas</p>
+            <p className="text-3xl font-bold text-green-600">R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card className="rounded-2xl shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total de Transações</p>
-                <p className="text-2xl font-bold">{receitas.length}</p>
-              </div>
-              <div className="text-blue-600 text-2xl">📊</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Média por Transação</p>
-                <p className="text-2xl font-bold">R$ {receitas.length > 0 ? (totalReceitas / receitas.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}</p>
-              </div>
-              <div className="text-purple-600 text-2xl">📈</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
+      {/* Tabela de Receitas */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Histórico de Receitas</CardTitle>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm" className="rounded-lg">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtrar
-              </Button>
-              <Button variant="outline" size="sm" className="rounded-lg">
-                <Search className="h-4 w-4 mr-2" />
-                Buscar
-              </Button>
-            </div>
-          </div>
+          <CardTitle>Lista de Receitas</CardTitle>
         </CardHeader>
         <CardContent>
           {receitas.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">📊</div>
+              <div className="text-6xl mb-4">💰</div>
               <h3 className="text-xl font-semibold mb-2">Nenhuma receita cadastrada</h3>
               <p className="text-muted-foreground mb-4">Comece adicionando sua primeira receita</p>
               <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl">
@@ -210,7 +182,7 @@ const Receitas = () => {
                   <TableHead>Descrição</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Forma de Pagamento</TableHead>
+                  <TableHead>Pagamento</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                 </TableRow>
               </TableHeader>
@@ -218,11 +190,11 @@ const Receitas = () => {
                 {receitas.map((receita) => (
                   <TableRow key={receita.id}>
                     <TableCell>{receita.data}</TableCell>
-                    <TableCell>{receita.descricao}</TableCell>
+                    <TableCell className="font-medium">{receita.descricao}</TableCell>
                     <TableCell>{receita.categoria}</TableCell>
                     <TableCell>{receita.cliente}</TableCell>
                     <TableCell>{receita.formaPagamento}</TableCell>
-                    <TableCell className="text-right font-medium text-green-600">
+                    <TableCell className="text-right font-bold text-green-600">
                       R$ {receita.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                   </TableRow>

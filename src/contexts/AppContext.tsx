@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 interface Receita {
   id: number;
@@ -28,16 +28,26 @@ interface Imposto {
   valor: number;
   vencimento: string;
   pago: boolean;
+  recorrente: boolean;
+}
+
+interface Configuracoes {
+  tema: 'light' | 'dark';
+  moeda: 'BRL' | 'USD' | 'EUR';
+  idioma: 'pt-BR' | 'en-US' | 'es-ES';
 }
 
 interface AppContextType {
   receitas: Receita[];
   despesas: Despesa[];
   impostos: Imposto[];
+  configuracoes: Configuracoes;
   addReceita: (receita: Omit<Receita, 'id'>) => void;
   addDespesa: (despesa: Omit<Despesa, 'id'>) => void;
   addImposto: (imposto: Omit<Imposto, 'id'>) => void;
   updateImposto: (id: number, updates: Partial<Imposto>) => void;
+  updateConfiguracoes: (configuracoes: Partial<Configuracoes>) => void;
+  zerarSaldo: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -46,6 +56,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [receitas, setReceitas] = useState<Receita[]>([]);
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   const [impostos, setImpostos] = useState<Imposto[]>([]);
+  const [configuracoes, setConfiguracoes] = useState<Configuracoes>({
+    tema: 'light',
+    moeda: 'BRL',
+    idioma: 'pt-BR'
+  });
+
+  // Aplicar tema quando mudança
+  useEffect(() => {
+    if (configuracoes.tema === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [configuracoes.tema]);
 
   const addReceita = (receita: Omit<Receita, 'id'>) => {
     const newReceita = { ...receita, id: Date.now() };
@@ -68,15 +92,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     ));
   };
 
+  const updateConfiguracoes = (novasConfiguracoes: Partial<Configuracoes>) => {
+    setConfiguracoes(prev => ({ ...prev, ...novasConfiguracoes }));
+  };
+
+  const zerarSaldo = () => {
+    setReceitas([]);
+    setDespesas([]);
+    setImpostos([]);
+  };
+
   return (
     <AppContext.Provider value={{
       receitas,
       despesas,
       impostos,
+      configuracoes,
       addReceita,
       addDespesa,
       addImposto,
-      updateImposto
+      updateImposto,
+      updateConfiguracoes,
+      zerarSaldo
     }}>
       {children}
     </AppContext.Provider>

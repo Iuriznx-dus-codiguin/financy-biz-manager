@@ -1,6 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
-import { Sidebar } from '@/components/Sidebar';
+import React, { useState } from 'react';
+import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/AppSidebar';
 import Dashboard from '@/components/sections/Dashboard';
 import Receitas from '@/components/sections/Receitas';
 import Despesas from '@/components/sections/Despesas';
@@ -15,19 +16,6 @@ import FloatingActionButton from '@/components/FloatingActionButton';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('painel');
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDark]);
-
-  const handleThemeToggle = () => {
-    setIsDark(!isDark);
-  };
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -55,20 +43,27 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar 
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        isDark={isDark}
-        onThemeToggle={handleThemeToggle}
-      />
-
-      <main className="ml-72 min-h-screen">
-        <div className="container mx-auto px-8 py-8">
-          {renderActiveSection()}
-        </div>
-        <Footer />
-      </main>
+    <div className="min-h-screen bg-background w-full">
+      <SidebarProvider>
+        <AppSidebar 
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+        />
+        
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <div className="flex-1" />
+          </header>
+          
+          <main className="flex-1 overflow-auto">
+            <div className="container mx-auto px-8 py-8">
+              {renderActiveSection()}
+            </div>
+            <Footer />
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
 
       <FloatingActionButton />
     </div>

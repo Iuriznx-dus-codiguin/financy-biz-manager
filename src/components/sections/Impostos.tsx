@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
@@ -17,7 +18,8 @@ const Impostos = () => {
     tipo: '',
     descricao: '',
     valor: '',
-    vencimento: ''
+    vencimento: '',
+    recorrente: false
   });
 
   const handleAddImposto = () => {
@@ -31,7 +33,8 @@ const Impostos = () => {
         tipo: '',
         descricao: '',
         valor: '',
-        vencimento: ''
+        vencimento: '',
+        recorrente: false
       });
       setIsDialogOpen(false);
     }
@@ -48,6 +51,12 @@ const Impostos = () => {
     return pago ? 
       <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">Pago</Badge> :
       <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200">Em aberto</Badge>;
+  };
+
+  const getTipoBadge = (recorrente: boolean) => {
+    return recorrente ? 
+      <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Recorrente</Badge> :
+      <Badge variant="outline" className="bg-gray-50 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300">Único</Badge>;
   };
 
   return (
@@ -70,14 +79,24 @@ const Impostos = () => {
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="tipo">Tipo (Imposto ou Taxa)</Label>
-                <Input
-                  id="tipo"
-                  placeholder="Ex: DAS, ISS, ICMS, Taxa de Limpeza..."
-                  value={novoImposto.tipo}
-                  onChange={(e) => setNovoImposto({...novoImposto, tipo: e.target.value})}
-                  className="rounded-xl"
-                />
+                <Label htmlFor="tipo">Tipo</Label>
+                <Select 
+                  value={novoImposto.tipo} 
+                  onValueChange={(value) => setNovoImposto({...novoImposto, tipo: value})}
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DAS">DAS</SelectItem>
+                    <SelectItem value="ISS">ISS</SelectItem>
+                    <SelectItem value="ICMS">ICMS</SelectItem>
+                    <SelectItem value="IRPF">IRPF</SelectItem>
+                    <SelectItem value="Taxa de Limpeza">Taxa de Limpeza</SelectItem>
+                    <SelectItem value="IPTU">IPTU</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="descricao">Descrição</Label>
@@ -109,6 +128,21 @@ const Impostos = () => {
                   onChange={(e) => setNovoImposto({...novoImposto, vencimento: e.target.value})}
                   className="rounded-xl"
                 />
+              </div>
+              <div>
+                <Label htmlFor="recorrencia">Tipo de Gasto</Label>
+                <Select 
+                  value={novoImposto.recorrente ? 'recorrente' : 'unico'} 
+                  onValueChange={(value) => setNovoImposto({...novoImposto, recorrente: value === 'recorrente'})}
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unico">Gasto Único</SelectItem>
+                    <SelectItem value="recorrente">Gasto Recorrente</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <Button onClick={handleAddImposto} className="w-full rounded-xl">
                 Adicionar
@@ -162,6 +196,7 @@ const Impostos = () => {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Vencimento</TableHead>
+                  <TableHead>Recorrência</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
@@ -173,6 +208,7 @@ const Impostos = () => {
                     <TableCell className="font-semibold">{imposto.tipo}</TableCell>
                     <TableCell>{imposto.descricao}</TableCell>
                     <TableCell>{imposto.vencimento}</TableCell>
+                    <TableCell>{getTipoBadge(imposto.recorrente)}</TableCell>
                     <TableCell>{getStatusBadge(imposto.pago)}</TableCell>
                     <TableCell className="text-right font-bold">
                       R$ {imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
