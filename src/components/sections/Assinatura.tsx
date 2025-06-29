@@ -6,6 +6,7 @@ import { CreditCard, Check, Calendar, AlertTriangle } from 'lucide-react';
 
 const Assinatura: React.FC = () => {
   const handlePayment = () => {
+    // URL do Cakto atualizada com webhook configurado
     window.open('https://pay.cakto.com.br/4cwxcix_453682', '_blank');
   };
 
@@ -69,6 +70,10 @@ const Assinatura: React.FC = () => {
             >
               Assinar Agora
             </Button>
+
+            <div className="text-xs text-muted-foreground text-center">
+              Pagamento seguro processado via Cakto
+            </div>
           </CardContent>
         </Card>
 
@@ -112,6 +117,18 @@ const Assinatura: React.FC = () => {
                 Nenhum pagamento realizado ainda
               </div>
             </div>
+
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+              <div className="text-sm">
+                <strong>URL do Webhook:</strong>
+                <code className="block mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
+                  https://hbyozfmpsgbxofcetdez.supabase.co/functions/v1/cakto-webhook
+                </code>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Configure esta URL no painel do Cakto para receber notificações de pagamento.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -138,6 +155,12 @@ const Assinatura: React.FC = () => {
             <h4 className="font-semibold mb-2">Há período de teste gratuito?</h4>
             <p className="text-sm text-muted-foreground">
               Sim, oferecemos um período de teste para que você possa conhecer todas as funcionalidades antes de assinar.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2">Como funciona a integração com Cakto?</h4>
+            <p className="text-sm text-muted-foreground">
+              Quando você efetua o pagamento via Cakto, nossa aplicação recebe automaticamente a confirmação e registra a receita em sua conta.
             </p>
           </div>
         </CardContent>

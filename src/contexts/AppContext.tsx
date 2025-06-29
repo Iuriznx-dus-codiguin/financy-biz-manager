@@ -168,7 +168,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           descricao: receita.descricao,
           categoria: receita.categoria,
           cliente: receita.cliente,
-          valor: receita.valor.toString(),
+          valor: receita.valor,
           forma_pagamento: receita.formaPagamento
         })
         .select()
@@ -205,7 +205,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           descricao: despesa.descricao,
           categoria: despesa.categoria,
           fornecedor: despesa.fornecedor,
-          valor: despesa.valor.toString(),
+          valor: despesa.valor,
           forma_pagamento: despesa.formaPagamento
         })
         .select()
@@ -240,7 +240,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           user_id: user.id,
           tipo: imposto.tipo,
           descricao: imposto.descricao,
-          valor: imposto.valor.toString(),
+          valor: imposto.valor,
           vencimento: imposto.vencimento,
           pago: imposto.pago,
           recorrente: imposto.recorrente
@@ -275,7 +275,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       if (updates.tipo !== undefined) updateData.tipo = updates.tipo;
       if (updates.descricao !== undefined) updateData.descricao = updates.descricao;
-      if (updates.valor !== undefined) updateData.valor = updates.valor.toString();
+      if (updates.valor !== undefined) updateData.valor = updates.valor;
       if (updates.vencimento !== undefined) updateData.vencimento = updates.vencimento;
       if (updates.pago !== undefined) updateData.pago = updates.pago;
       if (updates.recorrente !== undefined) updateData.recorrente = updates.recorrente;
@@ -283,7 +283,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const { error } = await supabase
         .from('impostos')
         .update(updateData)
-        .eq('id', id.toString())
+        .eq('id', id)
         .eq('user_id', user.id);
 
       if (error) throw error;
