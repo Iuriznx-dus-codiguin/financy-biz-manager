@@ -3,7 +3,9 @@ import React, { useState } from 'react';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { AuthPage } from '@/components/auth/AuthPage';
+import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { useAuth } from '@/hooks/useAuth';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { Loader2 } from 'lucide-react';
 import Dashboard from '@/components/sections/Dashboard';
 import Receitas from '@/components/sections/Receitas';
@@ -21,6 +23,7 @@ import { LogOut } from 'lucide-react';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
+  const { isOnboardingComplete, completeOnboarding } = useOnboarding();
   const [activeSection, setActiveSection] = useState('painel');
 
   // Mostrar loading enquanto verifica autenticação
@@ -38,6 +41,11 @@ const Index = () => {
   // Se não estiver autenticado, mostrar página de login
   if (!user) {
     return <AuthPage />;
+  }
+
+  // Se autenticado mas onboarding não foi completado, mostrar onboarding
+  if (!isOnboardingComplete) {
+    return <OnboardingFlow onComplete={completeOnboarding} />;
   }
 
   const renderActiveSection = () => {
