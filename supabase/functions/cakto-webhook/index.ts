@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-signature',
 };
 
 serve(async (req) => {
@@ -19,14 +19,28 @@ serve(async (req) => {
     // Inicializar cliente Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const webhookSecret = Deno.env.get('CAKTO_WEBHOOK_SECRET')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     if (req.method === 'POST') {
       const payload = await req.json();
       console.log('Payload recebido do Cakto:', JSON.stringify(payload, null, 2));
 
+      // Verificar assinatura do webhook (se fornecida pelo Cakto)
+      const signature = req.headers.get('x-webhook-signature') || req.headers.get('authorization');
+      if (signature && !signature.includes(webhookSecret)) {
+        console.error('Assinatura do webhook inválida');
+        return new Response(
+          JSON.stringify({ error: 'Assinatura inválida' }),
+          { 
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+
       // Verificar se é um evento de pagamento aprovado
-      if (payload.event === 'payment.approved' || payload.status === 'approved') {
+      if (payload.event === 'payment.approved' || payload.status === 'approved' || payload.status === 'paid') {
         const {
           customer_email,
           amount,
@@ -59,6 +73,12 @@ serve(async (req) => {
           );
         }
 
+        // Calcular valor (Cakto pode enviar em centavos ou reais)
+        let valorFinal = parseFloat(amount);
+        if (valorFinal > 1000) {
+          valorFinal = valorFinal / 100; // Converter de centavos para reais
+        }
+
         // Registrar a receita de assinatura
         const { data: receita, error: receitaError } = await supabase
           .from('receitas')
@@ -68,7 +88,7 @@ serve(async (req) => {
             descricao: `Pagamento de assinatura - ${product_name || 'Financy Premium'}`,
             categoria: 'Assinatura',
             cliente: customer_email,
-            valor: parseFloat(amount) / 100, // Cakto envia em centavos
+            valor: valorFinal,
             forma_pagamento: 'Cartão de Crédito'
           });
 
@@ -90,7 +110,7 @@ serve(async (req) => {
           JSON.stringify({ 
             success: true, 
             message: 'Pagamento processado com sucesso',
-            receita_id: receita?.id
+            receita_id: receita?.[0]?.id || 'criada'
           }),
           { 
             status: 200,
