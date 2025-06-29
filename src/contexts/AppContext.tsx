@@ -121,7 +121,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           descricao: r.descricao,
           categoria: r.categoria,
           cliente: r.cliente || '',
-          valor: parseFloat(r.valor),
+          valor: parseFloat(r.valor.toString()),
           formaPagamento: r.forma_pagamento
         })));
       }
@@ -133,7 +133,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           descricao: d.descricao,
           categoria: d.categoria,
           fornecedor: d.fornecedor || '',
-          valor: parseFloat(d.valor),
+          valor: parseFloat(d.valor.toString()),
           formaPagamento: d.forma_pagamento
         })));
       }
@@ -143,7 +143,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           id: i.id,
           tipo: i.tipo,
           descricao: i.descricao,
-          valor: parseFloat(i.valor),
+          valor: parseFloat(i.valor.toString()),
           vencimento: i.vencimento,
           pago: i.pago,
           recorrente: i.recorrente
@@ -168,7 +168,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           descricao: receita.descricao,
           categoria: receita.categoria,
           cliente: receita.cliente,
-          valor: receita.valor,
+          valor: receita.valor.toString(),
           forma_pagamento: receita.formaPagamento
         })
         .select()
@@ -183,7 +183,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           descricao: data.descricao,
           categoria: data.categoria,
           cliente: data.cliente || '',
-          valor: parseFloat(data.valor),
+          valor: parseFloat(data.valor.toString()),
           formaPagamento: data.forma_pagamento
         };
         setReceitas(prev => [newReceita, ...prev]);
@@ -205,7 +205,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           descricao: despesa.descricao,
           categoria: despesa.categoria,
           fornecedor: despesa.fornecedor,
-          valor: despesa.valor,
+          valor: despesa.valor.toString(),
           forma_pagamento: despesa.formaPagamento
         })
         .select()
@@ -220,7 +220,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           descricao: data.descricao,
           categoria: data.categoria,
           fornecedor: data.fornecedor || '',
-          valor: parseFloat(data.valor),
+          valor: parseFloat(data.valor.toString()),
           formaPagamento: data.forma_pagamento
         };
         setDespesas(prev => [newDespesa, ...prev]);
@@ -240,7 +240,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           user_id: user.id,
           tipo: imposto.tipo,
           descricao: imposto.descricao,
-          valor: imposto.valor,
+          valor: imposto.valor.toString(),
           vencimento: imposto.vencimento,
           pago: imposto.pago,
           recorrente: imposto.recorrente
@@ -255,7 +255,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           id: data.id,
           tipo: data.tipo,
           descricao: data.descricao,
-          valor: parseFloat(data.valor),
+          valor: parseFloat(data.valor.toString()),
           vencimento: data.vencimento,
           pago: data.pago,
           recorrente: data.recorrente
@@ -271,17 +271,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!user) return;
 
     try {
+      const updateData: any = {};
+      
+      if (updates.tipo !== undefined) updateData.tipo = updates.tipo;
+      if (updates.descricao !== undefined) updateData.descricao = updates.descricao;
+      if (updates.valor !== undefined) updateData.valor = updates.valor.toString();
+      if (updates.vencimento !== undefined) updateData.vencimento = updates.vencimento;
+      if (updates.pago !== undefined) updateData.pago = updates.pago;
+      if (updates.recorrente !== undefined) updateData.recorrente = updates.recorrente;
+
       const { error } = await supabase
         .from('impostos')
-        .update({
-          tipo: updates.tipo,
-          descricao: updates.descricao,
-          valor: updates.valor,
-          vencimento: updates.vencimento,
-          pago: updates.pago,
-          recorrente: updates.recorrente
-        })
-        .eq('id', id)
+        .update(updateData)
+        .eq('id', id.toString())
         .eq('user_id', user.id);
 
       if (error) throw error;
