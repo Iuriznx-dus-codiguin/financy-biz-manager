@@ -12,22 +12,55 @@ import { TooltipInfo } from '@/components/TooltipInfo';
 const Dashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [periodo, setPeriodo] = useState('6meses');
-  const { receitas, despesas, impostos, zerarSaldo } = useAppContext();
+  const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
 
   // Calcular estatísticas reais
   const totalReceitas = receitas.reduce((sum, receita) => sum + receita.valor, 0);
   const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
   const totalImpostos = impostos.filter(imposto => imposto.pago).reduce((sum, imposto) => sum + imposto.valor, 0);
-  const saldoAtual = totalReceitas - totalDespesas - totalImpostos;
+  
+  // Calcular custos de equipe
+  const calcularCustosEquipe = () => {
+    const hoje = new Date();
+    const inicioDoDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const inicioDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    
+    let custoDiario = 0;
+    let custoMensal = 0;
+    
+    membrosEquipe.forEach(membro => {
+      if (membro.status === 'ativo') {
+        switch (membro.periodicidade) {
+          case 'mensal':
+            custoMensal += membro.salario;
+            custoDiario += membro.salario / 30;
+            break;
+          case 'semanal':
+            custoMensal += membro.salario * 4;
+            custoDiario += membro.salario / 7;
+            break;
+          case 'quinzenal':
+            custoMensal += membro.salario * 2;
+            custoDiario += membro.salario / 15;
+            break;
+        }
+      }
+    });
+    
+    return { custoDiario, custoMensal };
+  };
+
+  const { custoDiario: custoEquipeDiario, custoMensal: custoEquipeMensal } = calcularCustosEquipe();
+  const saldoAtual = totalReceitas - totalDespesas - totalImpostos - custoEquipeMensal;
   const faturamentoBruto = totalReceitas;
 
   // Calcular ROI (Return on Investment) como número normal
   const calcularROI = () => {
-    const lucroLiquido = totalReceitas - totalDespesas - totalImpostos;
-    const investimentoTotal = totalDespesas + totalImpostos;
+    const lucroLiquido = totalReceitas - totalDespesas - totalImpostos - custoEquipeMensal;
+    const investimentoTotal = totalDespesas + totalImpostos + custoEquipeMensal;
     
     if (investimentoTotal === 0) {
-      return totalReceitas > 0 ? 1.0 : 0; // Se não teve gastos mas teve receita, ROI = 1.0
+      return totalReceitas > 0 ? 1.0 : 0;
     }
     
     return lucroLiquido / investimentoTotal;
@@ -39,12 +72,6 @@ const Dashboard = () => {
   const hoje = new Date().toISOString().split('T')[0];
   const receitasHoje = receitas.filter(r => r.data === hoje).reduce((sum, r) => sum + r.valor, 0);
   const despesasHoje = despesas.filter(d => d.data === hoje).reduce((sum, d) => sum + d.valor, 0);
-
-  // Função para determinar a cor do valor
-  const getValueColor = (value: number, isPositive: boolean = true) => {
-    if (value === 0) return 'text-muted-foreground';
-    return isPositive ? 'text-green-600' : 'text-red-600';
-  };
 
   const stats = [
     { 
@@ -61,9 +88,9 @@ const Dashboard = () => {
     },
     { 
       title: 'Despesas do Dia', 
-      value: `R$ ${despesasHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
+      value: `R$ ${(despesasHoje + custoEquipeDiario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
       positive: false,
-      color: despesasHoje === 0 ? 'text-muted-foreground' : 'text-red-600'
+      color: (despesasHoje + custoEquipeDiario) === 0 ? 'text-muted-foreground' : 'text-red-600'
     },
     { 
       title: 'Impostos Pagos', 
@@ -144,7 +171,6 @@ const Dashboard = () => {
 
   const chartData = gerarDadosGrafico();
 
-  // Categorias baseadas nas receitas reais
   const categorias = receitas.reduce((acc, receita) => {
     acc[receita.categoria] = (acc[receita.categoria] || 0) + receita.valor;
     return acc;
@@ -157,7 +183,6 @@ const Dashboard = () => {
     color: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'][index % 5]
   }));
 
-  // Últimas transações reais
   const allTransactions = [
     ...receitas.map(r => ({ ...r, type: 'receita' as const })),
     ...despesas.map(d => ({ ...d, type: 'despesa' as const }))
@@ -180,13 +205,6 @@ const Dashboard = () => {
           <p className="text-muted-foreground">Visão geral do seu negócio em tempo real</p>
         </div>
         <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={zerarSaldo}
-            className="rounded-xl"
-          >
-            Zerar Saldo
-          </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 py-3 font-semibold shadow-lg">
@@ -205,12 +223,12 @@ const Dashboard = () => {
                   </div>
                   <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
                     <p className="text-sm text-muted-foreground">Total Despesas</p>
-                    <p className="text-xl font-bold text-red-600">R$ {despesasHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    <p className="text-xl font-bold text-red-600">R$ {(despesasHoje + custoEquipeDiario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                   </div>
                 </div>
                 <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
                   <p className="text-sm text-muted-foreground">Saldo Líquido</p>
-                  <p className="text-2xl font-bold text-primary">R$ {(receitasHoje - despesasHoje).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-2xl font-bold text-primary">R$ {(receitasHoje - despesasHoje - custoEquipeDiario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <Button 
                   className="w-full rounded-xl" 
@@ -313,7 +331,6 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Últimas Transações */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
           <CardTitle>Últimas Transações</CardTitle>

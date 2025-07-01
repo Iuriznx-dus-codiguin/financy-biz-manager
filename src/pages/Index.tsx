@@ -8,6 +8,8 @@ import Impostos from '@/components/sections/Impostos';
 import Relatorios from '@/components/sections/Relatorios';
 import Fechamento from '@/components/sections/Fechamento';
 import Equipe from '@/components/sections/Equipe';
+import Assinatura from '@/components/sections/Assinatura';
+import Configuracoes from '@/components/sections/Configuracoes';
 import Ajuda from '@/components/sections/Ajuda';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { AppSidebar } from '@/components/AppSidebar';
@@ -35,12 +37,16 @@ export default function Index() {
           return <Despesas />;
         case 'impostos':
           return <Impostos />;
+        case 'equipe':
+          return <Equipe />;
         case 'relatorios':
           return <Relatorios />;
         case 'fechamento':
           return <Fechamento />;
-        case 'equipe':
-          return <Equipe />;
+        case 'assinatura':
+          return <Assinatura />;
+        case 'configuracoes':
+          return <Configuracoes />;
         case 'ajuda':
           return <Ajuda />;
         default:
@@ -53,7 +59,6 @@ export default function Index() {
     }
   };
 
-  // Show loading while checking auth and onboarding status
   if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -65,12 +70,10 @@ export default function Index() {
     );
   }
 
-  // Show auth page if user is not authenticated
   if (!user) {
     return <AuthPage />;
   }
 
-  // Show onboarding if user is authenticated but hasn't completed onboarding
   if (!isOnboardingComplete) {
     return <OnboardingFlow onComplete={completeOnboarding} />;
   }
@@ -82,7 +85,7 @@ export default function Index() {
           <div className="flex min-h-screen w-full">
             <AppSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
             <div className="flex-1 flex flex-col">
-              <main className="flex-1 p-8 pb-0">
+              <main className="flex-1 p-8">
                 {renderSection()}
               </main>
               <Footer />
