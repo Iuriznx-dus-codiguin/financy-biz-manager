@@ -7,22 +7,87 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff } from 'lucide-react';
+import { validateEmail, validatePassword, validateTextInput } from '@/utils/validation';
+import { useSecurityHeaders } from '@/hooks/useSecurityHeaders';
 
 export const AuthPage = () => {
+  useSecurityHeaders();
+  
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockoutTime, setLockoutTime] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     nomeCompleto: ''
   });
 
+  const MAX_LOGIN_ATTEMPTS = 5;
+  const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutos
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    // Validar email
+    if (!validateEmail(formData.email)) {
+      errors.email = 'Email inválido';
+    }
+
+    // Validar senha
+    if (isLogin) {
+      if (!formData.password.trim()) {
+        errors.password = 'Senha é obrigatória';
+      }
+    } else {
+      const passwordValidation = validatePassword(formData.password);
+      if (!passwordValidation.isValid) {
+        errors.password = passwordValidation.errors[0];
+      }
+    }
+
+    // Validar nome completo (apenas no cadastro)
+    if (!isLogin) {
+      const nameValidation = validateTextInput(formData.nomeCompleto, 100);
+      if (!nameValidation.isValid) {
+        errors.nomeCompleto = nameValidation.error!;
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const isAccountLocked = () => {
+    if (!lockoutTime) return false;
+    const now = Date.now();
+    if (now < lockoutTime) {
+      return true;
+    } else {
+      setLockoutTime(null);
+      setLoginAttempts(0);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isAccountLocked()) {
+      const remainingTime = Math.ceil((lockoutTime! - Date.now()) / 1000 / 60);
+      setError(`Conta bloqueada temporariamente. Tente novamente em ${remainingTime} minutos.`);
+      return;
+    }
+
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setMessage(null);
@@ -30,30 +95,40 @@ export const AuthPage = () => {
     try {
       if (isLogin) {
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
+          email: formData.email.trim().toLowerCase(),
           password: formData.password,
         });
 
         if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            setError('Email ou senha incorretos');
+          const newAttempts = loginAttempts + 1;
+          setLoginAttempts(newAttempts);
+          
+          if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+            setLockoutTime(Date.now() + LOCKOUT_DURATION);
+            setError(`Muitas tentativas de login. Conta bloqueada por 15 minutos.`);
           } else {
-            setError(error.message);
+            if (error.message.includes('Invalid login credentials')) {
+              setError(`Email ou senha incorretos. ${MAX_LOGIN_ATTEMPTS - newAttempts} tentativas restantes.`);
+            } else {
+              setError('Erro ao fazer login. Tente novamente.');
+            }
           }
           return;
         }
 
         if (data.user) {
+          setLoginAttempts(0);
+          setLockoutTime(null);
           window.location.href = '/';
         }
       } else {
         const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
+          email: formData.email.trim().toLowerCase(),
           password: formData.password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
-              nome_completo: formData.nomeCompleto
+              nome_completo: formData.nomeCompleto.trim()
             }
           }
         });
@@ -62,7 +137,7 @@ export const AuthPage = () => {
           if (error.message.includes('User already registered')) {
             setError('Este email já está cadastrado. Tente fazer login.');
           } else {
-            setError(error.message);
+            setError('Erro ao criar conta. Tente novamente.');
           }
           return;
         }
@@ -79,6 +154,12 @@ export const AuthPage = () => {
   };
 
   const handleGoogleLogin = async () => {
+    if (isAccountLocked()) {
+      const remainingTime = Math.ceil((lockoutTime! - Date.now()) / 1000 / 60);
+      setError(`Conta bloqueada temporariamente. Tente novamente em ${remainingTime} minutos.`);
+      return;
+    }
+
     setGoogleLoading(true);
     setError(null);
     setMessage(null);
@@ -92,7 +173,7 @@ export const AuthPage = () => {
       });
 
       if (error) {
-        setError('Erro ao fazer login com Google: ' + error.message);
+        setError('Erro ao fazer login com Google.');
       }
     } catch (err) {
       setError('Erro inesperado ao fazer login com Google.');
@@ -102,7 +183,15 @@ export const AuthPage = () => {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear validation error when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: '' }));
+    }
+    
+    // Sanitize input to prevent XSS
+    const sanitizedValue = value.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    
+    setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
   };
 
   return (
@@ -137,10 +226,9 @@ export const AuthPage = () => {
             </Alert>
           )}
 
-          {/* Google Login Button */}
           <Button
             onClick={handleGoogleLogin}
-            disabled={googleLoading || loading}
+            disabled={googleLoading || loading || isAccountLocked()}
             variant="outline"
             className="w-full rounded-xl h-14 text-base font-semibold border-2 hover:border-primary/50 transition-all duration-200 hover:shadow-lg"
           >
@@ -197,10 +285,16 @@ export const AuthPage = () => {
                     placeholder="Seu nome completo"
                     value={formData.nomeCompleto}
                     onChange={(e) => handleInputChange('nomeCompleto', e.target.value)}
-                    className="rounded-xl h-12 pl-10 border-2 focus:border-primary transition-colors"
+                    className={`rounded-xl h-12 pl-10 border-2 focus:border-primary transition-colors ${
+                      validationErrors.nomeCompleto ? 'border-red-500' : ''
+                    }`}
                     required={!isLogin}
+                    maxLength={100}
                   />
                 </div>
+                {validationErrors.nomeCompleto && (
+                  <p className="text-red-500 text-sm">{validationErrors.nomeCompleto}</p>
+                )}
               </div>
             )}
 
@@ -214,10 +308,16 @@ export const AuthPage = () => {
                   placeholder="seu@email.com"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="rounded-xl h-12 pl-10 border-2 focus:border-primary transition-colors"
+                  className={`rounded-xl h-12 pl-10 border-2 focus:border-primary transition-colors ${
+                    validationErrors.email ? 'border-red-500' : ''
+                  }`}
                   required
+                  maxLength={254}
                 />
               </div>
+              {validationErrors.email && (
+                <p className="text-red-500 text-sm">{validationErrors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -230,9 +330,12 @@ export const AuthPage = () => {
                   placeholder="Sua senha"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="rounded-xl h-12 pl-10 pr-10 border-2 focus:border-primary transition-colors"
+                  className={`rounded-xl h-12 pl-10 pr-10 border-2 focus:border-primary transition-colors ${
+                    validationErrors.password ? 'border-red-500' : ''
+                  }`}
                   required
-                  minLength={6}
+                  minLength={isLogin ? 1 : 8}
+                  maxLength={128}
                 />
                 <button
                   type="button"
@@ -242,17 +345,27 @@ export const AuthPage = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {validationErrors.password && (
+                <p className="text-red-500 text-sm">{validationErrors.password}</p>
+              )}
               {!isLogin && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Mínimo de 6 caracteres
-                </p>
+                <div className="text-xs text-muted-foreground mt-1 space-y-1">
+                  <p>A senha deve conter:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Pelo menos 8 caracteres</li>
+                    <li>Uma letra maiúscula</li>
+                    <li>Uma letra minúscula</li>
+                    <li>Um número</li>
+                    <li>Um caractere especial</li>
+                  </ul>
+                </div>
               )}
             </div>
 
             <Button 
               type="submit" 
               className="w-full rounded-xl h-14 text-base font-semibold bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-              disabled={loading || googleLoading}
+              disabled={loading || googleLoading || isAccountLocked()}
             >
               {loading ? (
                 <>
@@ -272,6 +385,7 @@ export const AuthPage = () => {
                 setIsLogin(!isLogin);
                 setError(null);
                 setMessage(null);
+                setValidationErrors({});
                 setFormData({ email: '', password: '', nomeCompleto: '' });
               }}
               className="text-primary font-medium hover:underline"

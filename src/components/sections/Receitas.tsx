@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,12 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Filter, Search } from 'lucide-react';
+import { Plus, Filter, Search, Trash2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
+import { validateNumericInput, validateTextInput, validateDate, sanitizeText } from '@/utils/validation';
 
 const Receitas = () => {
-  const { receitas, addReceita } = useAppContext();
+  const { receitas, addReceita, deleteReceita } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [novaReceita, setNovaReceita] = useState({
     data: '',
     descricao: '',
@@ -21,31 +24,102 @@ const Receitas = () => {
     formaPagamento: ''
   });
 
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    // Validar data
+    const dateValidation = validateDate(novaReceita.data);
+    if (!dateValidation.isValid) {
+      errors.data = dateValidation.error!;
+    }
+
+    // Validar descrição
+    const descricaoValidation = validateTextInput(novaReceita.descricao, 255);
+    if (!descricaoValidation.isValid) {
+      errors.descricao = descricaoValidation.error!;
+    }
+
+    // Validar categoria
+    if (!novaReceita.categoria) {
+      errors.categoria = 'Categoria é obrigatória';
+    }
+
+    // Validar cliente (opcional, mas se preenchido deve ser válido)
+    if (novaReceita.cliente) {
+      const clienteValidation = validateTextInput(novaReceita.cliente, 255);
+      if (!clienteValidation.isValid) {
+        errors.cliente = clienteValidation.error!;
+      }
+    }
+
+    // Validar valor
+    const valorValidation = validateNumericInput(novaReceita.valor, 0.01, 999999999);
+    if (!valorValidation.isValid) {
+      errors.valor = valorValidation.error!;
+    }
+
+    // Validar forma de pagamento
+    if (!novaReceita.formaPagamento) {
+      errors.formaPagamento = 'Forma de pagamento é obrigatória';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleAddReceita = (e: React.FormEvent) => {
     e.preventDefault();
-    if (novaReceita.descricao && novaReceita.valor) {
-      addReceita({
-        ...novaReceita,
-        valor: parseFloat(novaReceita.valor)
-      });
-      setNovaReceita({
-        data: '',
-        descricao: '',
-        categoria: '',
-        cliente: '',
-        valor: '',
-        formaPagamento: ''
-      });
-      setIsDialogOpen(false);
+    
+    if (!validateForm()) {
+      return;
     }
+
+    const receitaData = {
+      data: novaReceita.data,
+      descricao: sanitizeText(novaReceita.descricao),
+      categoria: novaReceita.categoria,
+      cliente: novaReceita.cliente ? sanitizeText(novaReceita.cliente) : '',
+      valor: parseFloat(novaReceita.valor),
+      formaPagamento: novaReceita.formaPagamento
+    };
+
+    addReceita(receitaData);
+    setNovaReceita({
+      data: '',
+      descricao: '',
+      categoria: '',
+      cliente: '',
+      valor: '',
+      formaPagamento: ''
+    });
+    setValidationErrors({});
+    setIsDialogOpen(false);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    // Clear validation error when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: '' }));
+    }
+    
+    // Sanitize input to prevent XSS
+    const sanitizedValue = value.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    
+    setNovaReceita(prev => ({ ...prev, [field]: sanitizedValue }));
   };
 
   const handleCategoriaChange = (value: string) => {
-    setNovaReceita(prev => ({ ...prev, categoria: value }));
+    handleInputChange('categoria', value);
   };
 
   const handleFormaPagamentoChange = (value: string) => {
-    setNovaReceita(prev => ({ ...prev, formaPagamento: value }));
+    handleInputChange('formaPagamento', value);
+  };
+
+  const handleDeleteReceita = async (id: number) => {
+    if (confirm('Tem certeza que deseja excluir esta receita? Esta ação não pode ser desfeita.')) {
+      await deleteReceita(id);
+    }
   };
 
   const totalReceitas = receitas.reduce((sum, receita) => sum + receita.valor, 0);
@@ -75,9 +149,13 @@ const Receitas = () => {
                   id="data"
                   type="date"
                   value={novaReceita.data}
-                  onChange={(e) => setNovaReceita(prev => ({...prev, data: e.target.value}))}
-                  className="rounded-xl"
+                  onChange={(e) => handleInputChange('data', e.target.value)}
+                  className={`rounded-xl ${validationErrors.data ? 'border-red-500' : ''}`}
+                  max={new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                 />
+                {validationErrors.data && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.data}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="descricao">Descrição</Label>
@@ -85,15 +163,19 @@ const Receitas = () => {
                   id="descricao"
                   placeholder="Descrição da receita"
                   value={novaReceita.descricao}
-                  onChange={(e) => setNovaReceita(prev => ({...prev, descricao: e.target.value}))}
-                  className="rounded-xl"
+                  onChange={(e) => handleInputChange('descricao', e.target.value)}
+                  className={`rounded-xl ${validationErrors.descricao ? 'border-red-500' : ''}`}
+                  maxLength={255}
                   required
                 />
+                {validationErrors.descricao && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.descricao}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="categoria">Categoria</Label>
                 <Select value={novaReceita.categoria} onValueChange={handleCategoriaChange}>
-                  <SelectTrigger className="rounded-xl">
+                  <SelectTrigger className={`rounded-xl ${validationErrors.categoria ? 'border-red-500' : ''}`}>
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
@@ -103,16 +185,23 @@ const Receitas = () => {
                     <SelectItem value="outros">Outros</SelectItem>
                   </SelectContent>
                 </Select>
+                {validationErrors.categoria && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.categoria}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="cliente">Cliente</Label>
                 <Input
                   id="cliente"
-                  placeholder="Nome do cliente"
+                  placeholder="Nome do cliente (opcional)"
                   value={novaReceita.cliente}
-                  onChange={(e) => setNovaReceita(prev => ({...prev, cliente: e.target.value}))}
-                  className="rounded-xl"
+                  onChange={(e) => handleInputChange('cliente', e.target.value)}
+                  className={`rounded-xl ${validationErrors.cliente ? 'border-red-500' : ''}`}
+                  maxLength={255}
                 />
+                {validationErrors.cliente && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.cliente}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="valor">Valor (R$)</Label>
@@ -120,17 +209,22 @@ const Receitas = () => {
                   id="valor"
                   type="number"
                   step="0.01"
+                  min="0.01"
+                  max="999999999"
                   placeholder="0,00"
                   value={novaReceita.valor}
-                  onChange={(e) => setNovaReceita(prev => ({...prev, valor: e.target.value}))}
-                  className="rounded-xl"
+                  onChange={(e) => handleInputChange('valor', e.target.value)}
+                  className={`rounded-xl ${validationErrors.valor ? 'border-red-500' : ''}`}
                   required
                 />
+                {validationErrors.valor && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.valor}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
                 <Select value={novaReceita.formaPagamento} onValueChange={handleFormaPagamentoChange}>
-                  <SelectTrigger className="rounded-xl">
+                  <SelectTrigger className={`rounded-xl ${validationErrors.formaPagamento ? 'border-red-500' : ''}`}>
                     <SelectValue placeholder="Selecione a forma de pagamento" />
                   </SelectTrigger>
                   <SelectContent>
@@ -140,6 +234,9 @@ const Receitas = () => {
                     <SelectItem value="transferencia">Transferência</SelectItem>
                   </SelectContent>
                 </Select>
+                {validationErrors.formaPagamento && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.formaPagamento}</p>
+                )}
               </div>
               <Button type="submit" className="w-full rounded-xl">
                 Adicionar Receita
@@ -224,6 +321,7 @@ const Receitas = () => {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Forma de Pagamento</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -232,10 +330,20 @@ const Receitas = () => {
                     <TableCell>{receita.data}</TableCell>
                     <TableCell>{receita.descricao}</TableCell>
                     <TableCell>{receita.categoria}</TableCell>
-                    <TableCell>{receita.cliente}</TableCell>
+                    <TableCell>{receita.cliente || '-'}</TableCell>
                     <TableCell>{receita.formaPagamento}</TableCell>
                     <TableCell className="text-right font-medium text-green-600">
                       R$ {receita.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteReceita(receita.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

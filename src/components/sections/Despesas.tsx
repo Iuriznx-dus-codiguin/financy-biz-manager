@@ -8,10 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Filter, Search, Trash2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
+import { validateNumericInput, validateTextInput, validateDate, sanitizeText } from '@/utils/validation';
 
 const Despesas = () => {
   const { despesas, addDespesa, deleteDespesa } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [novaDespesa, setNovaDespesa] = useState({
     data: '',
     descricao: '',
@@ -21,40 +23,105 @@ const Despesas = () => {
     formaPagamento: ''
   });
 
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    // Validar data
+    const dateValidation = validateDate(novaDespesa.data);
+    if (!dateValidation.isValid) {
+      errors.data = dateValidation.error!;
+    }
+
+    // Validar descrição
+    const descricaoValidation = validateTextInput(novaDespesa.descricao, 255);
+    if (!descricaoValidation.isValid) {
+      errors.descricao = descricaoValidation.error!;
+    }
+
+    // Validar categoria
+    if (!novaDespesa.categoria) {
+      errors.categoria = 'Categoria é obrigatória';
+    }
+
+    // Validar fornecedor (opcional, mas se preenchido deve ser válido)
+    if (novaDespesa.fornecedor) {
+      const fornecedorValidation = validateTextInput(novaDespesa.fornecedor, 255);
+      if (!fornecedorValidation.isValid) {
+        errors.fornecedor = fornecedorValidation.error!;
+      }
+    }
+
+    // Validar valor
+    const valorValidation = validateNumericInput(novaDespesa.valor, 0.01, 999999999);
+    if (!valorValidation.isValid) {
+      errors.valor = valorValidation.error!;
+    }
+
+    // Validar forma de pagamento
+    if (!novaDespesa.formaPagamento) {
+      errors.formaPagamento = 'Forma de pagamento é obrigatória';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleAddDespesa = (e: React.FormEvent) => {
     e.preventDefault();
-    if (novaDespesa.descricao && novaDespesa.valor) {
-      addDespesa({
-        ...novaDespesa,
-        valor: parseFloat(novaDespesa.valor)
-      });
-      setNovaDespesa({
-        data: '',
-        descricao: '',
-        categoria: '',
-        fornecedor: '',
-        valor: '',
-        formaPagamento: ''
-      });
-      setIsDialogOpen(false);
+    
+    if (!validateForm()) {
+      return;
     }
+
+    const despesaData = {
+      data: novaDespesa.data,
+      descricao: sanitizeText(novaDespesa.descricao),
+      categoria: novaDespesa.categoria,
+      fornecedor: novaDespesa.fornecedor ? sanitizeText(novaDespesa.fornecedor) : '',
+      valor: parseFloat(novaDespesa.valor),
+      formaPagamento: novaDespesa.formaPagamento
+    };
+
+    addDespesa(despesaData);
+    setNovaDespesa({
+      data: '',
+      descricao: '',
+      categoria: '',
+      fornecedor: '',
+      valor: '',
+      formaPagamento: ''
+    });
+    setValidationErrors({});
+    setIsDialogOpen(false);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    // Clear validation error when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: '' }));
+    }
+    
+    // Sanitize input to prevent XSS
+    const sanitizedValue = value.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    
+    setNovaDespesa(prev => ({ ...prev, [field]: sanitizedValue }));
   };
 
   const handleCategoriaChange = (value: string) => {
-    setNovaDespesa(prev => ({ ...prev, categoria: value }));
+    handleInputChange('categoria', value);
   };
 
   const handleFormaPagamentoChange = (value: string) => {
-    setNovaDespesa(prev => ({ ...prev, formaPagamento: value }));
+    handleInputChange('formaPagamento', value);
   };
 
-  const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
-
   const handleDeleteDespesa = async (id: number) => {
-    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
+    if (confirm('Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.')) {
       await deleteDespesa(id);
     }
   };
+
+  const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
 
   return (
     <section className="space-y-8">
@@ -81,9 +148,13 @@ const Despesas = () => {
                   id="data"
                   type="date"
                   value={novaDespesa.data}
-                  onChange={(e) => setNovaDespesa(prev => ({...prev, data: e.target.value}))}
-                  className="rounded-xl"
+                  onChange={(e) => handleInputChange('data', e.target.value)}
+                  className={`rounded-xl ${validationErrors.data ? 'border-red-500' : ''}`}
+                  max={new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                 />
+                {validationErrors.data && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.data}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="descricao">Descrição</Label>
@@ -91,15 +162,19 @@ const Despesas = () => {
                   id="descricao"
                   placeholder="Descrição da despesa"
                   value={novaDespesa.descricao}
-                  onChange={(e) => setNovaDespesa(prev => ({...prev, descricao: e.target.value}))}
-                  className="rounded-xl"
+                  onChange={(e) => handleInputChange('descricao', e.target.value)}
+                  className={`rounded-xl ${validationErrors.descricao ? 'border-red-500' : ''}`}
+                  maxLength={255}
                   required
                 />
+                {validationErrors.descricao && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.descricao}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="categoria">Categoria</Label>
                 <Select value={novaDespesa.categoria} onValueChange={handleCategoriaChange}>
-                  <SelectTrigger className="rounded-xl">
+                  <SelectTrigger className={`rounded-xl ${validationErrors.categoria ? 'border-red-500' : ''}`}>
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
@@ -110,16 +185,23 @@ const Despesas = () => {
                     <SelectItem value="outros">Outros</SelectItem>
                   </SelectContent>
                 </Select>
+                {validationErrors.categoria && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.categoria}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="fornecedor">Fornecedor</Label>
                 <Input
                   id="fornecedor"
-                  placeholder="Nome do fornecedor"
+                  placeholder="Nome do fornecedor (opcional)"
                   value={novaDespesa.fornecedor}
-                  onChange={(e) => setNovaDespesa(prev => ({...prev, fornecedor: e.target.value}))}
-                  className="rounded-xl"
+                  onChange={(e) => handleInputChange('fornecedor', e.target.value)}
+                  className={`rounded-xl ${validationErrors.fornecedor ? 'border-red-500' : ''}`}
+                  maxLength={255}
                 />
+                {validationErrors.fornecedor && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.fornecedor}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="valor">Valor (R$)</Label>
@@ -127,17 +209,22 @@ const Despesas = () => {
                   id="valor"
                   type="number"
                   step="0.01"
+                  min="0.01"
+                  max="999999999"
                   placeholder="0,00"
                   value={novaDespesa.valor}
-                  onChange={(e) => setNovaDespesa(prev => ({...prev, valor: e.target.value}))}
-                  className="rounded-xl"
+                  onChange={(e) => handleInputChange('valor', e.target.value)}
+                  className={`rounded-xl ${validationErrors.valor ? 'border-red-500' : ''}`}
                   required
                 />
+                {validationErrors.valor && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.valor}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
                 <Select value={novaDespesa.formaPagamento} onValueChange={handleFormaPagamentoChange}>
-                  <SelectTrigger className="rounded-xl">
+                  <SelectTrigger className={`rounded-xl ${validationErrors.formaPagamento ? 'border-red-500' : ''}`}>
                     <SelectValue placeholder="Selecione a forma de pagamento" />
                   </SelectTrigger>
                   <SelectContent>
@@ -147,6 +234,9 @@ const Despesas = () => {
                     <SelectItem value="transferencia">Transferência</SelectItem>
                   </SelectContent>
                 </Select>
+                {validationErrors.formaPagamento && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.formaPagamento}</p>
+                )}
               </div>
               <Button type="submit" className="w-full rounded-xl">
                 Adicionar Despesa
@@ -240,7 +330,7 @@ const Despesas = () => {
                     <TableCell>{despesa.data}</TableCell>
                     <TableCell>{despesa.descricao}</TableCell>
                     <TableCell>{despesa.categoria}</TableCell>
-                    <TableCell>{despesa.fornecedor}</TableCell>
+                    <TableCell>{despesa.fornecedor || '-'}</TableCell>
                     <TableCell>{despesa.formaPagamento}</TableCell>
                     <TableCell className="text-right font-medium text-red-600">
                       R$ {despesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
