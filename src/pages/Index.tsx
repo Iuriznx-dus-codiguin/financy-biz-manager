@@ -22,23 +22,31 @@ export default function Index() {
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
 
   const renderSection = () => {
-    switch (activeSection) {
-      case 'painel':
-        return <Dashboard />;
-      case 'receitas':
-        return <Receitas />;
-      case 'despesas':
-        return <Despesas />;
-      case 'impostos':
-        return <Impostos />;
-      case 'relatorios':
-        return <Relatorios />;
-      case 'fechamento':
-        return <Fechamento />;
-      case 'ajuda':
-        return <Ajuda />;
-      default:
-        return <Dashboard />;
+    console.log('Renderizando seção:', activeSection);
+    
+    try {
+      switch (activeSection) {
+        case 'painel':
+          return <Dashboard />;
+        case 'receitas':
+          return <Receitas />;
+        case 'despesas':
+          return <Despesas />;
+        case 'impostos':
+          return <Impostos />;
+        case 'relatorios':
+          return <Relatorios />;
+        case 'fechamento':
+          return <Fechamento />;
+        case 'ajuda':
+          return <Ajuda />;
+        default:
+          console.log('Seção não encontrada, retornando Dashboard');
+          return <Dashboard />;
+      }
+    } catch (error) {
+      console.error('Erro ao renderizar seção:', error);
+      return <Dashboard />;
     }
   };
 
@@ -68,10 +76,10 @@ export default function Index() {
     <div className="min-h-screen bg-background">
       <AppProvider>
         <SidebarProvider>
-          <div className="flex h-screen overflow-hidden">
+          <div className="flex min-h-screen w-full">
             <AppSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <main className="flex-1 overflow-y-auto p-8">
+            <div className="flex-1 flex flex-col">
+              <main className="flex-1 p-8 pb-0">
                 {renderSection()}
               </main>
               <Footer />

@@ -39,8 +39,6 @@ const menuItems = [
   { id: 'impostos', label: 'Impostos e Taxas', icon: Receipt },
   { id: 'relatorios', label: 'Relatórios', icon: PieChart },
   { id: 'fechamento', label: 'Fechamento de Caixa', icon: Calculator },
-  { id: 'assinatura', label: 'Assinatura', icon: CreditCard },
-  { id: 'configuracoes', label: 'Configurações', icon: Settings },
   { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle }
 ];
 
@@ -59,8 +57,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   };
 
   const handleSectionChange = (sectionId: string) => {
-    console.log('Changing section to:', sectionId);
-    onSectionChange(sectionId);
+    console.log('Sidebar: Mudando seção de', activeSection, 'para', sectionId);
+    try {
+      onSectionChange(sectionId);
+      console.log('Sidebar: Seção alterada com sucesso para', sectionId);
+    } catch (error) {
+      console.error('Sidebar: Erro ao alterar seção:', error);
+    }
   };
 
   return (
