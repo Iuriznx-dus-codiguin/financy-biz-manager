@@ -227,6 +227,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const addImposto = async (imposto: Omit<Imposto, 'id'>) => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('impostos')
+      .insert({
+        user_id: user.id,
+        descricao: imposto.descricao,
+        tipo: imposto.tipo,
+        valor: imposto.valor,
+        vencimento: imposto.vencimento,
+        pago: imposto.pago || false,
+        recorrente: imposto.recorrente || false
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao adicionar imposto:', error);
+      return;
+    }
+
+    if (data) {
+      const novoImposto = {
+        id: data.id,
+        data: data.vencimento,
+        descricao: data.descricao,
+        tipo: data.tipo,
+        valor: data.valor,
+        vencimento: data.vencimento,
+        pago: data.pago || false,
+        recorrente: data.recorrente || false
+      };
+      setImpostos(prev => [novoImposto, ...prev]);
+    }
+  };
+
   const addMembroEquipe = async (membro: Omit<MembroEquipe, 'id'>) => {
     const novoMembro = {
       ...membro,
