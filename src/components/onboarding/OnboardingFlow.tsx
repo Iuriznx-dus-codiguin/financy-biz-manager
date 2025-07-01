@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, User, Users, Building, Building2, DollarSign, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, Users, Building, Building2, DollarSign, Star, Info } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface OnboardingData {
   userType: string;
@@ -16,17 +16,19 @@ interface OnboardingData {
 }
 
 interface OnboardingFlowProps {
-  onComplete: (data: OnboardingData) => void;
+  onComplete: (data: OnboardingData) => Promise<void>;
 }
 
 export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState<OnboardingData>({
     userType: '',
     howDidYouKnow: '',
     salaryRange: '',
     revenueRange: ''
   });
+  const { toast } = useToast();
 
   const userTypes = [
     { id: 'personal', label: 'Usuário pessoal', icon: User, description: 'Para uso pessoal e familiar' },
@@ -60,11 +62,27 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     { value: '1000000+', label: 'Acima de R$ 1.000.000/mês' }
   ];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     } else {
-      onComplete(data);
+      setLoading(true);
+      try {
+        await onComplete(data);
+        toast({
+          title: "Configuração concluída!",
+          description: "Sua plataforma foi personalizada com base nas suas respostas.",
+        });
+      } catch (error) {
+        console.error('Erro ao completar onboarding:', error);
+        toast({
+          title: "Erro",
+          description: "Houve um erro ao salvar suas preferências. Tente novamente.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -219,7 +237,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       <Card className="w-full max-w-4xl rounded-2xl shadow-xl">
         <CardHeader className="text-center space-y-4 relative">
           <div className="absolute top-4 right-4">
-            <Button variant="ghost" size="sm" onClick={() => onComplete(data)}>
+            <Button variant="ghost" size="sm" onClick={() => onComplete(data)} disabled={loading}>
               Ignorar
             </Button>
           </div>
@@ -240,6 +258,16 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           </div>
           
           <p className="text-sm text-muted-foreground">{currentStep} / 3</p>
+
+          {/* Aviso sobre personalização */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mx-4">
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <Info className="w-4 h-4" />
+              <p className="text-sm font-medium">
+                Atenção: suas respostas serão utilizadas para adaptar a plataforma com base em suas necessidades
+              </p>
+            </div>
+          </div>
         </CardHeader>
 
         <CardContent className="space-y-8">
@@ -249,7 +277,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
           <div className="flex justify-between pt-6">
             {currentStep > 1 ? (
-              <Button variant="outline" onClick={handleBack} className="flex items-center space-x-2">
+              <Button variant="outline" onClick={handleBack} className="flex items-center space-x-2" disabled={loading}>
                 <ChevronLeft className="w-4 h-4" />
                 <span>Voltar</span>
               </Button>
@@ -259,10 +287,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
             <Button 
               onClick={handleNext} 
-              disabled={!canProceed()}
+              disabled={!canProceed() || loading}
               className="flex items-center space-x-2 bg-cyan-500 hover:bg-cyan-600"
             >
-              <span>{currentStep === 3 ? 'Finalizar' : 'Avançar'}</span>
+              <span>{currentStep === 3 ? (loading ? 'Finalizando...' : 'Finalizar') : 'Avançar'}</span>
               {currentStep < 3 && <ChevronRight className="w-4 h-4" />}
             </Button>
           </div>

@@ -81,6 +81,36 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_data: {
+        Row: {
+          created_at: string
+          how_did_you_know: string
+          id: string
+          revenue_range: string | null
+          salary_range: string | null
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          how_did_you_know: string
+          id?: string
+          revenue_range?: string | null
+          salary_range?: string | null
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string
+          how_did_you_know?: string
+          id?: string
+          revenue_range?: string | null
+          salary_range?: string | null
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

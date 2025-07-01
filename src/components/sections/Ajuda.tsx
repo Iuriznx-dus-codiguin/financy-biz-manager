@@ -7,55 +7,63 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 const Ajuda = () => {
   const guias = [
     {
-      title: 'Como emitir nota fiscal',
-      description: 'Passo a passo para emissão de NFe e NFSe',
-      icon: '📄',
-      content: 'Guia completo sobre emissão de notas fiscais eletrônicas...'
-    },
-    {
-      title: 'O que é cada imposto',
-      description: 'Entenda DAS, ISS, ICMS, IRPJ e outros',
-      icon: '🧾',
-      content: 'Explicação detalhada sobre cada tipo de imposto...'
-    },
-    {
-      title: 'Como fazer um DRE',
-      description: 'Demonstrativo do Resultado do Exercício',
-      icon: '📊',
-      content: 'Tutorial para criar seu DRE mensal e anual...'
-    },
-    {
-      title: 'Como controlar o fluxo de caixa',
-      description: 'Melhores práticas para gestão financeira',
+      title: 'Como cadastrar receitas e despesas',
+      description: 'Aprenda a registrar suas movimentações financeiras',
       icon: '💰',
-      content: 'Dicas essenciais para um controle efetivo...'
+      content: 'Guia completo sobre como cadastrar e gerenciar suas receitas e despesas...'
+    },
+    {
+      title: 'Controle de impostos no Financy',
+      description: 'Mantenha seus impostos organizados e em dia',
+      icon: '🧾',
+      content: 'Tutorial sobre como controlar vencimentos e pagamentos de impostos...'
+    },
+    {
+      title: 'Como usar o dashboard',
+      description: 'Entenda todos os indicadores e gráficos',
+      icon: '📊',
+      content: 'Explicação detalhada sobre cada seção do dashboard...'
+    },
+    {
+      title: 'Relatórios financeiros',
+      description: 'Gere relatórios para acompanhar sua performance',
+      icon: '📈',
+      content: 'Como gerar e interpretar os relatórios disponíveis...'
     }
   ];
 
   const faq = [
     {
-      pergunta: 'Como faço para importar dados de outro sistema?',
-      resposta: 'Você pode importar dados através da seção Configurações > Integrações. Oferecemos conectores para os principais sistemas de gestão e também importação via CSV.'
+      pergunta: 'Como faço para cadastrar uma nova receita?',
+      resposta: 'Acesse a seção "Receitas" no menu lateral, clique em "Nova Receita" e preencha os campos obrigatórios: data, descrição, categoria, valor e forma de pagamento. Você também pode adicionar informações do cliente se desejar.'
     },
     {
-      pergunta: 'Posso usar o Financy em múltiplas empresas?',
-      resposta: 'Sim! No plano Premium você pode gerenciar até 5 empresas diferentes na mesma conta. Cada empresa terá seus dados separados e independentes.'
+      pergunta: 'Posso editar ou excluir receitas e despesas já cadastradas?',
+      resposta: 'Sim! Na lista de receitas ou despesas, clique no ícone de edição ao lado do registro que deseja modificar. Você pode alterar qualquer informação ou excluir o registro completamente.'
     },
     {
-      pergunta: 'Como funciona o fechamento automático de caixa?',
-      resposta: 'O sistema pode ser configurado para fechar automaticamente o caixa todos os dias às 23h59. Você receberá um relatório por email com o resumo do dia.'
+      pergunta: 'Como funciona o controle de impostos?',
+      resposta: 'Na seção "Impostos", você pode cadastrar todos os impostos com suas respectivas datas de vencimento. O sistema mostrará quais estão próximos do vencimento e permite marcar como pagos quando quitados.'
     },
     {
-      pergunta: 'Meus dados estão seguros?',
-      resposta: 'Sim! Utilizamos criptografia de ponta a ponta, backups automáticos diários e servidores seguros. Seus dados financeiros estão totalmente protegidos.'
+      pergunta: 'O que aparece no dashboard principal?',
+      resposta: 'O dashboard mostra um resumo das suas finanças: total de receitas e despesas do mês, saldo atual, impostos próximos do vencimento e gráficos com a evolução dos seus números financeiros.'
     },
     {
-      pergunta: 'Como cancelar minha assinatura?',
-      resposta: 'Você pode cancelar a qualquer momento em Configurações > Plano e Assinatura. Não há multas ou taxas de cancelamento.'
+      pergunta: 'Como posso acompanhar meu fluxo de caixa?',
+      resposta: 'Use a combinação do dashboard para visão geral e a seção "Relatórios" para análises mais detalhadas. Você pode filtrar por períodos específicos e categorias para entender melhor seus padrões financeiros.'
     },
     {
-      pergunta: 'Posso personalizar os relatórios?',
-      resposta: 'Sim! Todos os relatórios podem ser personalizados com filtros, períodos específicos e você pode escolher quais dados incluir ou excluir.'
+      pergunta: 'É possível categorizar receitas e despesas?',
+      resposta: 'Sim! Ao cadastrar receitas e despesas, você pode escolher entre várias categorias predefinidas ou criar suas próprias. Isso ajuda na organização e análise dos seus gastos por área.'
+    },
+    {
+      pergunta: 'Como funciona o fechamento de caixa?',
+      resposta: 'A seção "Fechamento" permite que você faça o fechamento do caixa de períodos específicos, consolidando todas as movimentações e gerando um resumo final para controle.'
+    },
+    {
+      pergunta: 'Posso usar o Financy no celular?',
+      resposta: 'Sim! O Financy é totalmente responsivo e funciona perfeitamente em dispositivos móveis. Você pode acessar pelo navegador do seu smartphone ou tablet.'
     }
   ];
 
@@ -63,7 +71,7 @@ const Ajuda = () => {
     <section className="space-y-8">
       <div>
         <h2 className="text-3xl font-bold text-foreground">Ajuda e Suporte</h2>
-        <p className="text-muted-foreground">Central de instruções e suporte para micro e pequenas empresas</p>
+        <p className="text-muted-foreground">Central de instruções e suporte para o Financy</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -103,7 +111,7 @@ const Ajuda = () => {
 
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>📖 Guias Essenciais para PMEs</CardTitle>
+          <CardTitle>📖 Guias Essenciais do Financy</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

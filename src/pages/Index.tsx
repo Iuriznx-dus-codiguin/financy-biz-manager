@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
@@ -22,12 +21,12 @@ import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 
 const Index = () => {
-  const { user, loading, signOut } = useAuth();
-  const { isOnboardingComplete, completeOnboarding } = useOnboarding();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
   const [activeSection, setActiveSection] = useState('painel');
 
-  // Mostrar loading enquanto verifica autenticação
-  if (loading) {
+  // Mostrar loading enquanto verifica autenticação ou onboarding
+  if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -82,44 +81,55 @@ const Configuracoes = () => {
         </CardContent>
       </Card>
 
-      {/* Informações da Conta */}
+      {/* Informações da Conta - Atualizada */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
           <CardTitle>Informações da Conta</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold">Status da Conta</h3>
-                <p className="text-sm text-muted-foreground">Conta premium ativa</p>
+                <p className="text-sm text-muted-foreground">Plano gratuito ativo</p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-green-600">✓ Ativo</p>
-                <p className="text-sm text-muted-foreground">Válido até: 15/02/2025</p>
+                <p className="font-bold text-yellow-600">⚠️ Gratuito</p>
+                <p className="text-sm text-muted-foreground">Limitações aplicadas</p>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 border border-border rounded-xl">
-              <h4 className="font-semibold mb-2">Dados Salvos</h4>
+              <h4 className="font-semibold mb-2">Recursos Disponíveis</h4>
               <div className="space-y-1 text-sm text-muted-foreground">
-                <p>• Configurações: Salvos localmente</p>
-                <p>• Transações: Armazenadas no navegador</p>
-                <p>• Backup: Disponível na assinatura premium</p>
+                <p>• ✓ Dashboard básico</p>
+                <p>• ✓ Cadastro de receitas/despesas</p>
+                <p>• ✓ Controle básico de impostos</p>
+                <p>• ❌ Relatórios avançados</p>
+                <p>• ❌ Fechamento automático</p>
+                <p>• ❌ Suporte prioritário</p>
               </div>
             </div>
 
             <div className="p-4 border border-border rounded-xl">
-              <h4 className="font-semibold mb-2">Recursos Disponíveis</h4>
+              <h4 className="font-semibold mb-2">Para Desbloquear</h4>
               <div className="space-y-1 text-sm text-muted-foreground">
-                <p>• ✓ Dashboard completo</p>
-                <p>• ✓ Relatórios avançados</p>
-                <p>• ✓ Inteligência financeira</p>
-                <p>• ✓ Suporte prioritário</p>
+                <p>• 📊 Relatórios detalhados</p>
+                <p>• 🤖 Inteligência financeira</p>
+                <p>• 📈 Análises avançadas</p>
+                <p>• 🔄 Fechamento automático</p>
+                <p>• 💬 Suporte prioritário</p>
+                <p>• 📤 Exportação de dados</p>
               </div>
             </div>
+          </div>
+
+          <div className="text-center pt-4">
+            <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl">
+              Fazer Upgrade para Premium
+            </Button>
           </div>
         </CardContent>
       </Card>
