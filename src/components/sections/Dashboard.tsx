@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,16 +21,16 @@ const Dashboard = () => {
   const saldoAtual = totalReceitas - totalDespesas - totalImpostos;
   const faturamentoBruto = totalReceitas;
 
-  // Calcular ROI (Return on Investment) corrigido
+  // Calcular ROI (Return on Investment) como número normal
   const calcularROI = () => {
     const lucroLiquido = totalReceitas - totalDespesas - totalImpostos;
     const investimentoTotal = totalDespesas + totalImpostos;
     
     if (investimentoTotal === 0) {
-      return totalReceitas > 0 ? 100 : 0; // Se não teve gastos mas teve receita, ROI = 100%
+      return totalReceitas > 0 ? 1.0 : 0; // Se não teve gastos mas teve receita, ROI = 1.0
     }
     
-    return (lucroLiquido / investimentoTotal) * 100;
+    return lucroLiquido / investimentoTotal;
   };
 
   const roi = calcularROI();
@@ -78,7 +79,7 @@ const Dashboard = () => {
     },
     {
       title: 'ROI',
-      value: `${roi.toFixed(1)}%`,
+      value: roi.toFixed(2),
       positive: roi >= 0,
       color: roi === 0 ? 'text-muted-foreground' : (roi >= 0 ? 'text-green-600' : 'text-red-600'),
       tooltip: 'Retorno sobre Investimento - mostra o lucro obtido em relação ao investimento feito'

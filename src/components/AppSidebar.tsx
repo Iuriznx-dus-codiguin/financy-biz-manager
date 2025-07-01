@@ -9,7 +9,8 @@ import {
   Settings, 
   HelpCircle,
   CreditCard,
-  Calculator
+  Calculator,
+  Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +40,7 @@ const menuItems = [
   { id: 'impostos', label: 'Impostos e Taxas', icon: Receipt },
   { id: 'relatorios', label: 'Relatórios', icon: PieChart },
   { id: 'fechamento', label: 'Fechamento de Caixa', icon: Calculator },
+  { id: 'equipe', label: 'Equipe', icon: Users },
   { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle }
 ];
 

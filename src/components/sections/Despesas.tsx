@@ -6,11 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Filter, Search } from 'lucide-react';
+import { Plus, Filter, Search, Trash2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 const Despesas = () => {
-  const { despesas, addDespesa } = useAppContext();
+  const { despesas, addDespesa, removeDespesa } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [novaDespesa, setNovaDespesa] = useState({
     data: '',
@@ -49,6 +49,12 @@ const Despesas = () => {
   };
 
   const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
+
+  const handleDeleteDespesa = async (id: number) => {
+    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
+      await removeDespesa(id);
+    }
+  };
 
   return (
     <section className="space-y-8">
@@ -225,6 +231,7 @@ const Despesas = () => {
                   <TableHead>Fornecedor</TableHead>
                   <TableHead>Forma de Pagamento</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -237,6 +244,16 @@ const Despesas = () => {
                     <TableCell>{despesa.formaPagamento}</TableCell>
                     <TableCell className="text-right font-medium text-red-600">
                       R$ {despesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteDespesa(despesa.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

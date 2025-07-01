@@ -1,16 +1,15 @@
-
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface Receita {
   id: number;
   data: string;
   descricao: string;
   categoria: string;
-  cliente: string;
   valor: number;
-  formaPagamento: string;
+  user_id?: string;
 }
 
 interface Despesa {
@@ -21,22 +20,20 @@ interface Despesa {
   fornecedor: string;
   valor: number;
   formaPagamento: string;
+  user_id?: string;
 }
 
 interface Imposto {
   id: number;
-  tipo: string;
+  data: string;
   descricao: string;
   valor: number;
-  vencimento: string;
   pago: boolean;
-  recorrente: boolean;
+  user_id?: string;
 }
 
 interface Configuracoes {
   tema: 'light' | 'dark';
-  moeda: 'BRL' | 'USD' | 'EUR';
-  idioma: 'pt-BR' | 'en-US' | 'es-ES';
 }
 
 interface AppContextType {
@@ -47,112 +44,60 @@ interface AppContextType {
   addReceita: (receita: Omit<Receita, 'id'>) => Promise<void>;
   addDespesa: (despesa: Omit<Despesa, 'id'>) => Promise<void>;
   addImposto: (imposto: Omit<Imposto, 'id'>) => Promise<void>;
-  updateImposto: (id: number, updates: Partial<Imposto>) => Promise<void>;
-  updateConfiguracoes: (configuracoes: Partial<Configuracoes>) => void;
+  removeReceita: (id: number) => Promise<void>;
+  removeDespesa: (id: number) => Promise<void>;
+  removeImposto: (id: number) => Promise<void>;
+  updateConfiguracoes: (config: Partial<Configuracoes>) => void;
   zerarSaldo: () => void;
-  loading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [receitas, setReceitas] = useState<Receita[]>([]);
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   const [impostos, setImpostos] = useState<Imposto[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [configuracoes, setConfiguracoes] = useState<Configuracoes>({
-    tema: 'light',
-    moeda: 'BRL',
-    idioma: 'pt-BR'
-  });
+  const [configuracoes, setConfiguracoes] = useState<Configuracoes>({ tema: 'light' });
+  const { user } = useAuth();
 
-  // Aplicar tema quando mudança
-  useEffect(() => {
-    if (configuracoes.tema === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [configuracoes.tema]);
-
-  // Carregar dados quando usuário estiver autenticado
   useEffect(() => {
     if (user) {
-      loadData();
-    } else {
-      // Limpar dados quando usuário não estiver autenticado
-      setReceitas([]);
-      setDespesas([]);
-      setImpostos([]);
+      fetchData();
     }
   }, [user]);
 
-  const loadData = async () => {
+  const fetchData = async () => {
     if (!user) return;
-    
-    setLoading(true);
+
     try {
-      // Carregar receitas
-      const { data: receitasData } = await supabase
+      const { data: receitasData, error: receitasError } = await supabase
         .from('receitas')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('data', { ascending: false });
 
-      // Carregar despesas
-      const { data: despesasData } = await supabase
+      if (receitasError) throw receitasError;
+      if (receitasData) setReceitas(receitasData);
+
+      const { data: despesasData, error: despesasError } = await supabase
         .from('despesas')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('data', { ascending: false });
 
-      // Carregar impostos
-      const { data: impostosData } = await supabase
+      if (despesasError) throw despesasError;
+      if (despesasData) setDespesas(despesasData);
+
+      const { data: impostosData, error: impostosError } = await supabase
         .from('impostos')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('data', { ascending: false });
 
-      if (receitasData) {
-        setReceitas(receitasData.map(r => ({
-          id: r.id,
-          data: r.data,
-          descricao: r.descricao,
-          categoria: r.categoria,
-          cliente: r.cliente || '',
-          valor: parseFloat(r.valor.toString()),
-          formaPagamento: r.forma_pagamento
-        })));
-      }
-
-      if (despesasData) {
-        setDespesas(despesasData.map(d => ({
-          id: d.id,
-          data: d.data,
-          descricao: d.descricao,
-          categoria: d.categoria,
-          fornecedor: d.fornecedor || '',
-          valor: parseFloat(d.valor.toString()),
-          formaPagamento: d.forma_pagamento
-        })));
-      }
-
-      if (impostosData) {
-        setImpostos(impostosData.map(i => ({
-          id: i.id,
-          tipo: i.tipo,
-          descricao: i.descricao,
-          valor: parseFloat(i.valor.toString()),
-          vencimento: i.vencimento,
-          pago: i.pago,
-          recorrente: i.recorrente
-        })));
-      }
+      if (impostosError) throw impostosError;
+      if (impostosData) setImpostos(impostosData);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
-      setLoading(false);
+      console.error('Erro ao buscar dados:', error);
     }
   };
 
@@ -162,34 +107,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       const { data, error } = await supabase
         .from('receitas')
-        .insert({
-          user_id: user.id,
-          data: receita.data,
-          descricao: receita.descricao,
-          categoria: receita.categoria,
-          cliente: receita.cliente,
-          valor: receita.valor,
-          forma_pagamento: receita.formaPagamento
-        })
+        .insert([{ ...receita, user_id: user.id }])
         .select()
         .single();
 
       if (error) throw error;
 
-      if (data) {
-        const newReceita = {
-          id: data.id,
-          data: data.data,
-          descricao: data.descricao,
-          categoria: data.categoria,
-          cliente: data.cliente || '',
-          valor: parseFloat(data.valor.toString()),
-          formaPagamento: data.forma_pagamento
-        };
-        setReceitas(prev => [newReceita, ...prev]);
-      }
+      setReceitas(prev => [...prev, data]);
+      toast.success('Receita adicionada com sucesso!');
     } catch (error) {
       console.error('Erro ao adicionar receita:', error);
+      toast.error('Erro ao adicionar receita');
     }
   };
 
@@ -199,34 +127,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       const { data, error } = await supabase
         .from('despesas')
-        .insert({
-          user_id: user.id,
-          data: despesa.data,
-          descricao: despesa.descricao,
-          categoria: despesa.categoria,
-          fornecedor: despesa.fornecedor,
-          valor: despesa.valor,
-          forma_pagamento: despesa.formaPagamento
-        })
+        .insert([{ ...despesa, user_id: user.id }])
         .select()
         .single();
 
       if (error) throw error;
 
-      if (data) {
-        const newDespesa = {
-          id: data.id,
-          data: data.data,
-          descricao: data.descricao,
-          categoria: data.categoria,
-          fornecedor: data.fornecedor || '',
-          valor: parseFloat(data.valor.toString()),
-          formaPagamento: data.forma_pagamento
-        };
-        setDespesas(prev => [newDespesa, ...prev]);
-      }
+      setDespesas(prev => [...prev, data]);
+      toast.success('Despesa adicionada com sucesso!');
     } catch (error) {
       console.error('Erro ao adicionar despesa:', error);
+      toast.error('Despesa adicionada com sucesso!');
     }
   };
 
@@ -236,98 +147,112 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       const { data, error } = await supabase
         .from('impostos')
-        .insert({
-          user_id: user.id,
-          tipo: imposto.tipo,
-          descricao: imposto.descricao,
-          valor: imposto.valor,
-          vencimento: imposto.vencimento,
-          pago: imposto.pago,
-          recorrente: imposto.recorrente
-        })
+        .insert([{ ...imposto, user_id: user.id }])
         .select()
         .single();
 
       if (error) throw error;
 
-      if (data) {
-        const newImposto = {
-          id: data.id,
-          tipo: data.tipo,
-          descricao: data.descricao,
-          valor: parseFloat(data.valor.toString()),
-          vencimento: data.vencimento,
-          pago: data.pago,
-          recorrente: data.recorrente
-        };
-        setImpostos(prev => [newImposto, ...prev]);
-      }
+      setImpostos(prev => [...prev, data]);
+      toast.success('Imposto adicionado com sucesso!');
     } catch (error) {
       console.error('Erro ao adicionar imposto:', error);
+      toast.error('Imposto adicionado com sucesso!');
     }
   };
 
-  const updateImposto = async (id: number, updates: Partial<Imposto>) => {
+  const removeReceita = async (id: number) => {
     if (!user) return;
 
     try {
-      const updateData: any = {};
-      
-      if (updates.tipo !== undefined) updateData.tipo = updates.tipo;
-      if (updates.descricao !== undefined) updateData.descricao = updates.descricao;
-      if (updates.valor !== undefined) updateData.valor = updates.valor;
-      if (updates.vencimento !== undefined) updateData.vencimento = updates.vencimento;
-      if (updates.pago !== undefined) updateData.pago = updates.pago;
-      if (updates.recorrente !== undefined) updateData.recorrente = updates.recorrente;
-
       const { error } = await supabase
-        .from('impostos')
-        .update(updateData)
+        .from('receitas')
+        .delete()
         .eq('id', id)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      setImpostos(prev => prev.map(imposto => 
-        imposto.id === id ? { ...imposto, ...updates } : imposto
-      ));
+      setReceitas(prev => prev.filter(r => r.id !== id));
+      toast.success('Receita removida com sucesso!');
     } catch (error) {
-      console.error('Erro ao atualizar imposto:', error);
+      console.error('Erro ao remover receita:', error);
+      toast.error('Erro ao remover receita');
     }
   };
 
-  const updateConfiguracoes = (novasConfiguracoes: Partial<Configuracoes>) => {
-    setConfiguracoes(prev => ({ ...prev, ...novasConfiguracoes }));
+  const removeDespesa = async (id: number) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('despesas')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setDespesas(prev => prev.filter(d => d.id !== id));
+      toast.success('Despesa removida com sucesso!');
+    } catch (error) {
+      console.error('Erro ao remover despesa:', error);
+      toast.error('Erro ao remover despesa');
+    }
+  };
+
+  const removeImposto = async (id: number) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('impostos')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setImpostos(prev => prev.filter(i => i.id !== id));
+      toast.success('Imposto removido com sucesso!');
+    } catch (error) {
+      console.error('Erro ao remover imposto:', error);
+      toast.error('Erro ao remover imposto');
+    }
+  };
+
+  const updateConfiguracoes = (config: Partial<Configuracoes>) => {
+    setConfiguracoes(prev => ({ ...prev, ...config }));
   };
 
   const zerarSaldo = () => {
     setReceitas([]);
     setDespesas([]);
     setImpostos([]);
+    toast.success('Saldo zerado com sucesso!');
   };
 
-  return (
-    <AppContext.Provider value={{
-      receitas,
-      despesas,
-      impostos,
-      configuracoes,
-      addReceita,
-      addDespesa,
-      addImposto,
-      updateImposto,
-      updateConfiguracoes,
-      zerarSaldo,
-      loading
-    }}>
-      {children}
-    </AppContext.Provider>
-  );
+  const value: AppContextType = {
+    receitas,
+    despesas,
+    impostos,
+    configuracoes,
+    addReceita,
+    addDespesa,
+    addImposto,
+    removeReceita,
+    removeDespesa,
+    removeImposto,
+    updateConfiguracoes,
+    zerarSaldo
+  };
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAppContext must be used within an AppProvider');
   }
   return context;

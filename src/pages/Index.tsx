@@ -7,6 +7,7 @@ import Despesas from '@/components/sections/Despesas';
 import Impostos from '@/components/sections/Impostos';
 import Relatorios from '@/components/sections/Relatorios';
 import Fechamento from '@/components/sections/Fechamento';
+import Equipe from '@/components/sections/Equipe';
 import Ajuda from '@/components/sections/Ajuda';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { AppSidebar } from '@/components/AppSidebar';
@@ -38,6 +39,8 @@ export default function Index() {
           return <Relatorios />;
         case 'fechamento':
           return <Fechamento />;
+        case 'equipe':
+          return <Equipe />;
         case 'ajuda':
           return <Ajuda />;
         default:
