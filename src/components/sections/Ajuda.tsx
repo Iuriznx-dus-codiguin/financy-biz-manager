@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,7 +69,7 @@ const Ajuda = () => {
 
   const handleWhatsAppSupport = () => {
     const message = encodeURIComponent("Gostaria de conversar com o suporte da Financy");
-    window.open(`https://wa.me/5511999999999?text=${message}`, '_blank');
+    window.open(`https://wa.me/5587999083662?text=${message}`, '_blank');
   };
 
   const handleEmailSupport = () => {

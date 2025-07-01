@@ -1,5 +1,6 @@
+
 import { useEffect, useState } from 'react';
-import { AuthPage } from '@/components/AuthPage';
+import { AuthPage } from '@/components/auth/AuthPage';
 import Dashboard from '@/components/sections/Dashboard';
 import Receitas from '@/components/sections/Receitas';
 import Despesas from '@/components/sections/Despesas';
@@ -7,16 +8,16 @@ import Impostos from '@/components/sections/Impostos';
 import Relatorios from '@/components/sections/Relatorios';
 import Fechamento from '@/components/sections/Fechamento';
 import Ajuda from '@/components/sections/Ajuda';
-import OnboardingFlow from '@/components/OnboardingFlow';
-import Sidebar from '@/components/Sidebar';
+import OnboardingFlow from '@/components/onboarding/OnboardingFlow';
+import { AppSidebar } from '@/components/AppSidebar';
 import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Index() {
   const [activeSection, setActiveSection] = useState('painel');
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useAuth();
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -58,7 +59,7 @@ export default function Index() {
     <div className="min-h-screen bg-background">
       <AppProvider>
         <div className="flex h-screen overflow-hidden">
-          <Sidebar onSectionChange={setActiveSection} />
+          <AppSidebar onSectionChange={setActiveSection} />
           <div className="flex-1 flex flex-col overflow-hidden">
             <main className="flex-1 overflow-y-auto p-8">
               {renderSection()}

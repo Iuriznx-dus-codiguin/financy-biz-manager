@@ -4,7 +4,7 @@ import React from 'react';
 const Footer = () => {
   const handleWhatsAppSupport = () => {
     const message = encodeURIComponent("Gostaria de conversar com o suporte da Financy");
-    window.open(`https://wa.me/5511999999999?text=${message}`, '_blank');
+    window.open(`https://wa.me/5587999083662?text=${message}`, '_blank');
   };
 
   const handleEmailSupport = () => {
