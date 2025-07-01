@@ -10,6 +10,7 @@ import Fechamento from '@/components/sections/Fechamento';
 import Ajuda from '@/components/sections/Ajuda';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { AppSidebar } from '@/components/AppSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,7 +18,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 
 export default function Index() {
   const [activeSection, setActiveSection] = useState('painel');
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
 
   const renderSection = () => {
@@ -42,7 +43,7 @@ export default function Index() {
   };
 
   // Show loading while checking auth and onboarding status
-  if (loading || onboardingLoading) {
+  if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -53,28 +54,30 @@ export default function Index() {
     );
   }
 
-  // Show onboarding if user is authenticated but hasn't completed onboarding
-  if (user && !isOnboardingComplete) {
-    return <OnboardingFlow onComplete={completeOnboarding} />;
-  }
-
   // Show auth page if user is not authenticated
   if (!user) {
     return <AuthPage />;
   }
 
+  // Show onboarding if user is authenticated but hasn't completed onboarding
+  if (!isOnboardingComplete) {
+    return <OnboardingFlow onComplete={completeOnboarding} />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <AppProvider>
-        <div className="flex h-screen overflow-hidden">
-          <AppSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <main className="flex-1 overflow-y-auto p-8">
-              {renderSection()}
-            </main>
-            <Footer />
+        <SidebarProvider>
+          <div className="flex h-screen overflow-hidden">
+            <AppSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <main className="flex-1 overflow-y-auto p-8">
+                {renderSection()}
+              </main>
+              <Footer />
+            </div>
           </div>
-        </div>
+        </SidebarProvider>
       </AppProvider>
     </div>
   );

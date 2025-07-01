@@ -32,13 +32,19 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setLoading(false);
       setIsOnboardingComplete(false);
+      setOnboardingData(null);
     }
   }, [user]);
 
   const checkOnboardingStatus = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     
     try {
+      console.log('Verificando status do onboarding para usuário:', user.id);
+      
       const { data, error } = await supabase
         .from('onboarding_data')
         .select('*')
@@ -47,10 +53,12 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
 
       if (error && error.code !== 'PGRST116') {
         console.error('Erro ao verificar onboarding:', error);
+        setIsOnboardingComplete(false);
         return;
       }
 
       if (data) {
+        console.log('Dados de onboarding encontrados:', data);
         setOnboardingData({
           userType: data.user_type,
           howDidYouKnow: data.how_did_you_know,
@@ -59,19 +67,27 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
         });
         setIsOnboardingComplete(true);
       } else {
+        console.log('Nenhum dado de onboarding encontrado');
         setIsOnboardingComplete(false);
+        setOnboardingData(null);
       }
     } catch (error) {
       console.error('Erro ao verificar onboarding:', error);
+      setIsOnboardingComplete(false);
     } finally {
       setLoading(false);
     }
   };
 
   const completeOnboarding = async (data: OnboardingData) => {
-    if (!user) return;
+    if (!user) {
+      console.log('Usuário não encontrado ao completar onboarding');
+      return;
+    }
 
     try {
+      console.log('Salvando dados de onboarding:', data);
+      
       const { error } = await supabase
         .from('onboarding_data')
         .insert({
@@ -82,8 +98,12 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
           revenue_range: data.userType !== 'personal' ? data.revenueRange : null
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao salvar onboarding:', error);
+        throw error;
+      }
 
+      console.log('Onboarding completado com sucesso');
       setOnboardingData(data);
       setIsOnboardingComplete(true);
     } catch (error) {
