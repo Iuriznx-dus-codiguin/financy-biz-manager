@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAppContext } from '@/contexts/AppContext';
 import { InteligenciaFinanceira } from '@/components/InteligenciaFinanceira';
+import { TooltipInfo } from '@/components/TooltipInfo';
 
 const Dashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -20,17 +20,63 @@ const Dashboard = () => {
   const saldoAtual = totalReceitas - totalDespesas - totalImpostos;
   const faturamentoBruto = totalReceitas;
 
+  // Calcular ROI (Return on Investment)
+  const calcularROI = () => {
+    if (totalDespesas === 0) return 0;
+    return ((totalReceitas - totalDespesas) / totalDespesas) * 100;
+  };
+
+  const roi = calcularROI();
+
   // Receitas e despesas do dia (hoje)
   const hoje = new Date().toISOString().split('T')[0];
   const receitasHoje = receitas.filter(r => r.data === hoje).reduce((sum, r) => sum + r.valor, 0);
   const despesasHoje = despesas.filter(d => d.data === hoje).reduce((sum, d) => sum + d.valor, 0);
 
+  // Função para determinar a cor do valor
+  const getValueColor = (value: number, isPositive: boolean = true) => {
+    if (value === 0) return 'text-muted-foreground'; // Branco/cinza para valores zero
+    return isPositive ? 'text-green-600' : 'text-red-600';
+  };
+
   const stats = [
-    { title: 'Faturamento Bruto', value: `R$ ${faturamentoBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, positive: true },
-    { title: 'Receitas do Dia', value: `R$ ${receitasHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, positive: true },
-    { title: 'Despesas do Dia', value: `R$ ${despesasHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, positive: false },
-    { title: 'Impostos Pagos', value: `R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, positive: false },
-    { title: 'Saldo Líquido', value: `R$ ${saldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, positive: saldoAtual >= 0 }
+    { 
+      title: 'Faturamento Bruto', 
+      value: `R$ ${faturamentoBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
+      positive: true,
+      color: faturamentoBruto === 0 ? 'text-muted-foreground' : 'text-green-600'
+    },
+    { 
+      title: 'Receitas do Dia', 
+      value: `R$ ${receitasHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
+      positive: true,
+      color: receitasHoje === 0 ? 'text-muted-foreground' : 'text-green-600'
+    },
+    { 
+      title: 'Despesas do Dia', 
+      value: `R$ ${despesasHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
+      positive: false,
+      color: despesasHoje === 0 ? 'text-muted-foreground' : 'text-red-600'
+    },
+    { 
+      title: 'Impostos Pagos', 
+      value: `R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
+      positive: false,
+      color: totalImpostos === 0 ? 'text-muted-foreground' : 'text-red-600'
+    },
+    { 
+      title: 'Saldo Líquido', 
+      value: `R$ ${saldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
+      positive: saldoAtual >= 0,
+      color: saldoAtual === 0 ? 'text-muted-foreground' : (saldoAtual >= 0 ? 'text-green-600' : 'text-red-600')
+    },
+    {
+      title: 'ROI',
+      value: `${roi.toFixed(1)}%`,
+      positive: roi >= 0,
+      color: roi === 0 ? 'text-muted-foreground' : (roi >= 0 ? 'text-green-600' : 'text-red-600'),
+      tooltip: 'Retorno sobre Investimento'
+    }
   ];
 
   // Gerar dados do gráfico baseado no período selecionado
@@ -172,15 +218,16 @@ const Dashboard = () => {
       </div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
         {stats.map((stat, index) => (
           <Card key={index} className="rounded-2xl shadow-sm border-border/50 hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground mb-2">{stat.title}</p>
-                <p className={`text-2xl font-bold ${
-                  stat.positive ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  {stat.tooltip && <TooltipInfo content={stat.tooltip} />}
+                </div>
+                <p className={`text-2xl font-bold ${stat.color}`}>
                   {stat.value}
                 </p>
               </div>

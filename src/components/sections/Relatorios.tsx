@@ -4,60 +4,155 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { useAppContext } from '@/contexts/AppContext';
+import { toast } from 'sonner';
 
 const Relatorios = () => {
   const [selectedReport, setSelectedReport] = useState('mensal');
+  const { receitas, despesas, impostos } = useAppContext();
 
-  const monthlyData = [
-    { month: 'Jan', receitas: 25000, despesas: 18000, lucro: 7000 },
-    { month: 'Fev', receitas: 28000, despesas: 19500, lucro: 8500 },
-    { month: 'Mar', receitas: 32000, despesas: 22000, lucro: 10000 },
-    { month: 'Abr', receitas: 29000, despesas: 20500, lucro: 8500 },
-    { month: 'Mai', receitas: 35000, despesas: 24000, lucro: 11000 },
-    { month: 'Jun', receitas: 38000, despesas: 25500, lucro: 12500 }
-  ];
+  // Calcular dados reais
+  const totalReceitas = receitas.reduce((sum, r) => sum + r.valor, 0);
+  const totalDespesas = despesas.reduce((sum, d) => sum + d.valor, 0);
+  const totalImpostosPagos = impostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);
+  const lucroLiquido = totalReceitas - totalDespesas - totalImpostosPagos;
+  const margemLucro = totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
 
-  const categoryData = [
-    { categoria: 'Vendas', valor: 45000 },
-    { categoria: 'Serviços', valor: 28000 },
-    { categoria: 'Licenças', valor: 15000 },
-    { categoria: 'Consultoria', valor: 22000 }
-  ];
-
-  const insights = [
-    {
-      title: 'Crescimento das Receitas',
-      description: 'Suas receitas cresceram 35% comparado ao mês anterior',
-      type: 'positive'
-    },
-    {
-      title: 'Aumento em Marketing',
-      description: 'Você gastou 27% a mais com marketing em maio',
-      type: 'warning'
-    },
-    {
-      title: 'Melhor Categoria',
-      description: 'Vendas representam 58% da sua receita total',
-      type: 'info'
+  // Gerar dados mensais baseados nos dados reais
+  const gerarDadosMensais = () => {
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+    const dados = [];
+    
+    for (let i = 0; i < 6; i++) {
+      const mes = new Date();
+      mes.setMonth(mes.getMonth() - (5 - i));
+      const mesAtual = mes.getMonth() + 1;
+      const anoAtual = mes.getFullYear();
+      
+      const receitasMes = receitas.filter(r => {
+        const dataReceita = new Date(r.data);
+        return dataReceita.getMonth() + 1 === mesAtual && dataReceita.getFullYear() === anoAtual;
+      }).reduce((sum, r) => sum + r.valor, 0);
+      
+      const despesasMes = despesas.filter(d => {
+        const dataDespesa = new Date(d.data);
+        return dataDespesa.getMonth() + 1 === mesAtual && dataDespesa.getFullYear() === anoAtual;
+      }).reduce((sum, d) => sum + d.valor, 0);
+      
+      dados.push({
+        month: meses[i],
+        receitas: receitasMes,
+        despesas: despesasMes,
+        lucro: receitasMes - despesasMes
+      });
     }
-  ];
-
-  const rankings = {
-    maioresGastos: [
-      { item: 'Salários', valor: 'R$ 8.500,00' },
-      { item: 'Aluguel', valor: 'R$ 3.200,00' },
-      { item: 'Fornecedores', valor: 'R$ 2.800,00' },
-      { item: 'Marketing', valor: 'R$ 1.950,00' },
-      { item: 'Utilidades', valor: 'R$ 1.450,00' }
-    ],
-    maioresReceitas: [
-      { item: 'Cliente Premium A', valor: 'R$ 12.500,00' },
-      { item: 'Empresa XYZ', valor: 'R$ 8.900,00' },
-      { item: 'Startup ABC', valor: 'R$ 6.200,00' },
-      { item: 'Cliente Corporativo', valor: 'R$ 4.800,00' },
-      { item: 'Freelancer Pro', valor: 'R$ 3.500,00' }
-    ]
+    
+    return dados;
   };
+
+  // Gerar dados por categoria baseados nas receitas reais
+  const gerarDadosPorCategoria = () => {
+    const categorias = receitas.reduce((acc, receita) => {
+      acc[receita.categoria] = (acc[receita.categoria] || 0) + receita.valor;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(categorias).map(([categoria, valor]) => ({
+      categoria,
+      valor
+    }));
+  };
+
+  const monthlyData = gerarDadosMensais();
+  const categoryData = gerarDadosPorCategoria();
+
+  // Gerar insights baseados nos dados reais
+  const gerarInsights = () => {
+    const insights = [];
+
+    if (totalReceitas > totalDespesas) {
+      const crescimento = totalReceitas > 0 ? ((totalReceitas - totalDespesas) / totalReceitas * 100).toFixed(1) : '0';
+      insights.push({
+        title: 'Resultado Positivo',
+        description: `Suas receitas superam as despesas em ${crescimento}%`,
+        type: 'positive'
+      });
+    }
+
+    if (margemLucro > 20) {
+      insights.push({
+        title: 'Boa Margem de Lucro',
+        description: `Sua margem de lucro está em ${margemLucro.toFixed(1)}%`,
+        type: 'positive'
+      });
+    } else if (margemLucro > 0) {
+      insights.push({
+        title: 'Margem Baixa',
+        description: `Sua margem de lucro está em ${margemLucro.toFixed(1)}% - considere otimizar custos`,
+        type: 'warning'
+      });
+    }
+
+    if (categoryData.length > 0) {
+      const maiorCategoria = categoryData.reduce((prev, current) => 
+        prev.valor > current.valor ? prev : current
+      );
+      const percentualMaior = totalReceitas > 0 ? (maiorCategoria.valor / totalReceitas * 100).toFixed(1) : '0';
+      insights.push({
+        title: 'Principal Fonte de Receita',
+        description: `${maiorCategoria.categoria} representa ${percentualMaior}% da sua receita`,
+        type: 'info'
+      });
+    }
+
+    if (insights.length === 0) {
+      insights.push({
+        title: 'Comece a Registrar',
+        description: 'Adicione receitas e despesas para ver insights personalizados',
+        type: 'info'
+      });
+    }
+
+    return insights;
+  };
+
+  const insights = gerarInsights();
+
+  // Gerar rankings baseados nos dados reais
+  const gerarRankings = () => {
+    const maioresDespesas = despesas
+      .reduce((acc, despesa) => {
+        const categoria = despesa.categoria;
+        acc[categoria] = (acc[categoria] || 0) + despesa.valor;
+        return acc;
+      }, {} as Record<string, number>);
+
+    const maioresReceitas = receitas
+      .reduce((acc, receita) => {
+        const categoria = receita.categoria;
+        acc[categoria] = (acc[categoria] || 0) + receita.valor;
+        return acc;
+      }, {} as Record<string, number>);
+
+    return {
+      maioresGastos: Object.entries(maioresDespesas)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([item, valor]) => ({
+          item,
+          valor: `R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+        })),
+      maioresReceitas: Object.entries(maioresReceitas)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([item, valor]) => ({
+          item,
+          valor: `R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+        }))
+    };
+  };
+
+  const rankings = gerarRankings();
 
   const getInsightColor = (type: string) => {
     switch (type) {
@@ -68,6 +163,18 @@ const Relatorios = () => {
     }
   };
 
+  const handleExportPDF = () => {
+    toast.info('Para exportar PDF, você precisa integrar uma biblioteca como jsPDF ou react-pdf. Gostaria que eu implemente isso?');
+  };
+
+  const handleExportExcel = () => {
+    toast.info('Para exportar Excel, você precisa integrar uma biblioteca como xlsx ou SheetJS. Gostaria que eu implemente isso?');
+  };
+
+  const handleExportGoogleSheets = () => {
+    toast.info('Para exportar para Google Sheets, você precisa integrar com a API do Google Sheets. Gostaria que eu configure isso?');
+  };
+
   return (
     <section id="relatorios" className="space-y-8">
       <div className="flex justify-between items-center">
@@ -76,13 +183,13 @@ const Relatorios = () => {
           <p className="text-muted-foreground">Análises e insights gerenciais do seu negócio</p>
         </div>
         <div className="flex space-x-4">
-          <Button variant="outline" className="rounded-xl">
+          <Button variant="outline" className="rounded-xl" onClick={handleExportPDF}>
             📄 Exportar PDF
           </Button>
-          <Button variant="outline" className="rounded-xl">
+          <Button variant="outline" className="rounded-xl" onClick={handleExportExcel}>
             📊 Exportar Excel
           </Button>
-          <Button variant="outline" className="rounded-xl">
+          <Button variant="outline" className="rounded-xl" onClick={handleExportGoogleSheets}>
             📈 Google Sheets
           </Button>
         </div>
@@ -154,17 +261,23 @@ const Relatorios = () => {
             <CardTitle>Evolução Mensal - Receitas vs Despesas</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value) => `R$ ${value.toLocaleString()}`} />
-                <Line type="monotone" dataKey="receitas" stroke="#22C55E" strokeWidth={3} name="Receitas" />
-                <Line type="monotone" dataKey="despesas" stroke="#EF4444" strokeWidth={3} name="Despesas" />
-                <Line type="monotone" dataKey="lucro" stroke="#3B82F6" strokeWidth={3} name="Lucro" />
-              </LineChart>
-            </ResponsiveContainer>
+            {monthlyData.some(d => d.receitas > 0 || d.despesas > 0) ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                  <Line type="monotone" dataKey="receitas" stroke="#22C55E" strokeWidth={3} name="Receitas" />
+                  <Line type="monotone" dataKey="despesas" stroke="#EF4444" strokeWidth={3} name="Despesas" />
+                  <Line type="monotone" dataKey="lucro" stroke="#3B82F6" strokeWidth={3} name="Lucro" />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-muted-foreground">Nenhum dado disponível ainda</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -173,15 +286,21 @@ const Relatorios = () => {
             <CardTitle>Receitas por Categoria</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={categoryData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="categoria" />
-                <YAxis />
-                <Tooltip formatter={(value) => `R$ ${value.toLocaleString()}`} />
-                <Bar dataKey="valor" fill="#22C55E" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {categoryData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={categoryData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="categoria" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                  <Bar dataKey="valor" fill="#22C55E" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-muted-foreground">Nenhuma receita cadastrada ainda</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -190,22 +309,28 @@ const Relatorios = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="rounded-2xl shadow-sm">
           <CardHeader>
-            <CardTitle>🔻 Maiores Gastos do Mês</CardTitle>
+            <CardTitle>🔻 Maiores Gastos por Categoria</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {rankings.maioresGastos.map((item, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
-                  <div className="flex items-center space-x-3">
-                    <span className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                      {index + 1}
-                    </span>
-                    <span className="font-medium">{item.item}</span>
+            {rankings.maioresGastos.length > 0 ? (
+              <div className="space-y-3">
+                {rankings.maioresGastos.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                    <div className="flex items-center space-x-3">
+                      <span className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        {index + 1}
+                      </span>
+                      <span className="font-medium">{item.item}</span>
+                    </div>
+                    <span className="font-bold text-red-600">{item.valor}</span>
                   </div>
-                  <span className="font-bold text-red-600">{item.valor}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhuma despesa registrada ainda</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -214,19 +339,25 @@ const Relatorios = () => {
             <CardTitle>🔸 Maiores Fontes de Receita</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {rankings.maioresReceitas.map((item, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                  <div className="flex items-center space-x-3">
-                    <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                      {index + 1}
-                    </span>
-                    <span className="font-medium">{item.item}</span>
+            {rankings.maioresReceitas.length > 0 ? (
+              <div className="space-y-3">
+                {rankings.maioresReceitas.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                    <div className="flex items-center space-x-3">
+                      <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        {index + 1}
+                      </span>
+                      <span className="font-medium">{item.item}</span>
+                    </div>
+                    <span className="font-bold text-green-600">{item.valor}</span>
                   </div>
-                  <span className="font-bold text-green-600">{item.valor}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhuma receita registrada ainda</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -234,29 +365,29 @@ const Relatorios = () => {
       {/* Resumo Executivo */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>📋 Resumo Executivo - Junho 2025</CardTitle>
+          <CardTitle>📋 Resumo Executivo - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
               <p className="text-sm text-muted-foreground">Receita Total</p>
-              <p className="text-2xl font-bold text-blue-600">R$ 38.000,00</p>
-              <p className="text-xs text-green-600 mt-1">↑ +8.7% vs mês anterior</p>
+              <p className="text-2xl font-bold text-blue-600">R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             </div>
             <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
               <p className="text-sm text-muted-foreground">Despesas Total</p>
-              <p className="text-2xl font-bold text-red-600">R$ 25.500,00</p>
-              <p className="text-xs text-red-600 mt-1">↑ +6.2% vs mês anterior</p>
+              <p className="text-2xl font-bold text-red-600">R$ {totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             </div>
             <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
               <p className="text-sm text-muted-foreground">Lucro Líquido</p>
-              <p className="text-2xl font-bold text-green-600">R$ 12.500,00</p>
-              <p className="text-xs text-green-600 mt-1">↑ +13.6% vs mês anterior</p>
+              <p className={`text-2xl font-bold ${lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                R$ {lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
             </div>
             <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
               <p className="text-sm text-muted-foreground">Margem de Lucro</p>
-              <p className="text-2xl font-bold text-purple-600">32.9%</p>
-              <p className="text-xs text-green-600 mt-1">↑ +1.8% vs mês anterior</p>
+              <p className={`text-2xl font-bold ${margemLucro >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                {margemLucro.toFixed(1)}%
+              </p>
             </div>
           </div>
         </CardContent>
@@ -266,3 +397,4 @@ const Relatorios = () => {
 };
 
 export default Relatorios;
+
