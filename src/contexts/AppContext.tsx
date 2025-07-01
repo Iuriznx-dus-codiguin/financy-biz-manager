@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -67,6 +66,7 @@ interface AppContextType {
   deleteDespesa: (id: number) => Promise<void>;
   deleteImposto: (id: number) => Promise<void>;
   deleteMembroEquipe: (id: number) => Promise<void>;
+  updateImposto: (id: number, imposto: Partial<Imposto>) => Promise<void>;
   updateConfiguracoes: (novasConfiguracoes: Partial<Configuracoes>) => void;
 }
 
@@ -227,43 +227,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const addImposto = async (imposto: Omit<Imposto, 'id'>) => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('impostos')
-      .insert({
-        user_id: user.id,
-        descricao: imposto.descricao,
-        tipo: imposto.tipo,
-        valor: imposto.valor,
-        vencimento: imposto.vencimento,
-        pago: imposto.pago,
-        recorrente: imposto.recorrente
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Erro ao adicionar imposto:', error);
-      return;
-    }
-
-    if (data) {
-      const novoImposto = {
-        id: data.id,
-        data: data.vencimento,
-        descricao: data.descricao,
-        tipo: data.tipo,
-        valor: data.valor,
-        vencimento: data.vencimento,
-        pago: data.pago,
-        recorrente: data.recorrente
-      };
-      setImpostos(prev => [novoImposto, ...prev]);
-    }
-  };
-
   const addMembroEquipe = async (membro: Omit<MembroEquipe, 'id'>) => {
     const novoMembro = {
       ...membro,
@@ -324,6 +287,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setMembrosEquipe(prev => prev.filter(m => m.id !== id));
   };
 
+  const updateImposto = async (id: number, imposto: Partial<Imposto>) => {
+    const { error } = await supabase
+      .from('impostos')
+      .update({
+        pago: imposto.pago,
+        descricao: imposto.descricao,
+        tipo: imposto.tipo,
+        valor: imposto.valor,
+        vencimento: imposto.vencimento,
+        recorrente: imposto.recorrente
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao atualizar imposto:', error);
+      return;
+    }
+
+    setImpostos(prev => 
+      prev.map(i => i.id === id ? { ...i, ...imposto } : i)
+    );
+  };
+
   const updateConfiguracoes = (novasConfiguracoes: Partial<Configuracoes>) => {
     setConfiguracoes(prev => ({ ...prev, ...novasConfiguracoes }));
   };
@@ -344,6 +330,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       deleteDespesa,
       deleteImposto,
       deleteMembroEquipe,
+      updateImposto,
       updateConfiguracoes
     }}>
       {children}

@@ -24,11 +24,15 @@ const Impostos = () => {
 
   const handleAddImposto = (e: React.FormEvent) => {
     e.preventDefault();
-    if (novoImposto.tipo && novoImposto.valor) {
+    if (novoImposto.tipo && novoImposto.valor && novoImposto.vencimento) {
       addImposto({
-        ...novoImposto,
+        data: novoImposto.vencimento,
+        tipo: novoImposto.tipo,
+        descricao: novoImposto.descricao,
         valor: parseFloat(novoImposto.valor),
-        pago: false
+        vencimento: novoImposto.vencimento,
+        pago: false,
+        recorrente: novoImposto.recorrente
       });
       setNovoImposto({
         tipo: '',

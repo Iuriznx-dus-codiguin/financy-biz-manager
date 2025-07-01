@@ -9,12 +9,42 @@ const Fechamento = () => {
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // Calcular valores zerados para esta seção
-  const receitasDia = 0;
-  const despesasDia = 0;
-  const impostosVencendoDia = 0;
-  const custosEquipeDia = 0;
+  // Calcular valores reais baseados na data selecionada
+  const calcularValoresDia = (data: string) => {
+    const receitasDia = receitas
+      .filter(r => r.data === data)
+      .reduce((sum, r) => sum + r.valor, 0);
+    
+    const despesasDia = despesas
+      .filter(d => d.data === data)
+      .reduce((sum, d) => sum + d.valor, 0);
+    
+    const impostosVencendoDia = impostos
+      .filter(i => i.vencimento === data && !i.pago)
+      .reduce((sum, i) => sum + i.valor, 0);
+    
+    // Calcular custos proporcionais da equipe para o dia
+    let custosEquipeDia = 0;
+    membrosEquipe.forEach(membro => {
+      if (membro.status === 'ativo') {
+        switch (membro.periodicidade) {
+          case 'mensal':
+            custosEquipeDia += membro.salario / 30;
+            break;
+          case 'semanal':
+            custosEquipeDia += membro.salario / 7;
+            break;
+          case 'quinzenal':
+            custosEquipeDia += membro.salario / 15;
+            break;
+        }
+      }
+    });
 
+    return { receitasDia, despesasDia, impostosVencendoDia, custosEquipeDia };
+  };
+
+  const { receitasDia, despesasDia, impostosVencendoDia, custosEquipeDia } = calcularValoresDia(selectedDate);
   const saldoLiquido = receitasDia - despesasDia - impostosVencendoDia - custosEquipeDia;
 
   const handleFechamento = () => {

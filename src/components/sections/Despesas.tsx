@@ -10,7 +10,7 @@ import { Plus, Filter, Search, Trash2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 const Despesas = () => {
-  const { despesas, addDespesa, removeDespesa } = useAppContext();
+  const { despesas, addDespesa, deleteDespesa } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [novaDespesa, setNovaDespesa] = useState({
     data: '',
@@ -52,7 +52,7 @@ const Despesas = () => {
 
   const handleDeleteDespesa = async (id: number) => {
     if (confirm('Tem certeza que deseja excluir esta despesa?')) {
-      await removeDespesa(id);
+      await deleteDespesa(id);
     }
   };
 

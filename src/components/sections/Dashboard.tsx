@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,19 +13,15 @@ const Dashboard = () => {
   const [periodo, setPeriodo] = useState('6meses');
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
 
-  // Calcular estatísticas reais
+  // Calcular estatísticas reais incluindo custos da equipe
   const totalReceitas = receitas.reduce((sum, receita) => sum + receita.valor, 0);
   const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
   const totalImpostos = impostos.filter(imposto => imposto.pago).reduce((sum, imposto) => sum + imposto.valor, 0);
   
-  // Calcular custos de equipe
+  // Calcular custos de equipe mensais
   const calcularCustosEquipe = () => {
-    const hoje = new Date();
-    const inicioDoDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-    const inicioDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    
-    let custoDiario = 0;
     let custoMensal = 0;
+    let custoDiario = 0;
     
     membrosEquipe.forEach(membro => {
       if (membro.status === 'ativo') {
@@ -51,19 +46,20 @@ const Dashboard = () => {
   };
 
   const { custoDiario: custoEquipeDiario, custoMensal: custoEquipeMensal } = calcularCustosEquipe();
-  const saldoAtual = totalReceitas - totalDespesas - totalImpostos - custoEquipeMensal;
+  const totalCustosOperacionais = totalDespesas + totalImpostos + custoEquipeMensal;
+  const saldoAtual = totalReceitas - totalCustosOperacionais;
   const faturamentoBruto = totalReceitas;
 
-  // Calcular ROI (Return on Investment) como número normal
+  // Calcular ROI como número normal
   const calcularROI = () => {
-    const lucroLiquido = totalReceitas - totalDespesas - totalImpostos - custoEquipeMensal;
-    const investimentoTotal = totalDespesas + totalImpostos + custoEquipeMensal;
+    const lucroLiquido = totalReceitas - totalCustosOperacionais;
+    const investimentoTotal = totalCustosOperacionais;
     
     if (investimentoTotal === 0) {
-      return totalReceitas > 0 ? 1.0 : 0;
+      return totalReceitas > 0 ? 100.0 : 0.0;
     }
     
-    return lucroLiquido / investimentoTotal;
+    return (lucroLiquido / investimentoTotal) * 100;
   };
 
   const roi = calcularROI();
@@ -106,7 +102,7 @@ const Dashboard = () => {
     },
     {
       title: 'ROI',
-      value: roi.toFixed(2),
+      value: roi.toFixed(1),
       positive: roi >= 0,
       color: roi === 0 ? 'text-muted-foreground' : (roi >= 0 ? 'text-green-600' : 'text-red-600'),
       tooltip: 'Retorno sobre Investimento - mostra o lucro obtido em relação ao investimento feito'
