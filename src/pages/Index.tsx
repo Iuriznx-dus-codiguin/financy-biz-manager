@@ -15,7 +15,6 @@ import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
-import { AppProvider } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 
@@ -59,6 +58,7 @@ export default function Index() {
     }
   };
 
+  // Early return for loading states
   if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -70,29 +70,30 @@ export default function Index() {
     );
   }
 
+  // Show auth page if no user
   if (!user) {
     return <AuthPage />;
   }
 
+  // Show onboarding if not complete
   if (!isOnboardingComplete) {
     return <OnboardingFlow onComplete={completeOnboarding} />;
   }
 
+  // Main application layout
   return (
     <div className="min-h-screen bg-background">
-      <AppProvider>
-        <SidebarProvider>
-          <div className="flex min-h-screen w-full">
-            <AppSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-            <div className="flex-1 flex flex-col">
-              <main className="flex-1 p-8">
-                {renderSection()}
-              </main>
-              <Footer />
-            </div>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <AppSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+          <div className="flex-1 flex flex-col">
+            <main className="flex-1 p-8">
+              {renderSection()}
+            </main>
+            <Footer />
           </div>
-        </SidebarProvider>
-      </AppProvider>
+        </div>
+      </SidebarProvider>
     </div>
   );
 }

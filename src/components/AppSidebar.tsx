@@ -55,9 +55,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const isCollapsed = state === 'collapsed';
 
   const handleThemeToggle = () => {
-    updateConfiguracoes({
-      tema: configuracoes.tema === 'light' ? 'dark' : 'light'
-    });
+    try {
+      updateConfiguracoes({
+        tema: configuracoes.tema === 'light' ? 'dark' : 'light'
+      });
+    } catch (error) {
+      console.error('Erro ao alterar tema:', error);
+    }
   };
 
   const handleSectionChange = (sectionId: string) => {
@@ -122,10 +126,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           onClick={handleThemeToggle}
           className="w-full"
         >
-          {configuracoes.tema === 'dark' ? '☀️' : '🌙'}
+          {configuracoes?.tema === 'dark' ? '☀️' : '🌙'}
           {!isCollapsed && (
             <span className="ml-2">
-              {configuracoes.tema === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+              {configuracoes?.tema === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
             </span>
           )}
         </Button>
