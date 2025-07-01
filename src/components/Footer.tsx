@@ -2,6 +2,15 @@
 import React from 'react';
 
 const Footer = () => {
+  const handleWhatsAppSupport = () => {
+    const message = encodeURIComponent("Gostaria de conversar com o suporte da Financy");
+    window.open(`https://wa.me/5511999999999?text=${message}`, '_blank');
+  };
+
+  const handleEmailSupport = () => {
+    window.open('mailto:central.financy@gmail.com', '_blank');
+  };
+
   return (
     <footer className="border-t border-border bg-card mt-20">
       <div className="container mx-auto px-6 py-8">
@@ -44,9 +53,9 @@ const Footer = () => {
             <h4 className="font-semibold text-foreground mb-4">Suporte</h4>
             <ul className="space-y-2">
               <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Central de Ajuda</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Contato</a></li>
+              <li><button onClick={handleWhatsAppSupport} className="text-muted-foreground hover:text-primary transition-colors text-left">WhatsApp</button></li>
+              <li><button onClick={handleEmailSupport} className="text-muted-foreground hover:text-primary transition-colors text-left">Email</button></li>
               <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Status</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">API</a></li>
             </ul>
           </div>
         </div>

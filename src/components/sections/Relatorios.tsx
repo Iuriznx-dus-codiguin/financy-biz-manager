@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useAppContext } from '@/contexts/AppContext';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 
 const Relatorios = () => {
   const [selectedReport, setSelectedReport] = useState('mensal');
@@ -164,15 +166,85 @@ const Relatorios = () => {
   };
 
   const handleExportPDF = () => {
-    toast.info('Para exportar PDF, você precisa integrar uma biblioteca como jsPDF ou react-pdf. Gostaria que eu implemente isso?');
+    try {
+      const doc = new jsPDF();
+      
+      // Title
+      doc.setFontSize(20);
+      doc.text('Relatório Financeiro - Financy', 20, 30);
+      
+      // Current date
+      doc.setFontSize(10);
+      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 20, 40);
+      
+      // Financial summary
+      doc.setFontSize(14);
+      doc.text('Resumo Executivo', 20, 60);
+      
+      doc.setFontSize(10);
+      doc.text(`Receita Total: R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 75);
+      doc.text(`Despesas Total: R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 85);
+      doc.text(`Lucro Líquido: R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 95);
+      doc.text(`Margem de Lucro: ${margemLucro.toFixed(1)}%`, 20, 105);
+      
+      // Insights
+      doc.setFontSize(14);
+      doc.text('Insights Principais', 20, 125);
+      
+      let yPosition = 140;
+      insights.slice(0, 3).forEach((insight) => {
+        doc.setFontSize(10);
+        doc.text(`• ${insight.title}: ${insight.description}`, 20, yPosition);
+        yPosition += 10;
+      });
+      
+      doc.save('relatorio-financeiro-financy.pdf');
+      toast.success('Relatório PDF exportado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao exportar PDF');
+      console.error('PDF Export Error:', error);
+    }
   };
 
   const handleExportExcel = () => {
-    toast.info('Para exportar Excel, você precisa integrar uma biblioteca como xlsx ou SheetJS. Gostaria que eu implemente isso?');
-  };
-
-  const handleExportGoogleSheets = () => {
-    toast.info('Para exportar para Google Sheets, você precisa integrar com a API do Google Sheets. Gostaria que eu configure isso?');
+    try {
+      const workbook = XLSX.utils.book_new();
+      
+      // Summary sheet
+      const summaryData = [
+        ['Relatório Financeiro - Financy'],
+        ['Gerado em:', new Date().toLocaleDateString('pt-BR')],
+        [''],
+        ['Resumo Executivo'],
+        ['Receita Total', `R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
+        ['Despesas Total', `R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
+        ['Impostos Pagos', `R$ ${totalImpostosPagos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
+        ['Lucro Líquido', `R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
+        ['Margem de Lucro', `${margemLucro.toFixed(1)}%`],
+        [''],
+        ['Insights Principais'],
+        ...insights.map(insight => [insight.title, insight.description])
+      ];
+      
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumo');
+      
+      // Monthly evolution sheet
+      const monthlySheet = XLSX.utils.json_to_sheet(monthlyData);
+      XLSX.utils.book_append_sheet(workbook, monthlySheet, 'Evolução Mensal');
+      
+      // Categories sheet
+      if (categoryData.length > 0) {
+        const categoriesSheet = XLSX.utils.json_to_sheet(categoryData);
+        XLSX.utils.book_append_sheet(workbook, categoriesSheet, 'Receitas por Categoria');
+      }
+      
+      XLSX.writeFile(workbook, 'relatorio-financeiro-financy.xlsx');
+      toast.success('Relatório Excel exportado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao exportar Excel');
+      console.error('Excel Export Error:', error);
+    }
   };
 
   return (
@@ -188,9 +260,6 @@ const Relatorios = () => {
           </Button>
           <Button variant="outline" className="rounded-xl" onClick={handleExportExcel}>
             📊 Exportar Excel
-          </Button>
-          <Button variant="outline" className="rounded-xl" onClick={handleExportGoogleSheets}>
-            📈 Google Sheets
           </Button>
         </div>
       </div>
@@ -397,4 +466,3 @@ const Relatorios = () => {
 };
 
 export default Relatorios;
-

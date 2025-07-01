@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -67,6 +66,21 @@ const Ajuda = () => {
     }
   ];
 
+  const handleWhatsAppSupport = () => {
+    const message = encodeURIComponent("Gostaria de conversar com o suporte da Financy");
+    window.open(`https://wa.me/5511999999999?text=${message}`, '_blank');
+  };
+
+  const handleEmailSupport = () => {
+    window.open('mailto:central.financy@gmail.com', '_blank');
+  };
+
+  const handleReportProblem = () => {
+    const subject = encodeURIComponent("Relatar Problema - Financy");
+    const body = encodeURIComponent("Descreva o problema encontrado:\n\n");
+    window.open(`mailto:central.financy@gmail.com?subject=${subject}&body=${body}`, '_blank');
+  };
+
   return (
     <section className="space-y-8">
       <div>
@@ -80,7 +94,7 @@ const Ajuda = () => {
             <div className="text-4xl mb-4">💬</div>
             <h3 className="font-bold mb-2">WhatsApp</h3>
             <p className="text-sm text-muted-foreground mb-4">Suporte via WhatsApp das 8h às 18h</p>
-            <Button className="w-full rounded-xl bg-green-600 hover:bg-green-700">
+            <Button className="w-full rounded-xl bg-green-600 hover:bg-green-700" onClick={handleWhatsAppSupport}>
               Abrir WhatsApp
             </Button>
           </CardContent>
@@ -91,19 +105,19 @@ const Ajuda = () => {
             <div className="text-4xl mb-4">📧</div>
             <h3 className="font-bold mb-2">Email</h3>
             <p className="text-sm text-muted-foreground mb-4">Resposta em até 24 horas</p>
-            <Button variant="outline" className="w-full rounded-xl">
+            <Button variant="outline" className="w-full rounded-xl" onClick={handleEmailSupport}>
               Enviar Email
             </Button>
           </CardContent>
         </Card>
         
-        <Card className="rounded-2xl shadow-sm border-purple-200 dark:border-purple-800">
+        <Card className="rounded-2xl shadow-sm border-red-200 dark:border-red-800">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl mb-4">🎧</div>
-            <h3 className="font-bold mb-2">Suporte Premium</h3>
-            <p className="text-sm text-muted-foreground mb-4">Suporte prioritário por telefone</p>
-            <Button variant="outline" className="w-full rounded-xl">
-              Agendar Chamada
+            <div className="text-4xl mb-4">🐛</div>
+            <h3 className="font-bold mb-2">Relatar Problema</h3>
+            <p className="text-sm text-muted-foreground mb-4">Reporte bugs ou problemas técnicos</p>
+            <Button variant="outline" className="w-full rounded-xl" onClick={handleReportProblem}>
+              Relatar Problema
             </Button>
           </CardContent>
         </Card>
