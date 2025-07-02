@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -46,11 +45,18 @@ export interface MembroEquipe {
   dataAdmissao: string;
 }
 
+export interface Configuracoes {
+  tema: 'light' | 'dark';
+  moeda: 'BRL' | 'USD' | 'EUR';
+  idioma: 'pt-BR' | 'en-US' | 'es-ES';
+}
+
 interface AppContextType {
   receitas: Receita[];
   despesas: Despesa[];
   impostos: Imposto[];
   membrosEquipe: MembroEquipe[];
+  configuracoes: Configuracoes;
   addReceita: (receita: Omit<Receita, 'id'>) => Promise<void>;
   addDespesa: (despesa: Omit<Despesa, 'id'>) => Promise<void>;
   addImposto: (imposto: Omit<Imposto, 'id'>) => Promise<void>;
@@ -61,6 +67,7 @@ interface AppContextType {
   deleteImposto: (id: number) => Promise<void>;
   deleteMembroEquipe: (id: number) => Promise<void>;
   updateImposto: (id: number, imposto: Partial<Imposto>) => Promise<void>;
+  updateConfiguracoes: (novasConfiguracoes: Partial<Configuracoes>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -70,6 +77,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   const [impostos, setImpostos] = useState<Imposto[]>([]);
   const [membrosEquipe, setMembrosEquipe] = useState<MembroEquipe[]>([]);
+  const [configuracoes, setConfiguracoes] = useState<Configuracoes>({
+    tema: 'light',
+    moeda: 'BRL',
+    idioma: 'pt-BR'
+  });
 
   const { user } = useAuth();
 
@@ -335,12 +347,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   };
 
+  const updateConfiguracoes = (novasConfiguracoes: Partial<Configuracoes>) => {
+    setConfiguracoes(prev => ({ ...prev, ...novasConfiguracoes }));
+  };
+
   return (
     <AppContext.Provider value={{
       receitas,
       despesas,
       impostos,
       membrosEquipe,
+      configuracoes,
       addReceita,
       addDespesa,
       addImposto,
@@ -350,7 +367,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       deleteDespesa,
       deleteImposto,
       deleteMembroEquipe,
-      updateImposto
+      updateImposto,
+      updateConfiguracoes
     }}>
       {children}
     </AppContext.Provider>

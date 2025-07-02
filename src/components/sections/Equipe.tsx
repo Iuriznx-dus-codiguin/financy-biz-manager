@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,7 @@ const Equipe = () => {
     cargo: '',
     salario: 0,
     periodicidade: 'mensal' as 'mensal' | 'semanal' | 'quinzenal',
-    data_admissao: new Date().toISOString().split('T')[0]
+    dataAdmissao: new Date().toISOString().split('T')[0]
   });
 
   const resetForm = () => {
@@ -33,7 +32,7 @@ const Equipe = () => {
       cargo: '',
       salario: 0,
       periodicidade: 'mensal',
-      data_admissao: new Date().toISOString().split('T')[0]
+      dataAdmissao: new Date().toISOString().split('T')[0]
     });
   };
 
@@ -61,7 +60,7 @@ const Equipe = () => {
       cargo: member.cargo,
       salario: member.salario,
       periodicidade: member.periodicidade,
-      data_admissao: member.data_admissao
+      dataAdmissao: member.dataAdmissao
     });
     setIsEditDialogOpen(true);
   };
@@ -187,12 +186,12 @@ const Equipe = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="data_admissao">Data de Admissão</Label>
+                <Label htmlFor="dataAdmissao">Data de Admissão</Label>
                 <Input
-                  id="data_admissao"
+                  id="dataAdmissao"
                   type="date"
-                  value={formData.data_admissao}
-                  onChange={(e) => setFormData({ ...formData, data_admissao: e.target.value })}
+                  value={formData.dataAdmissao}
+                  onChange={(e) => setFormData({ ...formData, dataAdmissao: e.target.value })}
                 />
               </div>
               <div className="flex gap-2">
@@ -255,7 +254,7 @@ const Equipe = () => {
                     {membro.status}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Desde {new Date(membro.data_admissao).toLocaleDateString('pt-BR')}
+                    Desde {new Date(membro.dataAdmissao).toLocaleDateString('pt-BR')}
                   </span>
                 </div>
               </div>
