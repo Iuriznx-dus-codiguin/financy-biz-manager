@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { AuthPage } from '@/components/auth/AuthPage';
 import Dashboard from '@/components/sections/Dashboard';
 import Receitas from '@/components/sections/Receitas';
@@ -17,45 +17,44 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+const SECTION_COMPONENTS = {
+  painel: Dashboard,
+  receitas: Receitas,
+  despesas: Despesas,
+  impostos: Impostos,
+  equipe: Equipe,
+  relatorios: Relatorios,
+  fechamento: Fechamento,
+  assinatura: Assinatura,
+  configuracoes: Configuracoes,
+  ajuda: Ajuda,
+} as const;
+
+type SectionKey = keyof typeof SECTION_COMPONENTS;
 
 export default function Index() {
-  const [activeSection, setActiveSection] = useState('painel');
+  const [activeSection, setActiveSection] = useState<SectionKey>('painel');
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
 
-  const renderSection = () => {
-    try {
-      switch (activeSection) {
-        case 'painel':
-          return <Dashboard />;
-        case 'receitas':
-          return <Receitas />;
-        case 'despesas':
-          return <Despesas />;
-        case 'impostos':
-          return <Impostos />;
-        case 'equipe':
-          return <Equipe />;
-        case 'relatorios':
-          return <Relatorios />;
-        case 'fechamento':
-          return <Fechamento />;
-        case 'assinatura':
-          return <Assinatura />;
-        case 'configuracoes':
-          return <Configuracoes />;
-        case 'ajuda':
-          return <Ajuda />;
-        default:
-          return <Dashboard />;
-      }
-    } catch (error) {
-      console.error('Erro ao renderizar seção:', error);
-      return <Dashboard />;
+  const handleSectionChange = useCallback((section: string) => {
+    console.log('Changing section to:', section);
+    if (section in SECTION_COMPONENTS) {
+      setActiveSection(section as SectionKey);
+    } else {
+      console.warn('Invalid section:', section);
+      setActiveSection('painel');
     }
-  };
+  }, []);
 
-  // Loading state
+  const CurrentComponent = useMemo(() => {
+    const Component = SECTION_COMPONENTS[activeSection];
+    return Component || Dashboard;
+  }, [activeSection]);
+
+  // Loading states
   if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -79,18 +78,23 @@ export default function Index() {
 
   // Main app
   return (
-    <div className="min-h-screen bg-background">
+    <ErrorBoundary>
       <SidebarProvider>
         <div className="flex min-h-screen w-full">
-          <AppSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+          <AppSidebar 
+            activeSection={activeSection} 
+            onSectionChange={handleSectionChange} 
+          />
           <div className="flex-1 flex flex-col">
             <main className="flex-1 p-8">
-              {renderSection()}
+              <ErrorBoundary>
+                <CurrentComponent />
+              </ErrorBoundary>
             </main>
             <Footer />
           </div>
         </div>
       </SidebarProvider>
-    </div>
+    </ErrorBoundary>
   );
 }

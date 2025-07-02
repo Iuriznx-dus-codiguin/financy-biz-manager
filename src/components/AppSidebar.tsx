@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { 
   Layout, 
   TrendingUp, 
@@ -54,7 +54,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const { configuracoes, updateConfiguracoes } = useAppContext();
   const isCollapsed = state === 'collapsed';
 
-  const handleThemeToggle = () => {
+  const handleThemeToggle = useCallback(() => {
     try {
       updateConfiguracoes({
         tema: configuracoes.tema === 'light' ? 'dark' : 'light'
@@ -62,15 +62,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     } catch (error) {
       console.error('Erro ao alterar tema:', error);
     }
-  };
+  }, [configuracoes.tema, updateConfiguracoes]);
 
-  const handleSectionChange = (sectionId: string) => {
+  const handleSectionClick = useCallback((sectionId: string) => {
     try {
+      console.log('Sidebar: Clicking section', sectionId);
       onSectionChange(sectionId);
     } catch (error) {
       console.error('Erro ao alterar seção:', error);
     }
-  };
+  }, [onSectionChange]);
 
   return (
     <Sidebar collapsible="icon">
@@ -100,7 +101,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
-                      onClick={() => handleSectionChange(item.id)}
+                      onClick={() => handleSectionClick(item.id)}
                       isActive={isActive}
                       tooltip={isCollapsed ? item.label : undefined}
                     >

@@ -2,7 +2,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -25,6 +25,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary capturou um erro:', error, errorInfo);
+    console.error('Stack trace:', error.stack);
+    console.error('Component stack:', errorInfo.componentStack);
+    
     this.setState({
       error,
       errorInfo
@@ -32,50 +35,95 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   private handleReload = () => {
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
     window.location.reload();
   };
 
   private handleGoHome = () => {
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
     window.location.href = '/';
+  };
+
+  private handleReset = () => {
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
   };
 
   public render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-lg">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
                 <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
-              <CardTitle className="text-xl">Algo deu errado</CardTitle>
+              <CardTitle className="text-xl">Erro na Aplicação</CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <p className="text-muted-foreground">
-                Ocorreu um erro inesperado na aplicação. Tente recarregar a página ou voltar ao início.
+                Ocorreu um erro inesperado. Tente uma das opções abaixo para resolver o problema.
               </p>
+              
+              {this.state.error && (
+                <div className="text-left text-sm bg-red-50 p-3 rounded border">
+                  <strong>Erro:</strong> {this.state.error.message}
+                </div>
+              )}
+
               {process.env.NODE_ENV === 'development' && this.state.error && (
-                <details className="text-left text-xs bg-gray-100 p-2 rounded">
-                  <summary className="cursor-pointer font-semibold">Detalhes do erro (desenvolvimento)</summary>
-                  <pre className="mt-2 whitespace-pre-wrap">
-                    {this.state.error.toString()}
-                    {this.state.errorInfo?.componentStack}
-                  </pre>
+                <details className="text-left text-xs bg-gray-100 p-3 rounded">
+                  <summary className="cursor-pointer font-semibold mb-2">
+                    Detalhes técnicos (desenvolvimento)
+                  </summary>
+                  <div className="space-y-2">
+                    <div>
+                      <strong>Erro:</strong>
+                      <pre className="mt-1 whitespace-pre-wrap text-red-600">
+                        {this.state.error.toString()}
+                      </pre>
+                    </div>
+                    {this.state.error.stack && (
+                      <div>
+                        <strong>Stack:</strong>
+                        <pre className="mt-1 whitespace-pre-wrap text-gray-600 max-h-32 overflow-y-auto">
+                          {this.state.error.stack}
+                        </pre>
+                      </div>
+                    )}
+                    {this.state.errorInfo?.componentStack && (
+                      <div>
+                        <strong>Component Stack:</strong>
+                        <pre className="mt-1 whitespace-pre-wrap text-blue-600 max-h-32 overflow-y-auto">
+                          {this.state.errorInfo.componentStack}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
                 </details>
               )}
+
               <div className="flex flex-col gap-2">
+                <Button 
+                  onClick={this.handleReset}
+                  className="w-full"
+                  variant="default"
+                >
+                  Tentar Novamente
+                </Button>
                 <Button 
                   onClick={this.handleReload}
                   className="w-full"
+                  variant="outline"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Recarregar Página
                 </Button>
                 <Button 
-                  variant="outline"
+                  variant="ghost"
                   onClick={this.handleGoHome}
                   className="w-full"
                 >
+                  <Home className="h-4 w-4 mr-2" />
                   Voltar ao Início
                 </Button>
               </div>
