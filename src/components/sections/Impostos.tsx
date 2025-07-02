@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,6 @@ const Impostos = () => {
     e.preventDefault();
     if (novoImposto.tipo && novoImposto.valor && novoImposto.vencimento) {
       addImposto({
-        data: novoImposto.vencimento,
         tipo: novoImposto.tipo,
         descricao: novoImposto.descricao,
         valor: parseFloat(novoImposto.valor),

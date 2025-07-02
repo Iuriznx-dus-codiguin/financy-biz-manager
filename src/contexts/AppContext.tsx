@@ -42,6 +42,8 @@ export interface Imposto {
 export interface MembroEquipe {
   id: number;
   nome: string;
+  email: string;
+  telefone: string;
   cargo: string;
   salario: number;
   periodicidade: 'mensal' | 'semanal' | 'quinzenal';
