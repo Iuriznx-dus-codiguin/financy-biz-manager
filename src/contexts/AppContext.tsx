@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,13 +25,13 @@ export interface Despesa {
 
 export interface Imposto {
   id: number;
-  data: string;
   descricao: string;
   tipo: string;
   valor: number;
+  valorTipo: 'fixo' | 'porcentagem';
   vencimento: string;
   pago: boolean;
-  recorrente: boolean;
+  tipoRecorrencia: 'unico' | 'recorrente';
 }
 
 export interface MembroEquipe {
@@ -42,13 +43,7 @@ export interface MembroEquipe {
   salario: number;
   status: 'ativo' | 'inativo';
   periodicidade: 'mensal' | 'semanal' | 'quinzenal';
-  data_admissao: string;
-}
-
-export interface Configuracoes {
-  tema: 'light' | 'dark';
-  moeda: 'BRL' | 'USD' | 'EUR';
-  idioma: 'pt-BR' | 'en-US' | 'es-ES';
+  dataAdmissao: string;
 }
 
 interface AppContextType {
@@ -56,7 +51,6 @@ interface AppContextType {
   despesas: Despesa[];
   impostos: Imposto[];
   membrosEquipe: MembroEquipe[];
-  configuracoes: Configuracoes;
   addReceita: (receita: Omit<Receita, 'id'>) => Promise<void>;
   addDespesa: (despesa: Omit<Despesa, 'id'>) => Promise<void>;
   addImposto: (imposto: Omit<Imposto, 'id'>) => Promise<void>;
@@ -67,7 +61,6 @@ interface AppContextType {
   deleteImposto: (id: number) => Promise<void>;
   deleteMembroEquipe: (id: number) => Promise<void>;
   updateImposto: (id: number, imposto: Partial<Imposto>) => Promise<void>;
-  updateConfiguracoes: (novasConfiguracoes: Partial<Configuracoes>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -77,11 +70,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   const [impostos, setImpostos] = useState<Imposto[]>([]);
   const [membrosEquipe, setMembrosEquipe] = useState<MembroEquipe[]>([]);
-  const [configuracoes, setConfiguracoes] = useState<Configuracoes>({
-    tema: 'light',
-    moeda: 'BRL',
-    idioma: 'pt-BR'
-  });
 
   const { user } = useAuth();
 
@@ -140,13 +128,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (impostosData) {
         const impostosFormatados = impostosData.map(i => ({
           id: i.id,
-          data: i.vencimento,
           descricao: i.descricao,
           tipo: i.tipo,
           valor: i.valor,
+          valorTipo: 'fixo' as const,
           vencimento: i.vencimento,
           pago: i.pago || false,
-          recorrente: i.recorrente || false
+          tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente'
         }));
         setImpostos(impostosFormatados);
       }
@@ -239,7 +227,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         valor: imposto.valor,
         vencimento: imposto.vencimento,
         pago: imposto.pago || false,
-        recorrente: imposto.recorrente || false
+        recorrente: imposto.tipoRecorrencia === 'recorrente'
       })
       .select()
       .single();
@@ -252,13 +240,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (data) {
       const novoImposto = {
         id: data.id,
-        data: data.vencimento,
         descricao: data.descricao,
         tipo: data.tipo,
         valor: data.valor,
+        valorTipo: imposto.valorTipo,
         vencimento: data.vencimento,
         pago: data.pago || false,
-        recorrente: data.recorrente || false
+        tipoRecorrencia: imposto.tipoRecorrencia
       };
       setImpostos(prev => [novoImposto, ...prev]);
     }
@@ -333,7 +321,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         tipo: imposto.tipo,
         valor: imposto.valor,
         vencimento: imposto.vencimento,
-        recorrente: imposto.recorrente
+        recorrente: imposto.tipoRecorrencia === 'recorrente'
       })
       .eq('id', id);
 
@@ -347,17 +335,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   };
 
-  const updateConfiguracoes = (novasConfiguracoes: Partial<Configuracoes>) => {
-    setConfiguracoes(prev => ({ ...prev, ...novasConfiguracoes }));
-  };
-
   return (
     <AppContext.Provider value={{
       receitas,
       despesas,
       impostos,
       membrosEquipe,
-      configuracoes,
       addReceita,
       addDespesa,
       addImposto,
@@ -367,8 +350,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       deleteDespesa,
       deleteImposto,
       deleteMembroEquipe,
-      updateImposto,
-      updateConfiguracoes
+      updateImposto
     }}>
       {children}
     </AppContext.Provider>

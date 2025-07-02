@@ -1,34 +1,150 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Download } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 const Ajuda = () => {
+  const generatePDF = (guideType: string) => {
+    const doc = new jsPDF();
+    
+    // Configurar fonte
+    doc.setFont('helvetica');
+    
+    switch (guideType) {
+      case 'receitas-despesas':
+        doc.setFontSize(20);
+        doc.text('Guia: Como Cadastrar Receitas e Despesas', 20, 30);
+        
+        doc.setFontSize(14);
+        doc.text('1. CADASTRANDO RECEITAS', 20, 50);
+        doc.setFontSize(12);
+        doc.text('• Acesse a seção "Receitas" no menu lateral', 25, 65);
+        doc.text('• Clique no botão "Nova Receita"', 25, 75);
+        doc.text('• Preencha os campos obrigatórios:', 25, 85);
+        doc.text('  - Data da receita', 30, 95);
+        doc.text('  - Descrição detalhada', 30, 105);
+        doc.text('  - Categoria (Vendas, Serviços, etc.)', 30, 115);
+        doc.text('  - Valor em reais', 30, 125);
+        doc.text('  - Forma de pagamento', 30, 135);
+        doc.text('• Opcionalmente, adicione o nome do cliente', 25, 145);
+        doc.text('• Confirme clicando em "Adicionar Receita"', 25, 155);
+        
+        doc.setFontSize(14);
+        doc.text('2. CADASTRANDO DESPESAS', 20, 175);
+        doc.setFontSize(12);
+        doc.text('• Acesse a seção "Despesas" no menu lateral', 25, 190);
+        doc.text('• Clique no botão "Nova Despesa"', 25, 200);
+        doc.text('• Preencha os campos obrigatórios:', 25, 210);
+        doc.text('  - Data da despesa', 30, 220);
+        doc.text('  - Descrição detalhada', 30, 230);
+        doc.text('  - Categoria (Fornecedores, Equipamentos, etc.)', 30, 240);
+        doc.text('  - Valor em reais', 30, 250);
+        doc.text('  - Forma de pagamento', 30, 260);
+        doc.text('• Opcionalmente, adicione o nome do fornecedor', 25, 270);
+        doc.text('• Confirme clicando em "Adicionar Despesa"', 25, 280);
+        break;
+        
+      case 'impostos':
+        doc.setFontSize(20);
+        doc.text('Guia: Controle de Impostos no Financy', 20, 30);
+        
+        doc.setFontSize(14);
+        doc.text('1. CADASTRANDO IMPOSTOS E TAXAS', 20, 50);
+        doc.setFontSize(12);
+        doc.text('• Acesse "Impostos e Taxas" no menu', 25, 65);
+        doc.text('• Clique em "Adicionar Imposto/Taxa"', 25, 75);
+        doc.text('• Selecione o tipo: Imposto ou Taxa', 25, 85);
+        doc.text('• Descreva o imposto (ex: DAS, IPTU)', 25, 95);
+        doc.text('• Defina o valor e tipo (fixo ou porcentagem)', 25, 105);
+        doc.text('• Informe a data de vencimento', 25, 115);
+        doc.text('• Escolha: Pagamento único ou recorrente', 25, 125);
+        
+        doc.setFontSize(14);
+        doc.text('2. GERENCIANDO PAGAMENTOS', 20, 145);
+        doc.setFontSize(12);
+        doc.text('• Use "Marcar como Pago" após quitar', 25, 160);
+        doc.text('• Configure alertas para vencimentos', 25, 170);
+        doc.text('• Acompanhe impostos vencidos no dashboard', 25, 180);
+        break;
+        
+      case 'dashboard':
+        doc.setFontSize(20);
+        doc.text('Guia: Como Usar o Dashboard', 20, 30);
+        
+        doc.setFontSize(14);
+        doc.text('1. VISÃO GERAL FINANCEIRA', 20, 50);
+        doc.setFontSize(12);
+        doc.text('• Saldo atual: diferença entre receitas e despesas', 25, 65);
+        doc.text('• Total de receitas do período', 25, 75);
+        doc.text('• Total de despesas do período', 25, 85);
+        doc.text('• Impostos próximos do vencimento', 25, 95);
+        
+        doc.setFontSize(14);
+        doc.text('2. GRÁFICOS E ANÁLISES', 20, 115);
+        doc.setFontSize(12);
+        doc.text('• Evolução mensal das finanças', 25, 130);
+        doc.text('• Distribuição por categorias', 25, 140);
+        doc.text('• Comparativo receitas vs despesas', 25, 150);
+        break;
+        
+      case 'relatorios':
+        doc.setFontSize(20);
+        doc.text('Guia: Relatórios Financeiros', 20, 30);
+        
+        doc.setFontSize(14);
+        doc.text('1. TIPOS DE RELATÓRIOS', 20, 50);
+        doc.setFontSize(12);
+        doc.text('• Relatório mensal de receitas', 25, 65);
+        doc.text('• Relatório mensal de despesas', 25, 75);
+        doc.text('• Demonstrativo de fluxo de caixa', 25, 85);
+        doc.text('• Análise por categorias', 25, 95);
+        
+        doc.setFontSize(14);
+        doc.text('2. COMO GERAR RELATÓRIOS', 20, 115);
+        doc.setFontSize(12);
+        doc.text('• Acesse a seção "Relatórios"', 25, 130);
+        doc.text('• Selecione o período desejado', 25, 140);
+        doc.text('• Escolha o tipo de relatório', 25, 150);
+        doc.text('• Clique em "Gerar Relatório"', 25, 160);
+        doc.text('• Exporte em PDF ou Excel', 25, 170);
+        break;
+    }
+    
+    // Rodapé
+    doc.setFontSize(10);
+    doc.text('Gerado pelo Financy - Sistema de Gestão Financeira', 20, 280);
+    doc.text('Para mais dúvidas, entre em contato conosco!', 20, 290);
+    
+    // Download do PDF
+    doc.save(`financy-guia-${guideType}.pdf`);
+  };
+
   const guias = [
     {
       title: 'Como cadastrar receitas e despesas',
       description: 'Aprenda a registrar suas movimentações financeiras',
       icon: '💰',
-      content: 'Guia completo sobre como cadastrar e gerenciar suas receitas e despesas...'
+      guideType: 'receitas-despesas'
     },
     {
       title: 'Controle de impostos no Financy',
       description: 'Mantenha seus impostos organizados e em dia',
       icon: '🧾',
-      content: 'Tutorial sobre como controlar vencimentos e pagamentos de impostos...'
+      guideType: 'impostos'
     },
     {
       title: 'Como usar o dashboard',
       description: 'Entenda todos os indicadores e gráficos',
       icon: '📊',
-      content: 'Explicação detalhada sobre cada seção do dashboard...'
+      guideType: 'dashboard'
     },
     {
       title: 'Relatórios financeiros',
       description: 'Gere relatórios para acompanhar sua performance',
       icon: '📈',
-      content: 'Como gerar e interpretar os relatórios disponíveis...'
+      guideType: 'relatorios'
     }
   ];
 
@@ -39,7 +155,7 @@ const Ajuda = () => {
     },
     {
       pergunta: 'Posso editar ou excluir receitas e despesas já cadastradas?',
-      resposta: 'Sim! Na lista de receitas ou despesas, clique no ícone de edição ao lado do registro que deseja modificar. Você pode alterar qualquer informação ou excluir o registro completamente.'
+      resposta: 'Sim! Na lista de receitas ou despesas, clique no ícone de lixeira ao lado do registro que deseja excluir. Para editar, entre em contato com o suporte.'
     },
     {
       pergunta: 'Como funciona o controle de impostos?',
@@ -131,14 +247,19 @@ const Ajuda = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {guias.map((guia, index) => (
-              <div key={index} className="p-6 border border-border rounded-xl hover:bg-muted/30 transition-colors cursor-pointer">
+              <div key={index} className="p-6 border border-border rounded-xl hover:bg-muted/30 transition-colors">
                 <div className="flex items-start space-x-4">
                   <span className="text-3xl">{guia.icon}</span>
                   <div className="flex-1">
                     <h4 className="font-semibold text-lg mb-2">{guia.title}</h4>
                     <p className="text-sm text-muted-foreground mb-4">{guia.description}</p>
-                    <Button variant="outline" size="sm" className="rounded-lg">
-                      Ler Guia Completo
+                    <Button
+                      onClick={() => generatePDF(guia.guideType)}
+                      className="rounded-lg bg-primary hover:bg-primary/90"
+                      size="sm"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Baixar Guia em PDF
                     </Button>
                   </div>
                 </div>

@@ -10,7 +10,9 @@ import {
   HelpCircle,
   CreditCard,
   Calculator,
-  Users
+  Users,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,7 +28,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useAppContext } from '@/contexts/AppContext';
+import { useTheme } from '@/hooks/useTheme';
 
 interface AppSidebarProps {
   activeSection: string;
@@ -51,13 +53,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   onSectionChange
 }) => {
   const { state } = useSidebar();
-  const { configuracoes, updateConfiguracoes } = useAppContext();
+  const { theme, setTheme } = useTheme();
   const isCollapsed = state === 'collapsed';
 
   const handleThemeToggle = () => {
-    updateConfiguracoes({
-      tema: configuracoes.tema === 'light' ? 'dark' : 'light'
-    });
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   const handleSectionChange = (sectionId: string) => {
@@ -122,10 +122,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           onClick={handleThemeToggle}
           className="w-full"
         >
-          {configuracoes.tema === 'dark' ? '☀️' : '🌙'}
+          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           {!isCollapsed && (
             <span className="ml-2">
-              {configuracoes.tema === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+              {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
             </span>
           )}
         </Button>

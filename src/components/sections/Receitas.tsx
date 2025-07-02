@@ -6,11 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Filter, Search } from 'lucide-react';
+import { Plus, Filter, Search, Trash2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 const Receitas = () => {
-  const { receitas, addReceita } = useAppContext();
+  const { receitas, addReceita, deleteReceita } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [novaReceita, setNovaReceita] = useState({
     data: '',
@@ -40,12 +40,10 @@ const Receitas = () => {
     }
   };
 
-  const handleCategoriaChange = (value: string) => {
-    setNovaReceita(prev => ({ ...prev, categoria: value }));
-  };
-
-  const handleFormaPagamentoChange = (value: string) => {
-    setNovaReceita(prev => ({ ...prev, formaPagamento: value }));
+  const handleDeleteReceita = async (id: number) => {
+    if (confirm('Tem certeza que deseja excluir esta receita?')) {
+      await deleteReceita(id);
+    }
   };
 
   const totalReceitas = receitas.reduce((sum, receita) => sum + receita.valor, 0);
@@ -92,7 +90,7 @@ const Receitas = () => {
               </div>
               <div>
                 <Label htmlFor="categoria">Categoria</Label>
-                <Select value={novaReceita.categoria} onValueChange={handleCategoriaChange}>
+                <Select value={novaReceita.categoria} onValueChange={(value) => setNovaReceita(prev => ({ ...prev, categoria: value }))}>
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
@@ -129,7 +127,7 @@ const Receitas = () => {
               </div>
               <div>
                 <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
-                <Select value={novaReceita.formaPagamento} onValueChange={handleFormaPagamentoChange}>
+                <Select value={novaReceita.formaPagamento} onValueChange={(value) => setNovaReceita(prev => ({ ...prev, formaPagamento: value }))}>
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Selecione a forma de pagamento" />
                   </SelectTrigger>
@@ -224,6 +222,7 @@ const Receitas = () => {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Forma de Pagamento</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -236,6 +235,16 @@ const Receitas = () => {
                     <TableCell>{receita.formaPagamento}</TableCell>
                     <TableCell className="text-right font-medium text-green-600">
                       R$ {receita.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteReceita(receita.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

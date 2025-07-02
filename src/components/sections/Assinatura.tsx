@@ -2,166 +2,283 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CreditCard, Check, Calendar, AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { CreditCard, Check, Calendar, AlertTriangle, Crown, Sparkles, Bot, Lock } from 'lucide-react';
 
 const Assinatura: React.FC = () => {
-  const handlePayment = () => {
-    // URL do Cakto atualizada com webhook configurado
-    window.open('https://pay.cakto.com.br/4cwxcix_453682', '_blank');
+  const handlePayment = (planType: string) => {
+    // URLs diferentes para cada plano
+    const urls = {
+      plus: 'https://pay.cakto.com.br/4cwxcix_453682',
+      premium: 'https://pay.cakto.com.br/premium_plan', // URL fictícia
+      enterprise: '#' // Indisponível
+    };
+    
+    if (planType === 'enterprise') {
+      alert('Este plano estará disponível em breve! Entre em contato conosco para mais informações.');
+      return;
+    }
+    
+    window.open(urls[planType as keyof typeof urls], '_blank');
   };
+
+  const plans = [
+    {
+      id: 'plus',
+      name: 'Financy Plus',
+      price: 'R$ 49,90',
+      period: '/mês',
+      description: 'Ideal para freelancers e pequenos negócios',
+      icon: <CreditCard className="h-6 w-6" />,
+      color: 'blue',
+      features: [
+        'Dashboard completo',
+        'Gestão de receitas e despesas',
+        'Controle de impostos e taxas',
+        'Relatórios básicos',
+        'Fechamento de caixa',
+        'Suporte por email'
+      ],
+      available: true
+    },
+    {
+      id: 'premium',
+      name: 'Financy Premium',
+      price: 'R$ 89,90',
+      period: '/mês',
+      description: 'Para empresas que querem crescer com premiações',
+      icon: <Crown className="h-6 w-6" />,
+      color: 'purple',
+      badge: 'Premiações Anuais',
+      features: [
+        'Tudo do Financy Plus',
+        'Relatórios avançados',
+        'Gestão de equipe completa',
+        'Premiações anuais exclusivas',
+        'Análises preditivas',
+        'Suporte prioritário',
+        'Integração com bancos'
+      ],
+      available: true
+    },
+    {
+      id: 'enterprise',
+      name: 'Financy Enterprise',
+      price: 'R$ 199,90',
+      period: '/mês',
+      description: 'A solução mais completa com IA especializada',
+      icon: <Sparkles className="h-6 w-6" />,
+      color: 'gold',
+      badge: 'IA Incluída',
+      features: [
+        'Tudo do Financy Premium',
+        'Contador IA (Pixel) dedicado',
+        'Suporte especializado 24/7',
+        'Consultoria financeira mensal',
+        'Análises de mercado personalizadas',
+        'API para integrações customizadas',
+        'Treinamento da equipe'
+      ],
+      available: false
+    }
+  ];
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Assinatura</h1>
-          <p className="text-muted-foreground mt-2">Gerencie sua assinatura do Financy</p>
-        </div>
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl font-bold text-foreground">Escolha seu Plano</h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Transforme sua gestão financeira com soluções inovadoras. Escolha o plano ideal para seu negócio.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Plano Atual */}
-        <Card className="border-2 border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-primary" />
-              Plano Premium
-            </CardTitle>
-            <CardDescription>
-              Acesso completo a todas as funcionalidades do Financy
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary">R$ 49,90</div>
-              <div className="text-muted-foreground">/mês</div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {plans.map((plan) => (
+          <Card 
+            key={plan.id} 
+            className={`relative rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl ${
+              plan.id === 'premium' ? 'border-2 border-purple-200 dark:border-purple-800 scale-105' : ''
+            } ${!plan.available ? 'opacity-75' : ''}`}
+          >
+            {plan.id === 'premium' && (
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-purple-600 text-white px-4 py-1 rounded-full">
+                  Mais Popular
+                </Badge>
+              </div>
+            )}
+            
+            {!plan.available && (
+              <div className="absolute -top-4 right-4">
+                <Badge variant="secondary" className="bg-gray-500 text-white px-3 py-1 rounded-full flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  Em Breve
+                </Badge>
+              </div>
+            )}
+
+            <CardHeader className="text-center pb-8">
+              <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 ${
+                plan.color === 'blue' ? 'bg-blue-100 text-blue-600' :
+                plan.color === 'purple' ? 'bg-purple-100 text-purple-600' :
+                'bg-gradient-to-br from-yellow-400 to-orange-500 text-white'
+              }`}>
+                {plan.icon}
+              </div>
+              
+              <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
+              {plan.badge && (
+                <Badge variant="outline" className="mx-auto w-fit">
+                  {plan.badge}
+                </Badge>
+              )}
+              <CardDescription className="text-base">{plan.description}</CardDescription>
+              
+              <div className="pt-4">
+                <div className="text-5xl font-bold text-foreground">{plan.price}</div>
+                <div className="text-muted-foreground">{plan.period}</div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              <div className="space-y-3">
+                {plan.features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className={`rounded-full p-1 ${
+                      plan.color === 'blue' ? 'bg-blue-100' :
+                      plan.color === 'purple' ? 'bg-purple-100' :
+                      'bg-gradient-to-br from-yellow-100 to-orange-100'
+                    }`}>
+                      <Check className={`h-3 w-3 ${
+                        plan.color === 'blue' ? 'text-blue-600' :
+                        plan.color === 'purple' ? 'text-purple-600' :
+                        'text-orange-600'
+                      }`} />
+                    </div>
+                    <span className="text-sm">{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button 
+                onClick={() => handlePayment(plan.id)}
+                disabled={!plan.available}
+                className={`w-full h-12 rounded-xl font-semibold transition-all duration-300 ${
+                  plan.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
+                  plan.color === 'purple' ? 'bg-purple-600 hover:bg-purple-700' :
+                  plan.available ? 'bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700' :
+                  'bg-gray-400 cursor-not-allowed'
+                } text-white`}
+              >
+                {!plan.available ? (
+                  <>
+                    <Lock className="mr-2 h-4 w-4" />
+                    Indisponível no Momento
+                  </>
+                ) : plan.id === 'enterprise' ? (
+                  <>
+                    <Bot className="mr-2 h-4 w-4" />
+                    Solicitar Acesso
+                  </>
+                ) : (
+                  'Assinar Agora'
+                )}
+              </Button>
+
+              {plan.available && (
+                <div className="text-xs text-muted-foreground text-center">
+                  Pagamento seguro processado via Cakto
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Status da Assinatura */}
+      <Card className="rounded-3xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Status da Assinatura Atual
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <AlertTriangle className="h-5 w-5 text-blue-600" />
+              <span className="font-semibold text-blue-800 dark:text-blue-200">Período de Teste Gratuito</span>
             </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Dashboard completo</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Gestão de receitas e despesas</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Controle de impostos</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Relatórios avançados</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Fechamento de caixa</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Suporte prioritário</span>
-              </div>
-            </div>
-
-            <Button 
-              onClick={handlePayment}
-              className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-12"
-            >
-              Assinar Agora
-            </Button>
-
-            <div className="text-xs text-muted-foreground text-center">
-              Pagamento seguro processado via Cakto
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Status da Assinatura */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Status da Assinatura
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                <span className="font-semibold text-yellow-800 dark:text-yellow-200">Período de Teste</span>
-              </div>
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                Você está no período de teste gratuito. Assine para continuar usando todas as funcionalidades.
-              </p>
-            </div>
-
-            <div className="space-y-3">
+            <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+              Você está explorando todas as funcionalidades do Financy gratuitamente. 
+              Assine um plano para continuar aproveitando nossa plataforma.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Status:</span>
-                <span className="font-medium text-yellow-600">Teste Gratuito</span>
+                <span className="font-medium text-blue-600">Teste Gratuito</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Plano Ativo:</span>
+                <span className="font-medium">Nenhum</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Próximo Vencimento:</span>
                 <span className="font-medium">--</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Método de Pagamento:</span>
-                <span className="font-medium">--</span>
-              </div>
             </div>
+          </div>
 
-            <div className="pt-4 border-t">
-              <h4 className="font-semibold mb-2">Histórico de Pagamentos</h4>
-              <div className="text-sm text-muted-foreground text-center py-8">
-                Nenhum pagamento realizado ainda
-              </div>
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+            <div className="text-sm">
+              <strong>Webhook de Integração:</strong>
+              <code className="block mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs font-mono">
+                https://hbyozfmpsgbxofcetdez.supabase.co/functions/v1/cakto-webhook
+              </code>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Esta URL está configurada para receber automaticamente as confirmações de pagamento 
+                e ativar sua assinatura instantaneamente.
+              </p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-              <div className="text-sm">
-                <strong>URL do Webhook:</strong>
-                <code className="block mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
-                  https://hbyozfmpsgbxofcetdez.supabase.co/functions/v1/cakto-webhook
-                </code>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Configure esta URL no painel do Cakto para receber notificações de pagamento.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* FAQ da Assinatura */}
-      <Card>
+      {/* FAQ Atualizada */}
+      <Card className="rounded-3xl">
         <CardHeader>
           <CardTitle>Perguntas Frequentes</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">Como funciona a cobrança?</h4>
-            <p className="text-sm text-muted-foreground">
-              A cobrança é mensal no valor de R$ 49,90 e é processada automaticamente todo mês na mesma data da primeira assinatura.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2">Posso cancelar a qualquer momento?</h4>
-            <p className="text-sm text-muted-foreground">
-              Sim, você pode cancelar sua assinatura a qualquer momento. O acesso continuará até o final do período pago.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2">Há período de teste gratuito?</h4>
-            <p className="text-sm text-muted-foreground">
-              Sim, oferecemos um período de teste para que você possa conhecer todas as funcionalidades antes de assinar.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2">Como funciona a integração com Cakto?</h4>
-            <p className="text-sm text-muted-foreground">
-              Quando você efetua o pagamento via Cakto, nossa aplicação recebe automaticamente a confirmação e registra a receita em sua conta.
-            </p>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-2">🎁 O que são as premiações anuais?</h4>
+              <p className="text-sm text-muted-foreground">
+                Assinantes Premium e Enterprise recebem premiações exclusivas todo ano, 
+                incluindo consultorias gratuitas, relatórios especiais e acesso antecipado a novas funcionalidades.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">🤖 Como funciona o Contador IA (Pixel)?</h4>
+              <p className="text-sm text-muted-foreground">
+                Pixel é nossa IA especializada em contabilidade que analisa seus dados, 
+                oferece insights personalizados e responde dúvidas financeiras 24/7.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">💳 Posso trocar de plano a qualquer momento?</h4>
+              <p className="text-sm text-muted-foreground">
+                Sim! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. 
+                As alterações são aplicadas no próximo ciclo de cobrança.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">🔒 Quando o plano Enterprise estará disponível?</h4>
+              <p className="text-sm text-muted-foreground">
+                O plano Enterprise está em desenvolvimento final. Entre em contato para 
+                ser notificado assim que for lançado e garantir condições especiais.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

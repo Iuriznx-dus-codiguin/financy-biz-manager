@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,50 +6,53 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
-import { Plus, Filter, Search, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Filter, Search, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 const Impostos = () => {
-  const { impostos, addImposto, updateImposto } = useAppContext();
+  const { impostos, addImposto, updateImposto, deleteImposto } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [novoImposto, setNovoImposto] = useState({
     tipo: '',
     descricao: '',
     valor: '',
+    valorTipo: 'fixo' as 'fixo' | 'porcentagem',
     vencimento: '',
-    recorrente: false
+    tipoRecorrencia: 'unico' as 'unico' | 'recorrente'
   });
 
   const handleAddImposto = (e: React.FormEvent) => {
     e.preventDefault();
     if (novoImposto.tipo && novoImposto.valor && novoImposto.vencimento) {
       addImposto({
-        data: novoImposto.vencimento,
         tipo: novoImposto.tipo,
         descricao: novoImposto.descricao,
         valor: parseFloat(novoImposto.valor),
+        valorTipo: novoImposto.valorTipo,
         vencimento: novoImposto.vencimento,
         pago: false,
-        recorrente: novoImposto.recorrente
+        tipoRecorrencia: novoImposto.tipoRecorrencia
       });
       setNovoImposto({
         tipo: '',
         descricao: '',
         valor: '',
+        valorTipo: 'fixo',
         vencimento: '',
-        recorrente: false
+        tipoRecorrencia: 'unico'
       });
       setIsDialogOpen(false);
     }
   };
 
-  const handleTipoChange = (value: string) => {
-    setNovoImposto(prev => ({ ...prev, tipo: value }));
-  };
-
   const togglePago = (id: number, pago: boolean) => {
     updateImposto(id, { pago: !pago });
+  };
+
+  const handleDeleteImposto = async (id: number) => {
+    if (confirm('Tem certeza que deseja excluir este imposto/taxa?')) {
+      await deleteImposto(id);
+    }
   };
 
   const totalImpostos = impostos.reduce((sum, imposto) => sum + imposto.valor, 0);
@@ -78,7 +80,7 @@ const Impostos = () => {
             <form onSubmit={handleAddImposto} className="space-y-4">
               <div>
                 <Label htmlFor="tipo">Tipo</Label>
-                <Select value={novoImposto.tipo} onValueChange={handleTipoChange}>
+                <Select value={novoImposto.tipo} onValueChange={(value) => setNovoImposto(prev => ({ ...prev, tipo: value }))}>
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
@@ -99,18 +101,32 @@ const Impostos = () => {
                   required
                 />
               </div>
-              <div>
-                <Label htmlFor="valor">Valor (R$)</Label>
-                <Input
-                  id="valor"
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  value={novoImposto.valor}
-                  onChange={(e) => setNovoImposto(prev => ({...prev, valor: e.target.value}))}
-                  className="rounded-xl"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="valor">Valor</Label>
+                  <Input
+                    id="valor"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={novoImposto.valor}
+                    onChange={(e) => setNovoImposto(prev => ({...prev, valor: e.target.value}))}
+                    className="rounded-xl"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="valorTipo">Tipo de Valor</Label>
+                  <Select value={novoImposto.valorTipo} onValueChange={(value: 'fixo' | 'porcentagem') => setNovoImposto(prev => ({ ...prev, valorTipo: value }))}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixo">Valor Fixo (R$)</SelectItem>
+                      <SelectItem value="porcentagem">Porcentagem (%)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div>
                 <Label htmlFor="vencimento">Data de Vencimento</Label>
@@ -123,13 +139,17 @@ const Impostos = () => {
                   required
                 />
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="recorrente"
-                  checked={novoImposto.recorrente}
-                  onCheckedChange={(checked) => setNovoImposto(prev => ({...prev, recorrente: checked}))}
-                />
-                <Label htmlFor="recorrente">É um gasto recorrente?</Label>
+              <div>
+                <Label htmlFor="tipoRecorrencia">Tipo de Pagamento</Label>
+                <Select value={novoImposto.tipoRecorrencia} onValueChange={(value: 'unico' | 'recorrente') => setNovoImposto(prev => ({ ...prev, tipoRecorrencia: value }))}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unico">Pagamento Único</SelectItem>
+                    <SelectItem value="recorrente">Recorrente</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <Button type="submit" className="w-full rounded-xl">
                 Adicionar {novoImposto.tipo || 'Imposto/Taxa'}
@@ -223,7 +243,7 @@ const Impostos = () => {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Vencimento</TableHead>
-                  <TableHead>Recorrente</TableHead>
+                  <TableHead>Recorrência</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
@@ -235,9 +255,9 @@ const Impostos = () => {
                     <TableCell className="capitalize">{imposto.tipo}</TableCell>
                     <TableCell>{imposto.descricao}</TableCell>
                     <TableCell>{new Date(imposto.vencimento).toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell>{imposto.recorrente ? 'Sim' : 'Não'}</TableCell>
+                    <TableCell className="capitalize">{imposto.tipoRecorrencia}</TableCell>
                     <TableCell className="text-right font-medium">
-                      R$ {imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {imposto.valorTipo === 'porcentagem' ? `${imposto.valor}%` : `R$ ${imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                     </TableCell>
                     <TableCell className="text-center">
                       {imposto.pago ? (
@@ -247,14 +267,24 @@ const Impostos = () => {
                       )}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => togglePago(imposto.id, imposto.pago)}
-                        className="rounded-lg"
-                      >
-                        {imposto.pago ? 'Marcar como Pendente' : 'Marcar como Pago'}
-                      </Button>
+                      <div className="flex justify-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => togglePago(imposto.id, imposto.pago)}
+                          className="rounded-lg"
+                        >
+                          {imposto.pago ? 'Marcar Pendente' : 'Marcar Pago'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteImposto(imposto.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
