@@ -24,8 +24,6 @@ export default function Index() {
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
 
   const renderSection = () => {
-    console.log('Renderizando seção:', activeSection);
-    
     try {
       switch (activeSection) {
         case 'painel':
@@ -49,7 +47,6 @@ export default function Index() {
         case 'ajuda':
           return <Ajuda />;
         default:
-          console.log('Seção não encontrada, retornando Dashboard');
           return <Dashboard />;
       }
     } catch (error) {
@@ -58,7 +55,7 @@ export default function Index() {
     }
   };
 
-  // Early return for loading states
+  // Loading state
   if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -70,17 +67,17 @@ export default function Index() {
     );
   }
 
-  // Show auth page if no user
+  // Auth page
   if (!user) {
     return <AuthPage />;
   }
 
-  // Show onboarding if not complete
+  // Onboarding
   if (!isOnboardingComplete) {
     return <OnboardingFlow onComplete={completeOnboarding} />;
   }
 
-  // Main application layout
+  // Main app
   return (
     <div className="min-h-screen bg-background">
       <SidebarProvider>

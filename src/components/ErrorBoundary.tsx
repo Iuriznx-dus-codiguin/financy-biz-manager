@@ -2,7 +2,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -11,6 +11,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -23,8 +24,20 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Erro capturado pelo ErrorBoundary:', error, errorInfo);
+    console.error('ErrorBoundary capturou um erro:', error, errorInfo);
+    this.setState({
+      error,
+      errorInfo
+    });
   }
+
+  private handleReload = () => {
+    window.location.reload();
+  };
+
+  private handleGoHome = () => {
+    window.location.href = '/';
+  };
 
   public render() {
     if (this.state.hasError) {
@@ -39,14 +52,33 @@ export class ErrorBoundary extends Component<Props, State> {
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <p className="text-muted-foreground">
-                Ocorreu um erro inesperado. Por favor, recarregue a página.
+                Ocorreu um erro inesperado na aplicação. Tente recarregar a página ou voltar ao início.
               </p>
-              <Button 
-                onClick={() => window.location.reload()}
-                className="w-full"
-              >
-                Recarregar Página
-              </Button>
+              {process.env.NODE_ENV === 'development' && this.state.error && (
+                <details className="text-left text-xs bg-gray-100 p-2 rounded">
+                  <summary className="cursor-pointer font-semibold">Detalhes do erro (desenvolvimento)</summary>
+                  <pre className="mt-2 whitespace-pre-wrap">
+                    {this.state.error.toString()}
+                    {this.state.errorInfo?.componentStack}
+                  </pre>
+                </details>
+              )}
+              <div className="flex flex-col gap-2">
+                <Button 
+                  onClick={this.handleReload}
+                  className="w-full"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Recarregar Página
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={this.handleGoHome}
+                  className="w-full"
+                >
+                  Voltar ao Início
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

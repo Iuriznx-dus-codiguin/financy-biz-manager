@@ -65,12 +65,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   };
 
   const handleSectionChange = (sectionId: string) => {
-    console.log('Sidebar: Mudando seção de', activeSection, 'para', sectionId);
     try {
       onSectionChange(sectionId);
-      console.log('Sidebar: Seção alterada com sucesso para', sectionId);
     } catch (error) {
-      console.error('Sidebar: Erro ao alterar seção:', error);
+      console.error('Erro ao alterar seção:', error);
     }
   };
 
@@ -102,10 +100,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleSectionChange(item.id);
-                      }}
+                      onClick={() => handleSectionChange(item.id)}
                       isActive={isActive}
                       tooltip={isCollapsed ? item.label : undefined}
                     >
