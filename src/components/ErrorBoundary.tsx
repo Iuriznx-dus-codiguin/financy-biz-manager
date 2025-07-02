@@ -12,21 +12,27 @@ interface State {
   hasError: boolean;
   error?: Error;
   errorInfo?: ErrorInfo;
+  errorId: string;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false
+    hasError: false,
+    errorId: Math.random().toString(36).substr(2, 9)
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { 
+      hasError: true, 
+      error,
+      errorId: Math.random().toString(36).substr(2, 9)
+    };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary capturou um erro:', error, errorInfo);
-    console.error('Stack trace:', error.stack);
-    console.error('Component stack:', errorInfo.componentStack);
+    console.error(`[ErrorBoundary-${this.state.errorId}] Erro capturado:`, error);
+    console.error(`[ErrorBoundary-${this.state.errorId}] Stack trace:`, error.stack);
+    console.error(`[ErrorBoundary-${this.state.errorId}] Component stack:`, errorInfo.componentStack);
     
     this.setState({
       error,
@@ -35,17 +41,24 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   private handleReload = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    console.log(`[ErrorBoundary-${this.state.errorId}] Recarregando página...`);
     window.location.reload();
   };
 
   private handleGoHome = () => {
+    console.log(`[ErrorBoundary-${this.state.errorId}] Voltando ao início...`);
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
     window.location.href = '/';
   };
 
   private handleReset = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    console.log(`[ErrorBoundary-${this.state.errorId}] Resetando erro...`);
+    this.setState({ 
+      hasError: false, 
+      error: undefined, 
+      errorInfo: undefined,
+      errorId: Math.random().toString(36).substr(2, 9)
+    });
   };
 
   public render() {
@@ -67,6 +80,8 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.state.error && (
                 <div className="text-left text-sm bg-red-50 p-3 rounded border">
                   <strong>Erro:</strong> {this.state.error.message}
+                  <br />
+                  <small className="text-gray-500">ID: {this.state.errorId}</small>
                 </div>
               )}
 

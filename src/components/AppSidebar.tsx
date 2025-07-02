@@ -10,7 +10,9 @@ import {
   HelpCircle,
   CreditCard,
   Calculator,
-  Users
+  Users,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,9 +58,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   const handleThemeToggle = useCallback(() => {
     try {
-      updateConfiguracoes({
-        tema: configuracoes.tema === 'light' ? 'dark' : 'light'
-      });
+      const newTheme = configuracoes.tema === 'light' ? 'dark' : 'light';
+      console.log('Alterando tema de', configuracoes.tema, 'para', newTheme);
+      updateConfiguracoes({ tema: newTheme });
     } catch (error) {
       console.error('Erro ao alterar tema:', error);
     }
@@ -66,7 +68,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   const handleSectionClick = useCallback((sectionId: string) => {
     try {
-      console.log('Sidebar: Clicking section', sectionId);
+      console.log('Mudando para seção:', sectionId);
       onSectionChange(sectionId);
     } catch (error) {
       console.error('Erro ao alterar seção:', error);
@@ -82,7 +84,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           </div>
           {!isCollapsed && (
             <div>
-              <h1 className="text-lg font-bold text-foreground">Financy</h1>
+              <h1 className="text-lg font-bold text-foreground">Finanças</h1>
               <p className="text-xs text-muted-foreground">Gestão Financeira</p>
             </div>
           )}
@@ -120,11 +122,15 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         <Button
           variant="outline"
           onClick={handleThemeToggle}
-          className="w-full"
+          className="w-full flex items-center gap-2"
         >
-          {configuracoes?.tema === 'dark' ? '☀️' : '🌙'}
+          {configuracoes?.tema === 'dark' ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
           {!isCollapsed && (
-            <span className="ml-2">
+            <span>
               {configuracoes?.tema === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
             </span>
           )}

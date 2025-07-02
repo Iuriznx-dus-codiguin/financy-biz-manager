@@ -40,21 +40,31 @@ export default function Index() {
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
 
   const handleSectionChange = useCallback((section: string) => {
-    console.log('Changing section to:', section);
-    if (section in SECTION_COMPONENTS) {
-      setActiveSection(section as SectionKey);
-    } else {
-      console.warn('Invalid section:', section);
+    try {
+      console.log('Index: Mudando seção para:', section);
+      if (section in SECTION_COMPONENTS) {
+        setActiveSection(section as SectionKey);
+      } else {
+        console.warn('Seção inválida:', section);
+        setActiveSection('painel');
+      }
+    } catch (error) {
+      console.error('Erro ao mudar seção:', error);
       setActiveSection('painel');
     }
   }, []);
 
   const CurrentComponent = useMemo(() => {
-    const Component = SECTION_COMPONENTS[activeSection];
-    return Component || Dashboard;
+    try {
+      const Component = SECTION_COMPONENTS[activeSection];
+      return Component || Dashboard;
+    } catch (error) {
+      console.error('Erro ao obter componente:', error);
+      return Dashboard;
+    }
   }, [activeSection]);
 
-  // Loading states
+  // Estados de carregamento
   if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -66,7 +76,7 @@ export default function Index() {
     );
   }
 
-  // Auth page
+  // Página de autenticação
   if (!user) {
     return <AuthPage />;
   }
@@ -76,7 +86,7 @@ export default function Index() {
     return <OnboardingFlow onComplete={completeOnboarding} />;
   }
 
-  // Main app
+  // Aplicação principal
   return (
     <ErrorBoundary>
       <SidebarProvider>
