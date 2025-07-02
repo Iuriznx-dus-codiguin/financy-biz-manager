@@ -7,44 +7,40 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useAppContext } from '@/contexts/AppContext';
 import { InteligenciaFinanceira } from '@/components/InteligenciaFinanceira';
 import { TooltipInfo } from '@/components/TooltipInfo';
-import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [periodo, setPeriodo] = useState('6meses');
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
-  const { toast } = useToast();
 
   // Calcular estatísticas reais incluindo custos da equipe
-  const totalReceitas = receitas?.reduce((sum, receita) => sum + receita.valor, 0) || 0;
-  const totalDespesas = despesas?.reduce((sum, despesa) => sum + despesa.valor, 0) || 0;
-  const totalImpostos = impostos?.filter(imposto => imposto.pago).reduce((sum, imposto) => sum + imposto.valor, 0) || 0;
+  const totalReceitas = receitas.reduce((sum, receita) => sum + receita.valor, 0);
+  const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
+  const totalImpostos = impostos.filter(imposto => imposto.pago).reduce((sum, imposto) => sum + imposto.valor, 0);
   
   // Calcular custos de equipe mensais
   const calcularCustosEquipe = () => {
     let custoMensal = 0;
     let custoDiario = 0;
     
-    if (membrosEquipe && membrosEquipe.length > 0) {
-      membrosEquipe.forEach(membro => {
-        if (membro.status === 'ativo') {
-          switch (membro.periodicidade) {
-            case 'mensal':
-              custoMensal += membro.salario;
-              custoDiario += membro.salario / 30;
-              break;
-            case 'semanal':
-              custoMensal += membro.salario * 4;
-              custoDiario += membro.salario / 7;
-              break;
-            case 'quinzenal':
-              custoMensal += membro.salario * 2;
-              custoDiario += membro.salario / 15;
-              break;
-          }
+    membrosEquipe.forEach(membro => {
+      if (membro.status === 'ativo') {
+        switch (membro.periodicidade) {
+          case 'mensal':
+            custoMensal += membro.salario;
+            custoDiario += membro.salario / 30;
+            break;
+          case 'semanal':
+            custoMensal += membro.salario * 4;
+            custoDiario += membro.salario / 7;
+            break;
+          case 'quinzenal':
+            custoMensal += membro.salario * 2;
+            custoDiario += membro.salario / 15;
+            break;
         }
-      });
-    }
+      }
+    });
     
     return { custoDiario, custoMensal };
   };
@@ -70,8 +66,8 @@ const Dashboard = () => {
 
   // Receitas e despesas do dia (hoje)
   const hoje = new Date().toISOString().split('T')[0];
-  const receitasHoje = receitas?.filter(r => r.data === hoje).reduce((sum, r) => sum + r.valor, 0) || 0;
-  const despesasHoje = despesas?.filter(d => d.data === hoje).reduce((sum, d) => sum + d.valor, 0) || 0;
+  const receitasHoje = receitas.filter(r => r.data === hoje).reduce((sum, r) => sum + r.valor, 0);
+  const despesasHoje = despesas.filter(d => d.data === hoje).reduce((sum, d) => sum + d.valor, 0);
 
   const stats = [
     { 
@@ -118,61 +114,52 @@ const Dashboard = () => {
     const agora = new Date();
     let dados = [];
 
-    try {
-      switch (periodo) {
-        case '1semana':
-          for (let i = 6; i >= 0; i--) {
-            const data = new Date(agora);
-            data.setDate(data.getDate() - i);
-            const dataStr = data.toISOString().split('T')[0];
-            const faturamentoDia = receitas
-              ?.filter(r => r.data === dataStr)
-              .reduce((sum, r) => sum + r.valor, 0) || 0;
-            dados.push({
-              period: data.toLocaleDateString('pt-BR', { weekday: 'short' }),
-              faturamento: faturamentoDia
-            });
-          }
-          break;
-        case '1mes':
-          for (let i = 29; i >= 0; i--) {
-            const data = new Date(agora);
-            data.setDate(data.getDate() - i);
-            const dataStr = data.toISOString().split('T')[0];
-            const faturamentoDia = receitas
-              ?.filter(r => r.data === dataStr)
-              .reduce((sum, r) => sum + r.valor, 0) || 0;
-            dados.push({
-              period: data.getDate().toString(),
-              faturamento: faturamentoDia
-            });
-          }
-          break;
-        default: // 6meses
-          const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-          for (let i = 0; i < 6; i++) {
-            const mes = new Date(agora.getFullYear(), agora.getMonth() - (5 - i), 1);
-            const mesStr = mes.getMonth() + 1;
-            const anoStr = mes.getFullYear();
-            const faturamentoMes = receitas
-              ?.filter(r => {
-                const dataReceita = new Date(r.data);
-                return dataReceita.getMonth() + 1 === mesStr && dataReceita.getFullYear() === anoStr;
-              })
-              .reduce((sum, r) => sum + r.valor, 0) || 0;
-            dados.push({
-              period: meses[i],
-              faturamento: faturamentoMes
-            });
-          }
-      }
-    } catch (error) {
-      console.error('Erro ao gerar dados do gráfico:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao carregar dados do gráfico",
-        variant: "destructive",
-      });
+    switch (periodo) {
+      case '1semana':
+        for (let i = 6; i >= 0; i--) {
+          const data = new Date(agora);
+          data.setDate(data.getDate() - i);
+          const dataStr = data.toISOString().split('T')[0];
+          const faturamentoDia = receitas
+            .filter(r => r.data === dataStr)
+            .reduce((sum, r) => sum + r.valor, 0);
+          dados.push({
+            period: data.toLocaleDateString('pt-BR', { weekday: 'short' }),
+            faturamento: faturamentoDia
+          });
+        }
+        break;
+      case '1mes':
+        for (let i = 29; i >= 0; i--) {
+          const data = new Date(agora);
+          data.setDate(data.getDate() - i);
+          const dataStr = data.toISOString().split('T')[0];
+          const faturamentoDia = receitas
+            .filter(r => r.data === dataStr)
+            .reduce((sum, r) => sum + r.valor, 0);
+          dados.push({
+            period: data.getDate().toString(),
+            faturamento: faturamentoDia
+          });
+        }
+        break;
+      default: // 6meses
+        const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+        for (let i = 0; i < 6; i++) {
+          const mes = new Date(agora.getFullYear(), agora.getMonth() - (5 - i), 1);
+          const mesStr = mes.getMonth() + 1;
+          const anoStr = mes.getFullYear();
+          const faturamentoMes = receitas
+            .filter(r => {
+              const dataReceita = new Date(r.data);
+              return dataReceita.getMonth() + 1 === mesStr && dataReceita.getFullYear() === anoStr;
+            })
+            .reduce((sum, r) => sum + r.valor, 0);
+          dados.push({
+            period: meses[i],
+            faturamento: faturamentoMes
+          });
+        }
     }
 
     return dados;
@@ -180,10 +167,10 @@ const Dashboard = () => {
 
   const chartData = gerarDadosGrafico();
 
-  const categorias = receitas?.reduce((acc, receita) => {
+  const categorias = receitas.reduce((acc, receita) => {
     acc[receita.categoria] = (acc[receita.categoria] || 0) + receita.valor;
     return acc;
-  }, {} as Record<string, number>) || {};
+  }, {} as Record<string, number>);
 
   const totalCategorias = Object.values(categorias).reduce((sum, val) => sum + val, 0);
   const categoriesData = Object.entries(categorias).map(([name, value], index) => ({
@@ -193,8 +180,8 @@ const Dashboard = () => {
   }));
 
   const allTransactions = [
-    ...(receitas?.map(r => ({ ...r, type: 'receita' as const })) || []),
-    ...(despesas?.map(d => ({ ...d, type: 'despesa' as const })) || [])
+    ...receitas.map(r => ({ ...r, type: 'receita' as const })),
+    ...despesas.map(d => ({ ...d, type: 'despesa' as const }))
   ].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()).slice(0, 5);
 
   const recentTransactions = allTransactions.map(transaction => ({
@@ -272,9 +259,9 @@ const Dashboard = () => {
 
       {/* Inteligência Financeira */}
       <InteligenciaFinanceira 
-        receitas={receitas || []}
-        despesas={despesas || []}
-        impostos={impostos || []}
+        receitas={receitas}
+        despesas={despesas}
+        impostos={impostos}
       />
 
       {/* Gráficos e Tabelas */}

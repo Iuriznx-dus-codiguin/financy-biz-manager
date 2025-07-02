@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { AuthPage } from '@/components/auth/AuthPage';
 import Dashboard from '@/components/sections/Dashboard';
 import Receitas from '@/components/sections/Receitas';
@@ -15,56 +15,50 @@ import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
+import { AppProvider } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-
-const SECTION_COMPONENTS = {
-  painel: Dashboard,
-  receitas: Receitas,
-  despesas: Despesas,
-  impostos: Impostos,
-  equipe: Equipe,
-  relatorios: Relatorios,
-  fechamento: Fechamento,
-  assinatura: Assinatura,
-  configuracoes: Configuracoes,
-  ajuda: Ajuda,
-} as const;
-
-type SectionKey = keyof typeof SECTION_COMPONENTS;
 
 export default function Index() {
-  const [activeSection, setActiveSection] = useState<SectionKey>('painel');
+  const [activeSection, setActiveSection] = useState('painel');
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
 
-  const handleSectionChange = useCallback((section: string) => {
+  const renderSection = () => {
+    console.log('Renderizando seção:', activeSection);
+    
     try {
-      console.log('Index: Mudando seção para:', section);
-      if (section in SECTION_COMPONENTS) {
-        setActiveSection(section as SectionKey);
-      } else {
-        console.warn('Seção inválida:', section);
-        setActiveSection('painel');
+      switch (activeSection) {
+        case 'painel':
+          return <Dashboard />;
+        case 'receitas':
+          return <Receitas />;
+        case 'despesas':
+          return <Despesas />;
+        case 'impostos':
+          return <Impostos />;
+        case 'equipe':
+          return <Equipe />;
+        case 'relatorios':
+          return <Relatorios />;
+        case 'fechamento':
+          return <Fechamento />;
+        case 'assinatura':
+          return <Assinatura />;
+        case 'configuracoes':
+          return <Configuracoes />;
+        case 'ajuda':
+          return <Ajuda />;
+        default:
+          console.log('Seção não encontrada, retornando Dashboard');
+          return <Dashboard />;
       }
     } catch (error) {
-      console.error('Erro ao mudar seção:', error);
-      setActiveSection('painel');
+      console.error('Erro ao renderizar seção:', error);
+      return <Dashboard />;
     }
-  }, []);
+  };
 
-  const CurrentComponent = useMemo(() => {
-    try {
-      const Component = SECTION_COMPONENTS[activeSection];
-      return Component || Dashboard;
-    } catch (error) {
-      console.error('Erro ao obter componente:', error);
-      return Dashboard;
-    }
-  }, [activeSection]);
-
-  // Estados de carregamento
   if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -76,35 +70,29 @@ export default function Index() {
     );
   }
 
-  // Página de autenticação
   if (!user) {
     return <AuthPage />;
   }
 
-  // Onboarding
   if (!isOnboardingComplete) {
     return <OnboardingFlow onComplete={completeOnboarding} />;
   }
 
-  // Aplicação principal
   return (
-    <ErrorBoundary>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar 
-            activeSection={activeSection} 
-            onSectionChange={handleSectionChange} 
-          />
-          <div className="flex-1 flex flex-col">
-            <main className="flex-1 p-8">
-              <ErrorBoundary>
-                <CurrentComponent />
-              </ErrorBoundary>
-            </main>
-            <Footer />
+    <div className="min-h-screen bg-background">
+      <AppProvider>
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full">
+            <AppSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+            <div className="flex-1 flex flex-col">
+              <main className="flex-1 p-8">
+                {renderSection()}
+              </main>
+              <Footer />
+            </div>
           </div>
-        </div>
-      </SidebarProvider>
-    </ErrorBoundary>
+        </SidebarProvider>
+      </AppProvider>
+    </div>
   );
 }

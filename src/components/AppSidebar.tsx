@@ -1,5 +1,5 @@
 
-import React, { useCallback } from 'react';
+import React from 'react';
 import { 
   Layout, 
   TrendingUp, 
@@ -10,9 +10,7 @@ import {
   HelpCircle,
   CreditCard,
   Calculator,
-  Users,
-  Sun,
-  Moon
+  Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,24 +54,21 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const { configuracoes, updateConfiguracoes } = useAppContext();
   const isCollapsed = state === 'collapsed';
 
-  const handleThemeToggle = useCallback(() => {
-    try {
-      const newTheme = configuracoes.tema === 'light' ? 'dark' : 'light';
-      console.log('Alterando tema de', configuracoes.tema, 'para', newTheme);
-      updateConfiguracoes({ tema: newTheme });
-    } catch (error) {
-      console.error('Erro ao alterar tema:', error);
-    }
-  }, [configuracoes.tema, updateConfiguracoes]);
+  const handleThemeToggle = () => {
+    updateConfiguracoes({
+      tema: configuracoes.tema === 'light' ? 'dark' : 'light'
+    });
+  };
 
-  const handleSectionClick = useCallback((sectionId: string) => {
+  const handleSectionChange = (sectionId: string) => {
+    console.log('Sidebar: Mudando seção de', activeSection, 'para', sectionId);
     try {
-      console.log('Mudando para seção:', sectionId);
       onSectionChange(sectionId);
+      console.log('Sidebar: Seção alterada com sucesso para', sectionId);
     } catch (error) {
-      console.error('Erro ao alterar seção:', error);
+      console.error('Sidebar: Erro ao alterar seção:', error);
     }
-  }, [onSectionChange]);
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -84,7 +79,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           </div>
           {!isCollapsed && (
             <div>
-              <h1 className="text-lg font-bold text-foreground">Finanças</h1>
+              <h1 className="text-lg font-bold text-foreground">Financy</h1>
               <p className="text-xs text-muted-foreground">Gestão Financeira</p>
             </div>
           )}
@@ -103,7 +98,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
-                      onClick={() => handleSectionClick(item.id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSectionChange(item.id);
+                      }}
                       isActive={isActive}
                       tooltip={isCollapsed ? item.label : undefined}
                     >
@@ -122,16 +120,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         <Button
           variant="outline"
           onClick={handleThemeToggle}
-          className="w-full flex items-center gap-2"
+          className="w-full"
         >
-          {configuracoes?.tema === 'dark' ? (
-            <Sun className="h-4 w-4" />
-          ) : (
-            <Moon className="h-4 w-4" />
-          )}
+          {configuracoes.tema === 'dark' ? '☀️' : '🌙'}
           {!isCollapsed && (
-            <span>
-              {configuracoes?.tema === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+            <span className="ml-2">
+              {configuracoes.tema === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
             </span>
           )}
         </Button>
