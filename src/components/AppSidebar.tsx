@@ -12,7 +12,8 @@ import {
   Calculator,
   Users,
   Sun,
-  Moon
+  Moon,
+  Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useTheme } from '@/hooks/useTheme';
@@ -36,6 +38,7 @@ const menuItems = [
   { id: 'despesas', label: 'Despesas', icon: TrendingDown },
   { id: 'impostos', label: 'Impostos e Taxas', icon: Receipt },
   { id: 'equipe', label: 'Equipe', icon: Users },
+  { id: 'metas', label: 'Metas', icon: Target },
   { id: 'relatorios', label: 'Relatórios', icon: PieChart },
   { id: 'fechamento', label: 'Fechamento de Caixa', icon: Calculator },
   { id: 'assinatura', label: 'Assinatura', icon: CreditCard },
@@ -65,16 +68,19 @@ export const AppSidebar: React.FC = () => {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center space-x-3 p-2">
-          <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">F</span>
-          </div>
-          {!isCollapsed && (
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Financy</h1>
-              <p className="text-xs text-muted-foreground">Gestão Financeira</p>
+        <div className="flex items-center justify-between p-2">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">F</span>
             </div>
-          )}
+            {!isCollapsed && (
+              <div>
+                <h1 className="text-lg font-bold text-foreground">Financy</h1>
+                <p className="text-xs text-muted-foreground">Gestão Financeira</p>
+              </div>
+            )}
+          </div>
+          {!isCollapsed && <SidebarTrigger />}
         </div>
       </SidebarHeader>
 
@@ -116,6 +122,11 @@ export const AppSidebar: React.FC = () => {
             </span>
           )}
         </Button>
+        {isCollapsed && (
+          <div className="px-2">
+            <SidebarTrigger />
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

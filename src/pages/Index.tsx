@@ -8,12 +8,13 @@ import Impostos from '@/components/sections/Impostos';
 import Relatorios from '@/components/sections/Relatorios';
 import Fechamento from '@/components/sections/Fechamento';
 import Equipe from '@/components/sections/Equipe';
+import Metas from '@/components/sections/Metas';
 import Assinatura from '@/components/sections/Assinatura';
 import Configuracoes from '@/components/sections/Configuracoes';
 import Ajuda from '@/components/sections/Ajuda';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { AppSidebar } from '@/components/AppSidebar';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -48,50 +49,49 @@ export default function Index() {
         <SidebarProvider>
           <div className="flex min-h-screen w-full">
             <AppSidebar />
-            <div className="flex-1 flex flex-col">
-              <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
-                <div className="container flex h-14 items-center">
-                  <SidebarTrigger />
-                </div>
-              </header>
-              <main className="flex-1">
-                <section id="painel" className="min-h-screen p-8">
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <main className="flex-1 overflow-y-auto">
+                <section id="painel" className="h-screen p-8 overflow-y-auto">
                   <Dashboard />
                 </section>
                 
-                <section id="receitas" className="min-h-screen p-8 border-t">
+                <section id="receitas" className="h-screen p-8 border-t overflow-y-auto">
                   <Receitas />
                 </section>
                 
-                <section id="despesas" className="min-h-screen p-8 border-t">
+                <section id="despesas" className="h-screen p-8 border-t overflow-y-auto">
                   <Despesas />
                 </section>
                 
-                <section id="impostos" className="min-h-screen p-8 border-t">
+                <section id="impostos" className="h-screen p-8 border-t overflow-y-auto">
                   <Impostos />
                 </section>
                 
-                <section id="equipe" className="min-h-screen p-8 border-t">
+                <section id="equipe" className="h-screen p-8 border-t overflow-y-auto">
                   <Equipe />
                 </section>
                 
-                <section id="relatorios" className="min-h-screen p-8 border-t">
+                <section id="metas" className="h-screen p-8 border-t overflow-y-auto">
+                  <Metas />
+                </section>
+                
+                <section id="relatorios" className="h-screen p-8 border-t overflow-y-auto">
                   <Relatorios />
                 </section>
                 
-                <section id="fechamento" className="min-h-screen p-8 border-t">
+                <section id="fechamento" className="h-screen p-8 border-t overflow-y-auto">
                   <Fechamento />
                 </section>
                 
-                <section id="assinatura" className="min-h-screen p-8 border-t">
+                <section id="assinatura" className="h-screen p-8 border-t overflow-y-auto">
                   <Assinatura />
                 </section>
                 
-                <section id="configuracoes" className="min-h-screen p-8 border-t">
+                <section id="configuracoes" className="h-screen p-8 border-t overflow-y-auto">
                   <Configuracoes />
                 </section>
                 
-                <section id="ajuda" className="min-h-screen p-8 border-t">
+                <section id="ajuda" className="h-screen p-8 border-t overflow-y-auto">
                   <Ajuda />
                 </section>
               </main>
