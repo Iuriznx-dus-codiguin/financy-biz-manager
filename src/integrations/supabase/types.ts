@@ -81,6 +81,51 @@ export type Database = {
         }
         Relationships: []
       }
+      metas: {
+        Row: {
+          categoria: string
+          cor: string
+          created_at: string
+          id: string
+          prazo: string
+          progresso: number
+          status: string
+          titulo: string
+          updated_at: string
+          user_id: string
+          valor_atual: number
+          valor_meta: number
+        }
+        Insert: {
+          categoria: string
+          cor?: string
+          created_at?: string
+          id?: string
+          prazo: string
+          progresso?: number
+          status?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+          valor_atual?: number
+          valor_meta: number
+        }
+        Update: {
+          categoria?: string
+          cor?: string
+          created_at?: string
+          id?: string
+          prazo?: string
+          progresso?: number
+          status?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+          valor_atual?: number
+          valor_meta?: number
+        }
+        Relationships: []
+      }
       onboarding_data: {
         Row: {
           created_at: string

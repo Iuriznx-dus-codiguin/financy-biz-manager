@@ -46,23 +46,18 @@ const menuItems = [
   { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle }
 ];
 
-export const AppSidebar: React.FC = () => {
+interface AppSidebarProps {
+  activeSection: string;
+  setActiveSection: (section: string) => void;
+}
+
+export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActiveSection }) => {
   const { state } = useSidebar();
   const { theme, setTheme } = useTheme();
   const isCollapsed = state === 'collapsed';
 
   const handleThemeToggle = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
-  const handleScrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }
   };
 
   return (
@@ -80,7 +75,7 @@ export const AppSidebar: React.FC = () => {
               </div>
             )}
           </div>
-          {!isCollapsed && <SidebarTrigger />}
+          <SidebarTrigger />
         </div>
       </SidebarHeader>
 
@@ -95,8 +90,9 @@ export const AppSidebar: React.FC = () => {
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
-                      onClick={() => handleScrollToSection(item.id)}
+                      onClick={() => setActiveSection(item.id)}
                       tooltip={isCollapsed ? item.label : undefined}
+                      isActive={activeSection === item.id}
                     >
                       <Icon className="h-4 w-4" />
                       <span>{item.label}</span>
@@ -122,11 +118,6 @@ export const AppSidebar: React.FC = () => {
             </span>
           )}
         </Button>
-        {isCollapsed && (
-          <div className="px-2">
-            <SidebarTrigger />
-          </div>
-        )}
       </SidebarFooter>
     </Sidebar>
   );

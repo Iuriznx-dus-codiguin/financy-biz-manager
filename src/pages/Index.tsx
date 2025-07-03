@@ -23,6 +23,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
+  const [activeSection, setActiveSection] = useState('painel');
 
   if (authLoading || onboardingLoading) {
     return (
@@ -43,57 +44,46 @@ export default function Index() {
     return <OnboardingFlow onComplete={completeOnboarding} />;
   }
 
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'painel':
+        return <Dashboard />;
+      case 'receitas':
+        return <Receitas />;
+      case 'despesas':
+        return <Despesas />;
+      case 'impostos':
+        return <Impostos />;
+      case 'equipe':
+        return <Equipe />;
+      case 'metas':
+        return <Metas />;
+      case 'relatorios':
+        return <Relatorios />;
+      case 'fechamento':
+        return <Fechamento />;
+      case 'assinatura':
+        return <Assinatura />;
+      case 'configuracoes':
+        return <Configuracoes />;
+      case 'ajuda':
+        return <Ajuda />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <AppProvider>
         <SidebarProvider>
           <div className="flex min-h-screen w-full">
-            <AppSidebar />
+            <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
             <div className="flex-1 flex flex-col overflow-hidden">
               <main className="flex-1 overflow-y-auto">
-                <section id="painel" className="h-screen p-8 overflow-y-auto">
-                  <Dashboard />
-                </section>
-                
-                <section id="receitas" className="h-screen p-8 border-t overflow-y-auto">
-                  <Receitas />
-                </section>
-                
-                <section id="despesas" className="h-screen p-8 border-t overflow-y-auto">
-                  <Despesas />
-                </section>
-                
-                <section id="impostos" className="h-screen p-8 border-t overflow-y-auto">
-                  <Impostos />
-                </section>
-                
-                <section id="equipe" className="h-screen p-8 border-t overflow-y-auto">
-                  <Equipe />
-                </section>
-                
-                <section id="metas" className="h-screen p-8 border-t overflow-y-auto">
-                  <Metas />
-                </section>
-                
-                <section id="relatorios" className="h-screen p-8 border-t overflow-y-auto">
-                  <Relatorios />
-                </section>
-                
-                <section id="fechamento" className="h-screen p-8 border-t overflow-y-auto">
-                  <Fechamento />
-                </section>
-                
-                <section id="assinatura" className="h-screen p-8 border-t overflow-y-auto">
-                  <Assinatura />
-                </section>
-                
-                <section id="configuracoes" className="h-screen p-8 border-t overflow-y-auto">
-                  <Configuracoes />
-                </section>
-                
-                <section id="ajuda" className="h-screen p-8 border-t overflow-y-auto">
-                  <Ajuda />
-                </section>
+                <div className="h-screen p-8 overflow-y-auto">
+                  {renderActiveSection()}
+                </div>
               </main>
               <Footer />
             </div>
