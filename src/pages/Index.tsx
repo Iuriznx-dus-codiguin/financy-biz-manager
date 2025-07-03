@@ -25,6 +25,9 @@ export default function Index() {
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
   const [activeSection, setActiveSection] = useState('painel');
 
+  // Debug log para verificar qual seção está ativa
+  console.log('Active section:', activeSection);
+
   if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -45,6 +48,8 @@ export default function Index() {
   }
 
   const renderActiveSection = () => {
+    console.log('Rendering section:', activeSection);
+    
     switch (activeSection) {
       case 'painel':
         return <Dashboard />;
@@ -69,6 +74,7 @@ export default function Index() {
       case 'ajuda':
         return <Ajuda />;
       default:
+        console.warn('Seção não encontrada:', activeSection);
         return <Dashboard />;
     }
   };
@@ -81,7 +87,9 @@ export default function Index() {
             <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
             <div className="flex-1 flex flex-col overflow-hidden">
               <main className="flex-1 overflow-y-auto p-8">
-                {renderActiveSection()}
+                <div className="min-h-full">
+                  {renderActiveSection()}
+                </div>
               </main>
               <Footer />
             </div>
