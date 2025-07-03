@@ -60,13 +60,21 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const handleSectionChange = (sectionId: string) => {
-    console.log('Sidebar: Mudando seção de', activeSection, 'para', sectionId);
-    try {
-      onSectionChange(sectionId);
-      console.log('Sidebar: Seção alterada com sucesso para', sectionId);
-    } catch (error) {
-      console.error('Sidebar: Erro ao alterar seção:', error);
+  const handleSectionClick = (sectionId: string) => {
+    console.log('Sidebar: Navegando para seção', sectionId);
+    
+    // Atualiza o estado ativo
+    onSectionChange(sectionId);
+    
+    // Faz scroll suave até a seção
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      console.warn(`Elemento com ID ${sectionId} não encontrado`);
     }
   };
 
@@ -100,7 +108,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     <SidebarMenuButton
                       onClick={(e) => {
                         e.preventDefault();
-                        handleSectionChange(item.id);
+                        handleSectionClick(item.id);
                       }}
                       isActive={isActive}
                       tooltip={isCollapsed ? item.label : undefined}
