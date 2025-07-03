@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import { TimeFilter } from '@/components/TimeFilter';
 import { LoadingAnimation } from '@/components/LoadingAnimation';
 import { TooltipInfo } from '@/components/TooltipInfo';
 import { isDateInRange } from '@/utils/dateFilters';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -20,6 +19,7 @@ const Dashboard = () => {
   const [periodo, setPeriodo] = useState('6meses');
   const [timeFilter, setTimeFilter] = useState('hoje');
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
+  const { toast } = useToast();
 
   // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
@@ -244,10 +244,19 @@ const Dashboard = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      toast.success('Fechamento de caixa registrado com sucesso!');
+      toast({
+        title: "Sucesso!",
+        description: "Fechamento de caixa registrado com sucesso!",
+        duration: 3000,
+      });
       setIsDialogOpen(false);
     } catch (error) {
-      toast.error('Erro ao registrar fechamento de caixa');
+      toast({
+        title: "Erro",
+        description: "Erro ao registrar fechamento de caixa",
+        variant: "destructive",
+        duration: 3000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -259,6 +268,9 @@ const Dashboard = () => {
         isLoading={isLoading}
         message="Salvando fechamento de caixa..."
         successMessage="Fechamento salvo com sucesso!"
+        onComplete={() => {
+          // Não mostrar toast adicional aqui, já está sendo mostrado no handleFecharCaixa
+        }}
       />
       
       <div className="flex justify-between items-center">

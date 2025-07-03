@@ -1,13 +1,14 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
+import { CashClosingToast } from '@/components/CashClosingToast';
 
 const Fechamento = () => {
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showToast, setShowToast] = useState(false);
 
   // Calcular valores reais baseados na data selecionada
   const calcularValoresDia = (data: string) => {
@@ -48,12 +49,20 @@ const Fechamento = () => {
   const saldoLiquido = receitasDia - despesasDia - impostosVencendoDia - custosEquipeDia;
 
   const handleFechamento = () => {
-    // Lógica de fechamento de caixa seria implementada aqui
-    alert('Fechamento de caixa registrado com sucesso!');
+    // Simular o processo de fechamento
+    setTimeout(() => {
+      setShowToast(true);
+    }, 500);
   };
 
   return (
     <section className="space-y-8">
+      <CashClosingToast 
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        message="Fechamento de caixa registrado com sucesso!"
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Fechamento de Caixa</h2>
