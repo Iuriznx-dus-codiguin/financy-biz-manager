@@ -13,10 +13,6 @@ const Dashboard = () => {
   const [periodo, setPeriodo] = useState('6meses');
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
 
-  console.log('Dashboard - Receitas:', receitas);
-  console.log('Dashboard - Despesas:', despesas);
-  console.log('Dashboard - Impostos:', impostos);
-
   // Calcular estatísticas reais incluindo custos da equipe
   const totalReceitas = receitas.reduce((sum, receita) => sum + receita.valor, 0);
   const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
@@ -51,7 +47,7 @@ const Dashboard = () => {
 
   const { custoDiario: custoEquipeDiario, custoMensal: custoEquipeMensal } = calcularCustosEquipe();
   const totalCustosOperacionais = totalDespesas + totalImpostos + custoEquipeMensal;
-  const lucro = totalReceitas - totalCustosOperacionais;
+  const saldoAtual = totalReceitas - totalCustosOperacionais;
   const faturamentoBruto = totalReceitas;
 
   // Calcular ROI como número normal
@@ -68,18 +64,10 @@ const Dashboard = () => {
 
   const roi = calcularROI();
 
-  // Receitas e despesas do dia (hoje) - corrigido para comparar apenas a data
-  const hoje = new Date();
-  const hojeStr = hoje.toISOString().split('T')[0]; // formato YYYY-MM-DD
-  
-  console.log('Data de hoje:', hojeStr);
-  console.log('Despesas filtradas por hoje:', despesas.filter(d => d.data === hojeStr));
-  
-  const receitasHoje = receitas.filter(r => r.data === hojeStr).reduce((sum, r) => sum + r.valor, 0);
-  const despesasHoje = despesas.filter(d => d.data === hojeStr).reduce((sum, d) => sum + d.valor, 0);
-
-  console.log('Receitas hoje:', receitasHoje);
-  console.log('Despesas hoje:', despesasHoje);
+  // Receitas e despesas do dia (hoje)
+  const hoje = new Date().toISOString().split('T')[0];
+  const receitasHoje = receitas.filter(r => r.data === hoje).reduce((sum, r) => sum + r.valor, 0);
+  const despesasHoje = despesas.filter(d => d.data === hoje).reduce((sum, d) => sum + d.valor, 0);
 
   const stats = [
     { 
@@ -107,10 +95,10 @@ const Dashboard = () => {
       color: totalImpostos === 0 ? 'text-muted-foreground' : 'text-red-600'
     },
     { 
-      title: 'Lucro', 
-      value: `R$ ${lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
-      positive: lucro >= 0,
-      color: lucro === 0 ? 'text-muted-foreground' : (lucro >= 0 ? 'text-green-600' : 'text-red-600')
+      title: 'Saldo Líquido', 
+      value: `R$ ${saldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
+      positive: saldoAtual >= 0,
+      color: saldoAtual === 0 ? 'text-muted-foreground' : (saldoAtual >= 0 ? 'text-green-600' : 'text-red-600')
     },
     {
       title: 'ROI',
@@ -121,6 +109,7 @@ const Dashboard = () => {
     }
   ];
 
+  // Gerar dados do gráfico baseado no período selecionado
   const gerarDadosGrafico = () => {
     const agora = new Date();
     let dados = [];
@@ -234,7 +223,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                  <p className="text-sm text-muted-foreground">Lucro Líquido</p>
+                  <p className="text-sm text-muted-foreground">Saldo Líquido</p>
                   <p className="text-2xl font-bold text-primary">R$ {(receitasHoje - despesasHoje - custoEquipeDiario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <Button 

@@ -16,6 +16,7 @@ import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
+import { AppProvider } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 
@@ -23,8 +24,6 @@ export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
   const [activeSection, setActiveSection] = useState('painel');
-
-  console.log('Active section:', activeSection);
 
   if (authLoading || onboardingLoading) {
     return (
@@ -46,40 +45,49 @@ export default function Index() {
   }
 
   const renderActiveSection = () => {
-    console.log('Rendering section:', activeSection);
-    
-    const sections = {
-      'painel': <Dashboard key="dashboard" />,
-      'receitas': <Receitas key="receitas" />,
-      'despesas': <Despesas key="despesas" />,
-      'impostos': <Impostos key="impostos" />,
-      'equipe': <Equipe key="equipe" />,
-      'metas': <Metas key="metas" />,
-      'relatorios': <Relatorios key="relatorios" />,
-      'fechamento': <Fechamento key="fechamento" />,
-      'assinatura': <Assinatura key="assinatura" />,
-      'configuracoes': <Configuracoes key="configuracoes" />,
-      'ajuda': <Ajuda key="ajuda" />
-    };
-
-    return sections[activeSection as keyof typeof sections] || sections['painel'];
+    switch (activeSection) {
+      case 'painel':
+        return <Dashboard />;
+      case 'receitas':
+        return <Receitas />;
+      case 'despesas':
+        return <Despesas />;
+      case 'impostos':
+        return <Impostos />;
+      case 'equipe':
+        return <Equipe />;
+      case 'metas':
+        return <Metas />;
+      case 'relatorios':
+        return <Relatorios />;
+      case 'fechamento':
+        return <Fechamento />;
+      case 'assinatura':
+        return <Assinatura />;
+      case 'configuracoes':
+        return <Configuracoes />;
+      case 'ajuda':
+        return <Ajuda />;
+      default:
+        return <Dashboard />;
+    }
   };
 
   return (
     <div className="h-screen bg-background">
-      <SidebarProvider>
-        <div className="flex h-full w-full">
-          <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <main className="flex-1 overflow-y-auto p-8">
-              <div className="min-h-full">
+      <AppProvider>
+        <SidebarProvider>
+          <div className="flex h-full w-full">
+            <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <main className="flex-1 overflow-y-auto p-8">
                 {renderActiveSection()}
-              </div>
-            </main>
-            <Footer />
+              </main>
+              <Footer />
+            </div>
           </div>
-        </div>
-      </SidebarProvider>
+        </SidebarProvider>
+      </AppProvider>
     </div>
   );
 }
