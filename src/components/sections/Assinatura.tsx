@@ -1,17 +1,23 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { CreditCard, Check, Calendar, AlertTriangle, Crown, Sparkles, Bot, Lock } from 'lucide-react';
 
 const Assinatura: React.FC = () => {
-  const handlePayment = (planType: string) => {
+  const [isAnnual, setIsAnnual] = useState(false);
+
+  const handlePayment = (planType: string, period: string) => {
     // URLs diferentes para cada plano
     const urls = {
-      plus: 'https://pay.cakto.com.br/4cwxcix_453682',
-      premium: 'https://pay.cakto.com.br/premium_plan', // URL fictícia
-      enterprise: '#' // Indisponível
+      'plus-monthly': 'https://pay.cakto.com.br/4cwxcix_453682',
+      'plus-annual': 'https://pay.cakto.com.br/plus_annual_plan', // URL fictícia
+      'premium-monthly': 'https://pay.cakto.com.br/premium_plan', // URL fictícia
+      'premium-annual': 'https://pay.cakto.com.br/premium_annual_plan', // URL fictícia
+      'enterprise': '#' // Indisponível
     };
     
     if (planType === 'enterprise') {
@@ -19,15 +25,35 @@ const Assinatura: React.FC = () => {
       return;
     }
     
-    window.open(urls[planType as keyof typeof urls], '_blank');
+    const urlKey = `${planType}-${period}` as keyof typeof urls;
+    window.open(urls[urlKey], '_blank');
+  };
+
+  const getPrice = (basePrice: number, annualDiscount: number) => {
+    if (isAnnual) {
+      const annualPrice = basePrice * 12;
+      const discountedPrice = annualPrice * (1 - annualDiscount / 100);
+      return {
+        price: discountedPrice,
+        period: '/ano',
+        discount: annualDiscount,
+        originalPrice: annualPrice
+      };
+    }
+    return {
+      price: basePrice,
+      period: '/mês',
+      discount: 0,
+      originalPrice: basePrice
+    };
   };
 
   const plans = [
     {
       id: 'plus',
       name: 'Financy Plus',
-      price: 'R$ 49,90',
-      period: '/mês',
+      basePrice: 49.90,
+      annualDiscount: 10,
       description: 'Ideal para freelancers e pequenos negócios',
       icon: <CreditCard className="h-6 w-6" />,
       color: 'blue',
@@ -44,8 +70,8 @@ const Assinatura: React.FC = () => {
     {
       id: 'premium',
       name: 'Financy Premium',
-      price: 'R$ 89,90',
-      period: '/mês',
+      basePrice: 89.90,
+      annualDiscount: 12,
       description: 'Para empresas que querem crescer com premiações',
       icon: <Crown className="h-6 w-6" />,
       color: 'purple',
@@ -64,8 +90,8 @@ const Assinatura: React.FC = () => {
     {
       id: 'enterprise',
       name: 'Financy Enterprise',
-      price: 'R$ 199,90',
-      period: '/mês',
+      basePrice: 199.90,
+      annualDiscount: 15,
       description: 'A solução mais completa com IA especializada',
       icon: <Sparkles className="h-6 w-6" />,
       color: 'gold',
@@ -90,109 +116,160 @@ const Assinatura: React.FC = () => {
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Transforme sua gestão financeira com soluções inovadoras. Escolha o plano ideal para seu negócio.
         </p>
+        
+        {/* Toggle Mensal/Anual */}
+        <div className="flex items-center justify-center space-x-4 mt-6">
+          <Label htmlFor="billing-toggle" className={`font-medium ${!isAnnual ? 'text-primary' : 'text-muted-foreground'}`}>
+            Mensal
+          </Label>
+          <Switch
+            id="billing-toggle"
+            checked={isAnnual}
+            onCheckedChange={setIsAnnual}
+            className="data-[state=checked]:bg-primary"
+          />
+          <Label htmlFor="billing-toggle" className={`font-medium ${isAnnual ? 'text-primary' : 'text-muted-foreground'}`}>
+            Anual
+          </Label>
+          {isAnnual && (
+            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+              Economize até 12%
+            </Badge>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {plans.map((plan) => (
-          <Card 
-            key={plan.id} 
-            className={`relative rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl ${
-              plan.id === 'premium' ? 'border-2 border-purple-200 dark:border-purple-800 scale-105' : ''
-            } ${!plan.available ? 'opacity-75' : ''}`}
-          >
-            {plan.id === 'premium' && (
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-purple-600 text-white px-4 py-1 rounded-full">
-                  Mais Popular
-                </Badge>
-              </div>
-            )}
-            
-            {!plan.available && (
-              <div className="absolute -top-4 right-4">
-                <Badge variant="secondary" className="bg-gray-500 text-white px-3 py-1 rounded-full flex items-center gap-1">
-                  <Lock className="h-3 w-3" />
-                  Em Breve
-                </Badge>
-              </div>
-            )}
-
-            <CardHeader className="text-center pb-8">
-              <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 ${
-                plan.color === 'blue' ? 'bg-blue-100 text-blue-600' :
-                plan.color === 'purple' ? 'bg-purple-100 text-purple-600' :
-                'bg-gradient-to-br from-yellow-400 to-orange-500 text-white'
-              }`}>
-                {plan.icon}
-              </div>
-              
-              <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-              {plan.badge && (
-                <Badge variant="outline" className="mx-auto w-fit">
-                  {plan.badge}
-                </Badge>
-              )}
-              <CardDescription className="text-base">{plan.description}</CardDescription>
-              
-              <div className="pt-4">
-                <div className="text-5xl font-bold text-foreground">{plan.price}</div>
-                <div className="text-muted-foreground">{plan.period}</div>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                {plan.features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className={`rounded-full p-1 ${
-                      plan.color === 'blue' ? 'bg-blue-100' :
-                      plan.color === 'purple' ? 'bg-purple-100' :
-                      'bg-gradient-to-br from-yellow-100 to-orange-100'
-                    }`}>
-                      <Check className={`h-3 w-3 ${
-                        plan.color === 'blue' ? 'text-blue-600' :
-                        plan.color === 'purple' ? 'text-purple-600' :
-                        'text-orange-600'
-                      }`} />
-                    </div>
-                    <span className="text-sm">{feature}</span>
-                  </div>
-                ))}
-              </div>
-
-              <Button 
-                onClick={() => handlePayment(plan.id)}
-                disabled={!plan.available}
-                className={`w-full h-12 rounded-xl font-semibold transition-all duration-300 ${
-                  plan.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
-                  plan.color === 'purple' ? 'bg-purple-600 hover:bg-purple-700' :
-                  plan.available ? 'bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700' :
-                  'bg-gray-400 cursor-not-allowed'
-                } text-white`}
-              >
-                {!plan.available ? (
-                  <>
-                    <Lock className="mr-2 h-4 w-4" />
-                    Indisponível no Momento
-                  </>
-                ) : plan.id === 'enterprise' ? (
-                  <>
-                    <Bot className="mr-2 h-4 w-4" />
-                    Solicitar Acesso
-                  </>
-                ) : (
-                  'Assinar Agora'
-                )}
-              </Button>
-
-              {plan.available && (
-                <div className="text-xs text-muted-foreground text-center">
-                  Pagamento seguro processado via Cakto
+        {plans.map((plan) => {
+          const pricing = getPrice(plan.basePrice, plan.annualDiscount);
+          
+          return (
+            <Card 
+              key={plan.id} 
+              className={`relative rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl ${
+                plan.id === 'premium' ? 'border-2 border-purple-200 dark:border-purple-800 scale-105' : ''
+              } ${!plan.available ? 'opacity-75' : ''}`}
+            >
+              {plan.id === 'premium' && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-purple-600 text-white px-4 py-1 rounded-full">
+                    Mais Popular
+                  </Badge>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        ))}
+              
+              {!plan.available && (
+                <div className="absolute -top-4 right-4">
+                  <Badge variant="secondary" className="bg-gray-500 text-white px-3 py-1 rounded-full flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    Em Breve
+                  </Badge>
+                </div>
+              )}
+
+              {isAnnual && pricing.discount > 0 && plan.available && (
+                <div className="absolute -top-4 right-4">
+                  <Badge className="bg-green-600 text-white px-3 py-1 rounded-full">
+                    -{pricing.discount}%
+                  </Badge>
+                </div>
+              )}
+
+              <CardHeader className="text-center pb-8">
+                <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 ${
+                  plan.color === 'blue' ? 'bg-blue-100 text-blue-600' :
+                  plan.color === 'purple' ? 'bg-purple-100 text-purple-600' :
+                  'bg-gradient-to-br from-yellow-400 to-orange-500 text-white'
+                }`}>
+                  {plan.icon}
+                </div>
+                
+                <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
+                {plan.badge && (
+                  <Badge variant="outline" className="mx-auto w-fit">
+                    {plan.badge}
+                  </Badge>
+                )}
+                <CardDescription className="text-base">{plan.description}</CardDescription>
+                
+                <div className="pt-4">
+                  {isAnnual && pricing.discount > 0 ? (
+                    <div className="space-y-2">
+                      <div className="text-sm text-muted-foreground line-through">
+                        De R$ {pricing.originalPrice.toFixed(2)}{pricing.period}
+                      </div>
+                      <div className="text-5xl font-bold text-foreground">
+                        R$ {pricing.price.toFixed(2)}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-5xl font-bold text-foreground">
+                      R$ {pricing.price.toFixed(2)}
+                    </div>
+                  )}
+                  <div className="text-muted-foreground">{pricing.period}</div>
+                  {isAnnual && (
+                    <div className="text-sm text-muted-foreground mt-2">
+                      R$ {(pricing.price / 12).toFixed(2)}/mês
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-6">
+                <div className="space-y-3">
+                  {plan.features.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className={`rounded-full p-1 ${
+                        plan.color === 'blue' ? 'bg-blue-100' :
+                        plan.color === 'purple' ? 'bg-purple-100' :
+                        'bg-gradient-to-br from-yellow-100 to-orange-100'
+                      }`}>
+                        <Check className={`h-3 w-3 ${
+                          plan.color === 'blue' ? 'text-blue-600' :
+                          plan.color === 'purple' ? 'text-purple-600' :
+                          'text-orange-600'
+                        }`} />
+                      </div>
+                      <span className="text-sm">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Button 
+                  onClick={() => handlePayment(plan.id, isAnnual ? 'annual' : 'monthly')}
+                  disabled={!plan.available}
+                  className={`w-full h-12 rounded-xl font-semibold transition-all duration-300 ${
+                    plan.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
+                    plan.color === 'purple' ? 'bg-purple-600 hover:bg-purple-700' :
+                    plan.available ? 'bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700' :
+                    'bg-gray-400 cursor-not-allowed'
+                  } text-white`}
+                >
+                  {!plan.available ? (
+                    <>
+                      <Lock className="mr-2 h-4 w-4" />
+                      Indisponível no Momento
+                    </>
+                  ) : plan.id === 'enterprise' ? (
+                    <>
+                      <Bot className="mr-2 h-4 w-4" />
+                      Solicitar Acesso
+                    </>
+                  ) : (
+                    'Assinar Agora'
+                  )}
+                </Button>
+
+                {plan.available && (
+                  <div className="text-xs text-muted-foreground text-center">
+                    Pagamento seguro processado via Cakto
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Status da Assinatura */}
@@ -252,6 +329,13 @@ const Assinatura: React.FC = () => {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
+              <h4 className="font-semibold mb-2">💰 Quanto economizo com o plano anual?</h4>
+              <p className="text-sm text-muted-foreground">
+                Com o plano anual você economiza 10% no Financy Plus (R$ 539,90/ano) e 12% no Premium 
+                (R$ 889,90/ano), além de não se preocupar com renovações mensais.
+              </p>
+            </div>
+            <div>
               <h4 className="font-semibold mb-2">🎁 O que são as premiações anuais?</h4>
               <p className="text-sm text-muted-foreground">
                 Assinantes Premium e Enterprise recebem premiações exclusivas todo ano, 
@@ -270,13 +354,6 @@ const Assinatura: React.FC = () => {
               <p className="text-sm text-muted-foreground">
                 Sim! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. 
                 As alterações são aplicadas no próximo ciclo de cobrança.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">🔒 Quando o plano Enterprise estará disponível?</h4>
-              <p className="text-sm text-muted-foreground">
-                O plano Enterprise está em desenvolvimento final. Entre em contato para 
-                ser notificado assim que for lançado e garantir condições especiais.
               </p>
             </div>
           </div>

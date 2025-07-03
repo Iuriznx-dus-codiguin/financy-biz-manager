@@ -17,7 +17,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 
 export default function Index() {
