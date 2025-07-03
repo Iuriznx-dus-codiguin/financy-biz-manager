@@ -2,13 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
-
-interface OnboardingData {
-  user_type: string;
-  how_did_you_know: string;
-  salary_range?: string;
-  revenue_range?: string;
-}
+import { OnboardingData } from '@/types/onboarding';
 
 interface OnboardingContextType {
   isOnboardingComplete: boolean;

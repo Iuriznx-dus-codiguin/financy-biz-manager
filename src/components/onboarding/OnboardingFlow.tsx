@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,13 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, User, Users, Building, Building2, DollarSign, Star, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface OnboardingData {
-  userType: string;
-  howDidYouKnow: string;
-  salaryRange: string;
-  revenueRange: string;
-}
+import { OnboardingData } from '@/types/onboarding';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>;
@@ -23,10 +18,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<OnboardingData>({
-    userType: '',
-    howDidYouKnow: '',
-    salaryRange: '',
-    revenueRange: ''
+    user_type: '',
+    how_did_you_know: '',
+    salary_range: '',
+    revenue_range: ''
   });
   const { toast } = useToast();
 
@@ -95,11 +90,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return data.userType !== '';
+        return data.user_type !== '';
       case 2:
-        return data.howDidYouKnow !== '';
+        return data.how_did_you_know !== '';
       case 3:
-        return data.userType === 'personal' ? data.salaryRange !== '' : data.revenueRange !== '';
+        return data.user_type === 'personal' ? data.salary_range !== '' : data.revenue_range !== '';
       default:
         return false;
     }
@@ -120,11 +115,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <div
               key={type.id}
               className={`relative cursor-pointer transition-all duration-200 ${
-                data.userType === type.id 
+                data.user_type === type.id 
                   ? 'ring-2 ring-primary bg-primary/5' 
                   : 'hover:bg-muted/50'
               }`}
-              onClick={() => setData({ ...data, userType: type.id })}
+              onClick={() => setData({ ...data, user_type: type.id })}
             >
               <div className="flex items-center space-x-4 p-4 rounded-lg border">
                 <div className="flex-shrink-0">
@@ -134,7 +129,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   <h3 className="font-semibold">{type.label}</h3>
                   <p className="text-sm text-muted-foreground">{type.description}</p>
                 </div>
-                {data.userType === type.id && (
+                {data.user_type === type.id && (
                   <div className="absolute top-2 right-2">
                     <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                       <span className="text-white text-xs">✓</span>
@@ -162,11 +157,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           <div
             key={option.id}
             className={`relative cursor-pointer transition-all duration-200 ${
-              data.howDidYouKnow === option.id 
+              data.how_did_you_know === option.id 
                 ? 'ring-2 ring-primary bg-primary/5' 
                 : 'hover:bg-muted/50'
             }`}
-            onClick={() => setData({ ...data, howDidYouKnow: option.id })}
+            onClick={() => setData({ ...data, how_did_you_know: option.id })}
           >
             <div className="flex items-center space-x-4 p-4 rounded-lg border">
               <div className="flex-shrink-0 text-2xl">
@@ -175,7 +170,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               <div className="flex-1">
                 <h3 className="font-semibold">{option.label}</h3>
               </div>
-              {data.howDidYouKnow === option.id && (
+              {data.how_did_you_know === option.id && (
                 <div className="absolute top-2 right-2">
                   <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                     <span className="text-white text-xs">✓</span>
@@ -193,13 +188,13 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">
-          {data.userType === 'personal' 
+          {data.user_type === 'personal' 
             ? 'Qual a faixa do seu salário?' 
             : 'Qual a média de faturamento mensal?'
           }
         </h2>
         <p className="text-muted-foreground">
-          {data.userType === 'personal' 
+          {data.user_type === 'personal' 
             ? 'Isso nos ajudará a personalizar suas metas financeiras.' 
             : 'Isso nos ajudará a configurar os recursos adequados para seu negócio.'
           }
@@ -208,12 +203,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
       <div className="max-w-md mx-auto space-y-4">
         <Select 
-          value={data.userType === 'personal' ? data.salaryRange : data.revenueRange} 
+          value={data.user_type === 'personal' ? data.salary_range : data.revenue_range} 
           onValueChange={(value) => {
-            if (data.userType === 'personal') {
-              setData({ ...data, salaryRange: value });
+            if (data.user_type === 'personal') {
+              setData({ ...data, salary_range: value });
             } else {
-              setData({ ...data, revenueRange: value });
+              setData({ ...data, revenue_range: value });
             }
           }}
         >
@@ -221,7 +216,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <SelectValue placeholder="Selecione uma faixa" />
           </SelectTrigger>
           <SelectContent>
-            {(data.userType === 'personal' ? salaryRanges : revenueRanges).map((range) => (
+            {(data.user_type === 'personal' ? salaryRanges : revenueRanges).map((range) => (
               <SelectItem key={range.value} value={range.value}>
                 {range.label}
               </SelectItem>
