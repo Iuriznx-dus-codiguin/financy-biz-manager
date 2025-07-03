@@ -13,51 +13,15 @@ import Configuracoes from '@/components/sections/Configuracoes';
 import Ajuda from '@/components/sections/Ajuda';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { AppSidebar } from '@/components/AppSidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 
 export default function Index() {
-  const [activeSection, setActiveSection] = useState('painel');
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
-
-  const renderSection = () => {
-    console.log('Renderizando seção:', activeSection);
-    
-    try {
-      switch (activeSection) {
-        case 'painel':
-          return <Dashboard />;
-        case 'receitas':
-          return <Receitas />;
-        case 'despesas':
-          return <Despesas />;
-        case 'impostos':
-          return <Impostos />;
-        case 'equipe':
-          return <Equipe />;
-        case 'relatorios':
-          return <Relatorios />;
-        case 'fechamento':
-          return <Fechamento />;
-        case 'assinatura':
-          return <Assinatura />;
-        case 'configuracoes':
-          return <Configuracoes />;
-        case 'ajuda':
-          return <Ajuda />;
-        default:
-          console.log('Seção não encontrada, retornando Dashboard');
-          return <Dashboard />;
-      }
-    } catch (error) {
-      console.error('Erro ao renderizar seção:', error);
-      return <Dashboard />;
-    }
-  };
 
   if (authLoading || onboardingLoading) {
     return (
@@ -83,10 +47,53 @@ export default function Index() {
       <AppProvider>
         <SidebarProvider>
           <div className="flex min-h-screen w-full">
-            <AppSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+            <AppSidebar />
             <div className="flex-1 flex flex-col">
-              <main className="flex-1 p-8">
-                {renderSection()}
+              <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+                <div className="container flex h-14 items-center">
+                  <SidebarTrigger />
+                </div>
+              </header>
+              <main className="flex-1">
+                <section id="painel" className="min-h-screen p-8">
+                  <Dashboard />
+                </section>
+                
+                <section id="receitas" className="min-h-screen p-8 border-t">
+                  <Receitas />
+                </section>
+                
+                <section id="despesas" className="min-h-screen p-8 border-t">
+                  <Despesas />
+                </section>
+                
+                <section id="impostos" className="min-h-screen p-8 border-t">
+                  <Impostos />
+                </section>
+                
+                <section id="equipe" className="min-h-screen p-8 border-t">
+                  <Equipe />
+                </section>
+                
+                <section id="relatorios" className="min-h-screen p-8 border-t">
+                  <Relatorios />
+                </section>
+                
+                <section id="fechamento" className="min-h-screen p-8 border-t">
+                  <Fechamento />
+                </section>
+                
+                <section id="assinatura" className="min-h-screen p-8 border-t">
+                  <Assinatura />
+                </section>
+                
+                <section id="configuracoes" className="min-h-screen p-8 border-t">
+                  <Configuracoes />
+                </section>
+                
+                <section id="ajuda" className="min-h-screen p-8 border-t">
+                  <Ajuda />
+                </section>
               </main>
               <Footer />
             </div>

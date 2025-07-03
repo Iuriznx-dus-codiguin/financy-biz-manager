@@ -30,11 +30,6 @@ import {
 } from '@/components/ui/sidebar';
 import { useTheme } from '@/hooks/useTheme';
 
-interface AppSidebarProps {
-  activeSection: string;
-  onSectionChange: (section: string) => void;
-}
-
 const menuItems = [
   { id: 'painel', label: 'Painel', icon: Layout },
   { id: 'receitas', label: 'Receitas', icon: TrendingUp },
@@ -48,10 +43,7 @@ const menuItems = [
   { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle }
 ];
 
-export const AppSidebar: React.FC<AppSidebarProps> = ({ 
-  activeSection, 
-  onSectionChange
-}) => {
+export const AppSidebar: React.FC = () => {
   const { state } = useSidebar();
   const { theme, setTheme } = useTheme();
   const isCollapsed = state === 'collapsed';
@@ -60,13 +52,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const handleSectionChange = (sectionId: string) => {
-    console.log('Sidebar: Mudando seção de', activeSection, 'para', sectionId);
-    try {
-      onSectionChange(sectionId);
-      console.log('Sidebar: Seção alterada com sucesso para', sectionId);
-    } catch (error) {
-      console.error('Sidebar: Erro ao alterar seção:', error);
+  const handleScrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
     }
   };
 
@@ -93,16 +85,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <SidebarMenu>
               {menuItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = activeSection === item.id;
                 
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleSectionChange(item.id);
-                      }}
-                      isActive={isActive}
+                      onClick={() => handleScrollToSection(item.id)}
                       tooltip={isCollapsed ? item.label : undefined}
                     >
                       <Icon className="h-4 w-4" />
