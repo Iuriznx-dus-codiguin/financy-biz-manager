@@ -80,8 +80,8 @@ export default function Index() {
   };
 
   return (
-    <div className="h-screen bg-background">
-      <AppProvider>
+    <AppProvider>
+      <div className="h-screen bg-background">
         <SidebarProvider>
           <div className="flex h-full w-full">
             <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
@@ -95,7 +95,7 @@ export default function Index() {
             </div>
           </div>
         </SidebarProvider>
-      </AppProvider>
-    </div>
+      </div>
+    </AppProvider>
   );
 }

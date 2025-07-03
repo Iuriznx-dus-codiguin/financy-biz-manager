@@ -47,7 +47,7 @@ const Dashboard = () => {
 
   const { custoDiario: custoEquipeDiario, custoMensal: custoEquipeMensal } = calcularCustosEquipe();
   const totalCustosOperacionais = totalDespesas + totalImpostos + custoEquipeMensal;
-  const saldoAtual = totalReceitas - totalCustosOperacionais;
+  const lucro = totalReceitas - totalCustosOperacionais;
   const faturamentoBruto = totalReceitas;
 
   // Calcular ROI como número normal
@@ -95,10 +95,10 @@ const Dashboard = () => {
       color: totalImpostos === 0 ? 'text-muted-foreground' : 'text-red-600'
     },
     { 
-      title: 'Saldo Líquido', 
-      value: `R$ ${saldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
-      positive: saldoAtual >= 0,
-      color: saldoAtual === 0 ? 'text-muted-foreground' : (saldoAtual >= 0 ? 'text-green-600' : 'text-red-600')
+      title: 'Lucro', 
+      value: `R$ ${lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
+      positive: lucro >= 0,
+      color: lucro === 0 ? 'text-muted-foreground' : (lucro >= 0 ? 'text-green-600' : 'text-red-600')
     },
     {
       title: 'ROI',
@@ -223,7 +223,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                  <p className="text-sm text-muted-foreground">Saldo Líquido</p>
+                  <p className="text-sm text-muted-foreground">Lucro Líquido</p>
                   <p className="text-2xl font-bold text-primary">R$ {(receitasHoje - despesasHoje - custoEquipeDiario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <Button 
