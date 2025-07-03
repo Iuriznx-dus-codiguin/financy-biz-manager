@@ -24,7 +24,6 @@ export default function Index() {
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
   const [activeSection, setActiveSection] = useState('painel');
 
-  // Debug log para verificar qual seção está ativa
   console.log('Active section:', activeSection);
 
   if (authLoading || onboardingLoading) {
@@ -49,33 +48,21 @@ export default function Index() {
   const renderActiveSection = () => {
     console.log('Rendering section:', activeSection);
     
-    switch (activeSection) {
-      case 'painel':
-        return <Dashboard />;
-      case 'receitas':
-        return <Receitas />;
-      case 'despesas':
-        return <Despesas />;
-      case 'impostos':
-        return <Impostos />;
-      case 'equipe':
-        return <Equipe />;
-      case 'metas':
-        return <Metas />;
-      case 'relatorios':
-        return <Relatorios />;
-      case 'fechamento':
-        return <Fechamento />;
-      case 'assinatura':
-        return <Assinatura />;
-      case 'configuracoes':
-        return <Configuracoes />;
-      case 'ajuda':
-        return <Ajuda />;
-      default:
-        console.warn('Seção não encontrada:', activeSection);
-        return <Dashboard />;
-    }
+    const sections = {
+      'painel': <Dashboard key="dashboard" />,
+      'receitas': <Receitas key="receitas" />,
+      'despesas': <Despesas key="despesas" />,
+      'impostos': <Impostos key="impostos" />,
+      'equipe': <Equipe key="equipe" />,
+      'metas': <Metas key="metas" />,
+      'relatorios': <Relatorios key="relatorios" />,
+      'fechamento': <Fechamento key="fechamento" />,
+      'assinatura': <Assinatura key="assinatura" />,
+      'configuracoes': <Configuracoes key="configuracoes" />,
+      'ajuda': <Ajuda key="ajuda" />
+    };
+
+    return sections[activeSection as keyof typeof sections] || sections['painel'];
   };
 
   return (
