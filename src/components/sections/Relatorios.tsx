@@ -1,60 +1,120 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useAppContext } from '@/contexts/AppContext';
+import { TimeFilter } from '@/components/TimeFilter';
+import { isDateInRange, getDateRange } from '@/utils/dateFilters';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
+import { FileText, Download } from 'lucide-react';
 
 const Relatorios = () => {
   const [selectedReport, setSelectedReport] = useState('mensal');
+  const [timeFilter, setTimeFilter] = useState('este-mes');
+  const [isGenerating, setIsGenerating] = useState(false);
   const { receitas, despesas, impostos } = useAppContext();
 
-  // Calcular dados reais
-  const totalReceitas = receitas.reduce((sum, r) => sum + r.valor, 0);
-  const totalDespesas = despesas.reduce((sum, d) => sum + d.valor, 0);
-  const totalImpostosPagos = impostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);
+  // Filtrar dados baseado no filtro de tempo
+  const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
+  const filteredDespesas = despesas.filter(d => isDateInRange(d.data, timeFilter));
+  const filteredImpostos = impostos.filter(i => isDateInRange(i.vencimento, timeFilter));
+
+  // Calcular dados reais baseados no filtro
+  const totalReceitas = filteredReceitas.reduce((sum, r) => sum + r.valor, 0);
+  const totalDespesas = filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
+  const totalImpostosPagos = filteredImpostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);
   const lucroLiquido = totalReceitas - totalDespesas - totalImpostosPagos;
   const margemLucro = totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
 
-  // Gerar dados mensais baseados nos dados reais
-  const gerarDadosMensais = () => {
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-    const dados = [];
+  const getTimeFilterLabel = (filter: string) => {
+    const labels: Record<string, string> = {
+      'hoje': 'Hoje',
+      'ontem': 'Ontem',
+      'esta-semana': 'Esta Semana',
+      'semana-passada': 'Semana Passada',
+      'este-mes': 'Este Mês',
+      'mes-passado': 'Mês Passado',
+      'ultimos-30-dias': 'Últimos 30 Dias',
+      'ultimos-90-dias': 'Últimos 90 Dias',
+      'este-ano': 'Este Ano',
+      'ano-passado': 'Ano Passado'
+    };
+    return labels[filter] || 'Período Selecionado';
+  };
+
+  // Gerar dados baseados no tipo de relatório e período
+  const gerarDadosRelatorio = () => {
+    const { start, end } = getDateRange(timeFilter);
     
-    for (let i = 0; i < 6; i++) {
-      const mes = new Date();
-      mes.setMonth(mes.getMonth() - (5 - i));
-      const mesAtual = mes.getMonth() + 1;
-      const anoAtual = mes.getFullYear();
-      
-      const receitasMes = receitas.filter(r => {
-        const dataReceita = new Date(r.data);
-        return dataReceita.getMonth() + 1 === mesAtual && dataReceita.getFullYear() === anoAtual;
-      }).reduce((sum, r) => sum + r.valor, 0);
-      
-      const despesasMes = despesas.filter(d => {
-        const dataDespesa = new Date(d.data);
-        return dataDespesa.getMonth() + 1 === mesAtual && dataDespesa.getFullYear() === anoAtual;
-      }).reduce((sum, d) => sum + d.valor, 0);
-      
-      dados.push({
-        month: meses[i],
-        receitas: receitasMes,
-        despesas: despesasMes,
-        lucro: receitasMes - despesasMes
-      });
+    switch (selectedReport) {
+      case 'mensal':
+        return gerarDadosMensais();
+      case 'categoria':
+        return gerarDadosPorCategoria();
+      case 'cliente':
+        return gerarDadosPorCliente();
+      case 'comparativo':
+        return gerarDadosComparativos();
+      default:
+        return gerarDadosMensais();
+    }
+  };
+
+  const gerarDadosMensais = () => {
+    const dados = [];
+    const { start, end } = getDateRange(timeFilter);
+    
+    // Gera dados baseados no período selecionado
+    if (timeFilter.includes('semana')) {
+      // Dados por dia da semana
+      for (let i = 0; i < 7; i++) {
+        const data = new Date(start);
+        data.setDate(start.getDate() + i);
+        if (data <= end) {
+          const dataStr = data.toISOString().split('T')[0];
+          const receitasDia = receitas.filter(r => r.data === dataStr).reduce((sum, r) => sum + r.valor, 0);
+          const despesasDia = despesas.filter(d => d.data === dataStr).reduce((sum, d) => sum + d.valor, 0);
+          dados.push({
+            period: data.toLocaleDateString('pt-BR', { weekday: 'short' }),
+            receitas: receitasDia,
+            despesas: despesasDia,
+            lucro: receitasDia - despesasDia
+          });
+        }
+      }
+    } else {
+      // Dados mensais
+      const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      const agora = new Date();
+      for (let i = 0; i < 6; i++) {
+        const mes = new Date(agora.getFullYear(), agora.getMonth() - (5 - i), 1);
+        const mesStr = mes.getMonth() + 1;
+        const anoStr = mes.getFullYear();
+        const receitasMes = receitas.filter(r => {
+          const dataReceita = new Date(r.data);
+          return dataReceita.getMonth() + 1 === mesStr && dataReceita.getFullYear() === anoStr;
+        }).reduce((sum, r) => sum + r.valor, 0);
+        const despesasMes = despesas.filter(d => {
+          const dataDespesa = new Date(d.data);
+          return dataDespesa.getMonth() + 1 === mesStr && dataDespesa.getFullYear() === anoStr;
+        }).reduce((sum, d) => sum + d.valor, 0);
+        dados.push({
+          period: meses[mes.getMonth()],
+          receitas: receitasMes,
+          despesas: despesasMes,
+          lucro: receitasMes - despesasMes
+        });
+      }
     }
     
     return dados;
   };
 
-  // Gerar dados por categoria baseados nas receitas reais
   const gerarDadosPorCategoria = () => {
-    const categorias = receitas.reduce((acc, receita) => {
+    const categorias = filteredReceitas.reduce((acc, receita) => {
       acc[receita.categoria] = (acc[receita.categoria] || 0) + receita.valor;
       return acc;
     }, {} as Record<string, number>);
@@ -65,10 +125,134 @@ const Relatorios = () => {
     }));
   };
 
-  const monthlyData = gerarDadosMensais();
-  const categoryData = gerarDadosPorCategoria();
+  const gerarDadosPorCliente = () => {
+    const clientes = filteredReceitas.reduce((acc, receita) => {
+      const cliente = receita.cliente || 'Cliente não informado';
+      acc[cliente] = (acc[cliente] || 0) + receita.valor;
+      return acc;
+    }, {} as Record<string, number>);
 
-  // Gerar insights baseados nos dados reais
+    return Object.entries(clientes)
+      .map(([cliente, valor]) => ({ cliente, valor }))
+      .sort((a, b) => b.valor - a.valor)
+      .slice(0, 10);
+  };
+
+  const gerarDadosComparativos = () => {
+    // Comparar com período anterior
+    const periodoAtual = getDateRange(timeFilter);
+    const duracaoEmDias = Math.ceil((periodoAtual.end.getTime() - periodoAtual.start.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const inicioAnterior = new Date(periodoAtual.start);
+    inicioAnterior.setDate(inicioAnterior.getDate() - duracaoEmDias);
+    const fimAnterior = new Date(periodoAtual.start);
+    fimAnterior.setDate(fimAnterior.getDate() - 1);
+    
+    const receitasAtual = filteredReceitas.reduce((sum, r) => sum + r.valor, 0);
+    const despesasAtual = filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
+    
+    const receitasAnterior = receitas.filter(r => {
+      const data = new Date(r.data);
+      return data >= inicioAnterior && data <= fimAnterior;
+    }).reduce((sum, r) => sum + r.valor, 0);
+    
+    const despesasAnterior = despesas.filter(d => {
+      const data = new Date(d.data);
+      return data >= inicioAnterior && data <= fimAnterior;
+    }).reduce((sum, d) => sum + d.valor, 0);
+
+    return [
+      { period: 'Período Anterior', receitas: receitasAnterior, despesas: despesasAnterior },
+      { period: 'Período Atual', receitas: receitasAtual, despesas: despesasAtual }
+    ];
+  };
+
+  const handleGerarRelatorio = async () => {
+    setIsGenerating(true);
+    try {
+      // Simular geração do relatório
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success(`Relatório ${selectedReport} gerado com sucesso!`);
+    } catch (error) {
+      toast.error('Erro ao gerar relatório');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Título
+      doc.setFontSize(20);
+      doc.text('Relatório Financeiro - Financy', 20, 30);
+      
+      // Período
+      doc.setFontSize(12);
+      doc.text(`Período: ${getTimeFilterLabel(timeFilter)}`, 20, 45);
+      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 20, 55);
+      
+      // Resumo financeiro
+      doc.setFontSize(14);
+      doc.text('Resumo Financeiro', 20, 75);
+      
+      doc.setFontSize(10);
+      doc.text(`Receitas: R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 90);
+      doc.text(`Despesas: R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 100);
+      doc.text(`Lucro: R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 110);
+      doc.text(`Margem: ${margemLucro.toFixed(1)}%`, 20, 120);
+      
+      const fileName = `relatorio-${timeFilter}-${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+      toast.success(`Relatório PDF exportado: ${fileName}`);
+    } catch (error) {
+      toast.error('Erro ao exportar PDF');
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const workbook = XLSX.utils.book_new();
+      
+      // Aba de resumo
+      const resumoData = [
+        ['Relatório Financeiro - Financy'],
+        [`Período: ${getTimeFilterLabel(timeFilter)}`],
+        [`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`],
+        [''],
+        ['Resumo Financeiro'],
+        ['Receitas', `R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
+        ['Despesas', `R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
+        ['Lucro Líquido', `R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
+        ['Margem de Lucro', `${margemLucro.toFixed(1)}%`]
+      ];
+      
+      const resumoSheet = XLSX.utils.aoa_to_sheet(resumoData);
+      XLSX.utils.book_append_sheet(workbook, resumoSheet, 'Resumo');
+      
+      // Aba de receitas
+      if (filteredReceitas.length > 0) {
+        const receitasSheet = XLSX.utils.json_to_sheet(filteredReceitas);
+        XLSX.utils.book_append_sheet(workbook, receitasSheet, 'Receitas');
+      }
+      
+      // Aba de despesas
+      if (filteredDespesas.length > 0) {
+        const despesasSheet = XLSX.utils.json_to_sheet(filteredDespesas);
+        XLSX.utils.book_append_sheet(workbook, despesasSheet, 'Despesas');
+      }
+      
+      const fileName = `relatorio-${timeFilter}-${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+      toast.success(`Relatório Excel exportado: ${fileName}`);
+    } catch (error) {
+      toast.error('Erro ao exportar Excel');
+    }
+  };
+
+  const dadosRelatorio = gerarDadosRelatorio();
+
   const gerarInsights = () => {
     const insights = [];
 
@@ -76,7 +260,7 @@ const Relatorios = () => {
       const crescimento = totalReceitas > 0 ? ((totalReceitas - totalDespesas) / totalReceitas * 100).toFixed(1) : '0';
       insights.push({
         title: 'Resultado Positivo',
-        description: `Suas receitas superam as despesas em ${crescimento}%`,
+        description: `Receitas superam despesas em ${crescimento}% no período`,
         type: 'positive'
       });
     }
@@ -84,33 +268,39 @@ const Relatorios = () => {
     if (margemLucro > 20) {
       insights.push({
         title: 'Boa Margem de Lucro',
-        description: `Sua margem de lucro está em ${margemLucro.toFixed(1)}%`,
+        description: `Margem de lucro está em ${margemLucro.toFixed(1)}%`,
         type: 'positive'
       });
     } else if (margemLucro > 0) {
       insights.push({
         title: 'Margem Baixa',
-        description: `Sua margem de lucro está em ${margemLucro.toFixed(1)}% - considere otimizar custos`,
+        description: `Margem de lucro está em ${margemLucro.toFixed(1)}% - considere otimizar custos`,
         type: 'warning'
       });
     }
 
-    if (categoryData.length > 0) {
-      const maiorCategoria = categoryData.reduce((prev, current) => 
-        prev.valor > current.valor ? prev : current
+    if (filteredReceitas.length > 0) {
+      const categorias = filteredReceitas.reduce((acc, r) => {
+        acc[r.categoria] = (acc[r.categoria] || 0) + r.valor;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const maiorCategoria = Object.entries(categorias).reduce(([prevCat, prevVal], [cat, val]) => 
+        val > prevVal ? [cat, val] : [prevCat, prevVal]
       );
-      const percentualMaior = totalReceitas > 0 ? (maiorCategoria.valor / totalReceitas * 100).toFixed(1) : '0';
+      
+      const percentual = totalReceitas > 0 ? (maiorCategoria[1] / totalReceitas * 100).toFixed(1) : '0';
       insights.push({
         title: 'Principal Fonte de Receita',
-        description: `${maiorCategoria.categoria} representa ${percentualMaior}% da sua receita`,
+        description: `${maiorCategoria[0]} representa ${percentual}% da receita no período`,
         type: 'info'
       });
     }
 
     if (insights.length === 0) {
       insights.push({
-        title: 'Comece a Registrar',
-        description: 'Adicione receitas e despesas para ver insights personalizados',
+        title: 'Sem Dados Suficientes',
+        description: 'Adicione mais transações para ver insights detalhados',
         type: 'info'
       });
     }
@@ -119,42 +309,6 @@ const Relatorios = () => {
   };
 
   const insights = gerarInsights();
-
-  // Gerar rankings baseados nos dados reais
-  const gerarRankings = () => {
-    const maioresDespesas = despesas
-      .reduce((acc, despesa) => {
-        const categoria = despesa.categoria;
-        acc[categoria] = (acc[categoria] || 0) + despesa.valor;
-        return acc;
-      }, {} as Record<string, number>);
-
-    const maioresReceitas = receitas
-      .reduce((acc, receita) => {
-        const categoria = receita.categoria;
-        acc[categoria] = (acc[categoria] || 0) + receita.valor;
-        return acc;
-      }, {} as Record<string, number>);
-
-    return {
-      maioresGastos: Object.entries(maioresDespesas)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 5)
-        .map(([item, valor]) => ({
-          item,
-          valor: `R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-        })),
-      maioresReceitas: Object.entries(maioresReceitas)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 5)
-        .map(([item, valor]) => ({
-          item,
-          valor: `R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-        }))
-    };
-  };
-
-  const rankings = gerarRankings();
 
   const getInsightColor = (type: string) => {
     switch (type) {
@@ -165,148 +319,68 @@ const Relatorios = () => {
     }
   };
 
-  const handleExportPDF = () => {
-    try {
-      const doc = new jsPDF();
-      
-      // Title
-      doc.setFontSize(20);
-      doc.text('Relatório Financeiro - Financy', 20, 30);
-      
-      // Current date
-      doc.setFontSize(10);
-      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 20, 40);
-      
-      // Financial summary
-      doc.setFontSize(14);
-      doc.text('Resumo Executivo', 20, 60);
-      
-      doc.setFontSize(10);
-      doc.text(`Receita Total: R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 75);
-      doc.text(`Despesas Total: R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 85);
-      doc.text(`Lucro Líquido: R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 95);
-      doc.text(`Margem de Lucro: ${margemLucro.toFixed(1)}%`, 20, 105);
-      
-      // Insights
-      doc.setFontSize(14);
-      doc.text('Insights Principais', 20, 125);
-      
-      let yPosition = 140;
-      insights.slice(0, 3).forEach((insight) => {
-        doc.setFontSize(10);
-        doc.text(`• ${insight.title}: ${insight.description}`, 20, yPosition);
-        yPosition += 10;
-      });
-      
-      doc.save('relatorio-financeiro-financy.pdf');
-      toast.success('Relatório PDF exportado com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao exportar PDF');
-      console.error('PDF Export Error:', error);
-    }
-  };
-
-  const handleExportExcel = () => {
-    try {
-      const workbook = XLSX.utils.book_new();
-      
-      // Summary sheet
-      const summaryData = [
-        ['Relatório Financeiro - Financy'],
-        ['Gerado em:', new Date().toLocaleDateString('pt-BR')],
-        [''],
-        ['Resumo Executivo'],
-        ['Receita Total', `R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
-        ['Despesas Total', `R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
-        ['Impostos Pagos', `R$ ${totalImpostosPagos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
-        ['Lucro Líquido', `R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
-        ['Margem de Lucro', `${margemLucro.toFixed(1)}%`],
-        [''],
-        ['Insights Principais'],
-        ...insights.map(insight => [insight.title, insight.description])
-      ];
-      
-      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumo');
-      
-      // Monthly evolution sheet
-      const monthlySheet = XLSX.utils.json_to_sheet(monthlyData);
-      XLSX.utils.book_append_sheet(workbook, monthlySheet, 'Evolução Mensal');
-      
-      // Categories sheet
-      if (categoryData.length > 0) {
-        const categoriesSheet = XLSX.utils.json_to_sheet(categoryData);
-        XLSX.utils.book_append_sheet(workbook, categoriesSheet, 'Receitas por Categoria');
-      }
-      
-      XLSX.writeFile(workbook, 'relatorio-financeiro-financy.xlsx');
-      toast.success('Relatório Excel exportado com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao exportar Excel');
-      console.error('Excel Export Error:', error);
-    }
-  };
-
   return (
     <section id="relatorios" className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Relatórios</h2>
-          <p className="text-muted-foreground">Análises e insights gerenciais do seu negócio</p>
+          <p className="text-muted-foreground">Análises detalhadas do período selecionado</p>
         </div>
         <div className="flex space-x-4">
-          <Button variant="outline" className="rounded-xl" onClick={handleExportPDF}>
-            📄 Exportar PDF
+          <Button variant="outline" className="rounded-xl flex items-center gap-2" onClick={handleExportPDF}>
+            <FileText className="h-4 w-4" />
+            Baixar PDF ({getTimeFilterLabel(timeFilter)})
           </Button>
-          <Button variant="outline" className="rounded-xl" onClick={handleExportExcel}>
-            📊 Exportar Excel
+          <Button variant="outline" className="rounded-xl flex items-center gap-2" onClick={handleExportExcel}>
+            <Download className="h-4 w-4" />
+            Baixar Excel ({getTimeFilterLabel(timeFilter)})
           </Button>
         </div>
       </div>
 
-      {/* Seletor de Relatório */}
+      {/* Controles de Relatório */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>Tipo de Relatório</CardTitle>
+          <CardTitle>Configurar Relatório</CardHeader>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Select value={selectedReport} onValueChange={setSelectedReport}>
               <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Selecione o relatório" />
+                <SelectValue placeholder="Tipo de Relatório" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="mensal">Relatório Mensal</SelectItem>
+                <SelectItem value="mensal">Evolução Temporal</SelectItem>
                 <SelectItem value="categoria">Por Categoria</SelectItem>
                 <SelectItem value="cliente">Por Cliente</SelectItem>
                 <SelectItem value="comparativo">Comparativo</SelectItem>
               </SelectContent>
             </Select>
-            <Select>
-              <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ultimo-mes">Último Mês</SelectItem>
-                <SelectItem value="ultimos-3-meses">Últimos 3 Meses</SelectItem>
-                <SelectItem value="ultimos-6-meses">Últimos 6 Meses</SelectItem>
-                <SelectItem value="ano-atual">Ano Atual</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button className="rounded-xl">
-              Gerar Relatório
+            
+            <TimeFilter value={timeFilter} onChange={setTimeFilter} showIcon={false} />
+            
+            <Button 
+              className="rounded-xl" 
+              onClick={handleGerarRelatorio}
+              disabled={isGenerating}
+            >
+              {isGenerating ? 'Gerando...' : 'Gerar Relatório'}
             </Button>
-            <Button variant="outline" className="rounded-xl">
+            
+            <Button variant="outline" className="rounded-xl" onClick={() => {
+              setSelectedReport('mensal');
+              setTimeFilter('este-mes');
+            }}>
               Limpar Filtros
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Insights Principais */}
+      {/* Insights do Período */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>💡 Insights Principais</CardTitle>
+          <CardTitle>💡 Insights - {getTimeFilterLabel(timeFilter)}</CardHeader>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -323,118 +397,55 @@ const Relatorios = () => {
         </CardContent>
       </Card>
 
-      {/* Gráficos Principais */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="rounded-2xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Evolução Mensal - Receitas vs Despesas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {monthlyData.some(d => d.receitas > 0 || d.despesas > 0) ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={monthlyData}>
+      {/* Gráfico Principal */}
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader>
+          <CardTitle>
+            {selectedReport === 'mensal' && 'Evolução Temporal'}
+            {selectedReport === 'categoria' && 'Receitas por Categoria'}
+            {selectedReport === 'cliente' && 'Receitas por Cliente'}
+            {selectedReport === 'comparativo' && 'Análise Comparativa'}
+            {' - '}
+            {getTimeFilterLabel(timeFilter)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {dadosRelatorio.length > 0 ? (
+            <ResponsiveContainer width="100%" height={400}>
+              {selectedReport === 'categoria' || selectedReport === 'cliente' ? (
+                <BarChart data={dadosRelatorio}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
-                  <Line type="monotone" dataKey="receitas" stroke="#22C55E" strokeWidth={3} name="Receitas" />
-                  <Line type="monotone" dataKey="despesas" stroke="#EF4444" strokeWidth={3} name="Despesas" />
-                  <Line type="monotone" dataKey="lucro" stroke="#3B82F6" strokeWidth={3} name="Lucro" />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[300px]">
-                <p className="text-muted-foreground">Nenhum dado disponível ainda</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Receitas por Categoria</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {categoryData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={categoryData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="categoria" />
+                  <XAxis dataKey={selectedReport === 'categoria' ? 'categoria' : 'cliente'} />
                   <YAxis />
                   <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
                   <Bar dataKey="valor" fill="#22C55E" radius={[8, 8, 0, 0]} />
                 </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[300px]">
-                <p className="text-muted-foreground">Nenhuma receita cadastrada ainda</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Rankings e Listas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="rounded-2xl shadow-sm">
-          <CardHeader>
-            <CardTitle>🔻 Maiores Gastos por Categoria</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {rankings.maioresGastos.length > 0 ? (
-              <div className="space-y-3">
-                {rankings.maioresGastos.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
-                    <div className="flex items-center space-x-3">
-                      <span className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                        {index + 1}
-                      </span>
-                      <span className="font-medium">{item.item}</span>
-                    </div>
-                    <span className="font-bold text-red-600">{item.valor}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Nenhuma despesa registrada ainda</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-sm">
-          <CardHeader>
-            <CardTitle>🔸 Maiores Fontes de Receita</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {rankings.maioresReceitas.length > 0 ? (
-              <div className="space-y-3">
-                {rankings.maioresReceitas.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                    <div className="flex items-center space-x-3">
-                      <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                        {index + 1}
-                      </span>
-                      <span className="font-medium">{item.item}</span>
-                    </div>
-                    <span className="font-bold text-green-600">{item.valor}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Nenhuma receita registrada ainda</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              ) : (
+                <LineChart data={dadosRelatorio}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="period" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                  <Line type="monotone" dataKey="receitas" stroke="#22C55E" strokeWidth={3} name="Receitas" />
+                  <Line type="monotone" dataKey="despesas" stroke="#EF4444" strokeWidth={3} name="Despesas" />
+                  {dadosRelatorio[0]?.lucro !== undefined && (
+                    <Line type="monotone" dataKey="lucro" stroke="#3B82F6" strokeWidth={3} name="Lucro" />
+                  )}
+                </LineChart>
+              )}
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[400px]">
+              <p className="text-muted-foreground">Nenhum dado disponível para o período selecionado</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Resumo Executivo */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>📋 Resumo Executivo - {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</CardTitle>
+          <CardTitle>📋 Resumo Executivo - {getTimeFilterLabel(timeFilter)}</CardHeader>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

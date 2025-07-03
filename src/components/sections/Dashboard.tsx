@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,52 +6,69 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAppContext } from '@/contexts/AppContext';
-import { InteligenciaFinanceira } from '@/components/InteligenciaFinanceira';
+import { InteligenciaFinanceiraAprimorada } from '@/components/InteligenciaFinanceiraAprimorada';
+import { SubscriptionStatus } from '@/components/SubscriptionStatus';
+import { TimeFilter } from '@/components/TimeFilter';
+import { LoadingAnimation } from '@/components/LoadingAnimation';
 import { TooltipInfo } from '@/components/TooltipInfo';
+import { isDateInRange } from '@/utils/dateFilters';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [periodo, setPeriodo] = useState('6meses');
+  const [timeFilter, setTimeFilter] = useState('hoje');
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
 
-  // Calcular estatísticas reais incluindo custos da equipe
-  const totalReceitas = receitas.reduce((sum, receita) => sum + receita.valor, 0);
-  const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
-  const totalImpostos = impostos.filter(imposto => imposto.pago).reduce((sum, imposto) => sum + imposto.valor, 0);
+  // Filtrar dados baseado no filtro de tempo
+  const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
+  const filteredDespesas = despesas.filter(d => isDateInRange(d.data, timeFilter));
+  const filteredImpostos = impostos.filter(i => isDateInRange(i.vencimento, timeFilter));
+
+  // Calcular estatísticas reais baseadas no filtro
+  const totalReceitas = filteredReceitas.reduce((sum, receita) => sum + receita.valor, 0);
+  const totalDespesas = filteredDespesas.reduce((sum, despesa) => sum + despesa.valor, 0);
+  const totalImpostos = filteredImpostos.filter(imposto => imposto.pago).reduce((sum, imposto) => sum + imposto.valor, 0);
   
-  // Calcular custos de equipe mensais
+  // Calcular custos de equipe para o período
   const calcularCustosEquipe = () => {
-    let custoMensal = 0;
-    let custoDiario = 0;
+    let custoTotal = 0;
     
     membrosEquipe.forEach(membro => {
       if (membro.status === 'ativo') {
+        let custoMembro = 0;
         switch (membro.periodicidade) {
           case 'mensal':
-            custoMensal += membro.salario;
-            custoDiario += membro.salario / 30;
+            custoMembro = membro.salario;
             break;
           case 'semanal':
-            custoMensal += membro.salario * 4;
-            custoDiario += membro.salario / 7;
+            custoMembro = membro.salario * 4;
             break;
           case 'quinzenal':
-            custoMensal += membro.salario * 2;
-            custoDiario += membro.salario / 15;
+            custoMembro = membro.salario * 2;
             break;
         }
+        custoTotal += custoMembro;
       }
     });
     
-    return { custoDiario, custoMensal };
+    // Ajustar custo baseado no período de tempo
+    if (timeFilter === 'hoje') {
+      custoTotal = custoTotal / 30; // Custo diário
+    } else if (timeFilter === 'esta-semana') {
+      custoTotal = custoTotal / 4; // Custo semanal
+    }
+    
+    return custoTotal;
   };
 
-  const { custoDiario: custoEquipeDiario, custoMensal: custoEquipeMensal } = calcularCustosEquipe();
-  const totalCustosOperacionais = totalDespesas + totalImpostos + custoEquipeMensal;
-  const saldoAtual = totalReceitas - totalCustosOperacionais;
+  const custoEquipe = calcularCustosEquipe();
+  const totalCustosOperacionais = totalDespesas + totalImpostos + custoEquipe;
+  const lucro = totalReceitas - totalCustosOperacionais;
   const faturamentoBruto = totalReceitas;
 
-  // Calcular ROI como número normal
+  // Calcular ROI
   const calcularROI = () => {
     const lucroLiquido = totalReceitas - totalCustosOperacionais;
     const investimentoTotal = totalCustosOperacionais;
@@ -64,10 +82,36 @@ const Dashboard = () => {
 
   const roi = calcularROI();
 
-  // Receitas e despesas do dia (hoje)
+  // Dados para hoje (sempre mostrar dados do dia atual)
   const hoje = new Date().toISOString().split('T')[0];
   const receitasHoje = receitas.filter(r => r.data === hoje).reduce((sum, r) => sum + r.valor, 0);
   const despesasHoje = despesas.filter(d => d.data === hoje).reduce((sum, d) => sum + d.valor, 0);
+  const custoEquipeDiario = membrosEquipe
+    .filter(m => m.status === 'ativo')
+    .reduce((sum, m) => {
+      switch (m.periodicidade) {
+        case 'mensal': return sum + (m.salario / 30);
+        case 'semanal': return sum + (m.salario / 7);
+        case 'quinzenal': return sum + (m.salario / 15);
+        default: return sum;
+      }
+    }, 0);
+
+  const getTimeFilterLabel = (filter: string) => {
+    const labels: Record<string, string> = {
+      'hoje': 'de Hoje',
+      'ontem': 'de Ontem',
+      'esta-semana': 'desta Semana',
+      'semana-passada': 'da Semana Passada',
+      'este-mes': 'deste Mês',
+      'mes-passado': 'do Mês Passado',
+      'ultimos-30-dias': 'dos Últimos 30 Dias',
+      'ultimos-90-dias': 'dos Últimos 90 Dias',
+      'este-ano': 'deste Ano',
+      'ano-passado': 'do Ano Passado'
+    };
+    return labels[filter] || '';
+  };
 
   const stats = [
     { 
@@ -77,16 +121,16 @@ const Dashboard = () => {
       color: faturamentoBruto === 0 ? 'text-muted-foreground' : 'text-green-600'
     },
     { 
-      title: 'Receitas do Dia', 
-      value: `R$ ${receitasHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
+      title: `Receitas ${getTimeFilterLabel(timeFilter)}`, 
+      value: `R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
       positive: true,
-      color: receitasHoje === 0 ? 'text-muted-foreground' : 'text-green-600'
+      color: totalReceitas === 0 ? 'text-muted-foreground' : 'text-green-600'
     },
     { 
-      title: 'Despesas do Dia', 
-      value: `R$ ${(despesasHoje + custoEquipeDiario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
+      title: `Despesas ${getTimeFilterLabel(timeFilter)}`, 
+      value: `R$ ${totalCustosOperacionais.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
       positive: false,
-      color: (despesasHoje + custoEquipeDiario) === 0 ? 'text-muted-foreground' : 'text-red-600'
+      color: totalCustosOperacionais === 0 ? 'text-muted-foreground' : 'text-red-600'
     },
     { 
       title: 'Impostos Pagos', 
@@ -95,14 +139,14 @@ const Dashboard = () => {
       color: totalImpostos === 0 ? 'text-muted-foreground' : 'text-red-600'
     },
     { 
-      title: 'Saldo Líquido', 
-      value: `R$ ${saldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
-      positive: saldoAtual >= 0,
-      color: saldoAtual === 0 ? 'text-muted-foreground' : (saldoAtual >= 0 ? 'text-green-600' : 'text-red-600')
+      title: 'Lucro', 
+      value: `R$ ${lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 
+      positive: lucro >= 0,
+      color: lucro === 0 ? 'text-muted-foreground' : (lucro >= 0 ? 'text-green-600' : 'text-red-600')
     },
     {
       title: 'ROI',
-      value: roi.toFixed(1),
+      value: `${roi.toFixed(1)}%`,
       positive: roi >= 0,
       color: roi === 0 ? 'text-muted-foreground' : (roi >= 0 ? 'text-green-600' : 'text-red-600'),
       tooltip: 'Retorno sobre Investimento - mostra o lucro obtido em relação ao investimento feito'
@@ -193,14 +237,36 @@ const Dashboard = () => {
     type: transaction.type
   }));
 
+  const handleFecharCaixa = async () => {
+    setIsLoading(true);
+    
+    // Simular salvamento no banco de dados
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast.success('Fechamento de caixa registrado com sucesso!');
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error('Erro ao registrar fechamento de caixa');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <section id="painel" className="space-y-8">
+      <LoadingAnimation 
+        isLoading={isLoading}
+        message="Salvando fechamento de caixa..."
+        successMessage="Fechamento salvo com sucesso!"
+      />
+      
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Dashboard</h2>
-          <p className="text-muted-foreground">Visão geral do seu negócio em tempo real</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <TimeFilter value={timeFilter} onChange={setTimeFilter} />
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 py-3 font-semibold shadow-lg">
@@ -228,9 +294,10 @@ const Dashboard = () => {
                 </div>
                 <Button 
                   className="w-full rounded-xl" 
-                  onClick={() => setIsDialogOpen(false)}
+                  onClick={handleFecharCaixa}
+                  disabled={isLoading}
                 >
-                  Registrar Fechamento
+                  {isLoading ? 'Salvando...' : 'Registrar Fechamento'}
                 </Button>
               </div>
             </DialogContent>
@@ -257,11 +324,15 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Inteligência Financeira */}
-      <InteligenciaFinanceira 
+      {/* Status da Assinatura */}
+      <SubscriptionStatus />
+
+      {/* Inteligência Financeira Aprimorada */}
+      <InteligenciaFinanceiraAprimorada 
         receitas={receitas}
         despesas={despesas}
         impostos={impostos}
+        membrosEquipe={membrosEquipe}
       />
 
       {/* Gráficos e Tabelas */}

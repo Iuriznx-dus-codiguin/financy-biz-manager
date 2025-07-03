@@ -1,39 +1,23 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-
-interface OnboardingData {
-  userType: string;
-  howDidYouKnow: string;
-  salaryRange: string;
-  revenueRange: string;
-}
 
 interface OnboardingContextType {
-  onboardingData: OnboardingData | null;
   isOnboardingComplete: boolean;
-  completeOnboarding: (data: OnboardingData) => Promise<void>;
-  skipOnboarding: () => Promise<void>;
+  completeOnboarding: () => void;
   loading: boolean;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
-export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
-  const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
+export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      checkOnboardingStatus();
-    } else {
-      setLoading(false);
-      setIsOnboardingComplete(false);
-      setOnboardingData(null);
-    }
+    checkOnboardingStatus();
   }, [user]);
 
   const checkOnboardingStatus = async () => {
@@ -41,101 +25,36 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
       return;
     }
-    
+
     try {
-      console.log('Verificando status do onboarding para usuário:', user.id);
-      
       const { data, error } = await supabase
         .from('onboarding_data')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .single();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Erro ao verificar onboarding:', error);
-        setIsOnboardingComplete(false);
-        return;
       }
 
-      if (data) {
-        console.log('Dados de onboarding encontrados:', data);
-        setOnboardingData({
-          userType: data.user_type,
-          howDidYouKnow: data.how_did_you_know,
-          salaryRange: data.salary_range || '',
-          revenueRange: data.revenue_range || ''
-        });
-        setIsOnboardingComplete(true);
-      } else {
-        console.log('Nenhum dado de onboarding encontrado');
-        setIsOnboardingComplete(false);
-        setOnboardingData(null);
-      }
+      // Se existe dados de onboarding, considera como completo
+      setIsOnboardingComplete(!!data);
     } catch (error) {
       console.error('Erro ao verificar onboarding:', error);
-      setIsOnboardingComplete(false);
     } finally {
       setLoading(false);
     }
   };
 
-  const completeOnboarding = async (data: OnboardingData) => {
-    if (!user) {
-      console.log('Usuário não encontrado ao completar onboarding');
-      return;
-    }
-
-    try {
-      console.log('Salvando dados de onboarding:', data);
-      
-      const { error } = await supabase
-        .from('onboarding_data')
-        .insert({
-          user_id: user.id,
-          user_type: data.userType,
-          how_did_you_know: data.howDidYouKnow,
-          salary_range: data.userType === 'personal' ? data.salaryRange : null,
-          revenue_range: data.userType !== 'personal' ? data.revenueRange : null
-        });
-
-      if (error) {
-        console.error('Erro ao salvar onboarding:', error);
-        throw error;
-      }
-
-      console.log('Onboarding completado com sucesso');
-      setOnboardingData(data);
-      setIsOnboardingComplete(true);
-    } catch (error) {
-      console.error('Erro ao salvar onboarding:', error);
-      throw error;
-    }
-  };
-
-  const skipOnboarding = async () => {
-    if (!user) return;
-
-    try {
-      const defaultData = {
-        userType: 'personal',
-        howDidYouKnow: 'other',
-        salaryRange: '0-2000',
-        revenueRange: ''
-      };
-
-      await completeOnboarding(defaultData);
-    } catch (error) {
-      console.error('Erro ao pular onboarding:', error);
-    }
+  const completeOnboarding = () => {
+    setIsOnboardingComplete(true);
   };
 
   return (
-    <OnboardingContext.Provider value={{
-      onboardingData,
-      isOnboardingComplete,
-      completeOnboarding,
-      skipOnboarding,
-      loading
+    <OnboardingContext.Provider value={{ 
+      isOnboardingComplete, 
+      completeOnboarding, 
+      loading 
     }}>
       {children}
     </OnboardingContext.Provider>
