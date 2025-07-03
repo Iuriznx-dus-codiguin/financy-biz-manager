@@ -24,39 +24,40 @@ export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
 
-  // Detecta qual seção está visível no viewport
-  useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: '-20% 0px -70% 0px',
-      threshold: 0
-    };
-
-    const observerCallback = (entries: IntersectionObserverEntry[]) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          setActiveSection(entry.target.id);
-        }
-      });
-    };
-
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-    // Observa todas as seções
-    const sections = [
-      'painel', 'receitas', 'despesas', 'impostos', 'equipe', 
-      'relatorios', 'fechamento', 'assinatura', 'configuracoes', 'ajuda'
-    ];
-
-    sections.forEach(sectionId => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        observer.observe(element);
+  const renderSection = () => {
+    console.log('Renderizando seção:', activeSection);
+    
+    try {
+      switch (activeSection) {
+        case 'painel':
+          return <Dashboard />;
+        case 'receitas':
+          return <Receitas />;
+        case 'despesas':
+          return <Despesas />;
+        case 'impostos':
+          return <Impostos />;
+        case 'equipe':
+          return <Equipe />;
+        case 'relatorios':
+          return <Relatorios />;
+        case 'fechamento':
+          return <Fechamento />;
+        case 'assinatura':
+          return <Assinatura />;
+        case 'configuracoes':
+          return <Configuracoes />;
+        case 'ajuda':
+          return <Ajuda />;
+        default:
+          console.log('Seção não encontrada, retornando Dashboard');
+          return <Dashboard />;
       }
-    });
-
-    return () => observer.disconnect();
-  }, []);
+    } catch (error) {
+      console.error('Erro ao renderizar seção:', error);
+      return <Dashboard />;
+    }
+  };
 
   if (authLoading || onboardingLoading) {
     return (
@@ -84,56 +85,8 @@ export default function Index() {
           <div className="flex min-h-screen w-full">
             <AppSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
             <div className="flex-1 flex flex-col">
-              <main className="flex-1">
-                {/* Seção Painel */}
-                <section id="painel" className="min-h-screen p-8">
-                  <Dashboard />
-                </section>
-
-                {/* Seção Receitas */}
-                <section id="receitas" className="min-h-screen p-8 border-t">
-                  <Receitas />
-                </section>
-
-                {/* Seção Despesas */}
-                <section id="despesas" className="min-h-screen p-8 border-t">
-                  <Despesas />
-                </section>
-
-                {/* Seção Impostos */}
-                <section id="impostos" className="min-h-screen p-8 border-t">
-                  <Impostos />
-                </section>
-
-                {/* Seção Equipe */}
-                <section id="equipe" className="min-h-screen p-8 border-t">
-                  <Equipe />
-                </section>
-
-                {/* Seção Relatórios */}
-                <section id="relatorios" className="min-h-screen p-8 border-t">
-                  <Relatorios />
-                </section>
-
-                {/* Seção Fechamento */}
-                <section id="fechamento" className="min-h-screen p-8 border-t">
-                  <Fechamento />
-                </section>
-
-                {/* Seção Assinatura */}
-                <section id="assinatura" className="min-h-screen p-8 border-t">
-                  <Assinatura />
-                </section>
-
-                {/* Seção Configurações */}
-                <section id="configuracoes" className="min-h-screen p-8 border-t">
-                  <Configuracoes />
-                </section>
-
-                {/* Seção Ajuda */}
-                <section id="ajuda" className="min-h-screen p-8 border-t">
-                  <Ajuda />
-                </section>
+              <main className="flex-1 p-8">
+                {renderSection()}
               </main>
               <Footer />
             </div>
