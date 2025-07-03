@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -341,7 +342,7 @@ const Relatorios = () => {
       {/* Controles de Relatório */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>Configurar Relatório</CardHeader>
+          <CardTitle>Configurar Relatório</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -380,7 +381,7 @@ const Relatorios = () => {
       {/* Insights do Período */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>💡 Insights - {getTimeFilterLabel(timeFilter)}</CardHeader>
+          <CardTitle>💡 Insights - {getTimeFilterLabel(timeFilter)}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -445,7 +446,7 @@ const Relatorios = () => {
       {/* Resumo Executivo */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>📋 Resumo Executivo - {getTimeFilterLabel(timeFilter)}</CardHeader>
+          <CardTitle>📋 Resumo Executivo - {getTimeFilterLabel(timeFilter)}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
