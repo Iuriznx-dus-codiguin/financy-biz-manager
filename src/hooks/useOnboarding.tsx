@@ -3,9 +3,16 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
+interface OnboardingData {
+  user_type: string;
+  how_did_you_know: string;
+  salary_range?: string;
+  revenue_range?: string;
+}
+
 interface OnboardingContextType {
   isOnboardingComplete: boolean;
-  completeOnboarding: () => void;
+  completeOnboarding: (data: OnboardingData) => Promise<void>;
   loading: boolean;
 }
 
@@ -46,8 +53,30 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
-  const completeOnboarding = () => {
-    setIsOnboardingComplete(true);
+  const completeOnboarding = async (data: OnboardingData) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('onboarding_data')
+        .insert({
+          user_id: user.id,
+          user_type: data.user_type,
+          how_did_you_know: data.how_did_you_know,
+          salary_range: data.salary_range,
+          revenue_range: data.revenue_range
+        });
+
+      if (error) {
+        console.error('Erro ao salvar dados de onboarding:', error);
+        throw error;
+      }
+
+      setIsOnboardingComplete(true);
+    } catch (error) {
+      console.error('Erro ao completar onboarding:', error);
+      throw error;
+    }
   };
 
   return (
