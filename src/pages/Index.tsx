@@ -79,13 +79,15 @@ export default function Index() {
         <SidebarProvider>
           <div className="flex h-full w-full">
             <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-            <div className="flex-1 flex flex-col h-full overflow-hidden">
-              <main className="flex-1 overflow-auto">
-                <div className="p-8">
-                  {renderActiveSection()}
+            <div className="flex-1 flex flex-col h-full">
+              <div className="flex-1 overflow-y-auto">
+                <div className="min-h-full flex flex-col">
+                  <main className="flex-1 p-8">
+                    {renderActiveSection()}
+                  </main>
+                  <Footer />
                 </div>
-              </main>
-              <Footer />
+              </div>
             </div>
           </div>
         </SidebarProvider>
