@@ -17,7 +17,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/use-auth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 
 export default function Index() {
@@ -74,20 +74,16 @@ export default function Index() {
   };
 
   return (
-    <div className="h-screen bg-background overflow-hidden">
+    <div className="h-screen bg-background">
       <AppProvider>
         <SidebarProvider>
           <div className="flex h-full w-full">
             <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-            <div className="flex-1 flex flex-col h-full">
-              <div className="flex-1 overflow-y-auto">
-                <div className="min-h-full flex flex-col">
-                  <main className="flex-1 p-8">
-                    {renderActiveSection()}
-                  </main>
-                  <Footer />
-                </div>
-              </div>
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <main className="flex-1 overflow-y-auto p-8">
+                {renderActiveSection()}
+              </main>
+              <Footer />
             </div>
           </div>
         </SidebarProvider>
