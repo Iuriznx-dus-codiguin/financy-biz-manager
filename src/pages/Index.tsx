@@ -16,7 +16,6 @@ import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
-import { AppProvider } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 
@@ -80,22 +79,20 @@ export default function Index() {
   };
 
   return (
-    <AppProvider>
-      <div className="h-screen bg-background">
-        <SidebarProvider>
-          <div className="flex h-full w-full">
-            <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <main className="flex-1 overflow-y-auto p-8">
-                <div className="min-h-full">
-                  {renderActiveSection()}
-                </div>
-              </main>
-              <Footer />
-            </div>
+    <div className="h-screen bg-background">
+      <SidebarProvider>
+        <div className="flex h-full w-full">
+          <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <main className="flex-1 overflow-y-auto p-8">
+              <div className="min-h-full">
+                {renderActiveSection()}
+              </div>
+            </main>
+            <Footer />
           </div>
-        </SidebarProvider>
-      </div>
-    </AppProvider>
+        </div>
+      </SidebarProvider>
+    </div>
   );
 }

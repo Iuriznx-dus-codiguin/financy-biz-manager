@@ -13,6 +13,10 @@ const Dashboard = () => {
   const [periodo, setPeriodo] = useState('6meses');
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
 
+  console.log('Dashboard - Receitas:', receitas);
+  console.log('Dashboard - Despesas:', despesas);
+  console.log('Dashboard - Impostos:', impostos);
+
   // Calcular estatísticas reais incluindo custos da equipe
   const totalReceitas = receitas.reduce((sum, receita) => sum + receita.valor, 0);
   const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
@@ -64,10 +68,18 @@ const Dashboard = () => {
 
   const roi = calcularROI();
 
-  // Receitas e despesas do dia (hoje)
-  const hoje = new Date().toISOString().split('T')[0];
-  const receitasHoje = receitas.filter(r => r.data === hoje).reduce((sum, r) => sum + r.valor, 0);
-  const despesasHoje = despesas.filter(d => d.data === hoje).reduce((sum, d) => sum + d.valor, 0);
+  // Receitas e despesas do dia (hoje) - corrigido para comparar apenas a data
+  const hoje = new Date();
+  const hojeStr = hoje.toISOString().split('T')[0]; // formato YYYY-MM-DD
+  
+  console.log('Data de hoje:', hojeStr);
+  console.log('Despesas filtradas por hoje:', despesas.filter(d => d.data === hojeStr));
+  
+  const receitasHoje = receitas.filter(r => r.data === hojeStr).reduce((sum, r) => sum + r.valor, 0);
+  const despesasHoje = despesas.filter(d => d.data === hojeStr).reduce((sum, d) => sum + d.valor, 0);
+
+  console.log('Receitas hoje:', receitasHoje);
+  console.log('Despesas hoje:', despesasHoje);
 
   const stats = [
     { 
@@ -109,7 +121,6 @@ const Dashboard = () => {
     }
   ];
 
-  // Gerar dados do gráfico baseado no período selecionado
   const gerarDadosGrafico = () => {
     const agora = new Date();
     let dados = [];
