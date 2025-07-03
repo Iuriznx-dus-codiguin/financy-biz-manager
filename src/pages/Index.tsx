@@ -74,14 +74,14 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen bg-background overflow-hidden">
       <AppProvider>
         <SidebarProvider>
-          <div className="flex min-h-screen w-full">
+          <div className="flex h-full w-full">
             <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <main className="flex-1 overflow-y-auto">
-                <div className="h-screen p-8 overflow-y-auto">
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
+              <main className="flex-1 overflow-auto">
+                <div className="p-8">
                   {renderActiveSection()}
                 </div>
               </main>

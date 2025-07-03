@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -327,7 +328,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
 
     if (data) {
-      const novaMeta = {
+      const novaMeta: Meta = {
         id: data.id,
         titulo: data.titulo,
         valorMeta: data.valor_meta,
@@ -335,7 +336,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         progresso: data.progresso,
         prazo: data.prazo,
         categoria: data.categoria,
-        status: data.status,
+        status: data.status as 'em_andamento' | 'concluida' | 'atrasada',
         cor: data.cor
       };
       setMetas(prev => [novaMeta, ...prev]);
