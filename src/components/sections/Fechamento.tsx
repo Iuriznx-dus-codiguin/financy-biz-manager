@@ -3,12 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
-import { CashClosingToast } from '@/components/CashClosingToast';
+import { useToast } from '@/hooks/use-toast';
 
 const Fechamento = () => {
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [showToast, setShowToast] = useState(false);
+  const { toast } = useToast();
 
   // Calcular valores reais baseados na data selecionada
   const calcularValoresDia = (data: string) => {
@@ -49,27 +49,29 @@ const Fechamento = () => {
   const saldoLiquido = receitasDia - despesasDia - impostosVencendoDia - custosEquipeDia;
 
   const handleFechamento = async () => {
-    // Simular o processo de fechamento (aqui você faria a chamada real para a API)
     try {
       // Simular delay de processamento
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Só mostrar o toast após o fechamento ser concluído com sucesso
-      setShowToast(true);
+      // Mostrar toast de sucesso apenas após o fechamento ser concluído
+      toast({
+        title: "Sucesso!",
+        description: "Fechamento de caixa registrado com sucesso!",
+        duration: 3000,
+      });
     } catch (error) {
       console.error('Erro ao processar fechamento:', error);
-      // Aqui você poderia mostrar um toast de erro se necessário
+      toast({
+        title: "Erro",
+        description: "Erro ao registrar fechamento de caixa",
+        variant: "destructive",
+        duration: 3000,
+      });
     }
   };
 
   return (
     <section className="space-y-8">
-      <CashClosingToast 
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-        message="Fechamento de caixa registrado com sucesso!"
-      />
-
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Fechamento de Caixa</h2>
