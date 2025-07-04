@@ -48,8 +48,8 @@ const Fechamento = () => {
   const saldoLiquido = receitasDia - despesasDia - impostosVencendoDia - custosEquipeDia;
 
   const handleFechamento = () => {
-    // Lógica de fechamento de caixa seria implementada aqui
-    alert('Fechamento de caixa registrado com sucesso!');
+    // Fechamento simples sem notificações
+    console.log('Fechamento registrado');
   };
 
   return (

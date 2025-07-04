@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,14 +8,11 @@ import { useAppContext } from '@/contexts/AppContext';
 import { InteligenciaFinanceiraAprimorada } from '@/components/InteligenciaFinanceiraAprimorada';
 import { SubscriptionStatus } from '@/components/SubscriptionStatus';
 import { TimeFilter } from '@/components/TimeFilter';
-import { LoadingAnimation } from '@/components/LoadingAnimation';
 import { TooltipInfo } from '@/components/TooltipInfo';
 import { isDateInRange } from '@/utils/dateFilters';
-import { toast } from 'sonner';
 
 const Dashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [periodo, setPeriodo] = useState('6meses');
   const [timeFilter, setTimeFilter] = useState('hoje');
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
@@ -237,29 +233,12 @@ const Dashboard = () => {
     type: transaction.type
   }));
 
-  const handleFecharCaixa = async () => {
-    setIsLoading(true);
-    
-    // Simular salvamento no banco de dados
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast.success('Fechamento de caixa registrado com sucesso!');
-      setIsDialogOpen(false);
-    } catch (error) {
-      toast.error('Erro ao registrar fechamento de caixa');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleFecharCaixa = () => {
+    setIsDialogOpen(false);
   };
 
   return (
     <section id="painel" className="space-y-8">
-      <LoadingAnimation 
-        isLoading={isLoading}
-        message="Salvando fechamento de caixa..."
-        successMessage="Fechamento salvo com sucesso!"
-      />
       
       <div className="flex justify-between items-center">
         <div>
@@ -295,9 +274,8 @@ const Dashboard = () => {
                 <Button 
                   className="w-full rounded-xl" 
                   onClick={handleFecharCaixa}
-                  disabled={isLoading}
                 >
-                  {isLoading ? 'Salvando...' : 'Registrar Fechamento'}
+                  Registrar Fechamento
                 </Button>
               </div>
             </DialogContent>
