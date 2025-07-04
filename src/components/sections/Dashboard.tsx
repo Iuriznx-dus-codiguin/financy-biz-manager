@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { TimeFilter } from '@/components/TimeFilter';
 import { LoadingAnimation } from '@/components/LoadingAnimation';
 import { TooltipInfo } from '@/components/TooltipInfo';
 import { isDateInRange } from '@/utils/dateFilters';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -19,7 +20,6 @@ const Dashboard = () => {
   const [periodo, setPeriodo] = useState('6meses');
   const [timeFilter, setTimeFilter] = useState('hoje');
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
-  const { toast } = useToast();
 
   // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
@@ -240,24 +240,14 @@ const Dashboard = () => {
   const handleFecharCaixa = async () => {
     setIsLoading(true);
     
+    // Simular salvamento no banco de dados
     try {
-      // Simular salvamento no banco de dados
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Só mostrar toast APÓS o fechamento ser concluído com sucesso
-      toast({
-        title: "Sucesso!",
-        description: "Fechamento de caixa registrado com sucesso!",
-        duration: 3000,
-      });
+      toast.success('Fechamento de caixa registrado com sucesso!');
       setIsDialogOpen(false);
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao registrar fechamento de caixa",
-        variant: "destructive",
-        duration: 3000,
-      });
+      toast.error('Erro ao registrar fechamento de caixa');
     } finally {
       setIsLoading(false);
     }
@@ -269,9 +259,6 @@ const Dashboard = () => {
         isLoading={isLoading}
         message="Salvando fechamento de caixa..."
         successMessage="Fechamento salvo com sucesso!"
-        onComplete={() => {
-          // Não fazer nada aqui - o toast já foi mostrado em handleFecharCaixa
-        }}
       />
       
       <div className="flex justify-between items-center">

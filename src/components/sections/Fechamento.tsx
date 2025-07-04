@@ -1,14 +1,13 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
-import { useToast } from '@/hooks/use-toast';
 
 const Fechamento = () => {
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const { toast } = useToast();
 
   // Calcular valores reais baseados na data selecionada
   const calcularValoresDia = (data: string) => {
@@ -48,26 +47,9 @@ const Fechamento = () => {
   const { receitasDia, despesasDia, impostosVencendoDia, custosEquipeDia } = calcularValoresDia(selectedDate);
   const saldoLiquido = receitasDia - despesasDia - impostosVencendoDia - custosEquipeDia;
 
-  const handleFechamento = async () => {
-    try {
-      // Simular delay de processamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mostrar toast APENAS após o fechamento ser concluído com sucesso
-      toast({
-        title: "Sucesso!",
-        description: "Fechamento de caixa registrado com sucesso!",
-        duration: 3000,
-      });
-    } catch (error) {
-      console.error('Erro ao processar fechamento:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao registrar fechamento de caixa",
-        variant: "destructive",
-        duration: 3000,
-      });
-    }
+  const handleFechamento = () => {
+    // Lógica de fechamento de caixa seria implementada aqui
+    alert('Fechamento de caixa registrado com sucesso!');
   };
 
   return (

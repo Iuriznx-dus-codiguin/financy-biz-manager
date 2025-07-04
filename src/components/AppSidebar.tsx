@@ -38,7 +38,7 @@ const menuItems = [
   { id: 'despesas', label: 'Despesas', icon: TrendingDown },
   { id: 'impostos', label: 'Impostos e Taxas', icon: Receipt },
   { id: 'equipe', label: 'Equipe', icon: Users },
-  { id: 'metas', label: 'Objetivos', icon: Target },
+  { id: 'metas', label: 'Metas', icon: Target },
   { id: 'relatorios', label: 'Relatórios', icon: PieChart },
   { id: 'fechamento', label: 'Fechamento de Caixa', icon: Calculator },
   { id: 'assinatura', label: 'Assinatura', icon: CreditCard },
