@@ -240,10 +240,11 @@ const Dashboard = () => {
   const handleFecharCaixa = async () => {
     setIsLoading(true);
     
-    // Simular salvamento no banco de dados
     try {
+      // Simular salvamento no banco de dados
       await new Promise(resolve => setTimeout(resolve, 2000));
       
+      // Só mostrar toast APÓS o fechamento ser concluído com sucesso
       toast({
         title: "Sucesso!",
         description: "Fechamento de caixa registrado com sucesso!",
@@ -269,7 +270,7 @@ const Dashboard = () => {
         message="Salvando fechamento de caixa..."
         successMessage="Fechamento salvo com sucesso!"
         onComplete={() => {
-          // Não mostrar toast adicional aqui, já está sendo mostrado no handleFecharCaixa
+          // Não fazer nada aqui - o toast já foi mostrado em handleFecharCaixa
         }}
       />
       

@@ -53,7 +53,7 @@ const Fechamento = () => {
       // Simular delay de processamento
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Mostrar toast de sucesso apenas após o fechamento ser concluído
+      // Mostrar toast APENAS após o fechamento ser concluído com sucesso
       toast({
         title: "Sucesso!",
         description: "Fechamento de caixa registrado com sucesso!",
