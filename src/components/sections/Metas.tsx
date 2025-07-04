@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -74,22 +73,22 @@ const Metas = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Target className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">Metas Financeiras</h2>
+          <h2 className="text-2xl font-bold">Objetivos Financeiros</h2>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Nova Meta
+              Novo Objetivo
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Criar Nova Meta</DialogTitle>
+              <DialogTitle>Criar Novo Objetivo</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmitMeta} className="space-y-4">
               <div>
-                <Label htmlFor="titulo">Título da Meta</Label>
+                <Label htmlFor="titulo">Título do Objetivo</Label>
                 <Input
                   id="titulo"
                   value={novaMetaForm.titulo}
@@ -149,7 +148,7 @@ const Metas = () => {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full">Criar Meta</Button>
+              <Button type="submit" className="w-full">Criar Objetivo</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -162,7 +161,7 @@ const Metas = () => {
             <div className="flex items-center space-x-2">
               <Target className="h-5 w-5 text-blue-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Total de Metas</p>
+                <p className="text-sm text-muted-foreground">Total de Objetivos</p>
                 <p className="text-2xl font-bold">{metas.length}</p>
               </div>
             </div>
@@ -214,13 +213,13 @@ const Metas = () => {
       {metas.length === 0 ? (
         <Card className="p-8 text-center">
           <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Nenhuma meta cadastrada</h3>
+          <h3 className="text-lg font-semibold mb-2">Nenhum objetivo cadastrado</h3>
           <p className="text-muted-foreground mb-4">
-            Crie sua primeira meta financeira para começar a acompanhar seu progresso.
+            Crie seu primeiro objetivo financeiro para começar a acompanhar seu progresso.
           </p>
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Criar Primeira Meta
+            Criar Primeiro Objetivo
           </Button>
         </Card>
       ) : (
