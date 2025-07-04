@@ -48,11 +48,18 @@ const Fechamento = () => {
   const { receitasDia, despesasDia, impostosVencendoDia, custosEquipeDia } = calcularValoresDia(selectedDate);
   const saldoLiquido = receitasDia - despesasDia - impostosVencendoDia - custosEquipeDia;
 
-  const handleFechamento = () => {
-    // Simular o processo de fechamento
-    setTimeout(() => {
+  const handleFechamento = async () => {
+    // Simular o processo de fechamento (aqui você faria a chamada real para a API)
+    try {
+      // Simular delay de processamento
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Só mostrar o toast após o fechamento ser concluído com sucesso
       setShowToast(true);
-    }, 500);
+    } catch (error) {
+      console.error('Erro ao processar fechamento:', error);
+      // Aqui você poderia mostrar um toast de erro se necessário
+    }
   };
 
   return (
