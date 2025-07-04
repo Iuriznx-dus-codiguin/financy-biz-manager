@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,12 +10,73 @@ import { SubscriptionStatus } from '@/components/SubscriptionStatus';
 import { TimeFilter } from '@/components/TimeFilter';
 import { TooltipInfo } from '@/components/TooltipInfo';
 import { isDateInRange } from '@/utils/dateFilters';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { Lock, Crown } from 'lucide-react';
 
-const Dashboard = () => {
+interface SubscriptionData {
+  subscribed: boolean;
+  subscription_tier: string | null;
+  subscription_end: string | null;
+}
+
+interface DashboardProps {
+  setActiveSection?: (section: string) => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [periodo, setPeriodo] = useState('6meses');
   const [timeFilter, setTimeFilter] = useState('hoje');
+  const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(true);
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
+  const { user } = useAuth();
+
+  // Verificar status da assinatura
+  useEffect(() => {
+    checkSubscriptionStatus();
+  }, [user]);
+
+  const checkSubscriptionStatus = async () => {
+    if (!user) return;
+
+    try {
+      setLoadingSubscription(true);
+      
+      const { data: subscriber, error } = await supabase
+        .from('subscribers')
+        .select('*')
+        .eq('email', user.email)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Erro ao verificar assinatura:', error);
+        return;
+      }
+
+      if (subscriber) {
+        setSubscriptionData({
+          subscribed: subscriber.subscribed,
+          subscription_tier: subscriber.subscription_tier,
+          subscription_end: subscriber.subscription_end
+        });
+      } else {
+        setSubscriptionData({
+          subscribed: false,
+          subscription_tier: null,
+          subscription_end: null
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status da assinatura:', error);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
+
+  // Verificar se o usuário tem acesso premium
+  const hasPreminumAccess = subscriptionData?.subscribed && subscriptionData?.subscription_tier;
 
   // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
@@ -27,7 +88,6 @@ const Dashboard = () => {
   const totalDespesas = filteredDespesas.reduce((sum, despesa) => sum + despesa.valor, 0);
   const totalImpostos = filteredImpostos.filter(imposto => imposto.pago).reduce((sum, imposto) => sum + imposto.valor, 0);
   
-  // Calcular custos de equipe para o período
   const calcularCustosEquipe = () => {
     let custoTotal = 0;
     
@@ -49,11 +109,10 @@ const Dashboard = () => {
       }
     });
     
-    // Ajustar custo baseado no período de tempo
     if (timeFilter === 'hoje') {
-      custoTotal = custoTotal / 30; // Custo diário
+      custoTotal = custoTotal / 30;
     } else if (timeFilter === 'esta-semana') {
-      custoTotal = custoTotal / 4; // Custo semanal
+      custoTotal = custoTotal / 4;
     }
     
     return custoTotal;
@@ -64,7 +123,6 @@ const Dashboard = () => {
   const lucro = totalReceitas - totalCustosOperacionais;
   const faturamentoBruto = totalReceitas;
 
-  // Calcular ROI
   const calcularROI = () => {
     const lucroLiquido = totalReceitas - totalCustosOperacionais;
     const investimentoTotal = totalCustosOperacionais;
@@ -183,7 +241,7 @@ const Dashboard = () => {
           });
         }
         break;
-      default: // 6meses
+      default:
         const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
         for (let i = 0; i < 6; i++) {
           const mes = new Date(agora.getFullYear(), agora.getMonth() - (5 - i), 1);
@@ -303,15 +361,44 @@ const Dashboard = () => {
       </div>
 
       {/* Status da Assinatura */}
-      <SubscriptionStatus />
+      <SubscriptionStatus setActiveSection={setActiveSection} />
 
-      {/* Inteligência Financeira Aprimorada */}
-      <InteligenciaFinanceiraAprimorada 
-        receitas={receitas}
-        despesas={despesas}
-        impostos={impostos}
-        membrosEquipe={membrosEquipe}
-      />
+      {/* Inteligência Financeira Aprimorada - Apenas para usuários premium */}
+      {hasPreminumAccess ? (
+        <InteligenciaFinanceiraAprimorada 
+          receitas={receitas}
+          despesas={despesas}
+          impostos={impostos}
+          membrosEquipe={membrosEquipe}
+        />
+      ) : (
+        <Card className="rounded-2xl shadow-sm border-2 border-dashed border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+          <CardContent className="p-8 text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center">
+                <Crown className="h-8 w-8 text-white" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-foreground">Inteligência Financeira Avançada</h3>
+                <p className="text-muted-foreground max-w-md">
+                  Desbloqueie análises preditivas, insights personalizados e relatórios avançados com nossos planos premium.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-purple-600 bg-purple-100 dark:bg-purple-900/30 px-4 py-2 rounded-full">
+                <Lock className="h-4 w-4" />
+                <span>Recurso Premium</span>
+              </div>
+              <Button 
+                onClick={() => setActiveSection?.('assinatura')}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
+              >
+                <Crown className="mr-2 h-4 w-4" />
+                Assinar Agora
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Gráficos e Tabelas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

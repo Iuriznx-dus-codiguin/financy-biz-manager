@@ -14,7 +14,11 @@ interface SubscriptionData {
   stripe_customer_id: string | null;
 }
 
-export const SubscriptionStatus: React.FC = () => {
+interface SubscriptionStatusProps {
+  setActiveSection?: (section: string) => void;
+}
+
+export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ setActiveSection }) => {
   const { user } = useAuth();
   const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -160,14 +164,23 @@ export const SubscriptionStatus: React.FC = () => {
           )}
 
           {statusInfo.status === 'inactive' && (
-            <Button size="sm" className="w-full rounded-xl">
+            <Button 
+              size="sm" 
+              className="w-full rounded-xl"
+              onClick={() => setActiveSection?.('assinatura')}
+            >
               <Calendar className="h-4 w-4 mr-2" />
               Assinar Agora
             </Button>
           )}
 
           {(statusInfo.status === 'expiring' || statusInfo.status === 'expired') && (
-            <Button size="sm" variant="outline" className="w-full rounded-xl">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="w-full rounded-xl"
+              onClick={() => setActiveSection?.('assinatura')}
+            >
               <CreditCard className="h-4 w-4 mr-2" />
               Renovar Assinatura
             </Button>

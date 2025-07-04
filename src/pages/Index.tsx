@@ -47,7 +47,7 @@ export default function Index() {
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'painel':
-        return <Dashboard />;
+        return <Dashboard setActiveSection={setActiveSection} />;
       case 'receitas':
         return <Receitas />;
       case 'despesas':
@@ -69,7 +69,7 @@ export default function Index() {
       case 'ajuda':
         return <Ajuda />;
       default:
-        return <Dashboard />;
+        return <Dashboard setActiveSection={setActiveSection} />;
     }
   };
 
