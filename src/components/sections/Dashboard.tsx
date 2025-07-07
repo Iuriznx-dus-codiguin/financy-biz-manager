@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAppContext } from '@/contexts/AppContext';
 import { InteligenciaFinanceiraAprimorada } from '@/components/InteligenciaFinanceiraAprimorada';
+import { InteligenciaFinanceiraBasica } from '@/components/InteligenciaFinanceiraBasica';
 import { SubscriptionStatus } from '@/components/SubscriptionStatus';
 import { TimeFilter } from '@/components/TimeFilter';
 import { TooltipInfo } from '@/components/TooltipInfo';
@@ -28,6 +29,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [periodo, setPeriodo] = useState('6meses');
   const [timeFilter, setTimeFilter] = useState('hoje');
+  const [isClosingCash, setIsClosingCash] = useState(false);
   const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
@@ -75,8 +77,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
     }
   };
 
-  // Verificar se o usuário tem acesso premium
-  const hasPreminumAccess = subscriptionData?.subscribed && subscriptionData?.subscription_tier;
+  // Verificar se o usuário tem acesso premium e plus
+  const hasPreminumAccess = subscriptionData?.subscribed && subscriptionData?.subscription_tier === 'Premium';
+  const hasPlusAccess = subscriptionData?.subscribed && subscriptionData?.subscription_tier === 'Plus';
 
   // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
@@ -128,10 +131,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
     const investimentoTotal = totalCustosOperacionais;
     
     if (investimentoTotal === 0) {
-      return totalReceitas > 0 ? 100.0 : 0.0;
+      return totalReceitas > 0 ? 1.0 : 0.0;
     }
     
-    return (lucroLiquido / investimentoTotal) * 100;
+    return lucroLiquido / investimentoTotal;
   };
 
   const roi = calcularROI();
@@ -200,7 +203,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
     },
     {
       title: 'ROI',
-      value: `${roi.toFixed(1)}%`,
+      value: roi.toFixed(1),
       positive: roi >= 0,
       color: roi === 0 ? 'text-muted-foreground' : (roi >= 0 ? 'text-green-600' : 'text-red-600'),
       tooltip: 'Retorno sobre Investimento - mostra o lucro obtido em relação ao investimento feito'
@@ -291,7 +294,13 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
     type: transaction.type
   }));
 
-  const handleFecharCaixa = () => {
+  const handleFecharCaixa = async () => {
+    setIsClosingCash(true);
+    
+    // Simular processo de fechamento
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    setIsClosingCash(false);
     setIsDialogOpen(false);
   };
 
@@ -330,10 +339,22 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
                   <p className="text-2xl font-bold text-primary">R$ {(receitasHoje - despesasHoje - custoEquipeDiario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <Button 
-                  className="w-full rounded-xl" 
+                  className={`w-full rounded-xl transition-all duration-300 ${
+                    isClosingCash 
+                      ? 'bg-green-600 hover:bg-green-700 animate-pulse' 
+                      : 'bg-primary hover:bg-primary/90'
+                  }`}
                   onClick={handleFecharCaixa}
+                  disabled={isClosingCash}
                 >
-                  Registrar Fechamento
+                  {isClosingCash ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Salvando...
+                    </>
+                  ) : (
+                    'Registrar Fechamento'
+                  )}
                 </Button>
               </div>
             </DialogContent>
@@ -363,9 +384,16 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
       {/* Status da Assinatura */}
       <SubscriptionStatus setActiveSection={setActiveSection} />
 
-      {/* Inteligência Financeira Aprimorada - Apenas para usuários premium */}
+      {/* Inteligência Financeira - Baseada no plano */}
       {hasPreminumAccess ? (
         <InteligenciaFinanceiraAprimorada 
+          receitas={receitas}
+          despesas={despesas}
+          impostos={impostos}
+          membrosEquipe={membrosEquipe}
+        />
+      ) : hasPlusAccess ? (
+        <InteligenciaFinanceiraBasica 
           receitas={receitas}
           despesas={despesas}
           impostos={impostos}
@@ -379,9 +407,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
                 <Crown className="h-8 w-8 text-white" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-foreground">Inteligência Financeira Avançada</h3>
+                <h3 className="text-2xl font-bold text-foreground">Inteligência Financeira</h3>
                 <p className="text-muted-foreground max-w-md">
-                  Desbloqueie análises preditivas, insights personalizados e relatórios avançados com nossos planos premium.
+                  Desbloqueie insights financeiros e análises personalizadas com nossos planos pagos.
                 </p>
               </div>
               <div className="flex items-center gap-2 text-sm text-purple-600 bg-purple-100 dark:bg-purple-900/30 px-4 py-2 rounded-full">
@@ -390,7 +418,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
               </div>
               <Button 
                 onClick={() => setActiveSection?.('assinatura')}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold transform hover:scale-105 transition-all"
               >
                 <Crown className="mr-2 h-4 w-4" />
                 Assinar Agora
