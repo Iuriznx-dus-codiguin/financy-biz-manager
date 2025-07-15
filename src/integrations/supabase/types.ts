@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           categoria: string
           created_at: string | null
+          dashboard_id: string | null
           data: string
           descricao: string
           forma_pagamento: string
@@ -29,6 +30,7 @@ export type Database = {
         Insert: {
           categoria: string
           created_at?: string | null
+          dashboard_id?: string | null
           data: string
           descricao: string
           forma_pagamento: string
@@ -40,6 +42,7 @@ export type Database = {
         Update: {
           categoria?: string
           created_at?: string | null
+          dashboard_id?: string | null
           data?: string
           descricao?: string
           forma_pagamento?: string
@@ -53,6 +56,7 @@ export type Database = {
       impostos: {
         Row: {
           created_at: string | null
+          dashboard_id: string | null
           descricao: string
           id: number
           pago: boolean | null
@@ -64,6 +68,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          dashboard_id?: string | null
           descricao: string
           id?: number
           pago?: boolean | null
@@ -75,6 +80,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          dashboard_id?: string | null
           descricao?: string
           id?: number
           pago?: boolean | null
@@ -91,6 +97,7 @@ export type Database = {
           categoria: string
           cor: string
           created_at: string
+          dashboard_id: string | null
           id: string
           prazo: string
           progresso: number
@@ -105,6 +112,7 @@ export type Database = {
           categoria: string
           cor?: string
           created_at?: string
+          dashboard_id?: string | null
           id?: string
           prazo: string
           progresso?: number
@@ -119,6 +127,7 @@ export type Database = {
           categoria?: string
           cor?: string
           created_at?: string
+          dashboard_id?: string | null
           id?: string
           prazo?: string
           progresso?: number
@@ -190,6 +199,7 @@ export type Database = {
           categoria: string
           cliente: string | null
           created_at: string | null
+          dashboard_id: string | null
           data: string
           descricao: string
           forma_pagamento: string
@@ -201,6 +211,7 @@ export type Database = {
           categoria: string
           cliente?: string | null
           created_at?: string | null
+          dashboard_id?: string | null
           data: string
           descricao: string
           forma_pagamento: string
@@ -212,6 +223,7 @@ export type Database = {
           categoria?: string
           cliente?: string | null
           created_at?: string | null
+          dashboard_id?: string | null
           data?: string
           descricao?: string
           forma_pagamento?: string
@@ -254,6 +266,36 @@ export type Database = {
           subscription_tier?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_dashboards: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

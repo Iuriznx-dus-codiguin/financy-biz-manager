@@ -111,8 +111,12 @@ export const AuthPage = () => {
       
       <Card className="w-full max-w-md rounded-3xl shadow-2xl backdrop-blur-sm bg-white/95 dark:bg-gray-900/95 border-0">
         <CardHeader className="text-center space-y-6 pb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-lg">
-            <span className="text-white font-bold text-3xl">F</span>
+          <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-lg overflow-hidden">
+            <img 
+              src="/lovable-uploads/2e0fe1e4-b99b-4e35-beb7-82837c2dfd13.png" 
+              alt="Financy" 
+              className="w-full h-full object-contain filter brightness-0 invert"
+            />
           </div>
           <div className="space-y-2">
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">

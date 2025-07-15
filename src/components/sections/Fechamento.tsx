@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { CalendarDays, TrendingUp, TrendingDown, DollarSign, Check, Loader2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 const Fechamento = () => {
@@ -47,9 +47,20 @@ const Fechamento = () => {
   const { receitasDia, despesasDia, impostosVencendoDia, custosEquipeDia } = calcularValoresDia(selectedDate);
   const saldoLiquido = receitasDia - despesasDia - impostosVencendoDia - custosEquipeDia;
 
-  const handleFechamento = () => {
-    // Fechamento simples sem notificações
-    console.log('Fechamento registrado');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleFechamento = async () => {
+    setIsSaving(true);
+    
+    // Simular processo de salvamento
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    setIsSaving(false);
+    setSaved(true);
+    
+    // Reset após 3 segundos
+    setTimeout(() => setSaved(false), 3000);
   };
 
   return (
@@ -204,8 +215,34 @@ const Fechamento = () => {
             </div>
 
             <div className="flex justify-center">
-              <Button onClick={handleFechamento} size="lg" className="rounded-xl px-8">
-                Confirmar Fechamento de Caixa
+              <Button 
+                onClick={handleFechamento} 
+                disabled={isSaving || saved}
+                size="lg" 
+                className={`rounded-xl px-8 transition-all duration-500 ${
+                  saved 
+                    ? 'bg-green-600 hover:bg-green-600 scale-105 shadow-lg' 
+                    : isSaving 
+                    ? 'bg-blue-600 scale-105' 
+                    : 'hover:scale-105 hover:shadow-lg'
+                }`}
+              >
+                {saved ? (
+                  <>
+                    <Check className="mr-2 h-5 w-5 animate-bounce-in" />
+                    Salvo com Sucesso!
+                  </>
+                ) : isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <CalendarDays className="mr-2 h-5 w-5" />
+                    Confirmar Fechamento de Caixa
+                  </>
+                )}
               </Button>
             </div>
           </div>

@@ -145,7 +145,7 @@ const Configuracoes = () => {
               <div className="text-center">
                 <div className="text-2xl mb-2">📥</div>
                 <h3 className="font-semibold">Exportar Dados</h3>
-                <p className="text-sm text-muted-foreground">Baixar backup dos seus dados</p>
+                <p className="text-sm text-muted-foreground">Disponível no Plus+</p>
               </div>
             </Button>
 
@@ -167,8 +167,12 @@ const Configuracoes = () => {
         </CardHeader>
         <CardContent>
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto">
-              <span className="text-primary-foreground font-bold text-2xl">F</span>
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto overflow-hidden">
+              <img 
+                src="/lovable-uploads/2e0fe1e4-b99b-4e35-beb7-82837c2dfd13.png" 
+                alt="Financy" 
+                className="w-full h-full object-contain filter brightness-0 invert"
+              />
             </div>
             <div>
               <h3 className="text-xl font-bold">Financy</h3>

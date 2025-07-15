@@ -18,7 +18,8 @@ interface SubscriptionStatusProps {
   setActiveSection?: (section: string) => void;
 }
 
-export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ setActiveSection }) => {
+// Hook personalizado para verificar status de assinatura
+export const useSubscription = () => {
   const { user } = useAuth();
   const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,6 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ setActiv
     try {
       setLoading(true);
       
-      // Verificar se existe registro na tabela subscribers
       const { data: subscriber, error } = await supabase
         .from('subscribers')
         .select('*')
@@ -53,7 +53,6 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ setActiv
           stripe_customer_id: subscriber.stripe_customer_id
         });
       } else {
-        // Usuário não tem assinatura
         setSubscriptionData({
           subscribed: false,
           subscription_tier: null,
@@ -67,6 +66,19 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ setActiv
       setLoading(false);
     }
   };
+
+  const subscriptionTier = subscriptionData?.subscription_tier || 'free';
+  
+  return {
+    subscriptionData,
+    subscriptionTier,
+    loading,
+    checkSubscriptionStatus
+  };
+};
+
+export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ setActiveSection }) => {
+  const { subscriptionData, loading } = useSubscription();
 
   const getStatusInfo = () => {
     if (!subscriptionData) return null;

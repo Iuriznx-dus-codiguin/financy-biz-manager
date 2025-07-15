@@ -15,6 +15,8 @@ import {
   Moon,
   Target
 } from 'lucide-react';
+import { useDashboard } from '@/hooks/useDashboard';
+import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -30,20 +32,19 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useTheme } from '@/hooks/useTheme';
 
-const menuItems = [
-  { id: 'painel', label: 'Painel', icon: Layout },
-  { id: 'receitas', label: 'Receitas', icon: TrendingUp },
-  { id: 'despesas', label: 'Despesas', icon: TrendingDown },
-  { id: 'impostos', label: 'Impostos e Taxas', icon: Receipt },
-  { id: 'equipe', label: 'Equipe', icon: Users },
-  { id: 'metas', label: 'Objetivos', icon: Target },
-  { id: 'relatorios', label: 'Relatórios', icon: PieChart },
-  { id: 'fechamento', label: 'Fechamento de Caixa', icon: Calculator },
-  { id: 'assinatura', label: 'Assinatura', icon: CreditCard },
-  { id: 'configuracoes', label: 'Configurações', icon: Settings },
-  { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle }
+const allMenuItems = [
+  { id: 'painel', label: 'Painel', icon: Layout, businessOnly: false },
+  { id: 'receitas', label: 'Receitas', icon: TrendingUp, businessOnly: false },
+  { id: 'despesas', label: 'Despesas', icon: TrendingDown, businessOnly: false },
+  { id: 'impostos', label: 'Impostos e Taxas', icon: Receipt, businessOnly: false },
+  { id: 'equipe', label: 'Equipe', icon: Users, businessOnly: true },
+  { id: 'metas', label: 'Objetivos', icon: Target, businessOnly: false },
+  { id: 'relatorios', label: 'Relatórios', icon: PieChart, businessOnly: false },
+  { id: 'fechamento', label: 'Fechamento de Caixa', icon: Calculator, businessOnly: true },
+  { id: 'assinatura', label: 'Assinatura', icon: CreditCard, businessOnly: false },
+  { id: 'configuracoes', label: 'Configurações', icon: Settings, businessOnly: false },
+  { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle, businessOnly: false }
 ];
 
 interface AppSidebarProps {
@@ -54,7 +55,15 @@ interface AppSidebarProps {
 export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActiveSection }) => {
   const { state } = useSidebar();
   const { theme, setTheme } = useTheme();
+  const { currentDashboard } = useDashboard();
   const isCollapsed = state === 'collapsed';
+
+  // Filter menu items based on dashboard type
+  const menuItems = allMenuItems.filter(item => {
+    if (!currentDashboard) return true;
+    if (item.businessOnly && currentDashboard.type === 'personal') return false;
+    return true;
+  });
 
   const handleThemeToggle = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -65,8 +74,20 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
       <SidebarHeader>
         <div className="flex items-center justify-between p-2">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">F</span>
+            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center overflow-hidden">
+              {theme === 'dark' ? (
+                <img 
+                  src="/lovable-uploads/e2344118-d605-4e79-9efc-8e5cfc872faa.png" 
+                  alt="Financy" 
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <img 
+                  src="/lovable-uploads/2e0fe1e4-b99b-4e35-beb7-82837c2dfd13.png" 
+                  alt="Financy" 
+                  className="w-full h-full object-contain"
+                />
+              )}
             </div>
             {!isCollapsed && (
               <div>

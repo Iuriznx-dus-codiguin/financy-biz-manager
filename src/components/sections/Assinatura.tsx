@@ -64,7 +64,7 @@ const Assinatura: React.FC = () => {
         'Relatórios básicos',
         'Fechamento de caixa',
         'Inteligência financeira básica',
-        'Suporte 24h por WhatsApp'
+        'Suporte por email'
       ],
       available: true
     },
@@ -79,12 +79,12 @@ const Assinatura: React.FC = () => {
       badge: 'Premiações Anuais',
       features: [
         'Tudo do Financy Plus',
+        'Multi-dashboard (até 5)',
         'Inteligência financeira avançada',
-        'Relatórios avançados completos',
         'Gestão de equipe completa',
-        'Premiações anuais exclusivas',
-        'Análises preditivas profissionais',
-        'Suporte prioritário 24/7'
+        'Suporte 24h WhatsApp',
+        'Fechamento automático',
+        'Premiações anuais exclusivas'
       ],
       available: true
     },
@@ -99,11 +99,11 @@ const Assinatura: React.FC = () => {
       badge: 'IA Incluída',
       features: [
         'Tudo do Financy Premium',
-        'Contador IA (Pixel) dedicado',
-        'Otimização de impostos com IA',
-        'Análises preditivas avançadas',
-        'Suporte especializado 24/7',
-        'Relatórios personalizados'
+        'IA Pixel para gestão avançada',
+        'Economia em impostos',
+        'Gestão multi-empresa',
+        'Relatórios corporativos',
+        'Suporte dedicado'
       ],
       available: false
     }

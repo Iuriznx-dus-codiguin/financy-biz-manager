@@ -8,9 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Filter, Search, Trash2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 
 const Receitas = () => {
   const { receitas, addReceita, deleteReceita } = useAppContext();
+  const { isFeatureAvailable, getFeatureLimitMessage, getLimits } = useFeatureAccess();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [novaReceita, setNovaReceita] = useState({
     data: '',
