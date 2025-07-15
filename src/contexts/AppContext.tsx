@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useDashboard } from '@/hooks/useDashboard';
 
 export interface Receita {
   id: number;
@@ -11,6 +12,7 @@ export interface Receita {
   valor: number;
   cliente?: string;
   formaPagamento: string;
+  dashboard_id?: string;
 }
 
 export interface Despesa {
@@ -21,6 +23,7 @@ export interface Despesa {
   valor: number;
   fornecedor?: string;
   formaPagamento: string;
+  dashboard_id?: string;
 }
 
 export interface Imposto {
@@ -32,6 +35,7 @@ export interface Imposto {
   vencimento: string;
   pago: boolean;
   tipoRecorrencia: 'unico' | 'recorrente';
+  dashboard_id?: string;
 }
 
 export interface Meta {
@@ -44,6 +48,7 @@ export interface Meta {
   categoria: string;
   status: 'em_andamento' | 'concluida' | 'atrasada';
   cor: string;
+  dashboard_id?: string;
 }
 
 export interface MembroEquipe {
@@ -102,12 +107,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
 
   const { user } = useAuth();
+  const { currentDashboard } = useDashboard();
 
   useEffect(() => {
-    if (user) {
+    if (user && currentDashboard) {
       carregarDados();
     }
-  }, [user]);
+  }, [user, currentDashboard]);
 
   const carregarDados = async () => {
     try {
@@ -115,6 +121,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const { data: receitasData } = await supabase
         .from('receitas')
         .select('*')
+        .eq('dashboard_id', currentDashboard?.id)
         .order('data', { ascending: false });
 
       if (receitasData) {
@@ -125,7 +132,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           categoria: r.categoria,
           valor: r.valor,
           cliente: r.cliente,
-          formaPagamento: r.forma_pagamento
+          formaPagamento: r.forma_pagamento,
+          dashboard_id: r.dashboard_id
         }));
         setReceitas(receitasFormatadas);
       }
@@ -134,6 +142,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const { data: despesasData } = await supabase
         .from('despesas')
         .select('*')
+        .eq('dashboard_id', currentDashboard?.id)
         .order('data', { ascending: false });
 
       if (despesasData) {
@@ -144,7 +153,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           categoria: d.categoria,
           valor: d.valor,
           fornecedor: d.fornecedor,
-          formaPagamento: d.forma_pagamento
+          formaPagamento: d.forma_pagamento,
+          dashboard_id: d.dashboard_id
         }));
         setDespesas(despesasFormatadas);
       }
@@ -153,6 +163,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const { data: impostosData } = await supabase
         .from('impostos')
         .select('*')
+        .eq('dashboard_id', currentDashboard?.id)
         .order('vencimento', { ascending: false });
 
       if (impostosData) {
@@ -164,7 +175,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           valorTipo: 'fixo' as const,
           vencimento: i.vencimento,
           pago: i.pago || false,
-          tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente'
+          tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente',
+          dashboard_id: i.dashboard_id
         }));
         setImpostos(impostosFormatados);
       }
@@ -173,6 +185,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const { data: metasData } = await supabase
         .from('metas')
         .select('*')
+        .eq('dashboard_id', currentDashboard?.id)
         .order('created_at', { ascending: false });
 
       if (metasData) {
@@ -185,7 +198,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           prazo: m.prazo,
           categoria: m.categoria,
           status: m.status as 'em_andamento' | 'concluida' | 'atrasada',
-          cor: m.cor
+          cor: m.cor,
+          dashboard_id: m.dashboard_id
         }));
         setMetas(metasFormatadas);
       }
@@ -195,12 +209,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const addReceita = async (receita: Omit<Receita, 'id'>) => {
-    if (!user) return;
+    if (!user || !currentDashboard) return;
 
     const { data, error } = await supabase
       .from('receitas')
       .insert({
         user_id: user.id,
+        dashboard_id: currentDashboard.id,
         data: receita.data,
         descricao: receita.descricao,
         categoria: receita.categoria,
@@ -224,19 +239,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         categoria: data.categoria,
         valor: data.valor,
         cliente: data.cliente,
-        formaPagamento: data.forma_pagamento
+        formaPagamento: data.forma_pagamento,
+        dashboard_id: data.dashboard_id
       };
       setReceitas(prev => [novaReceita, ...prev]);
     }
   };
 
   const addDespesa = async (despesa: Omit<Despesa, 'id'>) => {
-    if (!user) return;
+    if (!user || !currentDashboard) return;
 
     const { data, error } = await supabase
       .from('despesas')
       .insert({
         user_id: user.id,
+        dashboard_id: currentDashboard.id,
         data: despesa.data,
         descricao: despesa.descricao,
         categoria: despesa.categoria,
@@ -260,19 +277,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         categoria: data.categoria,
         valor: data.valor,
         fornecedor: data.fornecedor,
-        formaPagamento: data.forma_pagamento
+        formaPagamento: data.forma_pagamento,
+        dashboard_id: data.dashboard_id
       };
       setDespesas(prev => [novaDespesa, ...prev]);
     }
   };
 
   const addImposto = async (imposto: Omit<Imposto, 'id'>) => {
-    if (!user) return;
+    if (!user || !currentDashboard) return;
 
     const { data, error } = await supabase
       .from('impostos')
       .insert({
         user_id: user.id,
+        dashboard_id: currentDashboard.id,
         descricao: imposto.descricao,
         tipo: imposto.tipo,
         valor: imposto.valor,
@@ -297,19 +316,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         valorTipo: imposto.valorTipo,
         vencimento: data.vencimento,
         pago: data.pago || false,
-        tipoRecorrencia: imposto.tipoRecorrencia
+        tipoRecorrencia: imposto.tipoRecorrencia,
+        dashboard_id: data.dashboard_id
       };
       setImpostos(prev => [novoImposto, ...prev]);
     }
   };
 
   const addMeta = async (meta: Omit<Meta, 'id'>) => {
-    if (!user) return;
+    if (!user || !currentDashboard) return;
 
     const { data, error } = await supabase
       .from('metas')
       .insert({
         user_id: user.id,
+        dashboard_id: currentDashboard.id,
         titulo: meta.titulo,
         valor_meta: meta.valorMeta,
         valor_atual: meta.valorAtual,
@@ -337,7 +358,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         prazo: data.prazo,
         categoria: data.categoria,
         status: data.status as 'em_andamento' | 'concluida' | 'atrasada',
-        cor: data.cor
+        cor: data.cor,
+        dashboard_id: data.dashboard_id
       };
       setMetas(prev => [novaMeta, ...prev]);
     }

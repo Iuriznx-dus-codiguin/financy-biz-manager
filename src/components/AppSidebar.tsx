@@ -1,5 +1,6 @@
 
 import React from 'react';
+import fLogo from '@/assets/f-logo-transparent.png';
 import { 
   Layout, 
   TrendingUp, 
@@ -74,20 +75,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
       <SidebarHeader>
         <div className="flex items-center justify-between p-2">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center overflow-hidden">
-              {theme === 'dark' ? (
-                <img 
-                  src="/lovable-uploads/e2344118-d605-4e79-9efc-8e5cfc872faa.png" 
-                  alt="Financy" 
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <img 
-                  src="/lovable-uploads/2e0fe1e4-b99b-4e35-beb7-82837c2dfd13.png" 
-                  alt="Financy" 
-                  className="w-full h-full object-contain"
-                />
-              )}
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img 
+                src={fLogo}
+                alt="F" 
+                className="w-6 h-6 object-contain"
+              />
             </div>
             {!isCollapsed && (
               <div>
