@@ -18,7 +18,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
 import { DashboardProvider } from '@/hooks/useDashboard';
-
+import { DashboardSelector } from '@/components/DashboardSelector';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 
@@ -84,6 +84,7 @@ export default function Index() {
               <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
               <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-8 space-y-6">
+                  <DashboardSelector />
                   {renderActiveSection()}
                 </main>
                 <Footer />

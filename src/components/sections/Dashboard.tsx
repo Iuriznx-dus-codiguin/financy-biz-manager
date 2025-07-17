@@ -14,8 +14,6 @@ import { isDateInRange } from '@/utils/dateFilters';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Lock, Crown } from 'lucide-react';
-import { CompactDashboardSelector } from '@/components/CompactDashboardSelector';
-import { useDashboard } from '@/hooks/useDashboard';
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -36,7 +34,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [loadingSubscription, setLoadingSubscription] = useState(true);
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const { user } = useAuth();
-  const { currentDashboard } = useDashboard();
 
   // Verificar status da assinatura
   useEffect(() => {
@@ -84,7 +81,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const hasPreminumAccess = subscriptionData?.subscribed && subscriptionData?.subscription_tier === 'Premium';
   const hasPlusAccess = subscriptionData?.subscribed && subscriptionData?.subscription_tier === 'Plus';
 
-  // Filtrar dados baseado no filtro de tempo e dashboard atual
+  // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
   const filteredDespesas = despesas.filter(d => isDateInRange(d.data, timeFilter));
   const filteredImpostos = impostos.filter(i => isDateInRange(i.vencimento, timeFilter));
@@ -315,7 +312,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           <h2 className="text-3xl font-bold text-foreground">Dashboard</h2>
         </div>
         <div className="flex items-center gap-3">
-          <CompactDashboardSelector />
           <TimeFilter value={timeFilter} onChange={setTimeFilter} />
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
