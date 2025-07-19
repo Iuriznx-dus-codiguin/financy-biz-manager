@@ -5,121 +5,213 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Check, Calendar, AlertTriangle, Crown, Sparkles, Bot, Lock } from 'lucide-react';
+import { 
+  CreditCard, 
+  Check, 
+  Calendar, 
+  AlertTriangle, 
+  Crown, 
+  Sparkles, 
+  Bot, 
+  Lock, 
+  User, 
+  Building2,
+  Star,
+  Flame,
+  MessageCircle,
+  Users,
+  TrendingUp,
+  Shield,
+  Zap
+} from 'lucide-react';
 
 const Assinatura: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
+  const [planType, setPlanType] = useState<'personal' | 'business'>('personal');
 
-  const handlePayment = (planType: string, period: string) => {
-    // URLs diferentes para cada plano
-    const urls = {
-      'plus-monthly': 'https://pay.cakto.com.br/4cwxcix_453682',
-      'plus-annual': 'https://pay.cakto.com.br/plus_annual_plan', // URL fictícia
-      'premium-monthly': 'https://pay.cakto.com.br/premium_plan', // URL fictícia
-      'premium-annual': 'https://pay.cakto.com.br/premium_annual_plan', // URL fictícia
-      'enterprise': '#' // Indisponível
-    };
-    
-    if (planType === 'enterprise') {
-      alert('Este plano estará disponível em breve! Entre em contato conosco para mais informações.');
-      return;
-    }
-    
-    const urlKey = `${planType}-${period}` as keyof typeof urls;
-    window.open(urls[urlKey], '_blank');
+  const handlePayment = (planId: string, period: string) => {
+    const urlKey = `${planId}-${period}`;
+    // URLs do Cakto serão atualizadas conforme necessário
+    console.log(`Iniciando pagamento para: ${urlKey}`);
+    alert(`Redirecionando para pagamento: ${planId} - ${period}`);
   };
 
-  const getPrice = (basePrice: number, annualDiscount: number) => {
+  const getPrice = (monthlyPrice: number, annualDiscount: number) => {
     if (isAnnual) {
-      const annualPrice = basePrice * 12;
+      const annualPrice = monthlyPrice * 12;
       const discountedPrice = annualPrice * (1 - annualDiscount / 100);
       return {
         price: discountedPrice,
+        monthlyEquivalent: discountedPrice / 12,
         period: '/ano',
         discount: annualDiscount,
         originalPrice: annualPrice
       };
     }
     return {
-      price: basePrice,
+      price: monthlyPrice,
+      monthlyEquivalent: monthlyPrice,
       period: '/mês',
       discount: 0,
-      originalPrice: basePrice
+      originalPrice: monthlyPrice
     };
   };
 
-  const plans = [
+  const personalPlans = [
     {
-      id: 'plus',
-      name: 'Financy Plus',
-      basePrice: 49.90,
-      annualDiscount: 10,
-      description: 'Ideal para freelancers e pequenos negócios',
-      icon: <CreditCard className="h-6 w-6" />,
-      color: 'blue',
+      id: 'personal-basic',
+      name: 'Básico',
+      monthlyPrice: 34.90,
+      annualDiscount: 20,
+      icon: <User className="h-6 w-6" />,
+      description: 'Para controle financeiro pessoal simples',
       features: [
-        'Dashboard completo',
-        'Gestão de receitas e despesas',
-        'Controle de impostos e taxas',
-        'Relatórios básicos',
-        'Fechamento de caixa',
-        'Inteligência financeira básica',
-        'Suporte por email'
-      ],
-      available: true
+        { name: 'Dashboard pessoal', value: 'Simples' },
+        { name: 'Agente de IA Financeira', value: false },
+        { name: 'Multi-Dashboard', value: '1' },
+        { name: 'Suporte por E-mail/WhatsApp', value: 'Básico' },
+        { name: 'Acesso a IA Especialista Pessoal', value: false },
+        { name: 'Acesso ao Chatbot inteligente', value: false },
+        { name: 'Ferramentas (despesas, ganhos)', value: 'Ilimitadas' },
+        { name: 'Teste gratuito', value: '7 dias' }
+      ]
     },
     {
-      id: 'premium',
-      name: 'Financy Premium',
-      basePrice: 89.90,
-      annualDiscount: 12,
-      description: 'Para empresas que querem crescer com premiações',
+      id: 'personal-plus',
+      name: 'Plus',
+      monthlyPrice: 49.90,
+      annualDiscount: 20,
+      icon: <TrendingUp className="h-6 w-6" />,
+      description: 'Gestão financeira pessoal avançada',
+      features: [
+        { name: 'Dashboard pessoal', value: 'Avançado' },
+        { name: 'Agente de IA Financeira', value: false },
+        { name: 'Multi-Dashboard', value: '3' },
+        { name: 'Suporte por E-mail/WhatsApp', value: 'Intermediário' },
+        { name: 'Acesso a IA Especialista Pessoal', value: false },
+        { name: 'Acesso ao Chatbot inteligente', value: false },
+        { name: 'Ferramentas (despesas, ganhos)', value: 'Ilimitadas' },
+        { name: 'Teste gratuito', value: '7 dias' }
+      ]
+    },
+    {
+      id: 'personal-enterprise',
+      name: 'Enterprise',
+      monthlyPrice: 97.00,
+      annualDiscount: 20,
       icon: <Crown className="h-6 w-6" />,
-      color: 'purple',
-      badge: 'Premiações Anuais',
+      description: 'Máximo controle com IA especializada',
+      badge: 'Recomendado',
+      recommended: true,
       features: [
-        'Tudo do Financy Plus',
-        'Multi-dashboard (até 5)',
-        'Inteligência financeira avançada',
-        'Gestão de equipe completa',
-        'Suporte 24h WhatsApp',
-        'Fechamento automático',
-        'Premiações anuais exclusivas'
-      ],
-      available: true
-    },
-    {
-      id: 'enterprise',
-      name: 'Financy Enterprise',
-      basePrice: 199.90,
-      annualDiscount: 15,
-      description: 'A solução mais completa com IA especializada',
-      icon: <Sparkles className="h-6 w-6" />,
-      color: 'gold',
-      badge: 'IA Incluída',
-      features: [
-        'Tudo do Financy Premium',
-        'IA Pixel para gestão avançada',
-        'Economia em impostos',
-        'Gestão multi-empresa',
-        'Relatórios corporativos',
-        'Suporte dedicado'
-      ],
-      available: false
+        { name: 'Dashboard pessoal', value: 'Avançado' },
+        { name: 'Agente de IA Financeira', value: true },
+        { name: 'Multi-Dashboard', value: 'Ilimitado' },
+        { name: 'Suporte por E-mail/WhatsApp', value: 'Prioritário' },
+        { name: 'Acesso a IA Especialista Pessoal', value: 'Especialista Pessoal' },
+        { name: 'Acesso ao Chatbot inteligente', value: true },
+        { name: 'Ferramentas (despesas, ganhos)', value: 'Ilimitadas' },
+        { name: 'Teste gratuito', value: '7 dias' }
+      ]
     }
   ];
 
+  const businessPlans = [
+    {
+      id: 'business-plus',
+      name: 'Plus',
+      monthlyPrice: 50.00,
+      annualDiscount: 20,
+      icon: <Building2 className="h-6 w-6" />,
+      description: 'Gestão empresarial essencial',
+      badge: 'Mais Popular',
+      popular: true,
+      features: [
+        { name: 'Dashboard empresarial', value: 'Simples' },
+        { name: 'Dashboard pessoal incluído', value: true },
+        { name: 'Multi-Dashboard', value: '3' },
+        { name: 'IA Financeira', value: true },
+        { name: 'IA Especialista em Impostos', value: true },
+        { name: 'Gestão de equipe', value: 'Básica' },
+        { name: 'Relatórios de impostos e taxas', value: true },
+        { name: 'Suporte (e-mail, WhatsApp, IA)', value: 'Intermediário' },
+        { name: 'Teste gratuito', value: '7 dias' }
+      ]
+    },
+    {
+      id: 'business-premium',
+      name: 'Premium',
+      monthlyPrice: 89.90,
+      annualDiscount: 20,
+      icon: <Sparkles className="h-6 w-6" />,
+      description: 'Gestão empresarial completa',
+      features: [
+        { name: 'Dashboard empresarial', value: 'Avançado' },
+        { name: 'Dashboard pessoal incluído', value: true },
+        { name: 'Multi-Dashboard', value: '5' },
+        { name: 'IA Financeira', value: true },
+        { name: 'IA Especialista em Impostos', value: true },
+        { name: 'Gestão de equipe', value: 'Avançada' },
+        { name: 'Relatórios de impostos e taxas', value: true },
+        { name: 'Suporte (e-mail, WhatsApp, IA)', value: 'Avançado' },
+        { name: 'Teste gratuito', value: '7 dias' }
+      ]
+    },
+    {
+      id: 'business-enterprise',
+      name: 'Enterprise',
+      monthlyPrice: 147.90,
+      annualDiscount: 20,
+      icon: <Shield className="h-6 w-6" />,
+      description: 'Solução empresarial premium',
+      features: [
+        { name: 'Dashboard empresarial', value: 'Avançado + customizado' },
+        { name: 'Dashboard pessoal incluído', value: true },
+        { name: 'Multi-Dashboard', value: 'Ilimitado' },
+        { name: 'IA Financeira', value: 'Com análise automatizada' },
+        { name: 'IA Especialista em Impostos', value: true },
+        { name: 'Gestão de equipe', value: 'Completa' },
+        { name: 'Relatórios de impostos e taxas', value: true },
+        { name: 'Suporte (e-mail, WhatsApp, IA)', value: 'Prioritário + dedicado' },
+        { name: 'Teste gratuito', value: '7 dias' }
+      ]
+    }
+  ];
+
+  const currentPlans = planType === 'personal' ? personalPlans : businessPlans;
+
   return (
     <div className="space-y-8">
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-6">
         <h1 className="text-4xl font-bold text-foreground">Escolha seu Plano</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Transforme sua gestão financeira com soluções inovadoras. Escolha o plano ideal para seu negócio.
+        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          Gestão financeira inteligente para pessoas físicas e empresas. 
+          Transforme sua relação com o dinheiro com nossa plataforma completa.
         </p>
         
+        {/* Toggle Planos Pessoais/Empresariais */}
+        <div className="flex items-center justify-center space-x-2">
+          <Button
+            variant={planType === 'personal' ? 'default' : 'outline'}
+            onClick={() => setPlanType('personal')}
+            className="flex items-center gap-2 px-6 py-3 rounded-lg transition-all duration-300"
+          >
+            <User className="h-4 w-4" />
+            Planos Pessoais
+          </Button>
+          <Button
+            variant={planType === 'business' ? 'default' : 'outline'}
+            onClick={() => setPlanType('business')}
+            className="flex items-center gap-2 px-6 py-3 rounded-lg transition-all duration-300"
+          >
+            <Building2 className="h-4 w-4" />
+            Planos Empresariais
+          </Button>
+        </div>
+        
         {/* Toggle Mensal/Anual */}
-        <div className="flex items-center justify-center space-x-4 mt-6">
-          <Label htmlFor="billing-toggle" className={`font-medium ${!isAnnual ? 'text-primary' : 'text-muted-foreground'}`}>
+        <div className="flex items-center justify-center space-x-4 bg-muted/50 rounded-lg p-4 max-w-md mx-auto">
+          <Label htmlFor="billing-toggle" className={`font-medium transition-colors ${!isAnnual ? 'text-primary' : 'text-muted-foreground'}`}>
             Mensal
           </Label>
           <Switch
@@ -128,148 +220,137 @@ const Assinatura: React.FC = () => {
             onCheckedChange={setIsAnnual}
             className="data-[state=checked]:bg-primary"
           />
-          <Label htmlFor="billing-toggle" className={`font-medium ${isAnnual ? 'text-primary' : 'text-muted-foreground'}`}>
+          <Label htmlFor="billing-toggle" className={`font-medium transition-colors ${isAnnual ? 'text-primary' : 'text-muted-foreground'}`}>
             Anual
           </Label>
           {isAnnual && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-              Economize até 12%
+            <Badge className="bg-green-500 text-white">
+              Economize até 20%
             </Badge>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {plans.map((plan) => {
-          const pricing = getPrice(plan.basePrice, plan.annualDiscount);
-          
-          return (
-            <Card 
-              key={plan.id} 
-              className={`relative rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl ${
-                plan.id === 'premium' ? 'border-2 border-purple-200 dark:border-purple-800 scale-105' : ''
-              } ${!plan.available ? 'opacity-75' : ''}`}
-            >
-              {plan.id === 'premium' && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-purple-600 text-white px-4 py-1 rounded-full">
-                    Mais Popular
-                  </Badge>
-                </div>
-              )}
+      {/* Tabela de Planos */}
+      <div className="overflow-x-auto">
+        <div className="min-w-full bg-background rounded-2xl border shadow-lg">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-0">
+            {/* Coluna de Recursos */}
+            <div className="bg-muted/20 p-6 border-r">
+              <div className="h-32 flex items-end">
+                <h3 className="text-lg font-semibold text-foreground">Recursos</h3>
+              </div>
+              <div className="space-y-4 mt-8">
+                {currentPlans[0].features.map((feature, index) => (
+                  <div key={index} className="h-12 flex items-center">
+                    <span className="text-sm font-medium text-muted-foreground">{feature.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Colunas dos Planos */}
+            {currentPlans.map((plan) => {
+              const pricing = getPrice(plan.monthlyPrice, plan.annualDiscount);
               
-              {!plan.available && (
-                <div className="absolute -top-4 right-4">
-                  <Badge variant="secondary" className="bg-gray-500 text-white px-3 py-1 rounded-full flex items-center gap-1">
-                    <Lock className="h-3 w-3" />
-                    Em Breve
-                  </Badge>
-                </div>
-              )}
+              return (
+                <div 
+                  key={plan.id} 
+                  className={`relative p-6 border-r last:border-r-0 ${
+                    plan.popular || plan.recommended ? 'bg-primary/5 border-primary/20' : ''
+                  }`}
+                >
+                  {/* Badge do Plano */}
+                  {(plan.popular || plan.recommended) && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <Badge className={`px-3 py-1 rounded-full text-white ${
+                        plan.popular ? 'bg-orange-500' : 'bg-purple-600'
+                      }`}>
+                        {plan.popular && <Flame className="h-3 w-3 mr-1" />}
+                        {plan.recommended && <Star className="h-3 w-3 mr-1" />}
+                        {plan.badge}
+                      </Badge>
+                    </div>
+                  )}
 
-              {isAnnual && pricing.discount > 0 && plan.available && (
-                <div className="absolute -top-4 right-4">
-                  <Badge className="bg-green-600 text-white px-3 py-1 rounded-full">
-                    -{pricing.discount}%
-                  </Badge>
-                </div>
-              )}
-
-              <CardHeader className="text-center pb-8">
-                <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 ${
-                  plan.color === 'blue' ? 'bg-blue-100 text-blue-600' :
-                  plan.color === 'purple' ? 'bg-purple-100 text-purple-600' :
-                  'bg-gradient-to-br from-yellow-400 to-orange-500 text-white'
-                }`}>
-                  {plan.icon}
-                </div>
-                
-                <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-                {plan.badge && (
-                  <Badge variant="outline" className="mx-auto w-fit">
-                    {plan.badge}
-                  </Badge>
-                )}
-                <CardDescription className="text-base">{plan.description}</CardDescription>
-                
-                <div className="pt-4">
-                  {isAnnual && pricing.discount > 0 ? (
+                  {/* Header do Plano */}
+                  <div className="text-center space-y-4 mb-8">
+                    <div className="w-12 h-12 mx-auto bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                      {plan.icon}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+                    </div>
+                    
+                    {/* Preço */}
                     <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground line-through">
-                        De R$ {pricing.originalPrice.toFixed(2)}{pricing.period}
-                      </div>
-                      <div className="text-5xl font-bold text-foreground">
+                      {isAnnual && pricing.discount > 0 && (
+                        <div className="text-sm text-muted-foreground line-through">
+                          R$ {pricing.originalPrice.toFixed(2)}/ano
+                        </div>
+                      )}
+                      <div className="text-3xl font-bold text-foreground">
                         R$ {pricing.price.toFixed(2)}
                       </div>
-                    </div>
-                  ) : (
-                    <div className="text-5xl font-bold text-foreground">
-                      R$ {pricing.price.toFixed(2)}
-                    </div>
-                  )}
-                  <div className="text-muted-foreground">{pricing.period}</div>
-                  {isAnnual && (
-                    <div className="text-sm text-muted-foreground mt-2">
-                      R$ {(pricing.price / 12).toFixed(2)}/mês
-                    </div>
-                  )}
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
-                <div className="space-y-3">
-                  {plan.features.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className={`rounded-full p-1 ${
-                        plan.color === 'blue' ? 'bg-blue-100' :
-                        plan.color === 'purple' ? 'bg-purple-100' :
-                        'bg-gradient-to-br from-yellow-100 to-orange-100'
-                      }`}>
-                        <Check className={`h-3 w-3 ${
-                          plan.color === 'blue' ? 'text-blue-600' :
-                          plan.color === 'purple' ? 'text-purple-600' :
-                          'text-orange-600'
-                        }`} />
+                      <div className="text-sm text-muted-foreground">
+                        {pricing.period}
+                        {isAnnual && (
+                          <span className="block">~R$ {pricing.monthlyEquivalent.toFixed(2)}/mês</span>
+                        )}
                       </div>
-                      <span className="text-sm">{feature}</span>
                     </div>
-                  ))}
-                </div>
 
-                <Button 
-                  onClick={() => handlePayment(plan.id, isAnnual ? 'annual' : 'monthly')}
-                  disabled={!plan.available}
-                  className={`w-full h-12 rounded-xl font-semibold transition-all duration-300 ${
-                    plan.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
-                    plan.color === 'purple' ? 'bg-purple-600 hover:bg-purple-700' :
-                    plan.available ? 'bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700' :
-                    'bg-gray-400 cursor-not-allowed'
-                  } text-white`}
-                >
-                  {!plan.available ? (
-                    <>
-                      <Lock className="mr-2 h-4 w-4" />
-                      Indisponível no Momento
-                    </>
-                  ) : plan.id === 'enterprise' ? (
-                    <>
-                      <Bot className="mr-2 h-4 w-4" />
-                      Solicitar Acesso
-                    </>
-                  ) : (
-                    'Assinar Agora'
-                  )}
-                </Button>
-
-                {plan.available && (
-                  <div className="text-xs text-muted-foreground text-center">
-                    Pagamento seguro processado via Cakto
+                    <Button 
+                      onClick={() => handlePayment(plan.id, isAnnual ? 'annual' : 'monthly')}
+                      className={`w-full transition-all duration-300 ${
+                        plan.popular || plan.recommended 
+                          ? 'bg-primary hover:bg-primary/90 shadow-lg'
+                          : 'bg-secondary hover:bg-secondary/80'
+                      }`}
+                    >
+                      {plan.popular || plan.recommended ? (
+                        <>
+                          <Zap className="mr-2 h-4 w-4" />
+                          Assinar Agora
+                        </>
+                      ) : (
+                        'Começar Teste'
+                      )}
+                    </Button>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+
+                  {/* Lista de Recursos */}
+                  <div className="space-y-4">
+                    {plan.features.map((feature, index) => (
+                      <div key={index} className="h-12 flex items-center">
+                        <div className="flex items-center gap-2">
+                          {typeof feature.value === 'boolean' ? (
+                            feature.value ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <span className="h-4 w-4 text-muted-foreground">-</span>
+                            )
+                          ) : (
+                            <Check className="h-4 w-4 text-green-500" />
+                          )}
+                          <span className="text-sm font-medium">
+                            {typeof feature.value === 'boolean' && !feature.value 
+                              ? '-' 
+                              : typeof feature.value === 'string' 
+                                ? feature.value 
+                                : '✓'
+                            }
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Status da Assinatura */}
@@ -322,38 +403,58 @@ const Assinatura: React.FC = () => {
       </Card>
 
       {/* FAQ Atualizada */}
-      <Card className="rounded-3xl">
+      <Card className="rounded-2xl">
         <CardHeader>
-          <CardTitle>Perguntas Frequentes</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5" />
+            Perguntas Frequentes
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 className="font-semibold mb-2">💰 Quanto economizo com o plano anual?</h4>
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                O que acontece após os 7 dias de teste gratuito?
+              </h4>
               <p className="text-sm text-muted-foreground">
-                Com o plano anual você economiza 10% no Financy Plus (R$ 539,90/ano) e 12% no Premium 
-                (R$ 889,90/ano), além de não se preocupar com renovações mensais.
+                Nada será cobrado automaticamente. Você escolhe se deseja assinar.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">🎁 O que são as premiações anuais?</h4>
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Posso trocar de plano depois?
+              </h4>
               <p className="text-sm text-muted-foreground">
-                Assinantes Premium e Enterprise recebem premiações exclusivas todo ano, 
-                incluindo consultorias gratuitas, relatórios especiais e acesso antecipado a novas funcionalidades.
+                Sim, você pode mudar de plano a qualquer momento sem perder seus dados.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">🤖 Como funciona o Contador IA (Pixel)?</h4>
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                O que é um Multi-Dashboard?
+              </h4>
               <p className="text-sm text-muted-foreground">
-                Pixel é nossa IA especializada em contabilidade que analisa seus dados, 
-                oferece insights personalizados e responde dúvidas financeiras 24/7.
+                É a capacidade de criar diferentes visões/empresas/pessoas em dashboards separados.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">💳 Posso trocar de plano a qualquer momento?</h4>
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <Bot className="h-4 w-4 text-primary" />
+                IA significa que um humano vai me atender?
+              </h4>
               <p className="text-sm text-muted-foreground">
-                Sim! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. 
-                As alterações são aplicadas no próximo ciclo de cobrança.
+                Não. IA significa Inteligência Artificial treinada para guiar você financeiramente.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-primary" />
+                E se eu for uma empresa mas assinar o plano pessoal?
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Você pode, mas não terá acesso aos recursos tributários e gestão de equipe disponíveis nos planos empresariais.
               </p>
             </div>
           </div>

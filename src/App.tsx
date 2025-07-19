@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { OnboardingProvider } from "@/hooks/useOnboarding";
 import { AppProvider } from "@/contexts/AppContext";
+import { DashboardProvider } from "@/hooks/useDashboard";
 import { ThemeProvider } from "@/hooks/useTheme";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -19,16 +20,18 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <OnboardingProvider>
-            <AppProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </AppProvider>
+            <DashboardProvider>
+              <AppProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </AppProvider>
+            </DashboardProvider>
           </OnboardingProvider>
         </AuthProvider>
       </TooltipProvider>
