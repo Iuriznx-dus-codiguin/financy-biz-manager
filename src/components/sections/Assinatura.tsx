@@ -95,6 +95,26 @@ const Assinatura: React.FC = () => {
       ]
     },
     {
+      id: 'personal-pro',
+      name: 'PRO',
+      monthlyPrice: 67.90,
+      annualDiscount: 20,
+      icon: <Flame className="h-6 w-6" />,
+      description: 'Dashboard Avançada com IA',
+      badge: 'Plano Popular',
+      popular: true,
+      features: [
+        { name: 'Dashboard Avançada', value: true },
+        { name: 'Multi Dashboard', value: '5 painéis' },
+        { name: 'Agente de Suporte IA', value: true },
+        { name: 'Agente de Inteligência Financeira IA', value: true },
+        { name: 'Suporte por E-mail e WhatsApp', value: true },
+        { name: 'Recursos ilimitados', value: true },
+        { name: 'Notificações Financeiras Inteligentes', value: true },
+        { name: 'Teste gratuito', value: '7 dias' }
+      ]
+    },
+    {
       id: 'personal-enterprise',
       name: 'Enterprise',
       monthlyPrice: 97.00,
@@ -154,6 +174,27 @@ const Assinatura: React.FC = () => {
         { name: 'Gestão de equipe', value: 'Avançada' },
         { name: 'Relatórios de impostos e taxas', value: true },
         { name: 'Suporte (e-mail, WhatsApp, IA)', value: 'Avançado' },
+        { name: 'Teste gratuito', value: '7 dias' }
+      ]
+    },
+    {
+      id: 'business-pro',
+      name: 'PRO',
+      monthlyPrice: 119.90,
+      annualDiscount: 20,
+      icon: <Flame className="h-6 w-6" />,
+      description: 'Solução empresarial avançada',
+      badge: 'Plano Popular',
+      popular: true,
+      features: [
+        { name: 'Tudo do Pessoal PRO', value: true },
+        { name: 'Dashboard Empresarial', value: 'Avançado' },
+        { name: 'Multi Dashboard', value: '8 painéis' },
+        { name: 'Agente Especialista em Impostos IA', value: true },
+        { name: 'Gestão de Equipe com permissões', value: true },
+        { name: 'Gestão de Impostos e Taxas', value: true },
+        { name: 'Suporte por E-mail, WhatsApp e Chatbot IA', value: true },
+        { name: 'Cadastro de Funcionários com controle de acesso', value: true },
         { name: 'Teste gratuito', value: '7 dias' }
       ]
     },
@@ -231,126 +272,105 @@ const Assinatura: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabela de Planos */}
-      <div className="overflow-x-auto">
-        <div className="min-w-full bg-background rounded-2xl border shadow-lg">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-0">
-            {/* Coluna de Recursos */}
-            <div className="bg-muted/20 p-6 border-r">
-              <div className="h-32 flex items-end">
-                <h3 className="text-lg font-semibold text-foreground">Recursos</h3>
-              </div>
-              <div className="space-y-4 mt-8">
-                {currentPlans[0].features.map((feature, index) => (
-                  <div key={index} className="h-12 flex items-center">
-                    <span className="text-sm font-medium text-muted-foreground">{feature.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+      {/* Cards dos Planos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {currentPlans.map((plan) => {
+          const pricing = getPrice(plan.monthlyPrice, plan.annualDiscount);
+          
+          return (
+            <Card 
+              key={plan.id} 
+              className={`relative transition-all duration-300 hover:shadow-xl ${
+                plan.popular || plan.recommended ? 'border-primary shadow-lg scale-105' : ''
+              }`}
+            >
+              {/* Badge do Plano */}
+              {(plan.popular || plan.recommended) && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                  <Badge className={`px-3 py-1 rounded-full text-white ${
+                    plan.popular ? 'bg-orange-500' : 'bg-purple-600'
+                  }`}>
+                    {plan.popular && <Flame className="h-3 w-3 mr-1" />}
+                    {plan.recommended && <Star className="h-3 w-3 mr-1" />}
+                    {plan.badge}
+                  </Badge>
+                </div>
+              )}
 
-            {/* Colunas dos Planos */}
-            {currentPlans.map((plan) => {
-              const pricing = getPrice(plan.monthlyPrice, plan.annualDiscount);
-              
-              return (
-                <div 
-                  key={plan.id} 
-                  className={`relative p-6 border-r last:border-r-0 ${
-                    plan.popular || plan.recommended ? 'bg-primary/5 border-primary/20' : ''
-                  }`}
-                >
-                  {/* Badge do Plano */}
-                  {(plan.popular || plan.recommended) && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <Badge className={`px-3 py-1 rounded-full text-white ${
-                        plan.popular ? 'bg-orange-500' : 'bg-purple-600'
-                      }`}>
-                        {plan.popular && <Flame className="h-3 w-3 mr-1" />}
-                        {plan.recommended && <Star className="h-3 w-3 mr-1" />}
-                        {plan.badge}
-                      </Badge>
+              <CardHeader className="text-center pb-4">
+                <div className="w-12 h-12 mx-auto bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-4">
+                  {plan.icon}
+                </div>
+                <CardTitle className="text-xl">{plan.name}</CardTitle>
+                <CardDescription>{plan.description}</CardDescription>
+                
+                {/* Preço */}
+                <div className="space-y-2 pt-4">
+                  {isAnnual && pricing.discount > 0 && (
+                    <div className="text-sm text-muted-foreground line-through">
+                      R$ {plan.monthlyPrice.toFixed(2)}/mês
                     </div>
                   )}
-
-                  {/* Header do Plano */}
-                  <div className="text-center space-y-4 mb-8">
-                    <div className="w-12 h-12 mx-auto bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                      {plan.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
-                    </div>
-                    
-                    {/* Preço */}
-                    <div className="space-y-2">
-                      {isAnnual && pricing.discount > 0 && (
-                        <div className="text-sm text-muted-foreground line-through">
-                          R$ {pricing.originalPrice.toFixed(2)}/ano
-                        </div>
-                      )}
-                      <div className="text-3xl font-bold text-foreground">
-                        R$ {pricing.price.toFixed(2)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {pricing.period}
-                        {isAnnual && (
-                          <span className="block">~R$ {pricing.monthlyEquivalent.toFixed(2)}/mês</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <Button 
-                      onClick={() => handlePayment(plan.id, isAnnual ? 'annual' : 'monthly')}
-                      className={`w-full transition-all duration-300 ${
-                        plan.popular || plan.recommended 
-                          ? 'bg-primary hover:bg-primary/90 shadow-lg'
-                          : 'bg-secondary hover:bg-secondary/80'
-                      }`}
-                    >
-                      {plan.popular || plan.recommended ? (
-                        <>
-                          <Zap className="mr-2 h-4 w-4" />
-                          Assinar Agora
-                        </>
-                      ) : (
-                        'Começar Teste'
-                      )}
-                    </Button>
+                  <div className="text-3xl font-bold text-foreground">
+                    R$ {isAnnual ? pricing.monthlyEquivalent.toFixed(2) : pricing.price.toFixed(2)}
                   </div>
-
-                  {/* Lista de Recursos */}
-                  <div className="space-y-4">
-                    {plan.features.map((feature, index) => (
-                      <div key={index} className="h-12 flex items-center">
-                        <div className="flex items-center gap-2">
-                          {typeof feature.value === 'boolean' ? (
-                            feature.value ? (
-                              <Check className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <span className="h-4 w-4 text-muted-foreground">-</span>
-                            )
-                          ) : (
-                            <Check className="h-4 w-4 text-green-500" />
-                          )}
-                          <span className="text-sm font-medium">
-                            {typeof feature.value === 'boolean' && !feature.value 
-                              ? '-' 
-                              : typeof feature.value === 'string' 
-                                ? feature.value 
-                                : '✓'
-                            }
-                          </span>
-                        </div>
+                  <div className="text-sm text-muted-foreground">
+                    /mês
+                    {isAnnual && (
+                      <div className="text-xs mt-1">
+                        Total anual: R$ {pricing.price.toFixed(2)}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
+
+                <Button 
+                  onClick={() => handlePayment(plan.id, isAnnual ? 'annual' : 'monthly')}
+                  className={`w-full mt-4 transition-all duration-300 ${
+                    plan.popular || plan.recommended 
+                      ? 'bg-primary hover:bg-primary/90 shadow-lg'
+                      : 'bg-secondary hover:bg-secondary/80'
+                  }`}
+                >
+                  {plan.popular || plan.recommended ? (
+                    <>
+                      <Zap className="mr-2 h-4 w-4" />
+                      Assinar Agora
+                    </>
+                  ) : (
+                    'Começar Teste'
+                  )}
+                </Button>
+              </CardHeader>
+
+              <CardContent className="space-y-3">
+                {plan.features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    {typeof feature.value === 'boolean' ? (
+                      feature.value ? (
+                        <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      ) : (
+                        <span className="h-4 w-4 text-muted-foreground flex-shrink-0">×</span>
+                      )
+                    ) : (
+                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    )}
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-foreground">
+                        {feature.name}
+                      </span>
+                      {typeof feature.value === 'string' && (
+                        <div className="text-xs text-muted-foreground">
+                          {feature.value}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Status da Assinatura */}

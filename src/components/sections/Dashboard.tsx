@@ -312,7 +312,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
       
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Dashboard</h2>
+          <h2 className="text-3xl font-bold text-foreground">
+            Olá, {user?.user_metadata?.nome_completo || user?.email?.split('@')[0] || 'Usuário'}!
+          </h2>
         </div>
         <div className="flex items-center gap-3">
           <CompactDashboardSelector />

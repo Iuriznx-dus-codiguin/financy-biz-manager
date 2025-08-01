@@ -1,6 +1,7 @@
 
 import React from 'react';
-import fLogo from '@/assets/f-logo-transparent.png';
+import fIcon from '@/assets/f-icon.png';
+import financyLogo from '@/assets/financy-logo.png';
 import { 
   Layout, 
   TrendingUp, 
@@ -73,23 +74,28 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center justify-between p-2">
-          <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-center p-4">
+          {isCollapsed ? (
             <div className="w-8 h-8 flex items-center justify-center">
               <img 
-                src={fLogo}
+                src={fIcon}
                 alt="F" 
-                className="w-6 h-6 object-contain"
+                className={`w-6 h-6 object-contain transition-colors ${
+                  theme === 'dark' ? 'filter invert' : ''
+                }`}
               />
             </div>
-            {!isCollapsed && (
-              <div>
-                <h1 className="text-lg font-bold text-foreground">Financy</h1>
-                <p className="text-xs text-muted-foreground">Gestão Financeira</p>
-              </div>
-            )}
-          </div>
-          <SidebarTrigger />
+          ) : (
+            <div className="flex items-center justify-center">
+              <img 
+                src={financyLogo}
+                alt="Financy" 
+                className={`h-8 object-contain transition-colors ${
+                  theme === 'dark' ? 'filter invert' : ''
+                }`}
+              />
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
