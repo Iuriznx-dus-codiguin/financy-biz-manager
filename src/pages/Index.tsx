@@ -10,8 +10,10 @@ import Fechamento from '@/components/sections/Fechamento';
 import Equipe from '@/components/sections/Equipe';
 import Metas from '@/components/sections/Metas';
 import Assinatura from '@/components/sections/Assinatura';
+import AgentesIA from '@/components/sections/AgentesIA';
 import Configuracoes from '@/components/sections/Configuracoes';
 import Ajuda from '@/components/sections/Ajuda';
+import { SubscriptionNotification } from '@/components/SubscriptionNotification';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -25,7 +27,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
-  const [activeSection, setActiveSection] = useState('painel');
+  const [activeSection, setActiveSection] = useState('assinatura');
 
   if (authLoading || onboardingLoading) {
     return (
@@ -42,9 +44,7 @@ export default function Index() {
     return <AuthPage />;
   }
 
-  if (!isOnboardingComplete) {
-    return <OnboardingFlow onComplete={completeOnboarding} />;
-  }
+  // Usuário vai direto para assinaturas, sem onboarding
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -64,6 +64,8 @@ export default function Index() {
         return <Relatorios />;
       case 'fechamento':
         return <Fechamento />;
+      case 'agentes-ia':
+        return <AgentesIA />;
       case 'assinatura':
         return <Assinatura />;
       case 'configuracoes':
@@ -83,6 +85,7 @@ export default function Index() {
             <div className="flex h-full w-full">
               <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
               <div className="flex-1 flex flex-col overflow-hidden">
+                <SubscriptionNotification setActiveSection={setActiveSection} />
                 <main className="flex-1 overflow-y-auto p-8 space-y-6">
                   {renderActiveSection()}
                 </main>

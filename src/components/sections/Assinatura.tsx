@@ -29,11 +29,39 @@ const Assinatura: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [planType, setPlanType] = useState<'personal' | 'business'>('personal');
 
+  const paymentUrls = {
+    // Planos Pessoais - Mensal
+    'personal-basic-monthly': 'https://pay.cakto.com.br/32twvdb_506799',
+    'personal-plus-monthly': 'https://pay.cakto.com.br/gbmkspq_506803',
+    'personal-pro-monthly': 'https://pay.cakto.com.br/f7d9hvg_506809',
+    'personal-enterprise-monthly': 'https://pay.cakto.com.br/6m4eyqf_506810',
+    
+    // Planos Pessoais - Anual
+    'personal-basic-annual': 'https://pay.cakto.com.br/ydsbtqa',
+    'personal-plus-annual': 'https://pay.cakto.com.br/39r822v',
+    'personal-pro-annual': 'https://pay.cakto.com.br/jtvtbzy',
+    'personal-enterprise-annual': 'https://pay.cakto.com.br/d73estf',
+    
+    // URLs dos planos empresariais serão configuradas posteriormente
+    'business-plus-monthly': '#',
+    'business-premium-monthly': '#',
+    'business-pro-monthly': '#',
+    'business-enterprise-monthly': '#',
+    'business-plus-annual': '#',
+    'business-premium-annual': '#',
+    'business-pro-annual': '#',
+    'business-enterprise-annual': '#'
+  };
+
   const handlePayment = (planId: string, period: string) => {
     const urlKey = `${planId}-${period}`;
-    // URLs do Cakto serão atualizadas conforme necessário
-    console.log(`Iniciando pagamento para: ${urlKey}`);
-    alert(`Redirecionando para pagamento: ${planId} - ${period}`);
+    const url = paymentUrls[urlKey as keyof typeof paymentUrls];
+    
+    if (url && url !== '#') {
+      window.open(url, '_blank');
+    } else {
+      alert('URL de pagamento não configurada ainda.');
+    }
   };
 
   const getPrice = (monthlyPrice: number, annualDiscount: number) => {

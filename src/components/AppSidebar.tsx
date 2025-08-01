@@ -15,7 +15,8 @@ import {
   Users,
   Sun,
   Moon,
-  Target
+  Target,
+  Bot
 } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/hooks/useTheme';
@@ -44,6 +45,7 @@ const allMenuItems = [
   { id: 'metas', label: 'Objetivos', icon: Target, businessOnly: false },
   { id: 'relatorios', label: 'Relatórios', icon: PieChart, businessOnly: false },
   { id: 'fechamento', label: 'Fechamento de Caixa', icon: Calculator, businessOnly: true },
+  { id: 'agentes-ia', label: 'Agentes de IA', icon: Bot, businessOnly: false },
   { id: 'assinatura', label: 'Assinatura', icon: CreditCard, businessOnly: false },
   { id: 'configuracoes', label: 'Configurações', icon: Settings, businessOnly: false },
   { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle, businessOnly: false }
