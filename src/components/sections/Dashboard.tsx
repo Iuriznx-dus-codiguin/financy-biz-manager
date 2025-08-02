@@ -310,70 +310,97 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   return (
     <section id="painel" className="space-y-8">
       
-      <div className="flex justify-between items-center">
-        <div>
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 shadow-sm">
-            <h2 className="text-2xl font-bold text-foreground">
-              Olá, {(() => {
-                const fullName = user?.user_metadata?.nome_completo || user?.email?.split('@')[0] || 'Usuário';
-                const nameParts = fullName.split(' ');
-                return nameParts.length >= 2 ? `${nameParts[0]} ${nameParts[1]}` : nameParts[0];
-              })()}!
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Dashboard: {currentDashboard?.name || 'Principal'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <CompactDashboardSelector />
-          <TimeFilter value={timeFilter} onChange={setTimeFilter} />
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 py-3 font-semibold shadow-lg">
-                Fechar Caixa Diário
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md rounded-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-bold">Fechamento de Caixa - Hoje</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                    <p className="text-sm text-muted-foreground">Total Receitas</p>
-                    <p className="text-xl font-bold text-green-600">R$ {receitasHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                  </div>
-                  <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
-                    <p className="text-sm text-muted-foreground">Total Despesas</p>
-                    <p className="text-xl font-bold text-red-600">R$ {(despesasHoje + custoEquipeDiario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                  </div>
-                </div>
-                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                  <p className="text-sm text-muted-foreground">Saldo Líquido</p>
-                  <p className="text-2xl font-bold text-primary">R$ {(receitasHoje - despesasHoje - custoEquipeDiario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                </div>
-                <Button 
-                  className={`w-full rounded-xl transition-all duration-300 ${
-                    isClosingCash 
-                      ? 'bg-green-600 hover:bg-green-700 animate-pulse' 
-                      : 'bg-primary hover:bg-primary/90'
-                  }`}
-                  onClick={handleFecharCaixa}
-                  disabled={isClosingCash}
-                >
-                  {isClosingCash ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Salvando...
-                    </>
-                  ) : (
-                    'Registrar Fechamento'
-                  )}
-                </Button>
+      {/* Caixa Superior com Todas as Informações */}
+      <div className="bg-gradient-to-r from-card/90 to-card/70 backdrop-blur-sm border border-border/50 rounded-3xl p-8 shadow-lg">
+        <div className="flex justify-between items-start">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-3xl font-bold text-foreground mb-2">
+                Olá, {(() => {
+                  const fullName = user?.user_metadata?.nome_completo || user?.email?.split('@')[0] || 'Usuário';
+                  const nameParts = fullName.split(' ');
+                  return nameParts.length >= 2 ? `${nameParts[0]} ${nameParts[1]}` : nameParts[0];
+                })()}!
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                Dashboard: {currentDashboard?.name || 'Principal'}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span>Sistema Operacional</span>
               </div>
-            </DialogContent>
-          </Dialog>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <span>{new Date().toLocaleDateString('pt-BR', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                <span>Último acesso: {new Date().toLocaleTimeString('pt-BR', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <CompactDashboardSelector />
+            <TimeFilter value={timeFilter} onChange={setTimeFilter} />
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 py-3 font-semibold shadow-lg">
+                  Fechar Caixa Diário
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md rounded-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold">Fechamento de Caixa - Hoje</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                      <p className="text-sm text-muted-foreground">Total Receitas</p>
+                      <p className="text-xl font-bold text-green-600">R$ {receitasHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    </div>
+                    <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                      <p className="text-sm text-muted-foreground">Total Despesas</p>
+                      <p className="text-xl font-bold text-red-600">R$ {(despesasHoje + custoEquipeDiario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    </div>
+                  </div>
+                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                    <p className="text-sm text-muted-foreground">Saldo Líquido</p>
+                    <p className="text-2xl font-bold text-primary">R$ {(receitasHoje - despesasHoje - custoEquipeDiario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  </div>
+                  <Button 
+                    className={`w-full rounded-xl transition-all duration-300 ${
+                      isClosingCash 
+                        ? 'bg-green-600 hover:bg-green-700 animate-pulse' 
+                        : 'bg-primary hover:bg-primary/90'
+                    }`}
+                    onClick={handleFecharCaixa}
+                    disabled={isClosingCash}
+                  >
+                    {isClosingCash ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Salvando...
+                      </>
+                    ) : (
+                      'Registrar Fechamento'
+                    )}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
 

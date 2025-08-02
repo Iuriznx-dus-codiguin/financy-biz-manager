@@ -54,13 +54,17 @@ const Assinatura: React.FC = () => {
   };
 
   const handlePayment = (planId: string, period: string) => {
-    const urlKey = `${planId}-${period}`;
-    const url = paymentUrls[urlKey as keyof typeof paymentUrls];
+    // Corrigir o mapeamento para corresponder às chaves dos paymentUrls
+    const billing = period === 'annual' ? 'annual' : 'monthly';
+    const urlKey = `${planId}-${billing}` as keyof typeof paymentUrls;
+    const url = paymentUrls[urlKey];
+    
+    console.log('Plan ID:', planId, 'Period:', period, 'URL Key:', urlKey, 'URL:', url);
     
     if (url && url !== '#') {
       window.open(url, '_blank');
     } else {
-      alert('URL de pagamento não configurada ainda.');
+      alert(`URL de pagamento para ${planId} (${billing}) não configurada ainda. Chave procurada: ${urlKey}`);
     }
   };
 

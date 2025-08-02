@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import fIcon from '@/assets/f-icon.png';
 import financyLogo from '@/assets/financy-logo.png';
 import { 
@@ -16,7 +16,9 @@ import {
   Sun,
   Moon,
   Target,
-  Bot
+  Bot,
+  Pin,
+  PinOff
 } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/hooks/useTheme';
@@ -57,10 +59,15 @@ interface AppSidebarProps {
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActiveSection }) => {
-  const { state } = useSidebar();
+  const { state, setOpen, open } = useSidebar();
   const { theme, setTheme } = useTheme();
   const { currentDashboard } = useDashboard();
+  const [isPinned, setIsPinned] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const isCollapsed = state === 'collapsed';
+  
+  // Se estiver colapsada e não está pinned, expandir no hover
+  const shouldExpand = isCollapsed && isHovered && !isPinned;
 
   // Filter menu items based on dashboard type
   const menuItems = allMenuItems.filter(item => {
@@ -73,26 +80,67 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
+  const handlePinToggle = () => {
+    if (isPinned) {
+      setIsPinned(false);
+      setOpen(false);
+    } else {
+      setIsPinned(true);
+      setOpen(true);
+    }
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (isCollapsed && !isPinned) {
+      setOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (isCollapsed && !isPinned) {
+      setOpen(false);
+    }
+  };
+
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar 
+      collapsible="icon"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <SidebarHeader>
-        <div className="flex items-center justify-center p-4">
-          {isCollapsed ? (
-            <div className="w-8 h-8 flex items-center justify-center">
-              <img 
-                src={fIcon}
-                alt="F" 
-                className="w-6 h-6 object-contain"
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center">
-              <img 
-                src={financyLogo}
-                alt="Financy" 
-                className="h-8 object-contain"
-              />
-            </div>
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center justify-center flex-1">
+            {isCollapsed && !shouldExpand ? (
+              <div className="w-8 h-8 flex items-center justify-center">
+                <img 
+                  src={fIcon}
+                  alt="F" 
+                  className="w-6 h-6 object-contain"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <img 
+                  src={financyLogo}
+                  alt="Financy" 
+                  className="h-8 object-contain"
+                />
+              </div>
+            )}
+          </div>
+          {(!isCollapsed || shouldExpand) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handlePinToggle}
+              className="h-6 w-6 p-0 hover:bg-accent"
+              title={isPinned ? "Desafixar sidebar" : "Fixar sidebar"}
+            >
+              {isPinned ? <Pin className="h-4 w-4" /> : <PinOff className="h-4 w-4" />}
+            </Button>
           )}
         </div>
       </SidebarHeader>
@@ -109,7 +157,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       onClick={() => setActiveSection(item.id)}
-                      tooltip={isCollapsed ? item.label : undefined}
+                      tooltip={isCollapsed && !shouldExpand ? item.label : undefined}
                       isActive={activeSection === item.id}
                     >
                       <Icon className="h-4 w-4" />
@@ -130,7 +178,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
           className="w-full"
         >
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          {!isCollapsed && (
+          {(!isCollapsed || shouldExpand) && (
             <span className="ml-2">
               {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
             </span>
