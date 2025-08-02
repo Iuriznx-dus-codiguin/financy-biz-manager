@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_subscriptions: {
+        Row: {
+          amount: number
+          billing_period: string
+          cakto_subscription_id: string | null
+          created_at: string
+          email: string
+          expires_at: string | null
+          id: string
+          payment_method: string | null
+          plan_id: string
+          plan_name: string
+          plan_type: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          billing_period: string
+          cakto_subscription_id?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string | null
+          id?: string
+          payment_method?: string | null
+          plan_id: string
+          plan_name: string
+          plan_type: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          billing_period?: string
+          cakto_subscription_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string | null
+          id?: string
+          payment_method?: string | null
+          plan_id?: string
+          plan_name?: string
+          plan_type?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       despesas: {
         Row: {
           categoria: string

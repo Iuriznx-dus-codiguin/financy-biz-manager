@@ -82,9 +82,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
               <img 
                 src={fIcon}
                 alt="F" 
-                className={`w-6 h-6 object-contain transition-colors ${
-                  theme === 'dark' ? 'filter invert' : ''
-                }`}
+                className="w-6 h-6 object-contain"
               />
             </div>
           ) : (
@@ -92,9 +90,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
               <img 
                 src={financyLogo}
                 alt="Financy" 
-                className={`h-8 object-contain transition-colors ${
-                  theme === 'dark' ? 'filter invert' : ''
-                }`}
+                className="h-8 object-contain"
               />
             </div>
           )}

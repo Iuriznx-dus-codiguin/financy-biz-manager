@@ -81,7 +81,7 @@ export default function Index() {
     <div className="h-screen bg-background">
       <AppProvider>
         <DashboardProvider>
-          <SidebarProvider>
+          <SidebarProvider defaultOpen={false}>
             <div className="flex h-full w-full">
               <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
               <div className="flex-1 flex flex-col overflow-hidden">
