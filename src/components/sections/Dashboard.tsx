@@ -322,9 +322,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
                   return nameParts.length >= 2 ? `${nameParts[0]} ${nameParts[1]}` : nameParts[0];
                 })()}!
               </h2>
-              <p className="text-lg text-muted-foreground">
-                Dashboard: {currentDashboard?.name || 'Principal'}
-              </p>
             </div>
             
           </div>
@@ -401,8 +398,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         ))}
       </div>
 
-      {/* Status da Assinatura */}
-      <SubscriptionStatus setActiveSection={setActiveSection} />
 
       {/* Inteligência Financeira - Baseada no plano */}
       {hasPreminumAccess ? (

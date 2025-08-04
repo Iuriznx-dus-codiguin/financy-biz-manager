@@ -13,7 +13,8 @@ import Assinatura from '@/components/sections/Assinatura';
 import AgentesIA from '@/components/sections/AgentesIA';
 import Configuracoes from '@/components/sections/Configuracoes';
 import Ajuda from '@/components/sections/Ajuda';
-import { SubscriptionNotification } from '@/components/SubscriptionNotification';
+import { GlobalSubscriptionAlert } from '@/components/GlobalSubscriptionAlert';
+import { useSubscriptionRedirect } from '@/hooks/useSubscriptionRedirect';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -27,7 +28,10 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
-  const [activeSection, setActiveSection] = useState('assinatura');
+  const [activeSection, setActiveSection] = useState('painel');
+
+  // Hook para gerenciar redirecionamentos baseados na assinatura
+  useSubscriptionRedirect({ setActiveSection, currentSection: activeSection });
 
   if (authLoading || onboardingLoading) {
     return (
@@ -85,8 +89,10 @@ export default function Index() {
             <div className="flex h-full w-full">
               <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
               <div className="flex-1 flex flex-col overflow-hidden">
-                <SubscriptionNotification setActiveSection={setActiveSection} />
-                <main className="flex-1 overflow-y-auto p-8 space-y-6">
+                <div className="px-8 pt-4">
+                  <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
+                </div>
+                <main className="flex-1 overflow-y-auto p-8 pt-4 space-y-6">
                   {renderActiveSection()}
                 </main>
                 <Footer />
