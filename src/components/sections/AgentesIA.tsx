@@ -1,86 +1,70 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bot, Brain, Calculator, MessageCircle } from 'lucide-react';
+import { AIAgentChat } from '@/components/AIAgentChat';
 
 const AgentesIA: React.FC = () => {
+  const agents = [
+    {
+      id: "support",
+      title: "Agente de Suporte",
+      description: "Tire dúvidas sobre a plataforma Financy 24h por dia",
+      icon: MessageCircle,
+      requiredFeature: "inteligencia_basica",
+      plan: "Plus",
+      color: "orange"
+    },
+    {
+      id: "financial_intelligence",
+      title: "Inteligência Financeira", 
+      description: "Reconhece gastos e receitas em linguagem natural",
+      icon: Brain,
+      requiredFeature: "inteligencia_basica",
+      plan: "Plus",
+      color: "blue"
+    },
+    {
+      id: "tax_specialist",
+      title: "Especialista em Impostos",
+      description: "Orientações sobre MEI, DAS e demais obrigações fiscais",
+      icon: Calculator,
+      requiredFeature: "inteligencia_avancada", 
+      plan: "Premium",
+      color: "green"
+    }
+  ];
+
   return (
     <section id="agentes-ia" className="space-y-8">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold text-foreground">Agentes de IA</h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Nossos assistentes inteligentes especializados para ajudar na sua gestão financeira.
+          Assistentes inteligentes especializados para sua gestão financeira
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="rounded-2xl shadow-sm border-border/50 hover:shadow-md transition-shadow">
-          <CardHeader className="text-center pb-4">
-            <div className="w-16 h-16 mx-auto bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-600 mb-4">
-              <Bot className="h-8 w-8" />
-            </div>
-            <CardTitle className="text-xl">Agente Financeiro</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-muted-foreground mb-4">
-              Coach financeiro básico com alertas, insights e sugestões personalizadas.
-            </p>
-            <div className="text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg">
-              Em breve
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-sm border-border/50 hover:shadow-md transition-shadow">
-          <CardHeader className="text-center pb-4">
-            <div className="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900/20 rounded-xl flex items-center justify-center text-green-600 mb-4">
-              <Calculator className="h-8 w-8" />
-            </div>
-            <CardTitle className="text-xl">Especialista em Impostos</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-muted-foreground mb-4">
-              Focado em planejamento tributário, declarações e dicas para MEIs e empresas.
-            </p>
-            <div className="text-sm text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-lg">
-              Em breve
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-sm border-border/50 hover:shadow-md transition-shadow">
-          <CardHeader className="text-center pb-4">
-            <div className="w-16 h-16 mx-auto bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-600 mb-4">
-              <Brain className="h-8 w-8" />
-            </div>
-            <CardTitle className="text-xl">Especialista Pessoal</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-muted-foreground mb-4">
-              Dicas para controle de gastos, reserva de emergência e saída do vermelho.
-            </p>
-            <div className="text-sm text-purple-600 bg-purple-50 dark:bg-purple-900/20 px-3 py-2 rounded-lg">
-              Em breve
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-sm border-border/50 hover:shadow-md transition-shadow">
-          <CardHeader className="text-center pb-4">
-            <div className="w-16 h-16 mx-auto bg-orange-100 dark:bg-orange-900/20 rounded-xl flex items-center justify-center text-orange-600 mb-4">
-              <MessageCircle className="h-8 w-8" />
-            </div>
-            <CardTitle className="text-xl">Chatbot Inteligente</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-muted-foreground mb-4">
-              Suporte 24/7 para responder dúvidas sobre uso da plataforma.
-            </p>
-            <div className="text-sm text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-3 py-2 rounded-lg">
-              Em breve
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Tabs defaultValue="support" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          {agents.map((agent) => (
+            <TabsTrigger key={agent.id} value={agent.id} className="flex items-center gap-2">
+              <agent.icon className="h-4 w-4" />
+              {agent.title}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        
+        {agents.map((agent) => (
+          <TabsContent key={agent.id} value={agent.id} className="mt-6">
+            <AIAgentChat
+              agentType={agent.id as 'support' | 'financial_intelligence' | 'tax_specialist'}
+              title={agent.title}
+              description={agent.description}
+              requiredFeature={agent.requiredFeature}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
 
       <Card className="rounded-2xl">
         <CardHeader>
@@ -99,9 +83,9 @@ const AgentesIA: React.FC = () => {
             <div>
               <h4 className="font-semibold mb-2">Disponibilidade por Plano:</h4>
               <ul className="space-y-1 text-muted-foreground">
-                <li>• <strong>Básico/Plus:</strong> Sem acesso aos agentes</li>
-                <li>• <strong>PRO:</strong> Agente Financeiro + Suporte</li>
-                <li>• <strong>Enterprise:</strong> Todos os agentes</li>
+                <li>• <strong>Plus:</strong> Suporte + Inteligência Financeira</li>
+                <li>• <strong>Premium:</strong> Todos os agentes incluindo Especialista em Impostos</li>
+                <li>• <strong>Enterprise:</strong> Acesso completo + funcionalidades avançadas</li>
               </ul>
             </div>
             <div>

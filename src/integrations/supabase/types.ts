@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_conversations: {
+        Row: {
+          agent_type: string
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          response: string
+          user_id: string
+        }
+        Insert: {
+          agent_type: string
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          response: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          response?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_recognized_transactions: {
+        Row: {
+          amount: number
+          category: string
+          confirmed: boolean | null
+          conversation_id: string | null
+          created_at: string
+          date: string
+          description: string
+          id: string
+          saved_to_platform: boolean | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          confirmed?: boolean | null
+          conversation_id?: string | null
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          saved_to_platform?: boolean | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          confirmed?: boolean | null
+          conversation_id?: string | null
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          saved_to_platform?: boolean | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recognized_transactions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_subscriptions: {
         Row: {
           amount: number
