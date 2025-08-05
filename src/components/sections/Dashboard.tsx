@@ -7,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useAppContext } from '@/contexts/AppContext';
 import { InteligenciaFinanceiraAprimorada } from '@/components/InteligenciaFinanceiraAprimorada';
 import { InteligenciaFinanceiraBasica } from '@/components/InteligenciaFinanceiraBasica';
+import { UpgradeCard } from '@/components/UpgradeCard';
 import { SubscriptionStatus } from '@/components/SubscriptionStatus';
 import { TimeFilter } from '@/components/TimeFilter';
 import { TooltipInfo } from '@/components/TooltipInfo';
@@ -401,46 +402,24 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
 
       {/* Inteligência Financeira - Baseada no plano */}
       {hasPreminumAccess ? (
-        <InteligenciaFinanceiraAprimorada 
-          receitas={receitas}
-          despesas={despesas}
-          impostos={impostos}
-          membrosEquipe={membrosEquipe}
+        <InteligenciaFinanceiraAprimorada
+          receitas={filteredReceitas}
+          despesas={filteredDespesas}
+          impostos={filteredImpostos}
         />
       ) : hasPlusAccess ? (
-        <InteligenciaFinanceiraBasica 
-          receitas={receitas}
-          despesas={despesas}
-          impostos={impostos}
-          membrosEquipe={membrosEquipe}
+        <InteligenciaFinanceiraBasica
+          receitas={filteredReceitas}
+          despesas={filteredDespesas}
+          impostos={filteredImpostos}
         />
       ) : (
-        <Card className="rounded-2xl shadow-sm border-2 border-dashed border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-          <CardContent className="p-8 text-center">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center">
-                <Crown className="h-8 w-8 text-white" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-foreground">Inteligência Financeira</h3>
-                <p className="text-muted-foreground max-w-md">
-                  Desbloqueie insights financeiros e análises personalizadas com nossos planos pagos.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-purple-600 bg-purple-100 dark:bg-purple-900/30 px-4 py-2 rounded-full">
-                <Lock className="h-4 w-4" />
-                <span>Recurso Premium</span>
-              </div>
-              <Button 
-                onClick={() => setActiveSection?.('assinatura')}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold transform hover:scale-105 transition-all"
-              >
-                <Crown className="mr-2 h-4 w-4" />
-                Assinar Agora
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <UpgradeCard
+          feature="Inteligência Financeira Avançada"
+          description="Análises poderosas, insights precisos e recomendações personalizadas para otimizar suas finanças"
+          requiredPlan="Plus ou superior"
+          onUpgrade={() => setActiveSection?.('assinatura')}
+        />
       )}
 
       {/* Gráficos e Tabelas */}
