@@ -44,53 +44,27 @@ const AgentesIA: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <Tabs defaultValue="support" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          {agents.map((agent) => (
+            <TabsTrigger key={agent.id} value={agent.id} className="flex items-center gap-2">
+              <agent.icon className="h-4 w-4" />
+              {agent.title}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        
         {agents.map((agent) => (
-          <Card key={agent.id} className="rounded-2xl hover:shadow-lg transition-all duration-300 border-border/50 group cursor-pointer relative overflow-hidden">
-            <div className={`absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity ${
-              agent.color === 'orange' ? 'from-orange-500 to-orange-600' :
-              agent.color === 'blue' ? 'from-blue-500 to-blue-600' :
-              'from-green-500 to-green-600'
-            }`} />
-            <CardHeader className="pb-4 relative">
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  agent.color === 'orange' ? 'bg-orange-100 dark:bg-orange-900/30' :
-                  agent.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                  'bg-green-100 dark:bg-green-900/30'
-                }`}>
-                  <agent.icon className={`h-6 w-6 ${
-                    agent.color === 'orange' ? 'text-orange-600 dark:text-orange-400' :
-                    agent.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
-                    'text-green-600 dark:text-green-400'
-                  }`} />
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="text-lg font-semibold">{agent.title}</CardTitle>
-                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
-                    agent.color === 'orange' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
-                    agent.color === 'blue' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                    'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                  }`}>
-                    {agent.plan}
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                {agent.description}
-              </p>
-              <AIAgentChat
-                agentType={agent.id as 'support' | 'financial_intelligence' | 'tax_specialist'}
-                title={agent.title}
-                description={agent.description}
-                requiredFeature={agent.requiredFeature}
-              />
-            </CardContent>
-          </Card>
+          <TabsContent key={agent.id} value={agent.id} className="mt-6">
+            <AIAgentChat
+              agentType={agent.id as 'support' | 'financial_intelligence' | 'tax_specialist'}
+              title={agent.title}
+              description={agent.description}
+              requiredFeature={agent.requiredFeature}
+            />
+          </TabsContent>
         ))}
-      </div>
+      </Tabs>
 
       <Card className="rounded-2xl">
         <CardHeader>
