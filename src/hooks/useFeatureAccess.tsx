@@ -26,6 +26,7 @@ export const useFeatureAccess = () => {
       ...plusPlanFeatures,
       'multi_dashboard',
       'inteligencia_avancada',
+      'dashboard_avancado', // Dashboard avançado apenas em planos premium
       'gestao_equipe',
       'fechamento_automatico',
       'whatsapp_support',
