@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Lock, Crown } from 'lucide-react';
 import { CompactDashboardSelector } from '@/components/CompactDashboardSelector';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -81,9 +82,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
     }
   };
 
-  // Verificar se o usuário tem acesso premium e plus
-  const hasPreminumAccess = subscriptionData?.subscribed && subscriptionData?.subscription_tier === 'Premium';
-  const hasPlusAccess = subscriptionData?.subscribed && subscriptionData?.subscription_tier === 'Plus';
+  // Usar useFeatureAccess para verificar permissões
+  const { isFeatureAvailable } = useFeatureAccess();
+  const hasBasicIntelligence = isFeatureAvailable('inteligencia_basica');
+  const hasAdvancedIntelligence = isFeatureAvailable('inteligencia_avancada');
 
   // Filtrar dados baseado no filtro de tempo e dashboard atual
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
@@ -401,13 +403,13 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
 
 
       {/* Inteligência Financeira - Baseada no plano */}
-      {hasPreminumAccess ? (
+      {hasAdvancedIntelligence ? (
         <InteligenciaFinanceiraAprimorada
           receitas={filteredReceitas}
           despesas={filteredDespesas}
           impostos={filteredImpostos}
         />
-      ) : hasPlusAccess ? (
+      ) : hasBasicIntelligence ? (
         <InteligenciaFinanceiraBasica
           receitas={filteredReceitas}
           despesas={filteredDespesas}
@@ -415,9 +417,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         />
       ) : (
         <UpgradeCard
-          feature="Inteligência Financeira Avançada"
-          description="Análises poderosas, insights precisos e recomendações personalizadas para otimizar suas finanças"
-          requiredPlan="Plus ou superior"
+          feature="Inteligência Financeira"
+          description="Análises básicas de suas finanças com insights relevantes"
+          requiredPlan="Plano gratuito"
           onUpgrade={() => setActiveSection?.('assinatura')}
         />
       )}
