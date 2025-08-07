@@ -33,19 +33,6 @@ export default function Index() {
   // Hook para gerenciar redirecionamentos baseados na assinatura
   useSubscriptionRedirect({ setActiveSection, currentSection: activeSection });
 
-  // Adicionar listener para navegação customizada dos agentes
-  useEffect(() => {
-    const handleNavigateToSection = (event: any) => {
-      setActiveSection(event.detail);
-    };
-
-    window.addEventListener('navigate-to-section', handleNavigateToSection);
-    
-    return () => {
-      window.removeEventListener('navigate-to-section', handleNavigateToSection);
-    };
-  }, []);
-
   if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

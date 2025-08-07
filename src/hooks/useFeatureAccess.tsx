@@ -8,8 +8,7 @@ export const useFeatureAccess = () => {
       'dashboard_basic',
       'receitas_basic', // Limitado
       'despesas_basic', // Limitado  
-      'impostos_basic',
-      'inteligencia_basica' // Básica funciona no plano gratuito
+      'impostos_basic'
     ];
 
     const plusPlanFeatures = [
@@ -19,6 +18,7 @@ export const useFeatureAccess = () => {
       'despesas_unlimited',
       'relatorios_basic',
       'fechamento_caixa',
+      'inteligencia_basica',
       'export_data'
     ];
 
@@ -26,7 +26,6 @@ export const useFeatureAccess = () => {
       ...plusPlanFeatures,
       'multi_dashboard',
       'inteligencia_avancada',
-      'dashboard_avancado', // Dashboard avançado apenas em planos premium
       'gestao_equipe',
       'fechamento_automatico',
       'whatsapp_support',
@@ -41,11 +40,6 @@ export const useFeatureAccess = () => {
       'relatorios_corporativos',
       'suporte_dedicado'
     ];
-
-    // Desenvolvedor tem acesso a tudo
-    if (subscriptionTier === 'developer') {
-      return true;
-    }
 
     switch (subscriptionTier) {
       case 'plus':
@@ -77,17 +71,6 @@ export const useFeatureAccess = () => {
 
   // Limites específicos para plano gratuito
   const getLimits = () => {
-    // Desenvolvedor tem acesso ilimitado a tudo
-    if (subscriptionTier === 'developer') {
-      return {
-        maxReceitas: -1,
-        maxDespesas: -1,
-        maxImpostos: -1,
-        maxMetas: -1,
-        maxDashboards: -1
-      };
-    }
-
     switch (subscriptionTier) {
       case 'free':
         return {

@@ -27,8 +27,7 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const body = await req.json();
-    const { message, action, transactionId } = body;
+    const { message, action } = await req.json();
 
     if (!message) {
       throw new Error('Message is required');
@@ -36,6 +35,7 @@ serve(async (req) => {
 
     // Se for uma ação de confirmação de gasto
     if (action === 'confirm_transaction') {
+      const { transactionId } = await req.json();
       
       // Buscar a transação
       const { data: transaction } = await supabase
