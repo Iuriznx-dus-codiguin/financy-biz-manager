@@ -79,15 +79,23 @@ export const AIAgentChat = ({ agentType, title, description, requiredFeature }: 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session?.access_token) {
+        throw new Error('Usuário não autenticado');
+      }
+      
       const response = await supabase.functions.invoke(getAgentEndpoint(), {
         body: { message: currentMessage },
         headers: {
-          Authorization: `Bearer ${session?.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
 
+      console.log('Response from agent:', response);
+
       if (response.error) {
-        throw new Error(response.error.message);
+        console.error('Agent response error:', response.error);
+        throw new Error(response.error.message || 'Erro na comunicação com o agente');
       }
 
       const agentMessage: Message = {

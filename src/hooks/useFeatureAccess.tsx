@@ -41,6 +41,11 @@ export const useFeatureAccess = () => {
       'suporte_dedicado'
     ];
 
+    // Desenvolvedor tem acesso a tudo
+    if (subscriptionTier === 'developer') {
+      return true;
+    }
+
     switch (subscriptionTier) {
       case 'plus':
         return plusPlanFeatures.includes(feature);
@@ -71,6 +76,17 @@ export const useFeatureAccess = () => {
 
   // Limites específicos para plano gratuito
   const getLimits = () => {
+    // Desenvolvedor tem acesso ilimitado a tudo
+    if (subscriptionTier === 'developer') {
+      return {
+        maxReceitas: -1,
+        maxDespesas: -1,
+        maxImpostos: -1,
+        maxMetas: -1,
+        maxDashboards: -1
+      };
+    }
+
     switch (subscriptionTier) {
       case 'free':
         return {
