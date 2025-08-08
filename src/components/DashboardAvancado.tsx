@@ -104,8 +104,8 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
 
   const dadosEvolutivos = gerarDadosEvolutivos();
 
-  // Dados por categoria
-  const despesasPorCategoria = despesas.reduce((acc, despesa) => {
+  // Dados por categoria (usando dados filtrados)
+  const despesasPorCategoria = filteredDespesas.reduce((acc, despesa) => {
     acc[despesa.categoria] = (acc[despesa.categoria] || 0) + despesa.valor;
     return acc;
   }, {} as Record<string, number>);
