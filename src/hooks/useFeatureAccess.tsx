@@ -8,7 +8,8 @@ export const useFeatureAccess = () => {
       'dashboard_basic',
       'receitas_basic', // Limitado
       'despesas_basic', // Limitado  
-      'impostos_basic'
+      'impostos_basic',
+      'inteligencia_basica' // Básica funciona no plano gratuito
     ];
 
     const plusPlanFeatures = [
@@ -18,7 +19,6 @@ export const useFeatureAccess = () => {
       'despesas_unlimited',
       'relatorios_basic',
       'fechamento_caixa',
-      'inteligencia_basica',
       'export_data'
     ];
 
@@ -26,6 +26,7 @@ export const useFeatureAccess = () => {
       ...plusPlanFeatures,
       'multi_dashboard',
       'inteligencia_avancada',
+      'dashboard_avancado', // Dashboard avançado apenas em planos premium
       'gestao_equipe',
       'fechamento_automatico',
       'whatsapp_support',

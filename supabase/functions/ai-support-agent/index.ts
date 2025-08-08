@@ -27,7 +27,8 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { message } = await req.json();
+    const body = await req.json();
+    const { message } = body;
 
     if (!message) {
       throw new Error('Message is required');
