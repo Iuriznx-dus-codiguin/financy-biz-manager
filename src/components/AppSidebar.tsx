@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-// Using uploaded logos that adapt to theme
-const lightLogo = '/lovable-uploads/2e0fe1e4-b99b-4e35-beb7-82837c2dfd13.png';
-const darkLogo = '/lovable-uploads/e2344118-d605-4e79-9efc-8e5cfc872faa.png';
+// Using uploaded logos
+const financyLogo = '/lovable-uploads/11a67f5c-242f-4740-b1f7-1ed6c6895f51.png';
+const iconLogo = '/lovable-uploads/29534308-8b72-41b6-ae6e-ab319484e584.png';
 import { 
   Layout, 
   TrendingUp, 
@@ -67,11 +67,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   const [isHovered, setIsHovered] = useState(false);
   const isCollapsed = state === 'collapsed';
   
-  // Select logo based on theme
-  const currentLogo = theme === 'dark' ? darkLogo : lightLogo;
-  
   // Se estiver colapsada e não está pinned, expandir no hover
   const shouldExpand = isCollapsed && isHovered && !isPinned;
+  
+  // Select logo based on sidebar state
+  const currentLogo = isCollapsed && !shouldExpand ? iconLogo : financyLogo;
 
   // Filter menu items based on dashboard type
   const menuItems = allMenuItems.filter(item => {
