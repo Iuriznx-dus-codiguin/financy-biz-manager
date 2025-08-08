@@ -16,6 +16,7 @@ import { isDateInRange } from '@/utils/dateFilters';
 import { Crown, Sparkles } from 'lucide-react';
 import { CompactDashboardSelector } from '@/components/CompactDashboardSelector';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { WelcomeHeader } from '@/components/WelcomeHeader';
 
 interface DashboardProps {
   setActiveSection?: (section: string) => void;
@@ -56,10 +57,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   if (hasAdvancedDashboard) {
     return (
       <section id="painel" className="space-y-6">
+        <WelcomeHeader setActiveSection={setActiveSection} />
+        
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold text-foreground">
-              Olá! 👋 Bem-vindo ao painel
+              Painel de Controle
             </h1>
             <p className="text-lg text-muted-foreground">
               Acompanhe suas finanças de forma inteligente
@@ -168,10 +171,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   // Dashboard básico
   return (
     <section id="painel" className="space-y-6">
+      <WelcomeHeader setActiveSection={setActiveSection} />
+      
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold text-foreground">
-            Olá! 👋 Bem-vindo ao painel
+            Painel de Controle
           </h1>
           <p className="text-lg text-muted-foreground">
             Acompanhe suas finanças de forma inteligente
