@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import fIcon from '@/assets/f-icon.png';
-import financyLogo from '@/assets/financy-logo.png';
+// Using uploaded logos that adapt to theme
+const lightLogo = '/lovable-uploads/2e0fe1e4-b99b-4e35-beb7-82837c2dfd13.png';
+const darkLogo = '/lovable-uploads/e2344118-d605-4e79-9efc-8e5cfc872faa.png';
 import { 
   Layout, 
   TrendingUp, 
@@ -66,6 +67,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   const [isHovered, setIsHovered] = useState(false);
   const isCollapsed = state === 'collapsed';
   
+  // Select logo based on theme
+  const currentLogo = theme === 'dark' ? darkLogo : lightLogo;
+  
   // Se estiver colapsada e não está pinned, expandir no hover
   const shouldExpand = isCollapsed && isHovered && !isPinned;
 
@@ -117,19 +121,19 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center justify-center flex-1">
             {isCollapsed && !shouldExpand ? (
-              <div className="w-8 h-8 flex items-center justify-center">
+              <div className="w-10 h-10 flex items-center justify-center">
                 <img 
-                  src={fIcon}
-                  alt="F" 
-                  className="w-6 h-6 object-contain"
+                  src={currentLogo}
+                  alt="Financy" 
+                  className="w-8 h-8 object-contain"
                 />
               </div>
             ) : (
               <div className="flex items-center justify-center">
                 <img 
-                  src={financyLogo}
+                  src={currentLogo}
                   alt="Financy" 
-                  className="h-8 object-contain"
+                  className="h-10 object-contain max-w-[120px]"
                 />
               </div>
             )}
