@@ -64,17 +64,11 @@ export const useSubscriptionRedirect = ({ setActiveSection, currentSection }: Us
 
         // Redirecionar para assinatura se necessário e bloquear outras seções
         if (shouldRedirectToSubscription) {
-          if (currentSection !== 'assinatura') {
-            setActiveSection('assinatura');
-          }
-          // Bloquear acesso a outras seções quando assinatura expirou
+          // Bloquear acesso a outras seções quando assinatura expirou, mas permitir acesso à assinatura
           const restrictedSections = ['painel', 'receitas', 'despesas', 'impostos', 'metas', 'relatorios', 'fechamento', 'agentes-ia', 'equipe', 'configuracoes'];
           if (restrictedSections.includes(currentSection)) {
             setActiveSection('assinatura');
           }
-        } else if (!shouldRedirectToSubscription && currentSection === 'assinatura') {
-          // Se usuário tem assinatura válida e está na tela de assinatura, redirecionar para dashboard
-          setActiveSection('painel');
         }
 
       } catch (error) {
