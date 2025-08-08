@@ -39,11 +39,14 @@ import {
   BarChart3,
   PieChart as PieIcon,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  HelpCircle,
+  Minus
 } from 'lucide-react';
 import { TimeFilter } from '@/components/TimeFilter';
 import { isDateInRange } from '@/utils/dateFilters';
 import { useAppContext } from '@/contexts/AppContext';
+import { TooltipInfo } from '@/components/TooltipInfo';
 
 interface DashboardAvancadoProps {
   timeFilter: string;
@@ -66,6 +69,12 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const totalImpostos = filteredImpostos.reduce((sum, i) => sum + i.valor, 0);
   const lucroLiquido = totalReceitas - totalDespesas - totalImpostos;
   const margemLucro = totalReceitas > 0 ? ((lucroLiquido / totalReceitas) * 100) : 0;
+  
+  // Métricas adicionais
+  const totalGastos = totalDespesas + totalImpostos;
+  const roi = totalReceitas > 0 ? (((totalReceitas - totalGastos) / totalGastos) * 100) : 0;
+  const proLaboreRecomendado = totalReceitas * 0.28; // 28% da receita como pró-labore
+  const capitalGiroNecessario = totalGastos * 3; // 3 meses de gastos
 
   // Dados para gráficos avançados
   const gerarDadosEvolutivos = () => {
@@ -127,12 +136,12 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
       <div className={`absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity ${gradient}`} />
       <CardHeader className="pb-3 relative">
         <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold text-foreground">{value}</p>
+          <div className="space-y-1 flex-1">
+            <div className="text-sm font-medium text-muted-foreground">{title}</div>
+            <p className="text-xl font-bold text-foreground">{value}</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-background/50 backdrop-blur-sm flex items-center justify-center">
-            <Icon className="h-6 w-6 text-primary" />
+          <div className="w-10 h-10 rounded-xl bg-background/50 backdrop-blur-sm flex items-center justify-center">
+            <Icon className="h-5 w-5 text-primary" />
           </div>
         </div>
         {change && (
@@ -172,7 +181,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
       </div>
 
       {/* KPIs Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <MetricCard
           title="Receita Total"
           value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
@@ -180,6 +189,12 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
           changeType={crescimentoMensal >= 0 ? 'positive' : 'negative'}
           icon={TrendingUp}
           gradient="from-green-500 to-emerald-600"
+        />
+        <MetricCard
+          title="Total de Gastos"
+          value={`R$ ${totalGastos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          icon={Minus}
+          gradient="from-red-500 to-rose-600"
         />
         <MetricCard
           title="Lucro Líquido"
@@ -190,16 +205,38 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
           gradient="from-blue-500 to-indigo-600"
         />
         <MetricCard
-          title="Margem de Lucro"
-          value={`${margemLucro.toFixed(1)}%`}
-          icon={BarChart3}
+          title={
+            <div className="flex items-center gap-1">
+              ROI
+              <TooltipInfo content="Retorno sobre Investimento - Mede o retorno obtido em relação ao investimento realizado" />
+            </div>
+          }
+          value={`${roi.toFixed(1)}%`}
+          changeType={roi >= 0 ? 'positive' : 'negative'}
+          icon={Target}
           gradient="from-purple-500 to-violet-600"
         />
         <MetricCard
-          title="Ticket Médio"
-          value={`R$ ${ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          icon={Target}
-          gradient="from-orange-500 to-red-600"
+          title={
+            <div className="flex items-center gap-1">
+              Pró-labore Recomendado
+              <TooltipInfo content="Remuneração recomendada para o sócio (28% da receita)" />
+            </div>
+          }
+          value={`R$ ${proLaboreRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          icon={Users}
+          gradient="from-orange-500 to-amber-600"
+        />
+        <MetricCard
+          title={
+            <div className="flex items-center gap-1">
+              Capital de Giro
+              <TooltipInfo content="Capital necessário para manter as operações por 3 meses" />
+            </div>
+          }
+          value={`R$ ${capitalGiroNecessario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          icon={Briefcase}
+          gradient="from-teal-500 to-cyan-600"
         />
       </div>
 
