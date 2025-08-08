@@ -56,7 +56,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   if (hasAdvancedDashboard) {
     return (
       <section id="painel" className="space-y-6">
-        {/* Header original mantido */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold text-foreground">
@@ -72,10 +71,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           </div>
         </div>
 
-        {/* Filtro de tempo */}
         <TimeFilter value={timeFilter} onChange={setTimeFilter} />
 
-        {/* Cards básicos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -142,7 +139,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           </Card>
         </div>
 
-        {/* Dashboard avançado abaixo */}
         <DashboardAvancado timeFilter={timeFilter} setTimeFilter={setTimeFilter} />
 
         {hasAdvancedIntelligence ? (

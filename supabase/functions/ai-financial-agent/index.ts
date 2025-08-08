@@ -19,15 +19,29 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user } } = await supabase.auth.getUser(token);
+    // Verificar autorização
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Authorization header missing');
+    }
 
-    if (!user) {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
       throw new Error('Unauthorized');
     }
 
-    const body = await req.json();
+    // Parse do body com verificação
+    let body;
+    const rawBody = await req.text();
+    try {
+      body = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError, 'Raw body:', rawBody);
+      throw new Error('Invalid JSON in request body');
+    }
+
     const { message, action, transactionId } = body;
 
     if (!message) {
