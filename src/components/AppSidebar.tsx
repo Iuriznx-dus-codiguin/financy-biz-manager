@@ -99,9 +99,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
 
   const handleMouseLeave = () => {
     setIsHovered(false);
-    if (isCollapsed && !isPinned) {
-      setOpen(false);
-    }
+    // Delay mais longo para evitar fechamento abrupto
+    setTimeout(() => {
+      if (isCollapsed && !isPinned && !isHovered) {
+        setOpen(false);
+      }
+    }, 500);
   };
 
   return (

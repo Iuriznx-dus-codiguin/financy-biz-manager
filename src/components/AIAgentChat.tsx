@@ -79,15 +79,23 @@ export const AIAgentChat = ({ agentType, title, description, requiredFeature }: 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session?.access_token) {
+        throw new Error('Usuário não autenticado');
+      }
+      
       const response = await supabase.functions.invoke(getAgentEndpoint(), {
         body: { message: currentMessage },
         headers: {
-          Authorization: `Bearer ${session?.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
 
+      console.log('Response from agent:', response);
+
       if (response.error) {
-        throw new Error(response.error.message);
+        console.error('Agent response error:', response.error);
+        throw new Error(response.error.message || 'Erro na comunicação com o agente');
       }
 
       const agentMessage: Message = {
@@ -186,7 +194,11 @@ export const AIAgentChat = ({ agentType, title, description, requiredFeature }: 
               {getFeatureLimitMessage(requiredFeature)}
             </div>
             <Button 
-              onClick={() => window.location.href = '#assinatura'} 
+              onClick={() => {
+                // Trigger navigation to subscription section
+                const event = new CustomEvent('navigate-to-section', { detail: 'assinatura' });
+                window.dispatchEvent(event);
+              }} 
               variant="default"
             >
               Ver Planos
@@ -198,7 +210,7 @@ export const AIAgentChat = ({ agentType, title, description, requiredFeature }: 
   }
 
   return (
-    <Card className="flex flex-col h-[600px]">
+    <Card className="flex flex-col h-[700px]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
