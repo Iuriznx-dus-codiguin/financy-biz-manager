@@ -169,7 +169,6 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
             </Badge>
           </div>
         </div>
-        <TimeFilter value={timeFilter} onChange={setTimeFilter} />
       </div>
 
       {/* KPIs Principais */}

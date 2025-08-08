@@ -14,6 +14,31 @@ export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAp
   despesas,
   impostos
 }) => {
+  // Verificar se há dados suficientes
+  const hasData = receitas.length > 0 || despesas.length > 0 || impostos.length > 0;
+  
+  if (!hasData) {
+    return (
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-yellow-500" />
+            Inteligência Financeira Avançada
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center py-12">
+          <div className="text-muted-foreground">
+            <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Dados Insuficientes</h3>
+            <p className="text-sm">
+              Adicione receitas, despesas ou impostos para gerar insights financeiros avançados.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const totalReceitas = receitas.reduce((sum, r) => sum + r.valor, 0);
   const totalDespesas = despesas.reduce((sum, d) => sum + d.valor, 0);
   const totalImpostosPagos = impostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);

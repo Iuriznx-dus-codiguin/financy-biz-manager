@@ -102,10 +102,8 @@ export default function Index() {
             <div className="flex h-full w-full">
               <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
               <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="px-8 pt-4">
-                  <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
-                </div>
-                <main className="flex-1 overflow-y-auto p-8 pt-4 space-y-6">
+                <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
+                <main className="flex-1 overflow-y-auto p-8 space-y-6">
                   {renderActiveSection()}
                 </main>
                 <Footer />

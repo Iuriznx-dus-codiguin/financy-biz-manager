@@ -136,7 +136,7 @@ export const GlobalSubscriptionAlert: React.FC<GlobalSubscriptionAlertProps> = (
   const config = getAlertConfig();
 
   return (
-    <div className={`w-full ${config.bgClass} border-l-4 border-l-current px-4 py-3 mb-4`}>
+    <div className={`fixed top-4 left-4 right-4 z-50 ${config.bgClass} border-l-4 border-l-current px-4 py-3 rounded-lg shadow-lg`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <config.icon className={`h-5 w-5 ${config.iconClass}`} />
