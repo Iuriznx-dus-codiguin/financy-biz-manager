@@ -8,7 +8,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { InteligenciaFinanceiraAprimorada } from '@/components/InteligenciaFinanceiraAprimorada';
 import { InteligenciaFinanceiraBasica } from '@/components/InteligenciaFinanceiraBasica';
 import { UpgradeCard } from '@/components/UpgradeCard';
-import { SubscriptionStatus } from '@/components/SubscriptionStatus';
+
 import { TimeFilter } from '@/components/TimeFilter';
 import { TooltipInfo } from '@/components/TooltipInfo';
 import { DashboardAvancado } from '@/components/DashboardAvancado';
@@ -68,7 +68,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           </div>
           <div className="flex items-center gap-4">
             <CompactDashboardSelector />
-            <SubscriptionStatus />
           </div>
         </div>
 
@@ -113,7 +112,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         </div>
         <div className="flex items-center gap-4">
           <CompactDashboardSelector />
-          <SubscriptionStatus />
         </div>
       </div>
 

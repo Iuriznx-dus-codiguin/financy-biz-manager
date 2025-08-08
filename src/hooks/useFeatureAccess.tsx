@@ -1,4 +1,4 @@
-import { useSubscription } from '@/components/SubscriptionStatus';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export const useFeatureAccess = () => {
   const { subscriptionTier } = useSubscription();
