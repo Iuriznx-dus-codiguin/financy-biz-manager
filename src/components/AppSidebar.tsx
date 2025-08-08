@@ -65,12 +65,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   const { currentDashboard } = useDashboard();
   const [isPinned, setIsPinned] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  
   const isCollapsed = state === 'collapsed';
-  
-  // Se estiver colapsada e não está pinned, expandir no hover
   const shouldExpand = isCollapsed && isHovered && !isPinned;
-  
-  // Select logo based on sidebar state
   const currentLogo = isCollapsed && !shouldExpand ? iconLogo : financyLogo;
 
   // Filter menu items based on dashboard type
