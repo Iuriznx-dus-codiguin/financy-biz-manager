@@ -19,43 +19,18 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Verificar autorização
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Authorization header missing');
-    }
-
+    const authHeader = req.headers.get('Authorization')!;
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    const { data: { user } } = await supabase.auth.getUser(token);
 
-    if (userError || !user) {
+    if (!user) {
       throw new Error('Unauthorized');
     }
 
-    // Parse do body com verificação
-    let body;
-    const rawBody = await req.text();
-    try {
-      body = JSON.parse(rawBody);
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError, 'Raw body:', rawBody);
-      throw new Error('Invalid JSON in request body');
-    }
-
-    const { message } = body;
+    const { message } = await req.json();
 
     if (!message) {
-      return new Response(JSON.stringify({ error: 'Message is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    if (!openAIApiKey) {
-      return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      throw new Error('Message is required');
     }
 
     // Sistema prompt para o especialista em impostos
@@ -128,7 +103,7 @@ serve(async (req) => {
       });
 
     return new Response(JSON.stringify({ 
-      response: aiResponse || "Desculpe, não consegui processar sua solicitação no momento.",
+      response: aiResponse,
       agent: 'tax_specialist',
       has_tax_content: hasTaxContent
     }), {

@@ -99,12 +99,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
 
   const handleMouseLeave = () => {
     setIsHovered(false);
-    // Fechar automaticamente quando sair da área se não estiver pinned
-    setTimeout(() => {
-      if (!isPinned && isHovered === false) {
-        setOpen(false);
-      }
-    }, 200);
+    if (isCollapsed && !isPinned) {
+      setOpen(false);
+    }
   };
 
   return (

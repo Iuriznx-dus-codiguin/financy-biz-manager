@@ -13,7 +13,7 @@ const Footer = () => {
 
   return (
     <footer className="border-t border-border bg-card mt-20">
-      <div className="container mx-auto px-6 py-4">
+      <div className="container mx-auto px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-3 mb-4">
@@ -26,8 +26,16 @@ const Footer = () => {
               A plataforma mais completa para gestão financeira de pequenas e médias empresas. 
               Controle total, relatórios inteligentes e crescimento sustentável.
             </p>
-            <div className="text-muted-foreground text-sm">
-              Entre em contato para parcerias e colaborações
+            <div className="flex space-x-4">
+              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                LinkedIn
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                Instagram
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                YouTube
+              </a>
             </div>
           </div>
           
@@ -52,7 +60,7 @@ const Footer = () => {
           </div>
         </div>
         
-        <div className="border-t border-border mt-4 pt-4 flex flex-col md:flex-row justify-between items-center">
+        <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-muted-foreground text-sm">
             Financy © 2025 - Todos os direitos reservados
           </p>

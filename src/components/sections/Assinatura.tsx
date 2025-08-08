@@ -22,18 +22,12 @@ import {
   Users,
   TrendingUp,
   Shield,
-  Zap,
-  Code2
+  Zap
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
 
 const Assinatura: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [planType, setPlanType] = useState<'personal' | 'business'>('personal');
-  const [isActivatingDeveloper, setIsActivatingDeveloper] = useState(false);
-  const { user } = useAuth();
 
   const paymentUrls = {
     // Planos Pessoais - Mensal
@@ -258,69 +252,6 @@ const Assinatura: React.FC = () => {
   ];
 
   const currentPlans = planType === 'personal' ? personalPlans : businessPlans;
-
-  const activateDeveloperMode = async () => {
-    if (!user) {
-      toast.error('Você precisa estar logado para ativar o modo desenvolvedor');
-      return;
-    }
-
-    setIsActivatingDeveloper(true);
-    
-    try {
-      // Verificar se já existe um registro para este usuário
-      const { data: existingSubscriber, error: checkError } = await supabase
-        .from('subscribers')
-        .select('*')
-        .eq('email', user.email)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
-      }
-
-      if (existingSubscriber) {
-        // Atualizar registro existente
-        const { error: updateError } = await supabase
-          .from('subscribers')
-          .update({
-            subscribed: true,
-            subscription_tier: 'developer',
-            subscription_end: null, // Acesso ilimitado
-            updated_at: new Date().toISOString()
-          })
-          .eq('email', user.email);
-
-        if (updateError) throw updateError;
-      } else {
-        // Criar novo registro
-        const { error: insertError } = await supabase
-          .from('subscribers')
-          .insert({
-            user_id: user.id,
-            email: user.email,
-            subscribed: true,
-            subscription_tier: 'developer',
-            subscription_end: null // Acesso ilimitado
-          });
-
-        if (insertError) throw insertError;
-      }
-
-      toast.success('Modo desenvolvedor ativado com sucesso! 🚀\nVocê agora tem acesso ilimitado a todas as funcionalidades.');
-      
-      // Recarregar a página após um pequeno delay para permitir que o toast seja exibido
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-
-    } catch (error) {
-      console.error('Erro ao ativar modo desenvolvedor:', error);
-      toast.error('Erro ao ativar modo desenvolvedor. Tente novamente.');
-    } finally {
-      setIsActivatingDeveloper(false);
-    }
-  };
 
   return (
     <div className="space-y-8">
@@ -581,19 +512,6 @@ const Assinatura: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Botão Desenvolvedor */}
-      <div className="flex justify-center pt-8">
-        <Button
-          onClick={activateDeveloperMode}
-          disabled={isActivatingDeveloper}
-          variant="outline"
-          className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-300 hover:border-purple-500 transition-all duration-300"
-        >
-          <Code2 className="h-4 w-4 mr-2" />
-          {isActivatingDeveloper ? 'Ativando...' : 'Sou um Desenvolvedor'}
-        </Button>
-      </div>
     </div>
   );
 };

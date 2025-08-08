@@ -19,47 +19,23 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Verificar autorização
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Authorization header missing');
-    }
-
+    const authHeader = req.headers.get('Authorization')!;
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    const { data: { user } } = await supabase.auth.getUser(token);
 
-    if (userError || !user) {
+    if (!user) {
       throw new Error('Unauthorized');
     }
 
-    // Parse do body com verificação
-    let body;
-    const rawBody = await req.text();
-    try {
-      body = JSON.parse(rawBody);
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError, 'Raw body:', rawBody);
-      throw new Error('Invalid JSON in request body');
-    }
-
-    const { message, action, transactionId } = body;
+    const { message, action } = await req.json();
 
     if (!message) {
-      return new Response(JSON.stringify({ error: 'Message is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    if (!openAIApiKey) {
-      return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      throw new Error('Message is required');
     }
 
     // Se for uma ação de confirmação de gasto
     if (action === 'confirm_transaction') {
+      const { transactionId } = await req.json();
       
       // Buscar a transação
       const { data: transaction } = await supabase
@@ -167,7 +143,6 @@ serve(async (req) => {
     let transactionId = null;
 
     try {
-      // Tentar parsear a resposta JSON
       parsedResponse = JSON.parse(aiResponse);
       
       // Se detectou transação, salvar no banco
@@ -185,15 +160,11 @@ serve(async (req) => {
           .select()
           .single();
 
-        transactionId = transaction?.id;
+        transactionId = transaction.id;
       }
     } catch (e) {
-      console.log('Erro ao parsear JSON da IA:', e);
-      // Se não conseguir parsear, criar resposta padrão
-      parsedResponse = { 
-        response: aiResponse || "Entendi! Como posso ajudar com suas finanças?", 
-        has_transaction: false 
-      };
+      // Se não conseguir parsear, usar resposta direta
+      parsedResponse = { response: aiResponse, has_transaction: false };
     }
 
     // Salvar conversa no banco
@@ -213,11 +184,11 @@ serve(async (req) => {
       .single();
 
     return new Response(JSON.stringify({ 
-      response: parsedResponse.response || "Como posso ajudar com suas finanças?",
+      response: parsedResponse.response,
       agent: 'financial_intelligence',
-      has_transaction: parsedResponse.has_transaction || false,
+      has_transaction: parsedResponse.has_transaction,
       transaction_id: transactionId,
-      conversation_id: conversation?.id
+      conversation_id: conversation.id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
