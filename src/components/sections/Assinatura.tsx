@@ -65,7 +65,7 @@ const Assinatura: React.FC = () => {
     const urlKey = `${planId}-${billing}` as keyof typeof paymentUrls;
     const url = paymentUrls[urlKey];
     
-    console.log('Plan ID:', planId, 'Period:', period, 'URL Key:', urlKey, 'URL:', url);
+    // Payment processing - debug logging removed for security
     
     if (url && url !== '#') {
       window.open(url, '_blank');

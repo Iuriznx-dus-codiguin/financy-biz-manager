@@ -91,7 +91,7 @@ export const AIAgentChat = ({ agentType, title, description, requiredFeature }: 
         }
       });
 
-      console.log('Response from agent:', response);
+      // Agent response received - logging removed for security
 
       if (response.error) {
         console.error('Agent response error:', response.error);
