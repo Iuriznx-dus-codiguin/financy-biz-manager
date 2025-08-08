@@ -56,22 +56,93 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   if (hasAdvancedDashboard) {
     return (
       <section id="painel" className="space-y-6">
+        {/* Header original mantido */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-4xl font-bold text-foreground">Painel de Controle</h1>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm rounded-full">
-                <Crown className="h-3 w-3" />
-                <span>Dashboard Avançado</span>
-              </div>
-            </div>
+            <h1 className="text-3xl font-bold text-foreground">
+              Olá! 👋 Bem-vindo ao painel
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Acompanhe suas finanças de forma inteligente
+            </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <CompactDashboardSelector />
             <SubscriptionStatus />
           </div>
         </div>
 
+        {/* Filtro de tempo */}
+        <TimeFilter value={timeFilter} onChange={setTimeFilter} />
+
+        {/* Cards básicos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total de Receitas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {filteredReceitas.length} transações
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total de Despesas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">
+                R$ {totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {filteredDespesas.length} transações
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Saldo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Receitas - Despesas
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Impostos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                R$ {totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {filteredImpostos.length} pendências
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Dashboard avançado abaixo */}
         <DashboardAvancado timeFilter={timeFilter} setTimeFilter={setTimeFilter} />
 
         {hasAdvancedIntelligence ? (
@@ -103,15 +174,14 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
     <section id="painel" className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-4xl font-bold text-foreground">Painel de Controle</h1>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 px-3 py-1 bg-muted text-muted-foreground text-sm rounded-full border">
-              <Sparkles className="h-3 w-3" />
-              <span>Dashboard Básico</span>
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold text-foreground">
+            Olá! 👋 Bem-vindo ao painel
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Acompanhe suas finanças de forma inteligente
+          </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <CompactDashboardSelector />
           <SubscriptionStatus />
         </div>

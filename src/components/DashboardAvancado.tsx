@@ -154,10 +154,10 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
 
   return (
     <div className="space-y-6">
-      {/* Header com Badge Premium */}
+      {/* Header com Badge Premium - REMOVIDO filtro de tempo duplicado */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h2 className="text-3xl font-bold text-foreground">Dashboard Avançado</h2>
+          <h2 className="text-2xl font-bold text-foreground">Análises Avançadas</h2>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0">
               <Crown className="h-3 w-3 mr-1" />
@@ -169,7 +169,6 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
             </Badge>
           </div>
         </div>
-        <TimeFilter value={timeFilter} onChange={setTimeFilter} />
       </div>
 
       {/* KPIs Principais */}

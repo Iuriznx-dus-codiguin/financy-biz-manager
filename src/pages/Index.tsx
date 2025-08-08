@@ -61,8 +61,6 @@ export default function Index() {
     return <AuthPage />;
   }
 
-  // Usuário vai direto para assinaturas, sem onboarding
-
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'painel':

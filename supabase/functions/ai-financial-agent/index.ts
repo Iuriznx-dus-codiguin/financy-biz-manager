@@ -143,6 +143,7 @@ serve(async (req) => {
     let transactionId = null;
 
     try {
+      // Tentar parsear a resposta JSON
       parsedResponse = JSON.parse(aiResponse);
       
       // Se detectou transação, salvar no banco
@@ -160,11 +161,15 @@ serve(async (req) => {
           .select()
           .single();
 
-        transactionId = transaction.id;
+        transactionId = transaction?.id;
       }
     } catch (e) {
-      // Se não conseguir parsear, usar resposta direta
-      parsedResponse = { response: aiResponse, has_transaction: false };
+      console.log('Erro ao parsear JSON da IA:', e);
+      // Se não conseguir parsear, criar resposta padrão
+      parsedResponse = { 
+        response: aiResponse || "Entendi! Como posso ajudar com suas finanças?", 
+        has_transaction: false 
+      };
     }
 
     // Salvar conversa no banco
@@ -184,11 +189,11 @@ serve(async (req) => {
       .single();
 
     return new Response(JSON.stringify({ 
-      response: parsedResponse.response,
+      response: parsedResponse.response || "Como posso ajudar com suas finanças?",
       agent: 'financial_intelligence',
-      has_transaction: parsedResponse.has_transaction,
+      has_transaction: parsedResponse.has_transaction || false,
       transaction_id: transactionId,
-      conversation_id: conversation.id
+      conversation_id: conversation?.id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

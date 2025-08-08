@@ -94,7 +94,7 @@ serve(async (req) => {
       });
 
     return new Response(JSON.stringify({ 
-      response: aiResponse,
+      response: aiResponse || "Desculpe, não consegui processar sua solicitação no momento.",
       agent: 'support'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
