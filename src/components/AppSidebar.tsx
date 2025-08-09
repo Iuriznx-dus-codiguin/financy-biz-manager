@@ -101,12 +101,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
 
   const handleMouseLeave = () => {
     setIsHovered(false);
-    // Delay mais longo para evitar fechamento abrupto
+    // Delay mais curto para fechamento mais responsivo
     setTimeout(() => {
-      if (isCollapsed && !isPinned && !isHovered) {
+      if (isCollapsed && !isPinned) {
         setOpen(false);
       }
-    }, 500);
+    }, 300);
   };
 
   return (
@@ -127,11 +127,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
                 />
               </div>
             ) : (
-              <div className="flex items-center justify-center w-full h-16">
+              <div className="flex items-center justify-center w-full h-14 px-2">
                 <img 
                   src={currentLogo}
                   alt="Financy" 
-                  className="h-12 object-contain max-w-[140px]"
+                  className="h-10 w-full object-contain"
                 />
               </div>
             )}

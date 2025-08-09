@@ -47,6 +47,7 @@ import { TimeFilter } from '@/components/TimeFilter';
 import { isDateInRange } from '@/utils/dateFilters';
 import { useAppContext } from '@/contexts/AppContext';
 import { TooltipInfo } from '@/components/TooltipInfo';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DashboardAvancadoProps {
   timeFilter: string;
@@ -57,6 +58,7 @@ const COLORS = ['#6366f1', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#06b6d4'
 
 export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter, setTimeFilter }) => {
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
+  const { user } = useAuth();
 
   // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
@@ -72,9 +74,9 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   
   // Métricas adicionais
   const totalGastos = totalDespesas + totalImpostos;
-  const roi = totalReceitas > 0 ? (((totalReceitas - totalGastos) / totalGastos) * 100) : 0;
+  const roi = totalGastos > 0 ? ((totalReceitas - totalGastos) / totalGastos) : 0;
   const proLaboreRecomendado = totalReceitas * 0.28; // 28% da receita como pró-labore
-  const capitalGiroNecessario = totalGastos * 3; // 3 meses de gastos
+  const capitalGiroRecomendado = totalGastos * 3; // 3 meses de gastos recomendados
 
   // Dados para gráficos avançados
   const gerarDadosEvolutivos = () => {
@@ -166,7 +168,9 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
       {/* Header com Badge Premium */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h2 className="text-3xl font-bold text-foreground">Dashboard Avançado</h2>
+          <h2 className="text-3xl font-bold text-foreground">
+            Olá, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário'}
+          </h2>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0">
               <Crown className="h-3 w-3 mr-1" />
@@ -178,6 +182,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
             </Badge>
           </div>
         </div>
+        <TimeFilter value={timeFilter} onChange={setTimeFilter} />
       </div>
 
       {/* KPIs Principais */}
@@ -211,7 +216,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               <TooltipInfo content="Retorno sobre Investimento - Mede o retorno obtido em relação ao investimento realizado" />
             </div>
           }
-          value={`${roi.toFixed(1)}%`}
+          value={roi.toFixed(2)}
           changeType={roi >= 0 ? 'positive' : 'negative'}
           icon={Target}
           gradient="from-purple-500 to-violet-600"
@@ -230,11 +235,11 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
         <MetricCard
           title={
             <div className="flex items-center gap-1">
-              Capital de Giro
-              <TooltipInfo content="Capital necessário para manter as operações por 3 meses" />
+              Capital de Giro Recomendado
+              <TooltipInfo content="Capital recomendado para manter as operações por 3 meses" />
             </div>
           }
-          value={`R$ ${capitalGiroNecessario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          value={`R$ ${capitalGiroRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={Briefcase}
           gradient="from-teal-500 to-cyan-600"
         />
