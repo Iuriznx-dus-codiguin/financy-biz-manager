@@ -127,11 +127,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
                 />
               </div>
             ) : (
-              <div className="flex items-center justify-center w-full">
+              <div className="flex items-center justify-center w-full h-full">
                 <img 
                   src={currentLogo}
                   alt="Financy" 
-                  className="h-14 object-contain max-w-full"
+                  className="w-full h-full object-contain"
                 />
               </div>
             )}
