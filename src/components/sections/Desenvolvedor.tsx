@@ -1,17 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Code2, Copy, Key, Lock, CheckCircle } from 'lucide-react';
+import { Code2, Copy, Key, Lock, CheckCircle, Shield, Terminal } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 const Desenvolvedor: React.FC = () => {
+  const [isDeveloperMode, setIsDeveloperMode] = useState(false);
+  const [isActivationDialogOpen, setIsActivationDialogOpen] = useState(false);
+  const [activationKey, setActivationKey] = useState('');
   const [unlockedKeys, setUnlockedKeys] = useState<Set<number>>(new Set());
   const [inputKey, setInputKey] = useState('');
   const [selectedKeyIndex, setSelectedKeyIndex] = useState<number | null>(null);
   const { toast } = useToast();
+
+  // Chave mestra para ativar modo desenvolvedor
+  const MASTER_KEY = 'dev_master_2024_financy';
+
+  // Verificar se modo desenvolvedor já está ativo
+  useEffect(() => {
+    const devMode = localStorage.getItem('financy_dev_mode');
+    if (devMode === 'active') {
+      setIsDeveloperMode(true);
+    }
+  }, []);
+
+  const handleActivateDeveloperMode = () => {
+    if (isDeveloperMode) {
+      toast({
+        title: "Modo Desenvolvedor Ativo",
+        description: "Você já é um desenvolvedor!",
+      });
+      return;
+    }
+    setIsActivationDialogOpen(true);
+  };
+
+  const handleMasterKeySubmit = () => {
+    if (activationKey === MASTER_KEY) {
+      setIsDeveloperMode(true);
+      localStorage.setItem('financy_dev_mode', 'active');
+      setIsActivationDialogOpen(false);
+      setActivationKey('');
+      toast({
+        title: "Modo Desenvolvedor Ativado!",
+        description: "Bem-vindo à área de desenvolvimento.",
+      });
+    } else {
+      toast({
+        title: "Chave Inválida",
+        description: "A chave de desenvolvedor inserida não é válida.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Chaves criptografadas de 20 caracteres
   const encryptedKeys = [
@@ -85,20 +129,73 @@ const Desenvolvedor: React.FC = () => {
       </div>
 
       <div className="max-w-6xl mx-auto">
-        <Card className="rounded-2xl mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Code2 className="h-5 w-5" />
-              Instruções de Acesso
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground text-sm">
-              Para acessar as chaves de API, você precisa inserir a chave criptografada correspondente. 
-              Cada chave liberada permite integração com diferentes serviços da plataforma Financy.
-            </p>
-          </CardContent>
-        </Card>
+        {!isDeveloperMode ? (
+          <Card className="rounded-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Ativação do Modo Desenvolvedor
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-muted-foreground">
+                Para acessar as funcionalidades de desenvolvedor, você precisa ativar o modo desenvolvedor com uma chave especial.
+              </p>
+              <Button onClick={handleActivateDeveloperMode} size="lg">
+                <Terminal className="h-4 w-4 mr-2" />
+                Ativar Modo Desenvolvedor
+              </Button>
+              
+              <Dialog open={isActivationDialogOpen} onOpenChange={setIsActivationDialogOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Ativar Modo Desenvolvedor</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="master-key">Chave de Desenvolvedor</Label>
+                      <Input
+                        id="master-key"
+                        value={activationKey}
+                        onChange={(e) => setActivationKey(e.target.value)}
+                        placeholder="Digite a chave mestra..."
+                        className="mt-1"
+                        type="password"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleMasterKeySubmit} className="flex-1">
+                        Ativar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setIsActivationDialogOpen(false)}
+                        className="flex-1"
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <Card className="rounded-2xl mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Code2 className="h-5 w-5" />
+                  Instruções de Acesso
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">
+                  Para acessar as chaves de API, você precisa inserir a chave criptografada correspondente. 
+                  Cada chave liberada permite integração com diferentes serviços da plataforma Financy.
+                </p>
+              </CardContent>
+            </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {encryptedKeys.map((encryptedKey, index) => {
@@ -206,6 +303,8 @@ const Desenvolvedor: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+        </>
+        )}
       </div>
     </section>
   );

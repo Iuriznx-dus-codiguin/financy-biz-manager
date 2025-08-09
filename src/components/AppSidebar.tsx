@@ -51,7 +51,8 @@ const allMenuItems = [
   { id: 'agentes-ia', label: 'Agentes de IA', icon: Bot, businessOnly: false },
   { id: 'assinatura', label: 'Assinatura', icon: CreditCard, businessOnly: false },
   { id: 'configuracoes', label: 'Configurações', icon: Settings, businessOnly: false },
-  { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle, businessOnly: false }
+  { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle, businessOnly: false },
+  { id: 'desenvolvedor', label: 'Sou um Desenvolvedor', icon: Settings, businessOnly: false }
 ];
 
 interface AppSidebarProps {
@@ -126,11 +127,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
                 />
               </div>
             ) : (
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center w-full">
                 <img 
                   src={currentLogo}
                   alt="Financy" 
-                  className="h-10 object-contain max-w-[120px]"
+                  className="h-14 object-contain max-w-full"
                 />
               </div>
             )}
