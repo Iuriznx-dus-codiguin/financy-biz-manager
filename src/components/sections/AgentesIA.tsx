@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bot, Brain, Calculator, MessageCircle } from 'lucide-react';
+import { Bot, Brain, Calculator, MessageCircle, Lock } from 'lucide-react';
 import { AIAgentChat } from '@/components/AIAgentChat';
 
 const AgentesIA: React.FC = () => {
@@ -77,16 +77,58 @@ const AgentesIA: React.FC = () => {
         </Select>
       </div>
 
-      {/* Chat Area */}
-      <div className="w-full max-w-4xl mx-auto">
-        {selectedAgentData && (
-          <AIAgentChat
-            agentType={selectedAgent as 'support' | 'financial_intelligence' | 'tax_specialist'}
-            title={selectedAgentData.title}
-            description={selectedAgentData.description}
-            requiredFeature={selectedAgentData.requiredFeature}
-          />
-        )}
+      {/* Fichas dos Agentes - Em Breve */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        {agents.map((agent) => {
+          const Icon = agent.icon;
+          return (
+            <Card key={agent.id} className="rounded-2xl relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-muted/50 to-muted opacity-80 z-10" />
+              <div className="absolute top-4 right-4 z-20">
+                <Lock className="h-5 w-5 text-muted-foreground animate-pulse" />
+              </div>
+              
+              <CardHeader className="relative z-20">
+                <CardTitle className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${
+                    agent.color === 'orange' ? 'bg-orange-100 dark:bg-orange-900/30' :
+                    agent.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30' :
+                    'bg-green-100 dark:bg-green-900/30'
+                  }`}>
+                    <Icon className={`h-5 w-5 ${
+                      agent.color === 'orange' ? 'text-orange-600 dark:text-orange-400' :
+                      agent.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
+                      'text-green-600 dark:text-green-400'
+                    }`} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">{agent.title}</h3>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      agent.color === 'orange' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
+                      agent.color === 'blue' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                    }`}>
+                      {agent.plan}
+                    </span>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              
+              <CardContent className="relative z-20">
+                <p className="text-muted-foreground text-sm mb-4">
+                  {agent.description}
+                </p>
+                
+                <div className="text-center">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-medium animate-pulse">
+                    <Lock className="h-4 w-4" />
+                    <span>Em Breve</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Info Cards */}
