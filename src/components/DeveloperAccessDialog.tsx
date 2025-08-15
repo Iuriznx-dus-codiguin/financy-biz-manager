@@ -8,49 +8,49 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-interface PropriedadesDialogoAcessoDesenvolvedor {
-  estaAberto: boolean;
-  aoFechar: () => void;
+interface DeveloperAccessDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export const DeveloperAccessDialog: React.FC<PropriedadesDialogoAcessoDesenvolvedor> = ({
-  estaAberto,
-  aoFechar
+export const DeveloperAccessDialog: React.FC<DeveloperAccessDialogProps> = ({
+  isOpen,
+  onClose
 }) => {
-  const [chaveAcesso, setChaveAcesso] = useState('');
-  const [estaValidando, setEstaValidando] = useState(false);
-  const { user: usuario } = useAuth();
+  const [accessKey, setAccessKey] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+  const { user } = useAuth();
 
-  const CHAVE_ACESSO_DESENVOLVEDOR = 'FINANCY_DEV_2024';
+  const DEVELOPER_ACCESS_KEY = 'FINANCY_DEV_2024';
 
-  const validarAcesso = async () => {
-    if (!usuario) {
+  const handleValidateAccess = async () => {
+    if (!user) {
       toast.error('Você precisa estar logado');
       return;
     }
 
-    if (chaveAcesso !== CHAVE_ACESSO_DESENVOLVEDOR) {
+    if (accessKey !== DEVELOPER_ACCESS_KEY) {
       toast.error('Chave de acesso inválida');
       return;
     }
 
-    setEstaValidando(true);
+    setIsValidating(true);
     
     try {
       // Verificar se já existe um registro para este usuário
-      const { data: assinanteExistente, error: erroVerificacao } = await supabase
+      const { data: existingSubscriber, error: checkError } = await supabase
         .from('subscribers')
         .select('*')
-        .eq('email', usuario.email)
+        .eq('email', user.email)
         .single();
 
-      if (erroVerificacao && erroVerificacao.code !== 'PGRST116') {
-        throw erroVerificacao;
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
       }
 
-      if (assinanteExistente) {
+      if (existingSubscriber) {
         // Atualizar registro existente
-        const { error: erroAtualizacao } = await supabase
+        const { error: updateError } = await supabase
           .from('subscribers')
           .update({
             subscribed: true,
@@ -58,43 +58,43 @@ export const DeveloperAccessDialog: React.FC<PropriedadesDialogoAcessoDesenvolve
             subscription_end: null, // Acesso ilimitado
             updated_at: new Date().toISOString()
           })
-          .eq('email', usuario.email);
+          .eq('email', user.email);
 
-        if (erroAtualizacao) throw erroAtualizacao;
+        if (updateError) throw updateError;
       } else {
         // Criar novo registro
-        const { error: erroInsercao } = await supabase
+        const { error: insertError } = await supabase
           .from('subscribers')
           .insert({
-            user_id: usuario.id,
-            email: usuario.email,
+            user_id: user.id,
+            email: user.email,
             subscribed: true,
             subscription_tier: 'developer',
             subscription_end: null // Acesso ilimitado
           });
 
-        if (erroInsercao) throw erroInsercao;
+        if (insertError) throw insertError;
       }
 
       toast.success('Modo desenvolvedor ativado com sucesso! 🚀\nVocê agora tem acesso ilimitado a todas as funcionalidades.');
       
-      aoFechar();
+      onClose();
       
       // Recarregar a página após um pequeno delay
       setTimeout(() => {
         window.location.reload();
       }, 2000);
 
-    } catch (erro) {
-      console.error('Erro ao ativar modo desenvolvedor:', erro);
+    } catch (error) {
+      console.error('Erro ao ativar modo desenvolvedor:', error);
       toast.error('Erro ao ativar modo desenvolvedor. Tente novamente.');
     } finally {
-      setEstaValidando(false);
+      setIsValidating(false);
     }
   };
 
   return (
-    <Dialog open={estaAberto} onOpenChange={aoFechar}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -114,32 +114,32 @@ export const DeveloperAccessDialog: React.FC<PropriedadesDialogoAcessoDesenvolve
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="chave-acesso">Chave de Acesso</Label>
+            <Label htmlFor="access-key">Chave de Acesso</Label>
             <Input
-              id="chave-acesso"
+              id="access-key"
               type="password"
               placeholder="Digite a chave de acesso"
-              value={chaveAcesso}
-              onChange={(e) => setChaveAcesso(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && validarAcesso()}
+              value={accessKey}
+              onChange={(e) => setAccessKey(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleValidateAccess()}
             />
           </div>
 
           <div className="flex gap-2 pt-2">
             <Button
               variant="outline"
-              onClick={aoFechar}
+              onClick={onClose}
               className="flex-1"
-              disabled={estaValidando}
+              disabled={isValidating}
             >
               Cancelar
             </Button>
             <Button
-              onClick={validarAcesso}
-              disabled={!chaveAcesso || estaValidando}
+              onClick={handleValidateAccess}
+              disabled={!accessKey || isValidating}
               className="flex-1"
             >
-              {estaValidando ? 'Validando...' : 'Ativar'}
+              {isValidating ? 'Validando...' : 'Ativar'}
             </Button>
           </div>
         </div>

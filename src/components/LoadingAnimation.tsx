@@ -2,36 +2,36 @@
 import React, { useState, useEffect } from 'react';
 import { Check, Loader2 } from 'lucide-react';
 
-interface PropriedadesAnimacaoCarregamento {
-  estaCarregando: boolean;
-  aoConcluir?: () => void;
-  mensagem?: string;
-  mensagemSucesso?: string;
+interface LoadingAnimationProps {
+  isLoading: boolean;
+  onComplete?: () => void;
+  message?: string;
+  successMessage?: string;
 }
 
-export const AnimacaoCarregamento: React.FC<PropriedadesAnimacaoCarregamento> = ({
-  estaCarregando,
-  aoConcluir,
-  mensagem = "Processando...",
-  mensagemSucesso = "Concluído com sucesso!"
+export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
+  isLoading,
+  onComplete,
+  message = "Processando...",
+  successMessage = "Concluído com sucesso!"
 }) => {
-  const [mostrarSucesso, setMostrarSucesso] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
-    if (!estaCarregando && mostrarSucesso) {
-      const temporizador = setTimeout(() => {
-        setMostrarSucesso(false);
-        aoConcluir?.();
+    if (!isLoading && showSuccess) {
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+        onComplete?.();
       }, 2000);
-      return () => clearTimeout(temporizador);
+      return () => clearTimeout(timer);
     }
     
-    if (!estaCarregando) {
-      setMostrarSucesso(true);
+    if (!isLoading) {
+      setShowSuccess(true);
     }
-  }, [estaCarregando, mostrarSucesso, aoConcluir]);
+  }, [isLoading, showSuccess, onComplete]);
 
-  if (!estaCarregando && !mostrarSucesso) {
+  if (!isLoading && !showSuccess) {
     return null;
   }
 
@@ -39,19 +39,19 @@ export const AnimacaoCarregamento: React.FC<PropriedadesAnimacaoCarregamento> = 
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full mx-4">
         <div className="text-center">
-          {estaCarregando ? (
+          {isLoading ? (
             <>
               <div className="flex justify-center mb-4">
                 <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                {mensagem}
+                {message}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Aguarde enquanto salvamos suas informações...
               </p>
             </>
-          ) : mostrarSucesso ? (
+          ) : showSuccess ? (
             <>
               <div className="flex justify-center mb-4">
                 <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -59,7 +59,7 @@ export const AnimacaoCarregamento: React.FC<PropriedadesAnimacaoCarregamento> = 
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-2">
-                {mensagemSucesso}
+                {successMessage}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Dados salvos com sucesso no banco de dados!
