@@ -13,7 +13,7 @@ interface PropriedadesDialogoAcessoDesenvolvedor {
   aoFechar: () => void;
 }
 
-export const DialogoAcessoDesenvolvedor: React.FC<PropriedadesDialogoAcessoDesenvolvedor> = ({
+export const DeveloperAccessDialog: React.FC<PropriedadesDialogoAcessoDesenvolvedor> = ({
   estaAberto,
   aoFechar
 }) => {
@@ -147,6 +147,3 @@ export const DialogoAcessoDesenvolvedor: React.FC<PropriedadesDialogoAcessoDesen
     </Dialog>
   );
 };
-
-// Manter export compatível para uso existente
-export const DeveloperAccessDialog = DialogoAcessoDesenvolvedor;
