@@ -17,6 +17,7 @@ import Ajuda from '@/components/sections/Ajuda';
 import { GlobalSubscriptionAlert } from '@/components/GlobalSubscriptionAlert';
 import { useSubscriptionRedirect } from '@/hooks/useSubscriptionRedirect';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
@@ -29,6 +30,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
+  const [showLoading, setShowLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('painel');
 
   // Hook para gerenciar redirecionamentos baseados na assinatura
@@ -56,6 +58,11 @@ export default function Index() {
         </div>
       </div>
     );
+  }
+
+  // Mostrar loading screen primeiro
+  if (showLoading) {
+    return <LoadingScreen onComplete={() => setShowLoading(false)} />;
   }
 
   if (!user) {

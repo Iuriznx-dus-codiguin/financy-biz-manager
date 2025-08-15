@@ -76,6 +76,10 @@ interface AppContextType {
   metas: Meta[];
   membrosEquipe: MembroEquipe[];
   configuracoes: Configuracoes;
+  setReceitas: React.Dispatch<React.SetStateAction<Receita[]>>;
+  setDespesas: React.Dispatch<React.SetStateAction<Despesa[]>>;
+  setImpostos: React.Dispatch<React.SetStateAction<Imposto[]>>;
+  setMetas: React.Dispatch<React.SetStateAction<Meta[]>>;
   addReceita: (receita: Omit<Receita, 'id'>) => Promise<void>;
   addDespesa: (despesa: Omit<Despesa, 'id'>) => Promise<void>;
   addImposto: (imposto: Omit<Imposto, 'id'>) => Promise<void>;
@@ -499,6 +503,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       metas,
       membrosEquipe,
       configuracoes,
+      setReceitas,
+      setDespesas,
+      setImpostos,
+      setMetas,
       addReceita,
       addDespesa,
       addImposto,
