@@ -33,7 +33,11 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
 
   useEffect(() => {
     const loadAllData = async () => {
-      if (!user) return;
+      if (!user) {
+        // Se não há usuário, completar o loading mesmo assim
+        setTimeout(onComplete, 1000);
+        return;
+      }
 
       let completedSteps = 0;
       const totalSteps = loadingSteps.length;
@@ -54,133 +58,132 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         await new Promise(resolve => setTimeout(resolve, 300));
         updateProgress('init');
 
-        // Passo 2: Carregar perfil (onboarding já carregado)
+        // Passo 2: Carregar perfil
         await new Promise(resolve => setTimeout(resolve, 200));
         updateProgress('profile');
 
         // Passo 3: Verificar assinatura
-        const subscriptionPromise = Promise.all([
-          supabase.from('customer_subscriptions').select('*').eq('user_id', user.id).maybeSingle(),
-          supabase.from('subscribers').select('*').eq('user_id', user.id).maybeSingle()
-        ]);
-
-        // Passo 4: Carregar dashboards
-        const dashboardsPromise = supabase.from('user_dashboards').select('*').eq('user_id', user.id);
-
-        // Aguardar subscription
-        await subscriptionPromise;
+        try {
+          await Promise.all([
+            supabase.from('customer_subscriptions').select('*').eq('user_id', user.id).maybeSingle(),
+            supabase.from('subscribers').select('*').eq('user_id', user.id).maybeSingle()
+          ]);
+        } catch (error) {
+          console.log('Erro ao carregar subscription, continuando...', error);
+        }
         updateProgress('subscription');
 
-        // Aguardar dashboards  
-        const dashboardsResult = await dashboardsPromise;
+        // Passo 4: Carregar dashboards
+        try {
+          await supabase.from('user_dashboards').select('*').eq('user_id', user.id);
+        } catch (error) {
+          console.log('Erro ao carregar dashboards, continuando...', error);
+        }
         updateProgress('dashboards');
 
-        // Determinar dashboard atual (pode usar o primeiro ou o padrão)
-        const currentDashboard = dashboardsResult.data?.[0];
+        // Passo 5: Carregar receitas
+        try {
+          const receitasResult = await supabase.from('receitas').select('*').eq('user_id', user.id);
+          if (receitasResult.data) {
+            const receitasFormatadas = receitasResult.data.map(r => ({
+              id: r.id,
+              data: r.data,
+              descricao: r.descricao,
+              categoria: r.categoria,
+              valor: r.valor,
+              cliente: r.cliente,
+              formaPagamento: r.forma_pagamento,
+              dashboard_id: r.dashboard_id
+            }));
+            setReceitas(receitasFormatadas);
+          }
+        } catch (error) {
+          console.log('Erro ao carregar receitas, continuando...', error);
+        }
+        updateProgress('receitas');
 
-        // Passo 5-8: Carregar todos os dados financeiros em paralelo
-        const dataPromises = [
-          // Receitas
-          supabase.from('receitas').select('*').eq('user_id', user.id).then(result => {
-            if (result.data) {
-              const receitasFormatadas = result.data.map(r => ({
-                id: r.id,
-                data: r.data,
-                descricao: r.descricao,
-                categoria: r.categoria,
-                valor: r.valor,
-                cliente: r.cliente,
-                formaPagamento: r.forma_pagamento,
-                dashboard_id: r.dashboard_id
-              }));
-              setReceitas(receitasFormatadas);
-            }
-            updateProgress('receitas');
-            return result;
-          }),
+        // Passo 6: Carregar despesas
+        try {
+          const despesasResult = await supabase.from('despesas').select('*').eq('user_id', user.id);
+          if (despesasResult.data) {
+            const despesasFormatadas = despesasResult.data.map(d => ({
+              id: d.id,
+              data: d.data,
+              descricao: d.descricao,
+              categoria: d.categoria,
+              valor: d.valor,
+              fornecedor: d.fornecedor,
+              formaPagamento: d.forma_pagamento,
+              dashboard_id: d.dashboard_id
+            }));
+            setDespesas(despesasFormatadas);
+          }
+        } catch (error) {
+          console.log('Erro ao carregar despesas, continuando...', error);
+        }
+        updateProgress('despesas');
 
-          // Despesas
-          supabase.from('despesas').select('*').eq('user_id', user.id).then(result => {
-            if (result.data) {
-              const despesasFormatadas = result.data.map(d => ({
-                id: d.id,
-                data: d.data,
-                descricao: d.descricao,
-                categoria: d.categoria,
-                valor: d.valor,
-                fornecedor: d.fornecedor,
-                formaPagamento: d.forma_pagamento,
-                dashboard_id: d.dashboard_id
-              }));
-              setDespesas(despesasFormatadas);
-            }
-            updateProgress('despesas');
-            return result;
-          }),
+        // Passo 7: Carregar impostos
+        try {
+          const impostosResult = await supabase.from('impostos').select('*').eq('user_id', user.id);
+          if (impostosResult.data) {
+            const impostosFormatados = impostosResult.data.map(i => ({
+              id: i.id,
+              descricao: i.descricao,
+              tipo: i.tipo,
+              valor: i.valor,
+              valorTipo: 'fixo' as const,
+              vencimento: i.vencimento,
+              pago: i.pago || false,
+              tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente',
+              dashboard_id: i.dashboard_id
+            }));
+            setImpostos(impostosFormatados);
+          }
+        } catch (error) {
+          console.log('Erro ao carregar impostos, continuando...', error);
+        }
+        updateProgress('impostos');
 
-          // Impostos
-          supabase.from('impostos').select('*').eq('user_id', user.id).then(result => {
-            if (result.data) {
-              const impostosFormatados = result.data.map(i => ({
-                id: i.id,
-                descricao: i.descricao,
-                tipo: i.tipo,
-                valor: i.valor,
-                valorTipo: 'fixo' as const,
-                vencimento: i.vencimento,
-                pago: i.pago || false,
-                tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente',
-                dashboard_id: i.dashboard_id
-              }));
-              setImpostos(impostosFormatados);
-            }
-            updateProgress('impostos');
-            return result;
-          }),
-
-          // Metas
-          supabase.from('metas').select('*').eq('user_id', user.id).then(result => {
-            if (result.data) {
-              const metasFormatadas = result.data.map(m => ({
-                id: m.id,
-                titulo: m.titulo,
-                valorMeta: m.valor_meta,
-                valorAtual: m.valor_atual,
-                progresso: m.progresso,
-                prazo: m.prazo,
-                categoria: m.categoria,
-                status: m.status as 'em_andamento' | 'concluida' | 'atrasada',
-                cor: m.cor,
-                dashboard_id: m.dashboard_id
-              }));
-              setMetas(metasFormatadas);
-            }
-            updateProgress('metas');
-            return result;
-          })
-        ];
-
-        // Aguardar todos os dados serem carregados
-        await Promise.all(dataPromises);
+        // Passo 8: Carregar metas
+        try {
+          const metasResult = await supabase.from('metas').select('*').eq('user_id', user.id);
+          if (metasResult.data) {
+            const metasFormatadas = metasResult.data.map(m => ({
+              id: m.id,
+              titulo: m.titulo,
+              valorMeta: m.valor_meta,
+              valorAtual: m.valor_atual,
+              progresso: m.progresso,
+              prazo: m.prazo,
+              categoria: m.categoria,
+              status: m.status as 'em_andamento' | 'concluida' | 'atrasada',
+              cor: m.cor,
+              dashboard_id: m.dashboard_id
+            }));
+            setMetas(metasFormatadas);
+          }
+        } catch (error) {
+          console.log('Erro ao carregar metas, continuando...', error);
+        }
+        updateProgress('metas');
 
         // Passo 9: Finalização
         await new Promise(resolve => setTimeout(resolve, 300));
         updateProgress('finish');
 
-        // Aguardar um pouco mais para garantir que a animação termine suavemente
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Aguardar um pouco para a animação terminar
+        await new Promise(resolve => setTimeout(resolve, 300));
 
-        console.log('Todos os dados foram carregados com sucesso durante o loading');
+        console.log('Carregamento concluído, redirecionando...');
         onComplete();
 
       } catch (error) {
-        console.error('Erro durante o carregamento:', error);
-        // Mesmo com erro, completar o loading após um tempo
-        setTimeout(() => {
-          setProgress(100);
-          setLoadingText('Finalizando...');
-          onComplete();
-        }, 1000);
+        console.error('Erro geral durante o carregamento:', error);
+        // Forçar completar o loading mesmo com erro
+        setProgress(100);
+        setLoadingText('Finalizando...');
+        setTimeout(onComplete, 500);
       }
     };
 
