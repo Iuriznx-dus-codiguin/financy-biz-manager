@@ -28,11 +28,12 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { DeveloperAccessDialog } from '@/components/DeveloperAccessDialog';
 
 const Assinatura: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [planType, setPlanType] = useState<'personal' | 'business'>('personal');
-  const [isActivatingDeveloper, setIsActivatingDeveloper] = useState(false);
+  const [isDeveloperDialogOpen, setIsDeveloperDialogOpen] = useState(false);
   const { user } = useAuth();
 
   const paymentUrls = {
@@ -259,67 +260,8 @@ const Assinatura: React.FC = () => {
 
   const currentPlans = planType === 'personal' ? personalPlans : businessPlans;
 
-  const activateDeveloperMode = async () => {
-    if (!user) {
-      toast.error('Você precisa estar logado para ativar o modo desenvolvedor');
-      return;
-    }
-
-    setIsActivatingDeveloper(true);
-    
-    try {
-      // Verificar se já existe um registro para este usuário
-      const { data: existingSubscriber, error: checkError } = await supabase
-        .from('subscribers')
-        .select('*')
-        .eq('email', user.email)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
-      }
-
-      if (existingSubscriber) {
-        // Atualizar registro existente
-        const { error: updateError } = await supabase
-          .from('subscribers')
-          .update({
-            subscribed: true,
-            subscription_tier: 'developer',
-            subscription_end: null, // Acesso ilimitado
-            updated_at: new Date().toISOString()
-          })
-          .eq('email', user.email);
-
-        if (updateError) throw updateError;
-      } else {
-        // Criar novo registro
-        const { error: insertError } = await supabase
-          .from('subscribers')
-          .insert({
-            user_id: user.id,
-            email: user.email,
-            subscribed: true,
-            subscription_tier: 'developer',
-            subscription_end: null // Acesso ilimitado
-          });
-
-        if (insertError) throw insertError;
-      }
-
-      toast.success('Modo desenvolvedor ativado com sucesso! 🚀\nVocê agora tem acesso ilimitado a todas as funcionalidades.');
-      
-      // Recarregar a página após um pequeno delay para permitir que o toast seja exibido
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-
-    } catch (error) {
-      console.error('Erro ao ativar modo desenvolvedor:', error);
-      toast.error('Erro ao ativar modo desenvolvedor. Tente novamente.');
-    } finally {
-      setIsActivatingDeveloper(false);
-    }
+  const handleDeveloperAccess = () => {
+    setIsDeveloperDialogOpen(true);
   };
 
   return (
@@ -508,38 +450,31 @@ const Assinatura: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+          {/* Área de status do teste */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
             <div className="text-sm">
-              <strong>Webhook de Integração:</strong>
-              <code className="block mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs font-mono">
-                https://hbyozfmpsgbxofcetdez.supabase.co/functions/v1/cakto-webhook
-              </code>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Esta URL está configurada para receber automaticamente as confirmações de pagamento 
-                e ativar sua assinatura instantaneamente.
+              <p className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                Status da Integração
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-300">
+                A integração com o sistema de pagamentos está ativa e funcionando corretamente.
+                Suas assinaturas serão ativadas automaticamente após o pagamento.
               </p>
             </div>
           </div>
 
-          {/* Botão Modo Desenvolvedor integrado */}
-          <div className="pt-4 border-t border-border/50">
+          {/* Botão de acesso desenvolvedor - mais discreto */}
+          <div className="pt-2 border-t border-border/50">
             <div className="text-center">
               <Button
-                onClick={activateDeveloperMode}
-                disabled={isActivatingDeveloper}
-                variant="outline"
-                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white border-none hover:from-purple-700 hover:to-blue-700"
+                onClick={handleDeveloperAccess}
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-primary"
               >
-                {isActivatingDeveloper ? (
-                  <MessageCircle className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Code2 className="h-4 w-4 mr-2" />
-                )}
-                {isActivatingDeveloper ? 'Ativando...' : 'Ativar Modo Desenvolvedor'}
+                <Code2 className="h-3 w-3 mr-1" />
+                Acesso Desenvolvedor
               </Button>
-              <p className="text-xs text-muted-foreground mt-2">
-                Acesso completo e ilimitado para desenvolvedores
-              </p>
             </div>
           </div>
         </CardContent>
@@ -604,18 +539,10 @@ const Assinatura: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Botão Desenvolvedor */}
-      <div className="flex justify-center pt-8">
-        <Button
-          onClick={activateDeveloperMode}
-          disabled={isActivatingDeveloper}
-          variant="outline"
-          className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-300 hover:border-purple-500 transition-all duration-300"
-        >
-          <Code2 className="h-4 w-4 mr-2" />
-          {isActivatingDeveloper ? 'Ativando...' : 'Sou um Desenvolvedor'}
-        </Button>
-      </div>
+      <DeveloperAccessDialog
+        isOpen={isDeveloperDialogOpen}
+        onClose={() => setIsDeveloperDialogOpen(false)}
+      />
     </div>
   );
 };
