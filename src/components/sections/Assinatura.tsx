@@ -520,6 +520,28 @@ const Assinatura: React.FC = () => {
               </p>
             </div>
           </div>
+
+          {/* Botão Modo Desenvolvedor integrado */}
+          <div className="pt-4 border-t border-border/50">
+            <div className="text-center">
+              <Button
+                onClick={activateDeveloperMode}
+                disabled={isActivatingDeveloper}
+                variant="outline"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white border-none hover:from-purple-700 hover:to-blue-700"
+              >
+                {isActivatingDeveloper ? (
+                  <MessageCircle className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Code2 className="h-4 w-4 mr-2" />
+                )}
+                {isActivatingDeveloper ? 'Ativando...' : 'Ativar Modo Desenvolvedor'}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                Acesso completo e ilimitado para desenvolvedores
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

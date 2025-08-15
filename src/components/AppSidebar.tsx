@@ -51,8 +51,7 @@ const allMenuItems = [
   { id: 'agentes-ia', label: 'Agentes de IA', icon: Bot, businessOnly: false },
   { id: 'assinatura', label: 'Assinatura', icon: CreditCard, businessOnly: false },
   { id: 'configuracoes', label: 'Configurações', icon: Settings, businessOnly: false },
-  { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle, businessOnly: false },
-  { id: 'desenvolvedor', label: 'Sou um Desenvolvedor', icon: Settings, businessOnly: false }
+  { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle, businessOnly: false }
 ];
 
 interface AppSidebarProps {
@@ -101,12 +100,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
 
   const handleMouseLeave = () => {
     setIsHovered(false);
-    // Delay mais curto para fechamento mais responsivo
-    setTimeout(() => {
-      if (isCollapsed && !isPinned) {
-        setOpen(false);
-      }
-    }, 300);
+    if (isCollapsed && !isPinned) {
+      setOpen(false);
+    }
   };
 
   return (

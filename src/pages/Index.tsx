@@ -13,7 +13,7 @@ import Assinatura from '@/components/sections/Assinatura';
 import AgentesIA from '@/components/sections/AgentesIA';
 import Configuracoes from '@/components/sections/Configuracoes';
 import Ajuda from '@/components/sections/Ajuda';
-import Desenvolvedor from '@/components/sections/Desenvolvedor';
+
 import { GlobalSubscriptionAlert } from '@/components/GlobalSubscriptionAlert';
 import { useSubscriptionRedirect } from '@/hooks/useSubscriptionRedirect';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
@@ -90,8 +90,6 @@ export default function Index() {
         return <Configuracoes />;
       case 'ajuda':
         return <Ajuda />;
-      case 'desenvolvedor':
-        return <Desenvolvedor />;
       default:
         return <Dashboard setActiveSection={setActiveSection} />;
     }
