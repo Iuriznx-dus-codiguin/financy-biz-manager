@@ -20,128 +20,171 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   const { setReceitas, setDespesas, setImpostos, setMetas } = useAppContext();
 
   const loadingSteps = [
-    { text: 'Inicializando...', duration: 500 },
-    { text: 'Carregando dados do usuário...', duration: 800 },
-    { text: 'Verificando assinatura...', duration: 600 },
-    { text: 'Sincronizando receitas...', duration: 700 },
-    { text: 'Carregando despesas...', duration: 700 },
-    { text: 'Verificando impostos...', duration: 400 },
-    { text: 'Finalizando...', duration: 300 }
+    { text: 'Inicializando conexão...', key: 'init' },
+    { text: 'Carregando perfil do usuário...', key: 'profile' },
+    { text: 'Verificando assinatura...', key: 'subscription' },
+    { text: 'Carregando dashboards...', key: 'dashboards' },
+    { text: 'Sincronizando receitas...', key: 'receitas' },
+    { text: 'Carregando despesas...', key: 'despesas' },
+    { text: 'Verificando impostos...', key: 'impostos' },
+    { text: 'Carregando metas...', key: 'metas' },
+    { text: 'Finalizando...', key: 'finish' }
   ];
 
   useEffect(() => {
-    const loadUserData = async () => {
+    const loadAllData = async () => {
       if (!user) return;
 
+      let completedSteps = 0;
+      const totalSteps = loadingSteps.length;
+
+      const updateProgress = (stepKey: string) => {
+        completedSteps++;
+        const newProgress = (completedSteps / totalSteps) * 100;
+        setProgress(newProgress);
+        
+        const step = loadingSteps.find(s => s.key === stepKey);
+        if (step) {
+          setLoadingText(step.text);
+        }
+      };
+
       try {
-        // Carregar todos os dados do usuário em paralelo
-        const [receitasData, despesasData, impostosData, metasData, subscriptionData] = await Promise.all([
-          supabase.from('receitas').select('*').eq('user_id', user.id),
-          supabase.from('despesas').select('*').eq('user_id', user.id),
-          supabase.from('impostos').select('*').eq('user_id', user.id),
-          supabase.from('metas').select('*').eq('user_id', user.id),
-          supabase.from('customer_subscriptions').select('*').eq('user_id', user.id).maybeSingle()
+        // Passo 1: Inicialização
+        await new Promise(resolve => setTimeout(resolve, 300));
+        updateProgress('init');
+
+        // Passo 2: Carregar perfil (onboarding já carregado)
+        await new Promise(resolve => setTimeout(resolve, 200));
+        updateProgress('profile');
+
+        // Passo 3: Verificar assinatura
+        const subscriptionPromise = Promise.all([
+          supabase.from('customer_subscriptions').select('*').eq('user_id', user.id).maybeSingle(),
+          supabase.from('subscribers').select('*').eq('user_id', user.id).maybeSingle()
         ]);
 
-        // Atualizar contexto com os dados carregados, formatando-os corretamente
-        if (receitasData.data) {
-          const receitasFormatadas = receitasData.data.map(r => ({
-            id: r.id,
-            data: r.data,
-            descricao: r.descricao,
-            categoria: r.categoria,
-            valor: r.valor,
-            cliente: r.cliente,
-            formaPagamento: r.forma_pagamento,
-            dashboard_id: r.dashboard_id
-          }));
-          setReceitas(receitasFormatadas);
-        }
-        
-        if (despesasData.data) {
-          const despesasFormatadas = despesasData.data.map(d => ({
-            id: d.id,
-            data: d.data,
-            descricao: d.descricao,
-            categoria: d.categoria,
-            valor: d.valor,
-            fornecedor: d.fornecedor,
-            formaPagamento: d.forma_pagamento,
-            dashboard_id: d.dashboard_id
-          }));
-          setDespesas(despesasFormatadas);
-        }
-        
-        if (impostosData.data) {
-          const impostosFormatados = impostosData.data.map(i => ({
-            id: i.id,
-            descricao: i.descricao,
-            tipo: i.tipo,
-            valor: i.valor,
-            valorTipo: 'fixo' as const,
-            vencimento: i.vencimento,
-            pago: i.pago || false,
-            tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente',
-            dashboard_id: i.dashboard_id
-          }));
-          setImpostos(impostosFormatados);
-        }
-        
-        if (metasData.data) {
-          const metasFormatadas = metasData.data.map(m => ({
-            id: m.id,
-            titulo: m.titulo,
-            valorMeta: m.valor_meta,
-            valorAtual: m.valor_atual,
-            progresso: m.progresso,
-            prazo: m.prazo,
-            categoria: m.categoria,
-            status: m.status as 'em_andamento' | 'concluida' | 'atrasada',
-            cor: m.cor,
-            dashboard_id: m.dashboard_id
-          }));
-          setMetas(metasFormatadas);
-        }
+        // Passo 4: Carregar dashboards
+        const dashboardsPromise = supabase.from('user_dashboards').select('*').eq('user_id', user.id);
 
-        console.log('Dados do usuário carregados com sucesso');
+        // Aguardar subscription
+        await subscriptionPromise;
+        updateProgress('subscription');
+
+        // Aguardar dashboards  
+        const dashboardsResult = await dashboardsPromise;
+        updateProgress('dashboards');
+
+        // Determinar dashboard atual (pode usar o primeiro ou o padrão)
+        const currentDashboard = dashboardsResult.data?.[0];
+
+        // Passo 5-8: Carregar todos os dados financeiros em paralelo
+        const dataPromises = [
+          // Receitas
+          supabase.from('receitas').select('*').eq('user_id', user.id).then(result => {
+            if (result.data) {
+              const receitasFormatadas = result.data.map(r => ({
+                id: r.id,
+                data: r.data,
+                descricao: r.descricao,
+                categoria: r.categoria,
+                valor: r.valor,
+                cliente: r.cliente,
+                formaPagamento: r.forma_pagamento,
+                dashboard_id: r.dashboard_id
+              }));
+              setReceitas(receitasFormatadas);
+            }
+            updateProgress('receitas');
+            return result;
+          }),
+
+          // Despesas
+          supabase.from('despesas').select('*').eq('user_id', user.id).then(result => {
+            if (result.data) {
+              const despesasFormatadas = result.data.map(d => ({
+                id: d.id,
+                data: d.data,
+                descricao: d.descricao,
+                categoria: d.categoria,
+                valor: d.valor,
+                fornecedor: d.fornecedor,
+                formaPagamento: d.forma_pagamento,
+                dashboard_id: d.dashboard_id
+              }));
+              setDespesas(despesasFormatadas);
+            }
+            updateProgress('despesas');
+            return result;
+          }),
+
+          // Impostos
+          supabase.from('impostos').select('*').eq('user_id', user.id).then(result => {
+            if (result.data) {
+              const impostosFormatados = result.data.map(i => ({
+                id: i.id,
+                descricao: i.descricao,
+                tipo: i.tipo,
+                valor: i.valor,
+                valorTipo: 'fixo' as const,
+                vencimento: i.vencimento,
+                pago: i.pago || false,
+                tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente',
+                dashboard_id: i.dashboard_id
+              }));
+              setImpostos(impostosFormatados);
+            }
+            updateProgress('impostos');
+            return result;
+          }),
+
+          // Metas
+          supabase.from('metas').select('*').eq('user_id', user.id).then(result => {
+            if (result.data) {
+              const metasFormatadas = result.data.map(m => ({
+                id: m.id,
+                titulo: m.titulo,
+                valorMeta: m.valor_meta,
+                valorAtual: m.valor_atual,
+                progresso: m.progresso,
+                prazo: m.prazo,
+                categoria: m.categoria,
+                status: m.status as 'em_andamento' | 'concluida' | 'atrasada',
+                cor: m.cor,
+                dashboard_id: m.dashboard_id
+              }));
+              setMetas(metasFormatadas);
+            }
+            updateProgress('metas');
+            return result;
+          })
+        ];
+
+        // Aguardar todos os dados serem carregados
+        await Promise.all(dataPromises);
+
+        // Passo 9: Finalização
+        await new Promise(resolve => setTimeout(resolve, 300));
+        updateProgress('finish');
+
+        // Aguardar um pouco mais para garantir que a animação termine suavemente
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        console.log('Todos os dados foram carregados com sucesso durante o loading');
+        onComplete();
+
       } catch (error) {
-        console.error('Erro ao carregar dados do usuário:', error);
-      }
-    };
-
-    // Simular carregamento com animação
-    let currentStep = 0;
-    let currentProgress = 0;
-
-    const runLoadingSequence = () => {
-      if (currentStep < loadingSteps.length) {
-        const step = loadingSteps[currentStep];
-        setLoadingText(step.text);
-
-        const stepProgress = 100 / loadingSteps.length;
-        const increment = stepProgress / (step.duration / 50);
-
-        const progressInterval = setInterval(() => {
-          currentProgress += increment;
-          setProgress(Math.min(currentProgress, (currentStep + 1) * stepProgress));
-        }, 50);
-
+        console.error('Erro durante o carregamento:', error);
+        // Mesmo com erro, completar o loading após um tempo
         setTimeout(() => {
-          clearInterval(progressInterval);
-          currentStep++;
-          runLoadingSequence();
-        }, step.duration);
-      } else {
-        // Completar o loading
-        setProgress(100);
-        setLoadingText('Pronto!');
-        setTimeout(onComplete, 200);
+          setProgress(100);
+          setLoadingText('Finalizando...');
+          onComplete();
+        }, 1000);
       }
     };
 
-    // Iniciar carregamento dos dados e animação
-    loadUserData();
-    runLoadingSequence();
+    loadAllData();
   }, [user, onComplete, setReceitas, setDespesas, setImpostos, setMetas]);
 
   return (

@@ -114,10 +114,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const { currentDashboard } = useDashboard();
 
   useEffect(() => {
-    if (user && currentDashboard) {
+    // Não recarregar dados se já foram carregados pela tela de loading
+    if (user && currentDashboard && receitas.length === 0 && despesas.length === 0 && impostos.length === 0 && metas.length === 0) {
       carregarDados();
     }
-  }, [user, currentDashboard]);
+  }, [user, currentDashboard, receitas.length, despesas.length, impostos.length, metas.length]);
 
   const carregarDados = async () => {
     try {
