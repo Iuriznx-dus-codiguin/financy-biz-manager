@@ -165,25 +165,6 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
 
   return (
     <div className="space-y-6">
-      {/* Header com Badge Premium */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-3xl font-bold text-foreground">
-            Olá, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário'}
-          </h2>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0">
-              <Crown className="h-3 w-3 mr-1" />
-              Premium
-            </Badge>
-            <Badge variant="outline" className="text-muted-foreground">
-              <Zap className="h-3 w-3 mr-1" />
-              IA Avançada
-            </Badge>
-          </div>
-        </div>
-        <TimeFilter value={timeFilter} onChange={setTimeFilter} />
-      </div>
 
       {/* KPIs Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">

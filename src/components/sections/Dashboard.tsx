@@ -14,8 +14,8 @@ import { TooltipInfo } from '@/components/TooltipInfo';
 import { DashboardAvancado } from '@/components/DashboardAvancado';
 import { isDateInRange } from '@/utils/dateFilters';
 import { Crown, Sparkles } from 'lucide-react';
-import { CompactDashboardSelector } from '@/components/CompactDashboardSelector';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { FloatingDashboardInfo } from '@/components/FloatingDashboardInfo';
 
 interface DashboardProps {
   setActiveSection?: (section: string) => void;
@@ -56,20 +56,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   if (hasAdvancedDashboard) {
     return (
       <section id="painel" className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-bold text-foreground">Painel de Controle</h1>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm rounded-full">
-                <Crown className="h-3 w-3" />
-                <span>Dashboard Avançado</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <CompactDashboardSelector />
-          </div>
-        </div>
+        <FloatingDashboardInfo 
+          timeFilter={timeFilter} 
+          setTimeFilter={setTimeFilter}
+          dashboardType="advanced"
+        />
 
         <DashboardAvancado timeFilter={timeFilter} setTimeFilter={setTimeFilter} />
 
@@ -100,20 +91,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   // Dashboard básico
   return (
     <section id="painel" className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-bold text-foreground">Painel de Controle</h1>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 px-3 py-1 bg-muted text-muted-foreground text-sm rounded-full border">
-              <Sparkles className="h-3 w-3" />
-              <span>Dashboard Básico</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <CompactDashboardSelector />
-        </div>
-      </div>
+      <FloatingDashboardInfo 
+        timeFilter={timeFilter} 
+        setTimeFilter={setTimeFilter}
+        dashboardType="basic"
+      />
 
       <UpgradeCard
         feature="Dashboard Avançado"
@@ -121,8 +103,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         requiredPlan="Premium ou superior"
         onUpgrade={() => setActiveSection?.('assinatura')}
       />
-
-      <TimeFilter value={timeFilter} onChange={setTimeFilter} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="hover:shadow-lg transition-shadow">
