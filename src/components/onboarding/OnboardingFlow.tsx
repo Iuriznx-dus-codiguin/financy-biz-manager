@@ -1,14 +1,16 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, User, Users, Building, Building2, DollarSign, Star, Info } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ChevronLeft, ChevronRight, User, Building, Star, PartyPopper } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingData } from '@/types/onboarding';
+import confetti from 'canvas-confetti';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>;
@@ -21,24 +23,63 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     user_type: '',
     how_did_you_know: '',
     salary_range: '',
-    revenue_range: ''
+    revenue_range: '',
+    nome_preferido: '',
+    termos_aceitos: false
   });
   const { toast } = useToast();
 
-  const userTypes = [
-    { id: 'personal', label: 'Usuário pessoal', icon: User, description: 'Para uso pessoal e familiar' },
-    { id: 'mei', label: 'Microempreendedor', icon: Building, description: 'MEI ou pequeno negócio' },
-    { id: 'medium', label: 'Empresa de médio porte', icon: Building2, description: 'Empresa com até 100 funcionários' },
-    { id: 'large', label: 'Empresa de grande porte', icon: Building2, description: 'Grande corporação' }
-  ];
+  const triggerConfetti = () => {
+    const count = 200;
+    const defaults = {
+      origin: { y: 0.7 }
+    };
+
+    function fire(particleRatio: number, opts: any) {
+      confetti({
+        ...defaults,
+        ...opts,
+        particleCount: Math.floor(count * particleRatio)
+      });
+    }
+
+    fire(0.25, {
+      spread: 26,
+      startVelocity: 55,
+    });
+
+    fire(0.2, {
+      spread: 60,
+    });
+
+    fire(0.35, {
+      spread: 100,
+      decay: 0.91,
+      scalar: 0.8
+    });
+
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 25,
+      decay: 0.92,
+      scalar: 1.2
+    });
+
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 45,
+    });
+  };
 
   const howDidYouKnowOptions = [
-    { id: 'google', label: 'Pesquisa no Google', icon: '🔍' },
-    { id: 'social', label: 'Redes sociais', icon: '📱' },
-    { id: 'friend', label: 'Indicação de amigo', icon: '👥' },
-    { id: 'youtube', label: 'YouTube', icon: '🎥' },
-    { id: 'blog', label: 'Blog ou artigo', icon: '📝' },
-    { id: 'other', label: 'Outro', icon: '💡' }
+    { id: 'google', label: 'Pesquisa no Google' },
+    { id: 'social', label: 'Redes sociais' },
+    { id: 'friend', label: 'Indicação de amigo' },
+    { id: 'youtube', label: 'YouTube' },
+    { id: 'blog', label: 'Blog ou artigo' },
+    { id: 'influencer', label: 'Influenciador' },
+    { id: 'advertisement', label: 'Anúncio' },
+    { id: 'other', label: 'Outro' }
   ];
 
   const salaryRanges = [
@@ -58,15 +99,16 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   ];
 
   const handleNext = async () => {
-    if (currentStep < 3) {
+    if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     } else {
       setLoading(true);
       try {
         await onComplete(data);
+        triggerConfetti();
         toast({
-          title: "Configuração concluída!",
-          description: "Sua plataforma foi personalizada com base nas suas respostas.",
+          title: "Bem-vindo ao Financy!",
+          description: `Olá ${data.nome_preferido}! Sua plataforma foi personalizada com sucesso.`,
         });
       } catch (error) {
         console.error('Erro ao completar onboarding:', error);
@@ -92,9 +134,13 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       case 1:
         return data.user_type !== '';
       case 2:
-        return data.how_did_you_know !== '';
+        return data.user_type === 'pessoal' ? data.salary_range !== '' : data.revenue_range !== '';
       case 3:
-        return data.user_type === 'personal' ? data.salary_range !== '' : data.revenue_range !== '';
+        return data.nome_preferido !== '';
+      case 4:
+        return data.how_did_you_know !== '';
+      case 5:
+        return data.termos_aceitos === true;
       default:
         return false;
     }
@@ -103,43 +149,58 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Qual das seguintes funções melhor descreve você?</h2>
-        <p className="text-muted-foreground">Seu feedback nos ajudará a personalizar a sua experiência.</p>
-        <p className="text-sm text-muted-foreground">Selecione apenas 1</p>
+        <h2 className="text-2xl font-bold">Para qual uso você irá destinar a Financy?</h2>
+        <p className="text-muted-foreground">Isso nos ajudará a personalizar sua experiência.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {userTypes.map((type) => {
-          const IconComponent = type.icon;
-          return (
-            <div
-              key={type.id}
-              className={`relative cursor-pointer transition-all duration-200 ${
-                data.user_type === type.id 
-                  ? 'ring-2 ring-primary bg-primary/5' 
-                  : 'hover:bg-muted/50'
-              }`}
-              onClick={() => setData({ ...data, user_type: type.id })}
-            >
-              <div className="flex items-center space-x-4 p-4 rounded-lg border">
-                <div className="flex-shrink-0">
-                  <IconComponent className="w-8 h-8 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">{type.label}</h3>
-                  <p className="text-sm text-muted-foreground">{type.description}</p>
-                </div>
-                {data.user_type === type.id && (
-                  <div className="absolute top-2 right-2">
-                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">✓</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+        <div
+          className={`relative cursor-pointer transition-all duration-200 ${
+            data.user_type === 'pessoal' 
+              ? 'ring-2 ring-primary bg-primary/5' 
+              : 'hover:bg-muted/50'
+          }`}
+          onClick={() => setData({ ...data, user_type: 'pessoal' })}
+        >
+          <div className="flex flex-col items-center space-y-4 p-6 rounded-lg border">
+            <User className="w-12 h-12 text-primary" />
+            <div className="text-center">
+              <h3 className="font-semibold text-lg">Pessoal</h3>
+              <p className="text-sm text-muted-foreground">Para controle das suas finanças pessoais</p>
             </div>
-          );
-        })}
+            {data.user_type === 'pessoal' && (
+              <div className="absolute top-2 right-2">
+                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div
+          className={`relative cursor-pointer transition-all duration-200 ${
+            data.user_type === 'empresarial' 
+              ? 'ring-2 ring-primary bg-primary/5' 
+              : 'hover:bg-muted/50'
+          }`}
+          onClick={() => setData({ ...data, user_type: 'empresarial' })}
+        >
+          <div className="flex flex-col items-center space-y-4 p-6 rounded-lg border">
+            <Building className="w-12 h-12 text-primary" />
+            <div className="text-center">
+              <h3 className="font-semibold text-lg">Empresarial</h3>
+              <p className="text-sm text-muted-foreground">Para gestão financeira da sua empresa</p>
+            </div>
+            {data.user_type === 'empresarial' && (
+              <div className="absolute top-2 right-2">
+                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -147,54 +208,14 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Como você conheceu o Financy?</h2>
-        <p className="text-muted-foreground">Seu feedback nos ajudará a personalizar a sua experiência.</p>
-        <p className="text-sm text-muted-foreground">Selecione todos que se aplicam</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {howDidYouKnowOptions.map((option) => (
-          <div
-            key={option.id}
-            className={`relative cursor-pointer transition-all duration-200 ${
-              data.how_did_you_know === option.id 
-                ? 'ring-2 ring-primary bg-primary/5' 
-                : 'hover:bg-muted/50'
-            }`}
-            onClick={() => setData({ ...data, how_did_you_know: option.id })}
-          >
-            <div className="flex items-center space-x-4 p-4 rounded-lg border">
-              <div className="flex-shrink-0 text-2xl">
-                {option.icon}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold">{option.label}</h3>
-              </div>
-              {data.how_did_you_know === option.id && (
-                <div className="absolute top-2 right-2">
-                  <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs">✓</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">
-          {data.user_type === 'personal' 
-            ? 'Qual a faixa do seu salário?' 
-            : 'Qual a média de faturamento mensal?'
+          {data.user_type === 'pessoal' 
+            ? 'Qual seu salário?' 
+            : 'Qual seu faturamento mensal?'
           }
         </h2>
         <p className="text-muted-foreground">
-          {data.user_type === 'personal' 
+          {data.user_type === 'pessoal' 
             ? 'Isso nos ajudará a personalizar suas metas financeiras.' 
             : 'Isso nos ajudará a configurar os recursos adequados para seu negócio.'
           }
@@ -203,9 +224,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
       <div className="max-w-md mx-auto space-y-4">
         <Select 
-          value={data.user_type === 'personal' ? data.salary_range : data.revenue_range} 
+          value={data.user_type === 'pessoal' ? data.salary_range : data.revenue_range} 
           onValueChange={(value) => {
-            if (data.user_type === 'personal') {
+            if (data.user_type === 'pessoal') {
               setData({ ...data, salary_range: value });
             } else {
               setData({ ...data, revenue_range: value });
@@ -216,7 +237,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <SelectValue placeholder="Selecione uma faixa" />
           </SelectTrigger>
           <SelectContent>
-            {(data.user_type === 'personal' ? salaryRanges : revenueRanges).map((range) => (
+            {(data.user_type === 'pessoal' ? salaryRanges : revenueRanges).map((range) => (
               <SelectItem key={range.value} value={range.value}>
                 {range.label}
               </SelectItem>
@@ -227,22 +248,109 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     </div>
   );
 
+  const renderStep3 = () => (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">Como você quer que nos te chamemos?</h2>
+        <p className="text-muted-foreground">Este nome aparecerá na sua dashboard.</p>
+      </div>
+
+      <div className="max-w-md mx-auto space-y-4">
+        <Input
+          type="text"
+          placeholder="Digite seu nome preferido"
+          value={data.nome_preferido}
+          onChange={(e) => setData({ ...data, nome_preferido: e.target.value })}
+          className="h-12 text-center"
+        />
+        {data.nome_preferido && (
+          <div className="text-center p-4 bg-muted/50 rounded-lg">
+            <p className="text-sm text-muted-foreground">Prévia:</p>
+            <p className="text-lg font-semibold">Olá, {data.nome_preferido}!</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderStep4 = () => (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">Como você conheceu a Financy?</h2>
+        <p className="text-muted-foreground">Queremos entender como você chegou até nós.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
+        {howDidYouKnowOptions.map((option) => (
+          <div
+            key={option.id}
+            className={`relative cursor-pointer transition-all duration-200 ${
+              data.how_did_you_know === option.id 
+                ? 'ring-2 ring-primary bg-primary/5' 
+                : 'hover:bg-muted/50'
+            }`}
+            onClick={() => setData({ ...data, how_did_you_know: option.id })}
+          >
+            <div className="flex items-center space-x-3 p-3 rounded-lg border">
+              <div className="flex-1">
+                <h3 className="font-medium">{option.label}</h3>
+              </div>
+              {data.how_did_you_know === option.id && (
+                <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderStep5 = () => (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">Termos de Uso</h2>
+        <p className="text-muted-foreground">Por favor, leia e aceite nossos termos para continuar.</p>
+      </div>
+
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="bg-muted/50 rounded-lg p-6 max-h-64 overflow-y-auto border">
+          <h3 className="font-semibold mb-4">Termos de Uso da Financy</h3>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>1. <strong>Aceitação dos Termos:</strong> Ao usar a Financy, você concorda com estes termos de uso.</p>
+            <p>2. <strong>Privacidade de Dados:</strong> Seus dados financeiros são criptografados e protegidos conforme nossa política de privacidade.</p>
+            <p>3. <strong>Uso Adequado:</strong> A plataforma deve ser utilizada apenas para fins legais de gestão financeira.</p>
+            <p>4. <strong>Responsabilidade:</strong> Você é responsável pela veracidade das informações inseridas.</p>
+            <p>5. <strong>Atualizações:</strong> Estes termos podem ser atualizados periodicamente.</p>
+            <p>6. <strong>Suporte:</strong> Disponibilizamos suporte técnico para auxiliar no uso da plataforma.</p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-3 justify-center">
+          <Checkbox
+            id="termos"
+            checked={data.termos_aceitos}
+            onCheckedChange={(checked) => setData({ ...data, termos_aceitos: checked as boolean })}
+          />
+          <Label htmlFor="termos" className="text-sm">
+            Concordo com os termos de uso da Financy e autorizo o processamento dos meus dados
+          </Label>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl rounded-2xl shadow-xl">
-        <CardHeader className="text-center space-y-4 relative">
-          <div className="absolute top-4 right-4">
-            <Button variant="ghost" size="sm" onClick={() => onComplete(data)} disabled={loading}>
-              Ignorar
-            </Button>
-          </div>
-          
+        <CardHeader className="text-center space-y-4">
           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto">
             <span className="text-primary-foreground font-bold text-2xl">F</span>
           </div>
           
           <div className="flex items-center justify-center space-x-2">
-            {[1, 2, 3].map((step) => (
+            {[1, 2, 3, 4, 5].map((step) => (
               <div
                 key={step}
                 className={`w-3 h-3 rounded-full transition-colors ${
@@ -252,23 +360,15 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             ))}
           </div>
           
-          <p className="text-sm text-muted-foreground">{currentStep} / 3</p>
-
-          {/* Aviso sobre personalização */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mx-4">
-            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <Info className="w-4 h-4" />
-              <p className="text-sm font-medium">
-                Atenção: suas respostas serão utilizadas para adaptar a plataforma com base em suas necessidades
-              </p>
-            </div>
-          </div>
+          <p className="text-sm text-muted-foreground">{currentStep} / 5</p>
         </CardHeader>
 
         <CardContent className="space-y-8">
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
+          {currentStep === 4 && renderStep4()}
+          {currentStep === 5 && renderStep5()}
 
           <div className="flex justify-between pt-6">
             {currentStep > 1 ? (
@@ -283,10 +383,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <Button 
               onClick={handleNext} 
               disabled={!canProceed() || loading}
-              className="flex items-center space-x-2 bg-cyan-500 hover:bg-cyan-600"
+              className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
             >
-              <span>{currentStep === 3 ? (loading ? 'Finalizando...' : 'Finalizar') : 'Avançar'}</span>
-              {currentStep < 3 && <ChevronRight className="w-4 h-4" />}
+              <span>{currentStep === 5 ? (loading ? 'Finalizando...' : 'Finalizar') : 'Avançar'}</span>
+              {currentStep < 5 && <ChevronRight className="w-4 h-4" />}
+              {currentStep === 5 && <PartyPopper className="w-4 h-4" />}
             </Button>
           </div>
         </CardContent>

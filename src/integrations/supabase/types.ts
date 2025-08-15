@@ -279,8 +279,10 @@ export type Database = {
           created_at: string
           how_did_you_know: string
           id: string
+          nome_preferido: string | null
           revenue_range: string | null
           salary_range: string | null
+          termos_aceitos: boolean | null
           user_id: string
           user_type: string
         }
@@ -288,8 +290,10 @@ export type Database = {
           created_at?: string
           how_did_you_know: string
           id?: string
+          nome_preferido?: string | null
           revenue_range?: string | null
           salary_range?: string | null
+          termos_aceitos?: boolean | null
           user_id: string
           user_type: string
         }
@@ -297,8 +301,10 @@ export type Database = {
           created_at?: string
           how_did_you_know?: string
           id?: string
+          nome_preferido?: string | null
           revenue_range?: string | null
           salary_range?: string | null
+          termos_aceitos?: boolean | null
           user_id?: string
           user_type?: string
         }

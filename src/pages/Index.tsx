@@ -62,7 +62,10 @@ export default function Index() {
     return <AuthPage />;
   }
 
-  // Usuário vai direto para assinaturas, sem onboarding
+  // Mostrar onboarding para novos usuários
+  if (!isOnboardingComplete) {
+    return <OnboardingFlow onComplete={completeOnboarding} />;
+  }
 
   const renderActiveSection = () => {
     switch (activeSection) {

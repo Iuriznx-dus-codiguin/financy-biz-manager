@@ -8,6 +8,7 @@ interface OnboardingContextType {
   isOnboardingComplete: boolean;
   completeOnboarding: (data: OnboardingData) => Promise<void>;
   loading: boolean;
+  onboardingData: OnboardingData | null;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -16,6 +17,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const { user } = useAuth();
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
 
   useEffect(() => {
     checkOnboardingStatus();
@@ -40,6 +42,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       // Se existe dados de onboarding, considera como completo
       setIsOnboardingComplete(!!data);
+      setOnboardingData(data);
     } catch (error) {
       console.error('Erro ao verificar onboarding:', error);
     } finally {
@@ -79,7 +82,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     <OnboardingContext.Provider value={{ 
       isOnboardingComplete, 
       completeOnboarding, 
-      loading 
+      loading,
+      onboardingData
     }}>
       {children}
     </OnboardingContext.Provider>

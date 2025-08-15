@@ -23,12 +23,15 @@ interface DashboardProps {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
+import { useOnboarding } from '@/hooks/useOnboarding';
+
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [periodo, setPeriodo] = useState('6meses');
   const [timeFilter, setTimeFilter] = useState('este-mes');
   const [isClosingCash, setIsClosingCash] = useState(false);
   const { receitas, despesas, impostos } = useAppContext();
+  const { onboardingData } = useOnboarding();
   
   const { isFeatureAvailable } = useFeatureAccess();
   const hasBasicIntelligence = isFeatureAvailable('inteligencia_basica');
@@ -56,7 +59,19 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   if (hasAdvancedDashboard) {
     return (
       <section id="painel" className="space-y-6">
-        <FloatingDashboardInfo 
+        {/* Saudação personalizada */}
+        {onboardingData?.nome_preferido && (
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
+            <h1 className="text-2xl font-bold text-primary">
+              Olá, {onboardingData.nome_preferido}! 👋
+            </h1>
+            <p className="text-muted-foreground">
+              Bem-vindo de volta ao seu painel financeiro.
+            </p>
+          </div>
+        )}
+
+        <FloatingDashboardInfo
           timeFilter={timeFilter} 
           setTimeFilter={setTimeFilter}
           dashboardType="advanced"
@@ -91,7 +106,19 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   // Dashboard básico
   return (
     <section id="painel" className="space-y-6">
-      <FloatingDashboardInfo 
+      {/* Saudação personalizada */}
+      {onboardingData?.nome_preferido && (
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
+          <h1 className="text-2xl font-bold text-primary">
+            Olá, {onboardingData.nome_preferido}! 👋
+          </h1>
+          <p className="text-muted-foreground">
+            Bem-vindo de volta ao seu painel financeiro.
+          </p>
+        </div>
+      )}
+
+      <FloatingDashboardInfo
         timeFilter={timeFilter} 
         setTimeFilter={setTimeFilter}
         dashboardType="basic"
