@@ -58,7 +58,9 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           user_type: data.user_type,
           how_did_you_know: data.how_did_you_know,
           salary_range: data.salary_range,
-          revenue_range: data.revenue_range
+          revenue_range: data.revenue_range,
+          nome_preferido: data.nome_preferido,
+          termos_aceitos: data.termos_aceitos
         });
 
       if (error) {
