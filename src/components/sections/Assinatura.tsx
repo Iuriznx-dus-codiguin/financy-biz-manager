@@ -540,8 +540,8 @@ const Assinatura: React.FC = () => {
       </Card>
 
       <DeveloperAccessDialog
-        isOpen={isDeveloperDialogOpen}
-        onClose={() => setIsDeveloperDialogOpen(false)}
+        estaAberto={isDeveloperDialogOpen}
+        aoFechar={() => setIsDeveloperDialogOpen(false)}
       />
     </div>
   );
