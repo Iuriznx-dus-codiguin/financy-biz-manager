@@ -10,6 +10,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronLeft, ChevronRight, User, Building, Star, PartyPopper } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingData } from '@/types/onboarding';
+import { FinancialDataStep } from './FinancialDataStep';
+import { ExpenseSheetStep } from './ExpenseSheetStep';
+import { FinancialGoalStep } from './FinancialGoalStep';
 import confetti from 'canvas-confetti';
 
 interface OnboardingFlowProps {
@@ -25,7 +28,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     salary_range: '',
     revenue_range: '',
     nome_preferido: '',
-    termos_aceitos: false
+    termos_aceitos: false,
+    gastos_iniciais: []
   });
   const { toast } = useToast();
 
@@ -99,7 +103,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   ];
 
   const handleNext = async () => {
-    if (currentStep < 5) {
+    if (currentStep < 8) {
       setCurrentStep(currentStep + 1);
     } else {
       setLoading(true);
@@ -140,6 +144,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       case 4:
         return data.how_did_you_know !== '';
       case 5:
+        return true; // Dados financeiros são opcionais
+      case 6:
+        return true; // Planilha de gastos é opcional
+      case 7:
+        return true; // Meta financeira é opcional
+      case 8:
         return data.termos_aceitos === true;
       default:
         return false;
@@ -350,7 +360,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           </div>
           
           <div className="flex items-center justify-center space-x-2">
-            {[1, 2, 3, 4, 5].map((step) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
               <div
                 key={step}
                 className={`w-3 h-3 rounded-full transition-colors ${
@@ -360,7 +370,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             ))}
           </div>
           
-          <p className="text-sm text-muted-foreground">{currentStep} / 5</p>
+          <p className="text-sm text-muted-foreground">{currentStep} / 8</p>
         </CardHeader>
 
         <CardContent className="space-y-8">
@@ -368,7 +378,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
           {currentStep === 4 && renderStep4()}
-          {currentStep === 5 && renderStep5()}
+          {currentStep === 5 && <FinancialDataStep data={data} setData={setData} />}
+          {currentStep === 6 && <ExpenseSheetStep data={data} setData={setData} />}
+          {currentStep === 7 && <FinancialGoalStep data={data} setData={setData} />}
+          {currentStep === 8 && renderStep5()}
 
           <div className="flex justify-between pt-6">
             {currentStep > 1 ? (
@@ -385,9 +398,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               disabled={!canProceed() || loading}
               className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
             >
-              <span>{currentStep === 5 ? (loading ? 'Finalizando...' : 'Finalizar') : 'Avançar'}</span>
-              {currentStep < 5 && <ChevronRight className="w-4 h-4" />}
-              {currentStep === 5 && <PartyPopper className="w-4 h-4" />}
+              <span>{currentStep === 8 ? (loading ? 'Finalizando...' : 'Finalizar') : 'Avançar'}</span>
+              {currentStep < 8 && <ChevronRight className="w-4 h-4" />}
+              {currentStep === 8 && <PartyPopper className="w-4 h-4" />}
             </Button>
           </div>
         </CardContent>

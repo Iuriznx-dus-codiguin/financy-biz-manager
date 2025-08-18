@@ -1,0 +1,295 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Trash2, Plus, Upload, Download } from 'lucide-react';
+import { OnboardingData, GastoInicial } from '@/types/onboarding';
+import { useToast } from '@/hooks/use-toast';
+
+interface ExpenseSheetStepProps {
+  data: OnboardingData;
+  setData: (data: OnboardingData) => void;
+}
+
+const categoriasPadrao = [
+  'Moradia',
+  'Alimentação', 
+  'Transporte',
+  'Saúde',
+  'Educação',
+  'Lazer',
+  'Outros'
+];
+
+const formasPagamento = [
+  'Dinheiro',
+  'Cartão de Débito',
+  'Cartão de Crédito',
+  'PIX',
+  'Transferência',
+  'Boleto'
+];
+
+export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setData }) => {
+  const { toast } = useToast();
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const gastos = data.gastos_iniciais || [];
+
+  const adicionarGasto = () => {
+    const novoGasto: GastoInicial = {
+      id: Date.now().toString(),
+      categoria: 'Outros',
+      descricao: '',
+      valor_mensal: 0,
+      forma_pagamento: 'Dinheiro'
+    };
+
+    setData({
+      ...data,
+      gastos_iniciais: [...gastos, novoGasto]
+    });
+    setEditingId(novoGasto.id);
+  };
+
+  const removerGasto = (id: string) => {
+    setData({
+      ...data,
+      gastos_iniciais: gastos.filter(g => g.id !== id)
+    });
+  };
+
+  const atualizarGasto = (id: string, campo: keyof GastoInicial, valor: any) => {
+    setData({
+      ...data,
+      gastos_iniciais: gastos.map(g => 
+        g.id === id ? { ...g, [campo]: valor } : g
+      )
+    });
+  };
+
+  const gerarGastosPadrao = () => {
+    const gastosPadrao: GastoInicial[] = categoriasPadrao.map((categoria, index) => ({
+      id: `default-${index}`,
+      categoria,
+      descricao: `Gastos com ${categoria.toLowerCase()}`,
+      valor_mensal: 0,
+      forma_pagamento: 'Cartão de Débito'
+    }));
+
+    setData({
+      ...data,
+      gastos_iniciais: gastosPadrao
+    });
+
+    toast({
+      title: "Planilha gerada!",
+      description: "Agora você pode editar os valores conforme sua realidade."
+    });
+  };
+
+  const exportarCSV = () => {
+    if (gastos.length === 0) {
+      toast({
+        title: "Nenhum dado para exportar",
+        description: "Adicione alguns gastos primeiro."
+      });
+      return;
+    }
+
+    const csv = [
+      'Categoria,Descrição,Valor Mensal,Forma de Pagamento',
+      ...gastos.map(g => `${g.categoria},${g.descricao},${g.valor_mensal},${g.forma_pagamento}`)
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'gastos-iniciais.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importarCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const lines = text.split('\n');
+      
+      // Pula o cabeçalho
+      const gastosImportados: GastoInicial[] = lines.slice(1)
+        .filter(line => line.trim())
+        .map((line, index) => {
+          const [categoria, descricao, valor, forma] = line.split(',');
+          return {
+            id: `imported-${index}`,
+            categoria: categoria || 'Outros',
+            descricao: descricao || '',
+            valor_mensal: Number(valor) || 0,
+            forma_pagamento: forma || 'Dinheiro'
+          };
+        });
+
+      setData({
+        ...data,
+        gastos_iniciais: [...gastos, ...gastosImportados]
+      });
+
+      toast({
+        title: "Dados importados!",
+        description: `${gastosImportados.length} gastos foram adicionados.`
+      });
+    };
+
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+
+  const totalGastos = gastos.reduce((total, gasto) => total + gasto.valor_mensal, 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">Planilha Inicial de Gastos</h2>
+        <p className="text-muted-foreground">
+          Registre seus gastos cotidianos para personalizar seu dashboard e relatórios.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-2 justify-center">
+        <Button onClick={gerarGastosPadrao} variant="outline" size="sm">
+          <Plus className="w-4 h-4 mr-2" />
+          Gerar Categorias Padrão
+        </Button>
+        
+        <Button onClick={adicionarGasto} size="sm">
+          <Plus className="w-4 h-4 mr-2" />
+          Adicionar Gasto
+        </Button>
+
+        <div className="relative">
+          <input
+            type="file"
+            accept=".csv"
+            onChange={importarCSV}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+          <Button variant="outline" size="sm">
+            <Upload className="w-4 h-4 mr-2" />
+            Importar CSV
+          </Button>
+        </div>
+
+        <Button onClick={exportarCSV} variant="outline" size="sm" disabled={gastos.length === 0}>
+          <Download className="w-4 h-4 mr-2" />
+          Exportar CSV
+        </Button>
+      </div>
+
+      {gastos.length > 0 && (
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Valor Mensal (R$)</TableHead>
+                <TableHead>Forma de Pagamento</TableHead>
+                <TableHead className="w-12"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {gastos.map((gasto) => (
+                <TableRow key={gasto.id}>
+                  <TableCell>
+                    <Select
+                      value={gasto.categoria}
+                      onValueChange={(value) => atualizarGasto(gasto.id, 'categoria', value)}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoriasPadrao.map(cat => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={gasto.descricao}
+                      onChange={(e) => atualizarGasto(gasto.id, 'descricao', e.target.value)}
+                      placeholder="Ex: Supermercado, combustível..."
+                      className="h-8"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="number"
+                      value={gasto.valor_mensal}
+                      onChange={(e) => atualizarGasto(gasto.id, 'valor_mensal', Number(e.target.value) || 0)}
+                      placeholder="0,00"
+                      className="h-8"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={gasto.forma_pagamento}
+                      onValueChange={(value) => atualizarGasto(gasto.id, 'forma_pagamento', value)}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {formasPagamento.map(forma => (
+                          <SelectItem key={forma} value={forma}>{forma}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removerGasto(gasto.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          
+          <div className="p-4 bg-muted/50 border-t">
+            <div className="flex justify-between items-center">
+              <span className="font-medium">Total mensal:</span>
+              <span className="font-bold text-lg">R$ {totalGastos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {gastos.length === 0 && (
+        <div className="text-center py-8 space-y-4">
+          <p className="text-muted-foreground">Nenhum gasto adicionado ainda.</p>
+          <Button onClick={gerarGastosPadrao} className="mx-auto">
+            <Plus className="w-4 h-4 mr-2" />
+            Começar com categorias padrão
+          </Button>
+        </div>
+      )}
+
+      <div className="text-center text-sm text-muted-foreground">
+        <p>💡 Você pode pular esta etapa, mas recomendamos preenchê-la para uma melhor experiência</p>
+      </div>
+    </div>
+  );
+};

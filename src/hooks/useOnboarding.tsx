@@ -54,7 +54,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!user) return;
 
     try {
-      const { error } = await supabase
+      // Salvar dados de onboarding
+      const { error: onboardingError } = await supabase
         .from('onboarding_data')
         .insert({
           user_id: user.id,
@@ -66,9 +67,70 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           termos_aceitos: data.termos_aceitos
         });
 
-      if (error) {
-        console.error('Erro ao salvar dados de onboarding:', error);
-        throw error;
+      if (onboardingError) {
+        console.error('Erro ao salvar dados de onboarding:', onboardingError);
+        throw onboardingError;
+      }
+
+      // Salvar gastos iniciais como despesas
+      if (data.gastos_iniciais && data.gastos_iniciais.length > 0) {
+        const despesas = data.gastos_iniciais.map(gasto => ({
+          user_id: user.id,
+          data: new Date().toISOString().split('T')[0],
+          valor: gasto.valor_mensal,
+          descricao: gasto.descricao,
+          categoria: gasto.categoria,
+          forma_pagamento: gasto.forma_pagamento
+        }));
+
+        const { error: despesasError } = await supabase
+          .from('despesas')
+          .insert(despesas);
+
+        if (despesasError) {
+          console.error('Erro ao salvar gastos iniciais:', despesasError);
+        }
+      }
+
+      // Salvar meta financeira
+      if (data.meta_financeira && data.valor_meta) {
+        const prazoDate = new Date();
+        switch (data.prazo_meta) {
+          case '3-meses':
+            prazoDate.setMonth(prazoDate.getMonth() + 3);
+            break;
+          case '6-meses':
+            prazoDate.setMonth(prazoDate.getMonth() + 6);
+            break;
+          case '1-ano':
+            prazoDate.setFullYear(prazoDate.getFullYear() + 1);
+            break;
+          case '2-anos':
+            prazoDate.setFullYear(prazoDate.getFullYear() + 2);
+            break;
+          case '5-anos':
+            prazoDate.setFullYear(prazoDate.getFullYear() + 5);
+            break;
+          default:
+            prazoDate.setMonth(prazoDate.getMonth() + 12);
+        }
+
+        const { error: metaError } = await supabase
+          .from('metas')
+          .insert({
+            user_id: user.id,
+            titulo: data.meta_financeira,
+            categoria: 'Financeira',
+            valor_meta: data.valor_meta,
+            valor_atual: 0,
+            prazo: prazoDate.toISOString().split('T')[0],
+            progresso: 0,
+            status: 'em_andamento'
+          });
+
+        if (metaError) {
+          console.error('Erro ao salvar meta financeira:', metaError);
+        }
       }
 
       setIsOnboardingComplete(true);
