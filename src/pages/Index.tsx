@@ -15,6 +15,7 @@ import Configuracoes from '@/components/sections/Configuracoes';
 import Ajuda from '@/components/sections/Ajuda';
 
 import { GlobalSubscriptionAlert } from '@/components/GlobalSubscriptionAlert';
+import { FreeTrialNotification } from '@/components/FreeTrialNotification';
 import { useSubscriptionRedirect } from '@/hooks/useSubscriptionRedirect';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { LoadingScreen } from '@/components/LoadingScreen';
@@ -114,6 +115,7 @@ export default function Index() {
               <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
               <div className="flex-1 flex flex-col overflow-hidden">
                 <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
+                <FreeTrialNotification setActiveSection={setActiveSection} />
                 <main className="flex-1 overflow-y-auto p-8 space-y-6">
                   {renderActiveSection()}
                 </main>

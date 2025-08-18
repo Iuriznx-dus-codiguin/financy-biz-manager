@@ -59,9 +59,130 @@ const Relatorios = () => {
         return gerarDadosPorCliente();
       case 'comparativo':
         return gerarDadosComparativos();
+      case 'gastos-equipe':
+        return gerarDadosGastosEquipe();
+      case 'gastos-fornecedor':
+        return gerarDadosGastosFornecedor();
+      case 'analise-impostos':
+        return gerarDadosAnaliseImpostos();
+      case 'fluxo-caixa':
+        return gerarDadosFluxoCaixa();
+      case 'rentabilidade':
+        return gerarDadosRentabilidade();
+      case 'benchmark':
+        return gerarDadosBenchmark();
       default:
         return gerarDadosMensais();
     }
+  };
+
+  const gerarDadosGastosEquipe = () => {
+    // Aqui assumindo que existe um array membrosEquipe no contexto
+    const gastosEquipe = filteredDespesas
+      .filter(d => d.categoria === 'equipe')
+      .reduce((acc, despesa) => {
+        const fornecedor = despesa.fornecedor || 'Membro não especificado';
+        acc[fornecedor] = (acc[fornecedor] || 0) + despesa.valor;
+        return acc;
+      }, {} as Record<string, number>);
+
+    return Object.entries(gastosEquipe).map(([membro, valor]) => ({
+      membro,
+      valor
+    }));
+  };
+
+  const gerarDadosGastosFornecedor = () => {
+    const gastosFornecedor = filteredDespesas
+      .filter(d => d.categoria === 'fornecedores')
+      .reduce((acc, despesa) => {
+        const fornecedor = despesa.fornecedor || 'Fornecedor não especificado';
+        acc[fornecedor] = (acc[fornecedor] || 0) + despesa.valor;
+        return acc;
+      }, {} as Record<string, number>);
+
+    return Object.entries(gastosFornecedor).map(([fornecedor, valor]) => ({
+      fornecedor,
+      valor
+    }));
+  };
+
+  const gerarDadosAnaliseImpostos = () => {
+    return filteredImpostos.map(imposto => ({
+      tipo: imposto.tipo,
+      valor: imposto.valor,
+      status: imposto.pago ? 'Pago' : 'Pendente',
+      vencimento: imposto.vencimento
+    }));
+  };
+
+  const gerarDadosFluxoCaixa = () => {
+    const fluxoPorMes = [];
+    const agora = new Date();
+    
+    for (let i = 0; i < 6; i++) {
+      const mes = new Date(agora.getFullYear(), agora.getMonth() - (5 - i), 1);
+      const mesStr = mes.getMonth() + 1;
+      const anoStr = mes.getFullYear();
+      
+      const entradas = receitas.filter(r => {
+        const dataReceita = new Date(r.data);
+        return dataReceita.getMonth() + 1 === mesStr && dataReceita.getFullYear() === anoStr;
+      }).reduce((sum, r) => sum + r.valor, 0);
+      
+      const saidas = despesas.filter(d => {
+        const dataDespesa = new Date(d.data);
+        return dataDespesa.getMonth() + 1 === mesStr && dataDespesa.getFullYear() === anoStr;
+      }).reduce((sum, d) => sum + d.valor, 0);
+      
+      fluxoPorMes.push({
+        mes: mes.toLocaleDateString('pt-BR', { month: 'short' }),
+        entradas,
+        saidas,
+        liquido: entradas - saidas
+      });
+    }
+    
+    return fluxoPorMes;
+  };
+
+  const gerarDadosRentabilidade = () => {
+    const categorias = filteredReceitas.reduce((acc, receita) => {
+      acc[receita.categoria] = (acc[receita.categoria] || 0) + receita.valor;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(categorias).map(([categoria, valor]) => ({
+      categoria,
+      receita: valor,
+      margem: totalReceitas > 0 ? ((valor / totalReceitas) * 100).toFixed(1) : '0'
+    }));
+  };
+
+  const gerarDadosBenchmark = () => {
+    const ticketMedio = filteredReceitas.length > 0 ? totalReceitas / filteredReceitas.length : 0;
+    const custoPorReceita = totalReceitas > 0 ? (totalDespesas / totalReceitas) * 100 : 0;
+    
+    return [
+      { 
+        metrica: 'Ticket Médio',
+        valor: `R$ ${ticketMedio.toFixed(2)}`,
+        benchmark: 'R$ 500,00',
+        performance: ticketMedio >= 500 ? 'Bom' : 'Melhorar'
+      },
+      {
+        metrica: 'Custo por Receita',
+        valor: `${custoPorReceita.toFixed(1)}%`,
+        benchmark: '< 70%',
+        performance: custoPorReceita < 70 ? 'Bom' : 'Atenção'
+      },
+      {
+        metrica: 'Margem de Lucro',
+        valor: `${margemLucro.toFixed(1)}%`,
+        benchmark: '> 20%',
+        performance: margemLucro > 20 ? 'Excelente' : margemLucro > 10 ? 'Bom' : 'Melhorar'
+      }
+    ];
   };
 
   const gerarDadosMensais = () => {
@@ -355,6 +476,12 @@ const Relatorios = () => {
                 <SelectItem value="categoria">Por Categoria</SelectItem>
                 <SelectItem value="cliente">Por Cliente</SelectItem>
                 <SelectItem value="comparativo">Comparativo</SelectItem>
+                <SelectItem value="gastos-equipe">Gastos com Equipe</SelectItem>
+                <SelectItem value="gastos-fornecedor">Gastos com Fornecedores</SelectItem>
+                <SelectItem value="analise-impostos">Análise de Impostos</SelectItem>
+                <SelectItem value="fluxo-caixa">Fluxo de Caixa</SelectItem>
+                <SelectItem value="rentabilidade">Análise de Rentabilidade</SelectItem>
+                <SelectItem value="benchmark">Benchmark de Performance</SelectItem>
               </SelectContent>
             </Select>
             
@@ -406,6 +533,12 @@ const Relatorios = () => {
             {selectedReport === 'categoria' && 'Receitas por Categoria'}
             {selectedReport === 'cliente' && 'Receitas por Cliente'}
             {selectedReport === 'comparativo' && 'Análise Comparativa'}
+            {selectedReport === 'gastos-equipe' && 'Gastos com Equipe'}
+            {selectedReport === 'gastos-fornecedor' && 'Gastos com Fornecedores'}
+            {selectedReport === 'analise-impostos' && 'Análise de Impostos'}
+            {selectedReport === 'fluxo-caixa' && 'Fluxo de Caixa'}
+            {selectedReport === 'rentabilidade' && 'Análise de Rentabilidade'}
+            {selectedReport === 'benchmark' && 'Benchmark de Performance'}
             {' - '}
             {getTimeFilterLabel(timeFilter)}
           </CardTitle>
@@ -413,14 +546,66 @@ const Relatorios = () => {
         <CardContent>
           {dadosRelatorio.length > 0 ? (
             <ResponsiveContainer width="100%" height={400}>
-              {selectedReport === 'categoria' || selectedReport === 'cliente' ? (
+              {selectedReport === 'categoria' || selectedReport === 'cliente' || 
+               selectedReport === 'gastos-equipe' || selectedReport === 'gastos-fornecedor' ? (
                 <BarChart data={dadosRelatorio}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey={selectedReport === 'categoria' ? 'categoria' : 'cliente'} />
+                  <XAxis dataKey={
+                    selectedReport === 'categoria' ? 'categoria' : 
+                    selectedReport === 'cliente' ? 'cliente' :
+                    selectedReport === 'gastos-equipe' ? 'membro' : 'fornecedor'
+                  } />
                   <YAxis />
                   <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
                   <Bar dataKey="valor" fill="#22C55E" radius={[8, 8, 0, 0]} />
                 </BarChart>
+              ) : selectedReport === 'fluxo-caixa' ? (
+                <LineChart data={dadosRelatorio}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                  <Line type="monotone" dataKey="entradas" stroke="#22C55E" strokeWidth={3} name="Entradas" />
+                  <Line type="monotone" dataKey="saidas" stroke="#EF4444" strokeWidth={3} name="Saídas" />
+                  <Line type="monotone" dataKey="liquido" stroke="#3B82F6" strokeWidth={3} name="Líquido" />
+                </LineChart>
+              ) : selectedReport === 'benchmark' ? (
+                <div className="space-y-4">
+                  {dadosRelatorio.map((item: any, index: number) => (
+                    <div key={index} className="flex justify-between items-center p-4 bg-muted/20 rounded-lg">
+                      <div>
+                        <p className="font-medium">{item.metrica}</p>
+                        <p className="text-sm text-muted-foreground">Benchmark: {item.benchmark}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">{item.valor}</p>
+                        <p className={`text-sm ${
+                          item.performance === 'Excelente' ? 'text-green-600' :
+                          item.performance === 'Bom' ? 'text-blue-600' : 'text-orange-600'
+                        }`}>
+                          {item.performance}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : selectedReport === 'analise-impostos' ? (
+                <div className="space-y-2">
+                  {dadosRelatorio.map((imposto: any, index: number) => (
+                    <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{imposto.tipo}</p>
+                        <p className="text-sm text-muted-foreground">Venc: {imposto.vencimento}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">R$ {imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        <p className={`text-sm ${imposto.status === 'Pago' ? 'text-green-600' : 'text-red-600'}`}>
+                          {imposto.status}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <LineChart data={dadosRelatorio}>
                   <CartesianGrid strokeDasharray="3 3" />

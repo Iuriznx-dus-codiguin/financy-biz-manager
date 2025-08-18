@@ -104,6 +104,7 @@ const Despesas = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="fornecedores">Fornecedores</SelectItem>
+                    <SelectItem value="equipe">Equipe</SelectItem>
                     <SelectItem value="equipamentos">Equipamentos</SelectItem>
                     <SelectItem value="manutencao">Manutenção</SelectItem>
                     <SelectItem value="marketing">Marketing</SelectItem>

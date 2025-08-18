@@ -369,20 +369,10 @@ const Assinatura: React.FC = () => {
 
                 <Button 
                   onClick={() => handlePayment(plan.id, isAnnual ? 'annual' : 'monthly')}
-                  className={`w-full mt-4 transition-all duration-300 ${
-                    plan.popular || plan.recommended 
-                      ? 'bg-primary hover:bg-primary/90 shadow-lg'
-                      : 'bg-secondary hover:bg-secondary/80'
-                  }`}
+                  className="w-full mt-4 transition-all duration-300 bg-green-600 hover:bg-green-700 text-white shadow-lg"
                 >
-                  {plan.popular || plan.recommended ? (
-                    <>
-                      <Zap className="mr-2 h-4 w-4" />
-                      Assinar Agora
-                    </>
-                  ) : (
-                    'Começar Teste'
-                  )}
+                  <Zap className="mr-2 h-4 w-4" />
+                  Assinar Agora
                 </Button>
               </CardHeader>
 

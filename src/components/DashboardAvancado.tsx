@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   LineChart, 
   Line, 
-  XAxis, 
+  XAxis,
   YAxis, 
   CartesianGrid, 
   Tooltip, 
@@ -64,6 +64,35 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
   const filteredDespesas = despesas.filter(d => isDateInRange(d.data, timeFilter));
   const filteredImpostos = impostos.filter(i => isDateInRange(i.vencimento, timeFilter));
+
+  // Calcular gastos com equipe (baseado nos salários cadastrados)
+  const gastosComEquipe = membrosEquipe
+    .filter(m => m.status === 'ativo')
+    .reduce((total, membro) => {
+      switch (membro.periodicidade) {
+        case 'mensal':
+          return total + membro.salario;
+        case 'semanal':
+          return total + (membro.salario * 4);
+        case 'quinzenal':
+          return total + (membro.salario * 2);
+        default:
+          return total;
+      }
+    }, 0);
+
+  // Calcular gastos com fornecedores (despesas da categoria fornecedores)
+  const gastosComFornecedores = filteredDespesas
+    .filter(d => d.categoria === 'fornecedores')
+    .reduce((sum, d) => sum + d.valor, 0);
+
+  // Gastos com equipe das despesas cadastradas (categoria equipe)
+  const gastosEquipeDespesas = filteredDespesas
+    .filter(d => d.categoria === 'equipe')
+    .reduce((sum, d) => sum + d.valor, 0);
+
+  // Total de gastos com equipe (salários + despesas de equipe)
+  const totalGastosEquipe = gastosComEquipe + gastosEquipeDespesas;
 
   // Calcular métricas avançadas
   const totalReceitas = filteredReceitas.reduce((sum, r) => sum + r.valor, 0);
@@ -175,55 +204,61 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
           changeType={crescimentoMensal >= 0 ? 'positive' : 'negative'}
           icon={TrendingUp}
           gradient="from-green-500 to-emerald-600"
-        />
-        <MetricCard
-          title="Total de Gastos"
-          value={`R$ ${totalGastos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          icon={Minus}
-          gradient="from-red-500 to-rose-600"
-        />
-        <MetricCard
-          title="Lucro Líquido"
-          value={`R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          change={margemLucro.toFixed(1)}
-          changeType={lucroLiquido >= 0 ? 'positive' : 'negative'}
-          icon={DollarSign}
-          gradient="from-blue-500 to-indigo-600"
-        />
-        <MetricCard
-          title={
-            <div className="flex items-center gap-1">
-              ROI
-              <TooltipInfo content="Retorno sobre Investimento - Mede o retorno obtido em relação ao investimento realizado" />
-            </div>
-          }
-          value={roi.toFixed(2)}
-          changeType={roi >= 0 ? 'positive' : 'negative'}
-          icon={Target}
-          gradient="from-purple-500 to-violet-600"
-        />
-        <MetricCard
-          title={
-            <div className="flex items-center gap-1">
-              Pró-labore Recomendado
-              <TooltipInfo content="Remuneração recomendada para o sócio (28% da receita)" />
-            </div>
-          }
-          value={`R$ ${proLaboreRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          icon={Users}
-          gradient="from-orange-500 to-amber-600"
-        />
-        <MetricCard
-          title={
-            <div className="flex items-center gap-1">
-              Capital de Giro Recomendado
-              <TooltipInfo content="Capital recomendado para manter as operações por 3 meses" />
-            </div>
-          }
-          value={`R$ ${capitalGiroRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          icon={Briefcase}
-          gradient="from-teal-500 to-cyan-600"
-        />
+         />
+         <MetricCard
+           title="Gastos com Equipe"
+           value={`R$ ${totalGastosEquipe.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+           icon={Users}
+           gradient="from-blue-500 to-indigo-600"
+         />
+         <MetricCard
+           title="Gastos com Fornecedores"
+           value={`R$ ${gastosComFornecedores.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+           icon={Briefcase}
+           gradient="from-orange-500 to-amber-600"
+         />
+         <MetricCard
+           title="Lucro Líquido"
+           value={`R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+           change={margemLucro.toFixed(1)}
+           changeType={lucroLiquido >= 0 ? 'positive' : 'negative'}
+           icon={DollarSign}
+           gradient="from-green-500 to-emerald-600"
+         />
+         <MetricCard
+           title={
+             <div className="flex items-center gap-1">
+               ROI
+               <TooltipInfo content="Retorno sobre Investimento - Mede o retorno obtido em relação ao investimento realizado" />
+             </div>
+           }
+           value={roi.toFixed(2)}
+           changeType={roi >= 0 ? 'positive' : 'negative'}
+           icon={Target}
+           gradient="from-purple-500 to-violet-600"
+         />
+         <MetricCard
+           title={
+             <div className="flex items-center gap-1">
+               Pró-labore Recomendado
+               <TooltipInfo content="Remuneração recomendada para o sócio (28% da receita)" />
+             </div>
+           }
+           value={`R$ ${proLaboreRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+           icon={Crown}
+           gradient="from-yellow-500 to-orange-600"
+         />
+         <MetricCard
+           title={
+             <div className="flex items-center gap-1">
+               Capital de Giro Recomendado
+               <TooltipInfo content="Capital recomendado para manter as operações por 3 meses" />
+             </div>
+           }
+           value={`R$ ${capitalGiroRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+           icon={Zap}
+           gradient="from-teal-500 to-cyan-600"
+         />
       </div>
 
       {/* Gráficos Avançados */}
