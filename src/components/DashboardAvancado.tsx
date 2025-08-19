@@ -103,11 +103,74 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const lucroLiquido = totalReceitas - totalDespesas - totalImpostos - totalTaxas;
   const margemLucro = totalReceitas > 0 ? ((lucroLiquido / totalReceitas) * 100) : 0;
   
+  // Total de despesas incluindo todos os gastos
+  const totalTodasDespesas = totalDespesas + totalImpostos + totalTaxas + totalGastosEquipe + gastosComFornecedores;
+  
   // Métricas adicionais
   const totalGastos = totalDespesas + totalImpostos + totalTaxas;
   const roi = totalGastos > 0 ? ((totalReceitas - totalGastos) / totalGastos) : 0;
   const proLaboreRecomendado = totalReceitas * 0.28; // 28% da receita como pró-labore
   const capitalGiroRecomendado = totalGastos * 3; // 3 meses de gastos recomendados
+
+  // Calcular crescimento real baseado no período anterior
+  const calcularCrescimento = (dadosAtuais: number, tipoFiltro: string) => {
+    let dataInicial = new Date();
+    let dataFinal = new Date();
+    
+    switch (tipoFiltro) {
+      case 'mes':
+        dataInicial.setMonth(dataInicial.getMonth() - 2);
+        dataFinal.setMonth(dataFinal.getMonth() - 1);
+        break;
+      case 'trimestre':
+        dataInicial.setMonth(dataInicial.getMonth() - 6);
+        dataFinal.setMonth(dataFinal.getMonth() - 3);
+        break;
+      case 'semestre':
+        dataInicial.setMonth(dataInicial.getMonth() - 12);
+        dataFinal.setMonth(dataFinal.getMonth() - 6);
+        break;
+      case 'ano':
+        dataInicial.setFullYear(dataInicial.getFullYear() - 2);
+        dataFinal.setFullYear(dataFinal.getFullYear() - 1);
+        break;
+      default: // semana
+        dataInicial.setDate(dataInicial.getDate() - 14);
+        dataFinal.setDate(dataFinal.getDate() - 7);
+    }
+
+    return { dataInicial, dataFinal };
+  };
+
+  const { dataInicial, dataFinal } = calcularCrescimento(0, timeFilter);
+  
+  // Receitas do período anterior
+  const receitasPeriodoAnterior = receitas.filter(r => {
+    const data = new Date(r.data);
+    return data >= dataInicial && data <= dataFinal;
+  }).reduce((sum, r) => sum + r.valor, 0);
+
+  // Despesas do período anterior
+  const despesasPeriodoAnterior = despesas.filter(d => {
+    const data = new Date(d.data);
+    return data >= dataInicial && data <= dataFinal;
+  }).reduce((sum, d) => sum + d.valor, 0);
+
+  const impostosPeriodoAnterior = impostos.filter(i => {
+    const data = new Date(i.vencimento);
+    return data >= dataInicial && data <= dataFinal;
+  }).reduce((sum, i) => sum + i.valor, 0);
+
+  const totalDespesasPeriodoAnterior = despesasPeriodoAnterior + impostosPeriodoAnterior;
+
+  // Calcular crescimento percentual
+  const crescimentoReceitas = receitasPeriodoAnterior > 0 
+    ? ((totalReceitas - receitasPeriodoAnterior) / receitasPeriodoAnterior) * 100 
+    : totalReceitas > 0 ? 100 : 0;
+
+  const crescimentoDespesas = totalDespesasPeriodoAnterior > 0 
+    ? ((totalTodasDespesas - totalDespesasPeriodoAnterior) / totalDespesasPeriodoAnterior) * 100 
+    : totalTodasDespesas > 0 ? 100 : 0;
 
   // Dados para gráficos avançados
   const gerarDadosEvolutivos = () => {
@@ -200,16 +263,18 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
       {/* KPIs Principais - Top */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <MetricCard
-          title="Receita Total"
+          title="Total em Receitas"
           value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          change={crescimentoMensal.toFixed(1)}
-          changeType={crescimentoMensal >= 0 ? 'positive' : 'negative'}
+          change={Math.abs(crescimentoReceitas).toFixed(1)}
+          changeType={crescimentoReceitas >= 0 ? 'positive' : 'negative'}
           icon={TrendingUp}
           gradient="from-green-500 to-emerald-600"
          />
          <MetricCard
-           title="Total de Gastos"
-           value={`R$ ${totalGastos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+           title="Total em Despesas"
+           value={`R$ ${totalTodasDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+           change={Math.abs(crescimentoDespesas).toFixed(1)}
+           changeType={crescimentoDespesas >= 0 ? 'negative' : 'positive'}
            icon={TrendingDown}
            gradient="from-red-500 to-rose-600"
          />
