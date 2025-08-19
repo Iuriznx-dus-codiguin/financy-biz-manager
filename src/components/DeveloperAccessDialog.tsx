@@ -21,7 +21,18 @@ export const DeveloperAccessDialog: React.FC<DeveloperAccessDialogProps> = ({
   const [isValidating, setIsValidating] = useState(false);
   const { user } = useAuth();
 
-  const DEVELOPER_ACCESS_KEY = 'FINANCY_DEV_2024';
+  const VALID_DEVELOPER_KEYS = [
+    'A8k9mN2pQ7xW4vB3zR6y',
+    'F5jL8dE9rT1nY4hU6cV0',
+    'M3wP7bG2sI9kX5oQ8fA1',
+    'R6vN4kL9dF2eT8wY3cB7',
+    'S1pX9mH4qL7vN2kF6rE8',
+    'T9kR3bY8sW1mP5vN7qL4',
+    'U2hF6pK9dL3vN8cR4wX7',
+    'V7mP2kY9sW4vN6bF1qL8',
+    'W4cR8pN2kF9vL3mY7bX5',
+    'X1vN6kP9dF4mL8wY2cR7'
+  ];
 
   const handleValidateAccess = async () => {
     if (!user) {
@@ -29,7 +40,7 @@ export const DeveloperAccessDialog: React.FC<DeveloperAccessDialogProps> = ({
       return;
     }
 
-    if (accessKey !== DEVELOPER_ACCESS_KEY) {
+    if (!VALID_DEVELOPER_KEYS.includes(accessKey)) {
       toast.error('Chave de acesso inválida');
       return;
     }

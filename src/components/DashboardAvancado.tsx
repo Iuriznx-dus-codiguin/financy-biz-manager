@@ -198,7 +198,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     <div className="space-y-6">
 
       {/* KPIs Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard
           title="Total de Impostos"
           value={`R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
@@ -213,7 +213,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
          />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <MetricCard
           title="Receita Total"
           value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
@@ -300,7 +300,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
         </TabsList>
 
         <TabsContent value="evolutivo" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Card className="col-span-1 lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -363,7 +363,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
         </TabsContent>
 
         <TabsContent value="categorias" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -433,7 +433,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">

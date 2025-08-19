@@ -127,12 +127,13 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
 
       <UpgradeCard
         feature="Dashboard Avançado"
-        description="Gráficos interativos, métricas avançadas, análises preditivas e insights personalizados com IA"
+        description="Gráficos interativos, métricas avançadas e insights com IA"
         requiredPlan="Premium ou superior"
         onUpgrade={() => setActiveSection?.('assinatura')}
+        dismissible={true}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
