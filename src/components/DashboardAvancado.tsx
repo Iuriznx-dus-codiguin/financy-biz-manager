@@ -197,8 +197,26 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   return (
     <div className="space-y-6">
 
-      {/* KPIs Principais */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* KPIs Principais - Top */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <MetricCard
+          title="Receita Total"
+          value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          change={crescimentoMensal.toFixed(1)}
+          changeType={crescimentoMensal >= 0 ? 'positive' : 'negative'}
+          icon={TrendingUp}
+          gradient="from-green-500 to-emerald-600"
+         />
+         <MetricCard
+           title="Total de Gastos"
+           value={`R$ ${totalGastos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+           icon={TrendingDown}
+           gradient="from-red-500 to-rose-600"
+         />
+      </div>
+
+      {/* Demais KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         <MetricCard
           title="Total de Impostos"
           value={`R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
@@ -210,17 +228,6 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
           value={`R$ ${totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={DollarSign}
           gradient="from-orange-500 to-red-600"
-         />
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <MetricCard
-          title="Receita Total"
-          value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          change={crescimentoMensal.toFixed(1)}
-          changeType={crescimentoMensal >= 0 ? 'positive' : 'negative'}
-          icon={TrendingUp}
-          gradient="from-green-500 to-emerald-600"
          />
          <MetricCard
            title="Gastos com Equipe"
