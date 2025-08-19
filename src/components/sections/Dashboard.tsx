@@ -52,7 +52,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
 
   const totalReceitas = filteredReceitas.reduce((sum, r) => sum + r.valor, 0);
   const totalDespesas = filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
-  const totalImpostos = filteredImpostos.reduce((sum, i) => sum + i.valor, 0);
+  const totalImpostos = filteredImpostos.filter(i => i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
+  const totalTaxas = filteredImpostos.filter(i => i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
   const saldo = totalReceitas - totalDespesas;
 
   // Dashboard avançado para planos premium
@@ -131,7 +132,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         onUpgrade={() => setActiveSection?.('assinatura')}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -183,7 +184,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Impostos
+              Total de Impostos
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -191,7 +192,23 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
               R$ {totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {filteredImpostos.length} pendências
+              {filteredImpostos.filter(i => i.tipo === 'imposto').length} impostos
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total de Taxas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              R$ {totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {filteredImpostos.filter(i => i.tipo === 'taxa').length} taxas
             </p>
           </CardContent>
         </Card>

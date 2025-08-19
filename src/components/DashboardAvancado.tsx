@@ -41,7 +41,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   HelpCircle,
-  Minus
+  Minus,
+  Receipt
 } from 'lucide-react';
 import { TimeFilter } from '@/components/TimeFilter';
 import { isDateInRange } from '@/utils/dateFilters';
@@ -97,12 +98,13 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   // Calcular métricas avançadas
   const totalReceitas = filteredReceitas.reduce((sum, r) => sum + r.valor, 0);
   const totalDespesas = filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
-  const totalImpostos = filteredImpostos.reduce((sum, i) => sum + i.valor, 0);
-  const lucroLiquido = totalReceitas - totalDespesas - totalImpostos;
+  const totalImpostos = filteredImpostos.filter(i => i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
+  const totalTaxas = filteredImpostos.filter(i => i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
+  const lucroLiquido = totalReceitas - totalDespesas - totalImpostos - totalTaxas;
   const margemLucro = totalReceitas > 0 ? ((lucroLiquido / totalReceitas) * 100) : 0;
   
   // Métricas adicionais
-  const totalGastos = totalDespesas + totalImpostos;
+  const totalGastos = totalDespesas + totalImpostos + totalTaxas;
   const roi = totalGastos > 0 ? ((totalReceitas - totalGastos) / totalGastos) : 0;
   const proLaboreRecomendado = totalReceitas * 0.28; // 28% da receita como pró-labore
   const capitalGiroRecomendado = totalGastos * 3; // 3 meses de gastos recomendados
@@ -196,6 +198,21 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     <div className="space-y-6">
 
       {/* KPIs Principais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Total de Impostos"
+          value={`R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          icon={Receipt}
+          gradient="from-blue-500 to-indigo-600"
+         />
+         <MetricCard
+          title="Total de Taxas"
+          value={`R$ ${totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          icon={DollarSign}
+          gradient="from-orange-500 to-red-600"
+         />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <MetricCard
           title="Receita Total"

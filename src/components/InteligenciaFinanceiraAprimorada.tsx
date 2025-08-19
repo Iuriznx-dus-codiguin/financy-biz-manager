@@ -41,10 +41,12 @@ export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAp
 
   const totalReceitas = receitas.reduce((sum, r) => sum + r.valor, 0);
   const totalDespesas = despesas.reduce((sum, d) => sum + d.valor, 0);
-  const totalImpostosPagos = impostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);
-  const totalImpostosAberto = impostos.filter(i => !i.pago).reduce((sum, i) => sum + i.valor, 0);
+  const totalImpostosPagos = impostos.filter(i => i.pago && i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
+  const totalTaxasPagas = impostos.filter(i => i.pago && i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
+  const totalImpostosAberto = impostos.filter(i => !i.pago && i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
+  const totalTaxasAberto = impostos.filter(i => !i.pago && i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
   
-  const margemLiquida = totalReceitas > 0 ? ((totalReceitas - totalDespesas - totalImpostosPagos) / totalReceitas) * 100 : 0;
+  const margemLiquida = totalReceitas > 0 ? ((totalReceitas - totalDespesas - totalImpostosPagos - totalTaxasPagas) / totalReceitas) * 100 : 0;
   const taxaQueima = totalDespesas / (totalReceitas || 1);
   const roe = totalReceitas > 0 ? ((totalReceitas - totalDespesas) / totalReceitas) * 100 : 0;
   
@@ -52,7 +54,8 @@ export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAp
   const receitaAnualizada = totalReceitas * 12;
   const valuationEstimado = receitaAnualizada * 4.5; // Múltiplo mais otimista para planos premium
   const breakEvenPoint = totalDespesas / (totalReceitas / 30); // Ponto de equilíbrio em dias
-  const liquidezImediata = (totalReceitas - totalDespesas) / (totalImpostosAberto || 1);
+  // Análise de liquidez
+  const liquidezImediata = (totalReceitas - totalDespesas) / (totalImpostosAberto + totalTaxasAberto || 1);
   
   // Análise de tendências (simulada)
   const crescimentoMensal = Math.random() * 20 - 10; // Simulação de crescimento
@@ -111,13 +114,14 @@ export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAp
       acao: 'Considerar melhorias que aumentem múltiplos de valuation'
     });
 
-    // Análise de impostos
-    if (totalImpostosAberto > totalReceitas * 0.15) {
+    // Análise de impostos e taxas
+    const totalImpostosETaxasAberto = totalImpostosAberto + totalTaxasAberto;
+    if (totalImpostosETaxasAberto > totalReceitas * 0.15) {
       analises.push({
         tipo: 'aviso',
         icon: AlertTriangle,
         titulo: 'Carga Tributária Alta',
-        descricao: 'Impostos pendentes representam >15% da receita. Avaliar planejamento tributário.',
+        descricao: 'Impostos e taxas pendentes representam >15% da receita. Avaliar planejamento tributário.',
         acao: 'Consultar contador para otimização fiscal'
       });
     }
