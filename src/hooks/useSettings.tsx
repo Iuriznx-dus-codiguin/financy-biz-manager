@@ -110,12 +110,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, settings')
           .eq('id', user.id)
           .single();
 
-        if (profile?.settings) {
-          const remoteSettings = JSON.parse(profile.settings);
+        if (profile && (profile as any).settings) {
+          const remoteSettings = JSON.parse((profile as any).settings);
           setSettings({ ...defaultSettings, ...remoteSettings });
           // Sincronizar com localStorage
           localStorage.setItem('financy-settings', JSON.stringify(remoteSettings));
@@ -144,7 +144,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             id: user.id,
             email: user.email,
             settings: JSON.stringify(updatedSettings),
-          });
+          } as any);
       }
 
       toast({
@@ -169,7 +169,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       if (user) {
         await supabase
           .from('profiles')
-          .update({ settings: null })
+          .update({ settings: null } as any)
           .eq('id', user.id);
       }
 
