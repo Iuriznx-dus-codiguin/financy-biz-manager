@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { useAppContext } from '@/contexts/AppContext';
 import { TimeFilter } from '@/components/TimeFilter';
 import { isDateInRange, getDateRange } from '@/utils/dateFilters';
@@ -29,6 +29,37 @@ const Relatorios = () => {
   const totalImpostosPagos = filteredImpostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);
   const lucroLiquido = totalReceitas - totalDespesas - totalImpostosPagos;
   const margemLucro = totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
+
+  // Dados para gráfico de rosca dos principais gastos
+  const gerarDadosPrincipaisGastos = () => {
+    const gastosCategorizados = {
+      'Despesas Operacionais': filteredDespesas.reduce((sum, d) => sum + d.valor, 0),
+      'Impostos': filteredImpostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0),
+      'Equipe': filteredDespesas.filter(d => d.categoria === 'equipe').reduce((sum, d) => sum + d.valor, 0),
+      'Fornecedores': filteredDespesas.filter(d => d.categoria === 'fornecedores').reduce((sum, d) => sum + d.valor, 0),
+      'Marketing': filteredDespesas.filter(d => d.categoria === 'marketing').reduce((sum, d) => sum + d.valor, 0),
+      'Tecnologia': filteredDespesas.filter(d => d.categoria === 'tecnologia').reduce((sum, d) => sum + d.valor, 0),
+    };
+
+    return Object.entries(gastosCategorizados)
+      .map(([name, value]) => ({ name, value }))
+      .filter(item => item.value > 0)
+      .sort((a, b) => b.value - a.value);
+  };
+
+  const dadosPrincipaisGastos = gerarDadosPrincipaisGastos();
+  
+  // Cores para o gráfico de rosca
+  const CORES_GASTOS = [
+    '#EF4444', // Vermelho
+    '#F97316', // Laranja  
+    '#EAB308', // Amarelo
+    '#22C55E', // Verde
+    '#3B82F6', // Azul
+    '#8B5CF6', // Roxo
+    '#EC4899', // Rosa
+    '#6B7280'  // Cinza
+  ];
 
   const getTimeFilterLabel = (filter: string) => {
     const labels: Record<string, string> = {
@@ -460,10 +491,70 @@ const Relatorios = () => {
         </div>
       </div>
 
+      {/* Gráfico Principal - Principais Gastos */}
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader>
+          <CardTitle>📊 Principais Gastos - {getTimeFilterLabel(timeFilter)}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {dadosPrincipaisGastos.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={dadosPrincipaisGastos}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={120}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {dadosPrincipaisGastos.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={CORES_GASTOS[index % CORES_GASTOS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg mb-4">Legenda</h3>
+                {dadosPrincipaisGastos.map((item, index) => (
+                  <div key={item.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/20">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-4 h-4 rounded-full" 
+                        style={{ backgroundColor: CORES_GASTOS[index % CORES_GASTOS.length] }}
+                      />
+                      <span className="font-medium">{item.name}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold">R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {dadosPrincipaisGastos.reduce((sum, g) => sum + g.value, 0) > 0 
+                          ? ((item.value / dadosPrincipaisGastos.reduce((sum, g) => sum + g.value, 0)) * 100).toFixed(1)
+                          : 0}%
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-muted-foreground">Nenhum gasto registrado no período selecionado</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Controles de Relatório */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>Configurar Relatório</CardTitle>
+          <CardTitle>⚙️ Configurar Relatórios Alternativos</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -525,11 +616,11 @@ const Relatorios = () => {
         </CardContent>
       </Card>
 
-      {/* Gráfico Principal */}
+      {/* Relatório Alternativo Selecionado */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
           <CardTitle>
-            {selectedReport === 'mensal' && 'Evolução Temporal'}
+            📈 {selectedReport === 'mensal' && 'Evolução Temporal'}
             {selectedReport === 'categoria' && 'Receitas por Categoria'}
             {selectedReport === 'cliente' && 'Receitas por Cliente'}
             {selectedReport === 'comparativo' && 'Análise Comparativa'}
