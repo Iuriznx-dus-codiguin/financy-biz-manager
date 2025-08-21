@@ -3,529 +3,464 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
 import { 
-  Download, 
-  Upload, 
-  RefreshCw, 
-  User, 
-  Bell, 
-  Shield, 
   Palette, 
-  Database,
-  AlertCircle,
-  Check,
-  Trash2
+  DollarSign,
+  LayoutDashboard,
+  User,
+  Trash2,
+  Plus,
+  Crown,
+  Calendar,
+  AlertTriangle
 } from 'lucide-react';
 import { useSettings, useCurrency } from '@/hooks/useSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useToast } from '@/hooks/use-toast';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const Configuracoes = () => {
-  const { settings, updateSettings, resetSettings, exportSettings, importSettings, loading } = useSettings();
-  const { user } = useAuth();
-  const { subscriptionTier } = useSubscription();
+  const { settings, updateSettings, loading } = useSettings();
+  const { user, signOut } = useAuth();
+  const { subscriptionData, subscriptionTier, loading: subscriptionLoading } = useSubscription();
   const { formatCurrency } = useCurrency();
-  const { dashboards, currentDashboard, setCurrentDashboard } = useDashboard();
+  const { dashboards, currentDashboard, createDashboard, deleteDashboard } = useDashboard();
+  const { getLimits } = useFeatureAccess();
   const { toast } = useToast();
-  const [importFile, setImportFile] = useState<File | null>(null);
+  const [newDashboardName, setNewDashboardName] = useState('');
+  const [isCreatingDashboard, setIsCreatingDashboard] = useState(false);
+  const [isDeletingData, setIsDeletingData] = useState(false);
 
-  const handleExportSettings = () => {
-    const dataStr = exportSettings();
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `financy-configuracoes-${new Date().toISOString().split('T')[0]}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+  const limits = getLimits();
+
+  const formatSubscriptionEnd = (endDate: string | null) => {
+    if (!endDate) return 'N/A';
+    return new Date(endDate).toLocaleDateString('pt-BR');
   };
 
-  const handleImportSettings = async () => {
-    if (!importFile) return;
+  const getSubscriptionStatus = () => {
+    if (subscriptionLoading) return { status: 'Carregando...', variant: 'secondary' };
     
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const content = e.target?.result as string;
-        await importSettings(content);
-        setImportFile(null);
-      } catch (error) {
-        console.error('Erro ao importar configurações:', error);
+    if (!user) return { status: 'Não autenticado', variant: 'destructive' };
+    
+    if (!subscriptionData) {
+      // Usuário sem registro = teste gratuito
+      const signUpDate = new Date(user.created_at || Date.now());
+      const trialEndDate = new Date(signUpDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+      const today = new Date();
+      const diffTime = trialEndDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays > 0) {
+        return { 
+          status: `Teste Grátis (${diffDays} dias restantes)`, 
+          variant: 'default',
+          endDate: trialEndDate.toLocaleDateString('pt-BR')
+        };
+      } else {
+        return { 
+          status: 'Teste Grátis Expirado', 
+          variant: 'destructive',
+          endDate: trialEndDate.toLocaleDateString('pt-BR')
+        };
       }
-    };
-    reader.readAsText(importFile);
+    }
+
+    if (subscriptionData.subscribed && subscriptionData.subscription_end) {
+      const endDate = new Date(subscriptionData.subscription_end);
+      const today = new Date();
+      const diffTime = endDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays > 0) {
+        return { 
+          status: `${subscriptionData.subscription_tier || 'Premium'} (${diffDays} dias restantes)`, 
+          variant: 'default',
+          endDate: formatSubscriptionEnd(subscriptionData.subscription_end)
+        };
+      } else {
+        return { 
+          status: 'Assinatura Expirada', 
+          variant: 'destructive',
+          endDate: formatSubscriptionEnd(subscriptionData.subscription_end)
+        };
+      }
+    }
+
+    return { status: 'Sem Assinatura', variant: 'secondary' };
   };
 
-  const handleLogout = async () => {
-    // Implementar logout quando necessário
-    toast({
-      title: "Logout realizado",
-      description: "Você foi desconectado com sucesso.",
-    });
+  const handleCreateDashboard = async () => {
+    if (!newDashboardName.trim()) {
+      toast({
+        title: "Nome inválido",
+        description: "Por favor, insira um nome para o dashboard.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (dashboards.length >= limits.maxDashboards && limits.maxDashboards !== -1) {
+      toast({
+        title: "Limite atingido",
+        description: `Você atingiu o limite de ${limits.maxDashboards} dashboard(s) para seu plano atual.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsCreatingDashboard(true);
+      await createDashboard(newDashboardName, 'personal');
+      setNewDashboardName('');
+      toast({
+        title: "Dashboard criado",
+        description: "Seu novo dashboard foi criado com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o dashboard.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingDashboard(false);
+    }
   };
 
-  if (loading) {
+  const handleDeleteAllData = async () => {
+    if (!user) return;
+    
+    try {
+      setIsDeletingData(true);
+      
+      // Deletar todos os dados financeiros do usuário
+      await Promise.all([
+        supabase.from('receitas').delete().eq('user_id', user.id),
+        supabase.from('despesas').delete().eq('user_id', user.id),
+        supabase.from('impostos').delete().eq('user_id', user.id),
+        supabase.from('metas').delete().eq('user_id', user.id),
+        supabase.from('ai_recognized_transactions').delete().eq('user_id', user.id),
+        supabase.from('ai_conversations').delete().eq('user_id', user.id),
+      ]);
+
+      // Deletar dashboards (exceto o padrão se existir)
+      await supabase
+        .from('user_dashboards')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('is_default', false);
+
+      // Resetar configurações (mas manter settings como null para não afetar a estrutura)
+      await supabase
+        .from('profiles')
+        .update({ settings: null } as any)
+        .eq('id', user.id);
+
+      // Limpar localStorage das configurações
+      localStorage.removeItem('financy-settings');
+      
+      toast({
+        title: "Dados apagados",
+        description: "Todos os seus dados financeiros e configurações foram apagados com sucesso. Sua assinatura e data de expiração do teste foram mantidas.",
+      });
+
+      // Recarregar a página para aplicar as mudanças
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Erro ao apagar dados:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível apagar todos os dados. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingData(false);
+    }
+  };
+
+  if (loading || subscriptionLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-muted-foreground">Carregando configurações...</div>
+        </div>
       </div>
     );
   }
 
+  const subscriptionStatus = getSubscriptionStatus();
+
   return (
-    <section className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-foreground">Configurações</h2>
-        <p className="text-muted-foreground">Personalize sua experiência no Financy</p>
+    <div className="p-6 space-y-6">
+      <div className="flex items-center gap-2 mb-6">
+        <User className="h-6 w-6 text-primary" />
+        <h1 className="text-2xl font-bold">Configurações</h1>
       </div>
 
-      <Tabs defaultValue="geral" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="geral" className="flex items-center gap-2">
-            <Palette className="w-4 h-4" />
-            Geral
-          </TabsTrigger>
-          <TabsTrigger value="perfil" className="flex items-center gap-2">
-            <User className="w-4 h-4" />
-            Perfil
-          </TabsTrigger>
-          <TabsTrigger value="notificacoes" className="flex items-center gap-2">
-            <Bell className="w-4 h-4" />
-            Notificações
-          </TabsTrigger>
-          <TabsTrigger value="privacidade" className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            Privacidade
-          </TabsTrigger>
-          <TabsTrigger value="dados" className="flex items-center gap-2">
-            <Database className="w-4 h-4" />
-            Dados
-          </TabsTrigger>
-        </TabsList>
+      {/* Tema */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5" />
+            Aparência
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="tema">Tema</Label>
+            <Select
+              value={settings.tema}
+              onValueChange={(value: 'light' | 'dark' | 'system') => 
+                updateSettings({ tema: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tema" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Claro</SelectItem>
+                <SelectItem value="dark">Escuro</SelectItem>
+                <SelectItem value="system">Sistema</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Configurações Gerais */}
-        <TabsContent value="geral" className="space-y-6">
-          <Card className="rounded-2xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="w-5 h-5" />
-                Aparência e Interface
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label>Tema</Label>
-                  <Select 
-                    value={settings.tema} 
-                    onValueChange={(value: 'light' | 'dark' | 'system') => 
-                      updateSettings({ tema: value })
-                    }
-                  >
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="system">🔄 Automático</SelectItem>
-                      <SelectItem value="light">🌞 Claro</SelectItem>
-                      <SelectItem value="dark">🌙 Escuro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+      {/* Moeda */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Moeda
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="moeda">Moeda Padrão</Label>
+            <Select
+              value={settings.moeda}
+              onValueChange={(value: 'BRL' | 'USD' | 'EUR') => 
+                updateSettings({ moeda: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a moeda" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BRL">Real Brasileiro (R$)</SelectItem>
+                <SelectItem value="USD">Dólar Americano ($)</SelectItem>
+                <SelectItem value="EUR">Euro (€)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
-                <div className="space-y-2">
-                  <Label>Moeda</Label>
-                  <Select 
-                    value={settings.moeda} 
-                    onValueChange={(value: 'BRL' | 'USD' | 'EUR') => 
-                      updateSettings({ moeda: value })
-                    }
-                  >
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="BRL">🇧🇷 Real (R$)</SelectItem>
-                      <SelectItem value="USD">🇺🇸 Dólar ($)</SelectItem>
-                      <SelectItem value="EUR">🇪🇺 Euro (€)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Formato de Data</Label>
-                  <Select 
-                    value={settings.formatoData} 
-                    onValueChange={(value: 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD') => 
-                      updateSettings({ formatoData: value })
-                    }
-                  >
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="DD/MM/YYYY">DD/MM/AAAA</SelectItem>
-                      <SelectItem value="MM/DD/YYYY">MM/DD/AAAA</SelectItem>
-                      <SelectItem value="YYYY-MM-DD">AAAA-MM-DD</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 border rounded-xl">
-                <div className="space-y-1">
-                  <p className="font-medium">Animações</p>
-                  <p className="text-sm text-muted-foreground">Ativar animações na interface</p>
-                </div>
-                <Switch
-                  checked={settings.exibirAnimacoes}
-                  onCheckedChange={(checked) => updateSettings({ exibirAnimacoes: checked })}
-                />
-              </div>
-
-              {dashboards.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Dashboard Padrão</Label>
-                  <Select 
-                    value={settings.dashboardPadrao || ''} 
-                    onValueChange={(value) => updateSettings({ dashboardPadrao: value })}
-                  >
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue placeholder="Selecionar dashboard padrão" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {dashboards.map(dashboard => (
-                        <SelectItem key={dashboard.id} value={dashboard.id}>
-                          {dashboard.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Perfil */}
-        <TabsContent value="perfil" className="space-y-6">
-          <Card className="rounded-2xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Informações da Conta
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-muted/50 rounded-xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">Status da Assinatura</h3>
-                    <p className="text-sm text-muted-foreground">{user?.email}</p>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant={subscriptionTier === 'free' ? 'secondary' : 'default'}>
-                      {subscriptionTier === 'free' ? 'Gratuito' : 'Premium'}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-
-              {subscriptionTier === 'free' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 border rounded-xl">
-                    <h4 className="font-semibold mb-2 text-green-600">Recursos Disponíveis</h4>
-                    <div className="space-y-1 text-sm text-muted-foreground">
-                      <p>• ✓ Dashboard básico</p>
-                      <p>• ✓ Cadastro de receitas/despesas</p>
-                      <p>• ✓ Controle básico de impostos</p>
-                      <p>• ✓ Metas financeiras</p>
+      {/* Dashboards */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LayoutDashboard className="h-5 w-5" />
+            Dashboards
+            <Badge variant="outline">
+              {dashboards.length}/{limits.maxDashboards === -1 ? '∞' : limits.maxDashboards}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Dashboards Criados</Label>
+            {dashboards.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum dashboard criado ainda.</p>
+            ) : (
+              <div className="space-y-2">
+                {dashboards.map((dashboard) => (
+                  <div key={dashboard.id} className="flex items-center justify-between p-2 border rounded">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{dashboard.name}</span>
+                      {dashboard.isDefault && <Badge variant="default">Padrão</Badge>}
+                      {currentDashboard?.id === dashboard.id && <Badge variant="outline">Atual</Badge>}
                     </div>
-                  </div>
-
-                  <div className="p-4 border rounded-xl">
-                    <h4 className="font-semibold mb-2 text-orange-600">Premium Plus+</h4>
-                    <div className="space-y-1 text-sm text-muted-foreground">
-                      <p>• 📊 Relatórios avançados</p>
-                      <p>• 🤖 IA Financeira</p>
-                      <p>• 📈 Analytics detalhado</p>
-                      <p>• 🔄 Sincronização em nuvem</p>
-                      <p>• 💬 Suporte prioritário</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {subscriptionTier === 'free' && (
-                <div className="text-center pt-4">
-                  <Button className="rounded-xl">
-                    Fazer Upgrade para Premium
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Notificações */}
-        <TabsContent value="notificacoes" className="space-y-6">
-          <Card className="rounded-2xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5" />
-                Preferências de Notificação
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-xl">
-                  <div className="space-y-1">
-                    <p className="font-medium">Notificações por Email</p>
-                    <p className="text-sm text-muted-foreground">Receber relatórios e alertas por email</p>
-                  </div>
-                  <Switch
-                    checked={settings.notificacoes.email}
-                    onCheckedChange={(checked) => 
-                      updateSettings({ 
-                        notificacoes: { ...settings.notificacoes, email: checked } 
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-xl">
-                  <div className="space-y-1">
-                    <p className="font-medium">Notificações Push</p>
-                    <p className="text-sm text-muted-foreground">Alertas no navegador sobre vencimentos</p>
-                  </div>
-                  <Switch
-                    checked={settings.notificacoes.push}
-                    onCheckedChange={(checked) => 
-                      updateSettings({ 
-                        notificacoes: { ...settings.notificacoes, push: checked } 
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-xl">
-                  <div className="space-y-1">
-                    <p className="font-medium">Relatórios Automáticos</p>
-                    <p className="text-sm text-muted-foreground">Receber relatórios mensais automáticos</p>
-                  </div>
-                  <Switch
-                    checked={settings.notificacoes.relatorios}
-                    onCheckedChange={(checked) => 
-                      updateSettings({ 
-                        notificacoes: { ...settings.notificacoes, relatorios: checked } 
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-xl">
-                  <div className="space-y-1">
-                    <p className="font-medium">Marketing</p>
-                    <p className="text-sm text-muted-foreground">Novidades e promoções do Financy</p>
-                  </div>
-                  <Switch
-                    checked={settings.notificacoes.marketing}
-                    onCheckedChange={(checked) => 
-                      updateSettings({ 
-                        notificacoes: { ...settings.notificacoes, marketing: checked } 
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Privacidade */}
-        <TabsContent value="privacidade" className="space-y-6">
-          <Card className="rounded-2xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                Privacidade e Segurança
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-xl">
-                  <div className="space-y-1">
-                    <p className="font-medium">Perfil Público</p>
-                    <p className="text-sm text-muted-foreground">Permitir que outros usuários vejam seu perfil</p>
-                  </div>
-                  <Switch
-                    checked={settings.perfilPublico}
-                    onCheckedChange={(checked) => updateSettings({ perfilPublico: checked })}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-xl">
-                  <div className="space-y-1">
-                    <p className="font-medium">Compartilhar Dados</p>
-                    <p className="text-sm text-muted-foreground">Ajudar a melhorar o Financy compartilhando dados anônimos</p>
-                  </div>
-                  <Switch
-                    checked={settings.compartilharDados}
-                    onCheckedChange={(checked) => updateSettings({ compartilharDados: checked })}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-xl">
-                  <div className="space-y-1">
-                    <p className="font-medium">Backup Automático</p>
-                    <p className="text-sm text-muted-foreground">Criar backups automáticos dos seus dados</p>
-                  </div>
-                  <Switch
-                    checked={settings.backupAutomatico}
-                    onCheckedChange={(checked) => updateSettings({ backupAutomatico: checked })}
-                  />
-                </div>
-
-                {settings.backupAutomatico && (
-                  <div className="space-y-2 pl-4">
-                    <Label>Frequência do Backup</Label>
-                    <Select 
-                      value={settings.frequenciaBackup} 
-                      onValueChange={(value: 'diario' | 'semanal' | 'mensal') => 
-                        updateSettings({ frequenciaBackup: value })
-                      }
-                    >
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="diario">Diário</SelectItem>
-                        <SelectItem value="semanal">Semanal</SelectItem>
-                        <SelectItem value="mensal">Mensal</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Dados */}
-        <TabsContent value="dados" className="space-y-6">
-          <Card className="rounded-2xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="w-5 h-5" />
-                Gestão de Dados
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button 
-                  variant="outline" 
-                  className="rounded-xl h-auto p-4"
-                  onClick={handleExportSettings}
-                >
-                  <div className="text-center w-full">
-                    <Download className="w-6 h-6 mx-auto mb-2 text-primary" />
-                    <h3 className="font-semibold">Exportar Configurações</h3>
-                    <p className="text-sm text-muted-foreground">Download arquivo JSON</p>
-                  </div>
-                </Button>
-
-                <div className="space-y-2">
-                  <Button 
-                    variant="outline" 
-                    className="rounded-xl h-auto p-4 w-full"
-                    onClick={() => document.getElementById('import-file')?.click()}
-                  >
-                    <div className="text-center w-full">
-                      <Upload className="w-6 h-6 mx-auto mb-2 text-primary" />
-                      <h3 className="font-semibold">Importar Configurações</h3>
-                      <p className="text-sm text-muted-foreground">Restaurar de arquivo JSON</p>
-                    </div>
-                  </Button>
-                  <Input
-                    id="import-file"
-                    type="file"
-                    accept=".json"
-                    className="hidden"
-                    onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                  />
-                  {importFile && (
-                    <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
-                      <span className="text-sm">{importFile.name}</span>
-                      <Button size="sm" onClick={handleImportSettings}>
-                        Importar
+                    {!dashboard.isDefault && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteDashboard(dashboard.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                ))}
               </div>
+            )}
+          </div>
 
-              <Separator />
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-orange-600">
-                  <AlertCircle className="w-5 h-5" />
-                  <h3 className="font-semibold">Zona de Perigo</h3>
-                </div>
-                
+          {(dashboards.length < limits.maxDashboards || limits.maxDashboards === -1) && (
+            <div className="space-y-2">
+              <Label htmlFor="newDashboard">Criar Novo Dashboard</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="newDashboard"
+                  placeholder="Nome do dashboard"
+                  value={newDashboardName}
+                  onChange={(e) => setNewDashboardName(e.target.value)}
+                />
                 <Button 
-                  variant="outline" 
-                  className="rounded-xl text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                  onClick={resetSettings}
+                  onClick={handleCreateDashboard}
+                  disabled={isCreatingDashboard}
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Resetar Todas as Configurações
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar
                 </Button>
-                
-                <p className="text-sm text-muted-foreground">
-                  Esta ação irá restaurar todas as configurações para os valores padrão.
+              </div>
+            </div>
+          )}
+
+          {(limits.maxDashboards !== -1 && dashboards.length >= limits.maxDashboards) && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-md dark:bg-amber-950/50 dark:border-amber-900">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                <Crown className="h-4 w-4" />
+                <p className="text-sm">
+                  Você atingiu o limite de dashboards para seu plano atual. 
+                  Faça upgrade para criar mais dashboards.
                 </p>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Sobre o Sistema */}
-      <Card className="rounded-2xl">
+      {/* Status da Conta */}
+      <Card>
         <CardHeader>
-          <CardTitle>Sobre o Financy</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Status da Conta
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto overflow-hidden">
-              <img 
-                src="/lovable-uploads/2e0fe1e4-b99b-4e35-beb7-82837c2dfd13.png" 
-                alt="Financy" 
-                className="w-full h-full object-contain filter brightness-0 invert"
-              />
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Plano Atual:</span>
+              <Badge variant={subscriptionStatus.variant as any}>
+                {subscriptionStatus.status}
+              </Badge>
             </div>
-            <div>
-              <h3 className="text-xl font-bold">Financy</h3>
-              <p className="text-muted-foreground">Sistema de Gestão Financeira</p>
+            
+            {subscriptionStatus.endDate && (
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Data de Expiração:</span>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{subscriptionStatus.endDate}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Email:</span>
+              <span className="text-sm text-muted-foreground">{user?.email}</span>
             </div>
-            <div className="text-sm text-muted-foreground space-y-1">
-              <p>Versão 2.1.0</p>
-              <p>Última atualização: {new Date().toLocaleDateString('pt-BR')}</p>
-              <p>Desenvolvido com ❤️ para pequenas e médias empresas</p>
-              <p>© 2025 Financy. Todos os direitos reservados.</p>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <span className="font-medium">Limites do Plano:</span>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>Dashboards: {limits.maxDashboards === -1 ? 'Ilimitado' : limits.maxDashboards}</div>
+                <div>Receitas: {limits.maxReceitas === -1 ? 'Ilimitado' : limits.maxReceitas}</div>
+                <div>Despesas: {limits.maxDespesas === -1 ? 'Ilimitado' : limits.maxDespesas}</div>
+                <div>Metas: {limits.maxMetas === -1 ? 'Ilimitado' : limits.maxMetas}</div>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
-    </section>
+
+      {/* Apagar Dados */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <Trash2 className="h-5 w-5" />
+            Zona de Perigo
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
+              <div className="space-y-2">
+                <h4 className="font-medium text-destructive">Apagar Todos os Dados</h4>
+                <p className="text-sm text-muted-foreground">
+                  Esta ação irá apagar permanentemente todos os seus dados financeiros, 
+                  configurações e dashboards. Sua assinatura e data de expiração do teste 
+                  gratuito serão mantidas.
+                </p>
+                <p className="text-xs text-muted-foreground font-medium">
+                  ⚠️ Esta ação não pode ser desfeita!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={isDeletingData}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Apagar Todos os Dados
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação irá apagar permanentemente:
+                  <br />• Todas as receitas, despesas e impostos
+                  <br />• Todas as metas financeiras
+                  <br />• Todos os dashboards personalizados
+                  <br />• Todas as configurações personalizadas
+                  <br />• Histórico de conversas com IA
+                  <br /><br />
+                  <strong>Suas credenciais de conta e status de assinatura serão mantidos.</strong>
+                  <br /><br />
+                  Digite "APAGAR" para confirmar esta ação irreversível.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDeleteAllData}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Confirmar Exclusão
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
