@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff } from 'lucide-react';
+import financyLogo from '@/assets/financy-logo.png';
 
 export const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -106,189 +106,209 @@ export const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 dark:from-primary/10 dark:via-background dark:to-primary/5 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Elementos decorativos de background */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-primary/3 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2"></div>
       
-      <Card className="w-full max-w-md rounded-3xl shadow-2xl backdrop-blur-sm bg-white/95 dark:bg-gray-900/95 border-0">
-        <CardHeader className="text-center space-y-6 pb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-lg overflow-hidden">
-            <img 
-              src="/lovable-uploads/2e0fe1e4-b99b-4e35-beb7-82837c2dfd13.png" 
-              alt="Financy" 
-              className="w-full h-full object-contain filter brightness-0 invert"
-            />
-          </div>
-          <div className="space-y-2">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-              {isLogin ? 'Bem-vindo de volta!' : 'Junte-se ao Financy'}
-            </CardTitle>
-            <p className="text-muted-foreground text-lg">
-              {isLogin ? 'Entre na sua conta para continuar' : 'Crie sua conta e comece a gerenciar suas finanças'}
-            </p>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {error && (
-            <Alert className="border-red-200 bg-red-50 text-red-800 rounded-xl">
-              <AlertDescription className="font-medium">{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {message && (
-            <Alert className="border-green-200 bg-green-50 text-green-800 rounded-xl">
-              <AlertDescription className="font-medium">{message}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Google Login Button */}
-          <Button
-            onClick={handleGoogleLogin}
-            disabled={googleLoading || loading}
-            variant="outline"
-            className="w-full rounded-xl h-14 text-base font-semibold border-2 hover:border-primary/50 transition-all duration-200 hover:shadow-lg"
-          >
-            {googleLoading ? (
-              <>
-                <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                Entrando com Google...
-              </>
-            ) : (
-              <>
-                <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                </svg>
-                Continuar com Google
-              </>
-            )}
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-200 dark:border-gray-700" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white dark:bg-gray-900 px-4 text-muted-foreground font-medium">
-                Ou continue com email
-              </span>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {!isLogin && (
+      {/* Container principal */}
+      <div className="relative z-10 w-full max-w-lg">
+        <Card className="rounded-3xl shadow-2xl backdrop-blur-md bg-card/95 border border-border/50 overflow-hidden">
+          {/* Header com logo */}
+          <div className="bg-gradient-to-r from-primary to-primary/80 px-8 py-12 text-center relative">
+            <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]"></div>
+            <div className="relative z-10 space-y-4">
+              <div className="w-24 h-24 mx-auto bg-white/10 backdrop-blur-sm rounded-3xl flex items-center justify-center shadow-lg ring-1 ring-white/20">
+                <img 
+                  src={financyLogo}
+                  alt="Financy" 
+                  className="w-16 h-16 object-contain filter brightness-0 invert"
+                />
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="nomeCompleto" className="text-sm font-medium">Nome Completo</Label>
-                <div className="relative">
-                  <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <h1 className="text-3xl font-bold text-primary-foreground font-inter">
+                  {isLogin ? 'Bem-vindo de volta!' : 'Bem-vindo ao Financy'}
+                </h1>
+                <p className="text-primary-foreground/80 text-lg font-medium">
+                  {isLogin ? 'Acesse sua conta para continuar' : 'Sua jornada financeira começa aqui'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <CardContent className="p-8 space-y-6">
+            {error && (
+              <Alert className="border-destructive/20 bg-destructive/5 text-destructive rounded-xl">
+                <AlertDescription className="font-medium">{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {message && (
+              <Alert className="border-primary/20 bg-primary/5 text-primary rounded-xl">
+                <AlertDescription className="font-medium">{message}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Google Login Button */}
+            <Button
+              onClick={handleGoogleLogin}
+              disabled={googleLoading || loading}
+              variant="outline"
+              className="w-full rounded-2xl h-14 text-base font-semibold border-2 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 group"
+            >
+              {googleLoading ? (
+                <>
+                  <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                  Entrando com Google...
+                </>
+              ) : (
+                <>
+                  <svg className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
+                  </svg>
+                  Continuar com Google
+                </>
+              )}
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-sm uppercase">
+                <span className="bg-card px-4 text-muted-foreground font-medium">
+                  Ou continue com email
+                </span>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="nomeCompleto" className="text-sm font-medium text-foreground">Nome Completo</Label>
+                  <div className="relative group">
+                    <UserIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <Input
+                      id="nomeCompleto"
+                      type="text"
+                      placeholder="Seu nome completo"
+                      value={formData.nomeCompleto}
+                      onChange={(e) => handleInputChange('nomeCompleto', e.target.value)}
+                      className="rounded-2xl h-14 pl-12 pr-4 border-2 focus:border-primary transition-all duration-300 bg-background/50 backdrop-blur-sm hover:bg-background/70 focus:bg-background text-base"
+                      required={!isLogin}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">Email</Label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
                   <Input
-                    id="nomeCompleto"
-                    type="text"
-                    placeholder="Seu nome completo"
-                    value={formData.nomeCompleto}
-                    onChange={(e) => handleInputChange('nomeCompleto', e.target.value)}
-                    className="rounded-xl h-12 pl-10 border-2 focus:border-primary transition-colors"
-                    required={!isLogin}
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className="rounded-2xl h-14 pl-12 pr-4 border-2 focus:border-primary transition-all duration-300 bg-background/50 backdrop-blur-sm hover:bg-background/70 focus:bg-background text-base"
+                    required
                   />
                 </div>
               </div>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="rounded-xl h-12 pl-10 border-2 focus:border-primary transition-colors"
-                  required
-                />
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">Senha</Label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Sua senha"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    className="rounded-2xl h-14 pl-12 pr-12 border-2 focus:border-primary transition-all duration-300 bg-background/50 backdrop-blur-sm hover:bg-background/70 focus:bg-background text-base"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+                {!isLogin && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Mínimo de 6 caracteres
+                  </p>
+                )}
               </div>
+
+              <Button 
+                type="submit" 
+                className="w-full rounded-2xl h-16 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/25 transform hover:-translate-y-0.5 active:translate-y-0"
+                disabled={loading || googleLoading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    {isLogin ? 'Entrando...' : 'Criando conta...'}
+                  </>
+                ) : (
+                  isLogin ? 'Entrar na minha conta' : 'Criar minha conta'
+                )}
+              </Button>
+            </form>
+
+            <div className="text-center pt-4">
+              <Button
+                variant="link"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError(null);
+                  setMessage(null);
+                  setFormData({ email: '', password: '', nomeCompleto: '' });
+                }}
+                className="text-primary font-medium hover:text-primary/80 transition-colors text-base"
+                disabled={loading || googleLoading}
+              >
+                {isLogin 
+                  ? 'Não tem uma conta? Cadastre-se gratuitamente' 
+                  : 'Já tem uma conta? Faça login'
+                }
+              </Button>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">Senha</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Sua senha"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="rounded-xl h-12 pl-10 pr-10 border-2 focus:border-primary transition-colors"
-                  required
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {!isLogin && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Mínimo de 6 caracteres
-                </p>
-              )}
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full rounded-xl h-14 text-base font-semibold bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-              disabled={loading || googleLoading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  {isLogin ? 'Entrando...' : 'Criando conta...'}
-                </>
-              ) : (
-                isLogin ? 'Entrar na minha conta' : 'Criar minha conta'
-              )}
-            </Button>
-          </form>
-
-          <div className="text-center pt-4">
-            <Button
-              variant="link"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError(null);
-                setMessage(null);
-                setFormData({ email: '', password: '', nomeCompleto: '' });
-              }}
-              className="text-primary font-medium hover:underline"
-              disabled={loading || googleLoading}
-            >
-              {isLogin 
-                ? 'Não tem uma conta? Cadastre-se gratuitamente' 
-                : 'Já tem uma conta? Faça login'
-              }
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Rodapé informativo */}
+        <div className="mt-8 text-center">
+          <p className="text-muted-foreground text-sm">
+            Ao continuar, você concorda com nossos{' '}
+            <a href="#" className="text-primary hover:text-primary/80 font-medium">Termos de Uso</a>{' '}
+            e{' '}
+            <a href="#" className="text-primary hover:text-primary/80 font-medium">Política de Privacidade</a>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
