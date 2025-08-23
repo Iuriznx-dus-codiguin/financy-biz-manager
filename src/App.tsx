@@ -18,9 +18,9 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <SettingsProvider>
-        <TooltipProvider>
-          <AuthProvider>
+      <TooltipProvider>
+        <AuthProvider>
+          <SettingsProvider>
             <OnboardingProvider>
               <DashboardProvider>
                 <AppProvider>
@@ -35,9 +35,9 @@ const App = () => (
                 </AppProvider>
               </DashboardProvider>
             </OnboardingProvider>
-          </AuthProvider>
-        </TooltipProvider>
-      </SettingsProvider>
+          </SettingsProvider>
+        </AuthProvider>
+      </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
