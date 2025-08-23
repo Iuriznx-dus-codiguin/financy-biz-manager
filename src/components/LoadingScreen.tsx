@@ -69,7 +69,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             supabase.from('subscribers').select('*').eq('user_id', user.id).maybeSingle()
           ]);
         } catch (error) {
-          console.log('Erro ao carregar subscription, continuando...', error);
+          // Erro ao carregar subscription, continuando...
         }
         updateProgress('subscription');
 
@@ -77,7 +77,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         try {
           await supabase.from('user_dashboards').select('*').eq('user_id', user.id);
         } catch (error) {
-          console.log('Erro ao carregar dashboards, continuando...', error);
+          // Erro ao carregar dashboards, continuando...
         }
         updateProgress('dashboards');
 
@@ -98,7 +98,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             setReceitas(receitasFormatadas);
           }
         } catch (error) {
-          console.log('Erro ao carregar receitas, continuando...', error);
+          // Erro ao carregar receitas, continuando...
         }
         updateProgress('receitas');
 
@@ -119,7 +119,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             setDespesas(despesasFormatadas);
           }
         } catch (error) {
-          console.log('Erro ao carregar despesas, continuando...', error);
+          // Erro ao carregar despesas, continuando...
         }
         updateProgress('despesas');
 
@@ -141,7 +141,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             setImpostos(impostosFormatados);
           }
         } catch (error) {
-          console.log('Erro ao carregar impostos, continuando...', error);
+          // Erro ao carregar impostos, continuando...
         }
         updateProgress('impostos');
 
@@ -164,7 +164,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             setMetas(metasFormatadas);
           }
         } catch (error) {
-          console.log('Erro ao carregar metas, continuando...', error);
+          // Erro ao carregar metas, continuando...
         }
         updateProgress('metas');
 

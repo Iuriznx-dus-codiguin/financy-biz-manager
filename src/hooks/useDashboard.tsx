@@ -37,6 +37,7 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
       const { data, error } = await supabase
         .from('user_dashboards')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: true });
 
       if (error) throw error;

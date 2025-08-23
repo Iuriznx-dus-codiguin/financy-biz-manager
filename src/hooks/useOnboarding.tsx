@@ -34,9 +34,9 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         .from('onboarding_data')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Erro ao verificar onboarding:', error);
       }
 
