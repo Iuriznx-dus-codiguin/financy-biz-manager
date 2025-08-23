@@ -108,23 +108,19 @@ export default function Index() {
 
   return (
     <div className="h-screen bg-background">
-      <AppProvider>
-        <DashboardProvider>
-          <SidebarProvider defaultOpen={false}>
-            <div className="flex h-full w-full">
-              <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
-                <FreeTrialNotification setActiveSection={setActiveSection} />
-                <main className="flex-1 overflow-y-auto p-8 space-y-6">
-                  {renderActiveSection()}
-                </main>
-                <Footer />
-              </div>
-            </div>
-          </SidebarProvider>
-        </DashboardProvider>
-      </AppProvider>
+      <SidebarProvider defaultOpen={false}>
+        <div className="flex h-full w-full">
+          <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
+            <FreeTrialNotification setActiveSection={setActiveSection} />
+            <main className="flex-1 overflow-y-auto p-8 space-y-6">
+              {renderActiveSection()}
+            </main>
+            <Footer />
+          </div>
+        </div>
+      </SidebarProvider>
     </div>
   );
 }

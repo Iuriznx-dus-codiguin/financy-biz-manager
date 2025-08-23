@@ -9,6 +9,7 @@ import { OnboardingProvider } from "@/hooks/useOnboarding";
 import { AppProvider } from "@/contexts/AppContext";
 import { DashboardProvider } from "@/hooks/useDashboard";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { SettingsProvider } from "@/hooks/useSettings";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -17,24 +18,26 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <TooltipProvider>
-        <AuthProvider>
-          <OnboardingProvider>
-            <DashboardProvider>
-              <AppProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </BrowserRouter>
-              </AppProvider>
-            </DashboardProvider>
-          </OnboardingProvider>
-        </AuthProvider>
-      </TooltipProvider>
+      <SettingsProvider>
+        <TooltipProvider>
+          <AuthProvider>
+            <OnboardingProvider>
+              <DashboardProvider>
+                <AppProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </BrowserRouter>
+                </AppProvider>
+              </DashboardProvider>
+            </OnboardingProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </SettingsProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

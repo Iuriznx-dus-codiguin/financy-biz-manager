@@ -175,7 +175,6 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         // Aguardar um pouco para a animação terminar
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        console.log('Carregamento concluído, redirecionando...');
         onComplete();
 
       } catch (error) {
