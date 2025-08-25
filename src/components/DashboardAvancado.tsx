@@ -314,7 +314,21 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
             }`}>
               {change === 0 ? '0' : `${Math.abs(change).toFixed(1)}`}%
             </span>
-            <span className="text-xs text-muted-foreground">vs período anterior</span>
+            <span className="text-xs text-muted-foreground">
+              vs {
+                timeFilter === 'hoje' ? 'ontem' :
+                timeFilter === 'ontem' ? 'anteontem' :
+                timeFilter === 'esta-semana' ? 'semana anterior' :
+                timeFilter === 'semana-passada' ? 'duas semanas atrás' :
+                timeFilter === 'este-mes' ? 'mês anterior' :
+                timeFilter === 'mes-passado' ? 'dois meses atrás' :
+                timeFilter === 'ultimos-30-dias' ? '30 dias anteriores' :
+                timeFilter === 'ultimos-90-dias' ? '90 dias anteriores' :
+                timeFilter === 'este-ano' ? 'ano anterior' :
+                timeFilter === 'ano-passado' ? 'dois anos atrás' :
+                'período anterior'
+              }
+            </span>
           </div>
         )}
       </CardHeader>

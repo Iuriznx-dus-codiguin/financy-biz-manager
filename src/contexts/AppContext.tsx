@@ -69,6 +69,16 @@ export interface Configuracoes {
   idioma: 'pt-BR' | 'en-US' | 'es-ES';
 }
 
+interface DashboardCache {
+  [dashboardId: string]: {
+    receitas: Receita[];
+    despesas: Despesa[];
+    impostos: Imposto[];
+    metas: Meta[];
+    timestamp: number;
+  };
+}
+
 interface AppContextType {
   receitas: Receita[];
   despesas: Despesa[];
@@ -94,6 +104,7 @@ interface AppContextType {
   deleteMembroEquipe: (id: number) => Promise<void>;
   updateImposto: (id: number, imposto: Partial<Imposto>) => Promise<void>;
   updateConfiguracoes: (novasConfiguracoes: Partial<Configuracoes>) => void;
+  clearCacheForDashboard: (dashboardId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -109,18 +120,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     moeda: 'BRL',
     idioma: 'pt-BR'
   });
+  const [dashboardCache, setDashboardCache] = useState<DashboardCache>({});
 
   const { user } = useAuth();
   const { currentDashboard } = useDashboard();
 
+  // Cache timeout de 5 minutos
+  const CACHE_TIMEOUT = 5 * 60 * 1000;
+
   useEffect(() => {
-    // Não recarregar dados se já foram carregados pela tela de loading
-    if (user && currentDashboard && receitas.length === 0 && despesas.length === 0 && impostos.length === 0 && metas.length === 0) {
+    if (user && currentDashboard) {
       carregarDados();
     }
-  }, [user, currentDashboard, receitas.length, despesas.length, impostos.length, metas.length]);
+  }, [user, currentDashboard]);
 
   const carregarDados = async () => {
+    if (!currentDashboard) return;
+
+    // Verificar se existe cache válido
+    const cached = dashboardCache[currentDashboard.id];
+    if (cached && (Date.now() - cached.timestamp) < CACHE_TIMEOUT) {
+      setReceitas(cached.receitas);
+      setDespesas(cached.despesas);
+      setImpostos(cached.impostos);
+      setMetas(cached.metas);
+      return;
+    }
+
     try {
       // Carregar receitas
       const { data: receitasData } = await supabase
@@ -129,19 +155,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .eq('dashboard_id', currentDashboard?.id)
         .order('data', { ascending: false });
 
-      if (receitasData) {
-        const receitasFormatadas = receitasData.map(r => ({
-          id: r.id,
-          data: r.data,
-          descricao: r.descricao,
-          categoria: r.categoria,
-          valor: r.valor,
-          cliente: r.cliente,
-          formaPagamento: r.forma_pagamento,
-          dashboard_id: r.dashboard_id
-        }));
-        setReceitas(receitasFormatadas);
-      }
+      const receitasFormatadas = receitasData?.map(r => ({
+        id: r.id,
+        data: r.data,
+        descricao: r.descricao,
+        categoria: r.categoria,
+        valor: r.valor,
+        cliente: r.cliente,
+        formaPagamento: r.forma_pagamento,
+        dashboard_id: r.dashboard_id
+      })) || [];
 
       // Carregar despesas
       const { data: despesasData } = await supabase
@@ -150,19 +173,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .eq('dashboard_id', currentDashboard?.id)
         .order('data', { ascending: false });
 
-      if (despesasData) {
-        const despesasFormatadas = despesasData.map(d => ({
-          id: d.id,
-          data: d.data,
-          descricao: d.descricao,
-          categoria: d.categoria,
-          valor: d.valor,
-          fornecedor: d.fornecedor,
-          formaPagamento: d.forma_pagamento,
-          dashboard_id: d.dashboard_id
-        }));
-        setDespesas(despesasFormatadas);
-      }
+      const despesasFormatadas = despesasData?.map(d => ({
+        id: d.id,
+        data: d.data,
+        descricao: d.descricao,
+        categoria: d.categoria,
+        valor: d.valor,
+        fornecedor: d.fornecedor,
+        formaPagamento: d.forma_pagamento,
+        dashboard_id: d.dashboard_id
+      })) || [];
 
       // Carregar impostos
       const { data: impostosData } = await supabase
@@ -171,20 +191,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .eq('dashboard_id', currentDashboard?.id)
         .order('vencimento', { ascending: false });
 
-      if (impostosData) {
-        const impostosFormatados = impostosData.map(i => ({
-          id: i.id,
-          descricao: i.descricao,
-          tipo: i.tipo,
-          valor: i.valor,
-          valorTipo: 'fixo' as const,
-          vencimento: i.vencimento,
-          pago: i.pago || false,
-          tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente',
-          dashboard_id: i.dashboard_id
-        }));
-        setImpostos(impostosFormatados);
-      }
+      const impostosFormatados = impostosData?.map(i => ({
+        id: i.id,
+        descricao: i.descricao,
+        tipo: i.tipo,
+        valor: i.valor,
+        valorTipo: 'fixo' as const,
+        vencimento: i.vencimento,
+        pago: i.pago || false,
+        tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente',
+        dashboard_id: i.dashboard_id
+      })) || [];
 
       // Carregar metas
       const { data: metasData } = await supabase
@@ -193,21 +210,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .eq('dashboard_id', currentDashboard?.id)
         .order('created_at', { ascending: false });
 
-      if (metasData) {
-        const metasFormatadas = metasData.map(m => ({
-          id: m.id,
-          titulo: m.titulo,
-          valorMeta: m.valor_meta,
-          valorAtual: m.valor_atual,
-          progresso: m.progresso,
-          prazo: m.prazo,
-          categoria: m.categoria,
-          status: m.status as 'em_andamento' | 'concluida' | 'atrasada',
-          cor: m.cor,
-          dashboard_id: m.dashboard_id
-        }));
-        setMetas(metasFormatadas);
-      }
+      const metasFormatadas = metasData?.map(m => ({
+        id: m.id,
+        titulo: m.titulo,
+        valorMeta: m.valor_meta,
+        valorAtual: m.valor_atual,
+        progresso: m.progresso,
+        prazo: m.prazo,
+        categoria: m.categoria,
+        status: m.status as 'em_andamento' | 'concluida' | 'atrasada',
+        cor: m.cor,
+        dashboard_id: m.dashboard_id
+      })) || [];
+
+      // Atualizar estados
+      setReceitas(receitasFormatadas);
+      setDespesas(despesasFormatadas);
+      setImpostos(impostosFormatados);
+      setMetas(metasFormatadas);
+
+      // Atualizar cache
+      setDashboardCache(prev => ({
+        ...prev,
+        [currentDashboard.id]: {
+          receitas: receitasFormatadas,
+          despesas: despesasFormatadas,
+          impostos: impostosFormatados,
+          metas: metasFormatadas,
+          timestamp: Date.now()
+        }
+      }));
+
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     }
@@ -496,6 +529,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setConfiguracoes(prev => ({ ...prev, ...novasConfiguracoes }));
   };
 
+  const clearCacheForDashboard = (dashboardId: string) => {
+    setDashboardCache(prev => {
+      const newCache = { ...prev };
+      delete newCache[dashboardId];
+      return newCache;
+    });
+  };
+
   return (
     <AppContext.Provider value={{
       receitas,
@@ -521,7 +562,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       deleteMeta,
       deleteMembroEquipe,
       updateImposto,
-      updateConfiguracoes
+      updateConfiguracoes,
+      clearCacheForDashboard
     }}>
       {children}
     </AppContext.Provider>
