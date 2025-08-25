@@ -112,65 +112,121 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const proLaboreRecomendado = totalReceitas * 0.28; // 28% da receita como pró-labore
   const capitalGiroRecomendado = totalGastos * 3; // 3 meses de gastos recomendados
 
-  // Calcular crescimento real baseado no período anterior
-  const calcularCrescimento = (dadosAtuais: number, tipoFiltro: string) => {
-    let dataInicial = new Date();
-    let dataFinal = new Date();
+  // Calcular períodos anteriores baseado no filtro atual
+  const getPeriodoAnterior = (filter: string) => {
+    const today = new Date();
+    let startAnterior = new Date();
+    let endAnterior = new Date();
     
-    switch (tipoFiltro) {
-      case 'mes':
-        dataInicial.setMonth(dataInicial.getMonth() - 2);
-        dataFinal.setMonth(dataFinal.getMonth() - 1);
+    switch (filter) {
+      case 'hoje':
+        startAnterior.setDate(today.getDate() - 1);
+        endAnterior.setDate(today.getDate() - 1);
+        endAnterior.setHours(23, 59, 59, 999);
         break;
-      case 'trimestre':
-        dataInicial.setMonth(dataInicial.getMonth() - 6);
-        dataFinal.setMonth(dataFinal.getMonth() - 3);
+      case 'ontem':
+        startAnterior.setDate(today.getDate() - 2);
+        endAnterior.setDate(today.getDate() - 2);
+        endAnterior.setHours(23, 59, 59, 999);
         break;
-      case 'semestre':
-        dataInicial.setMonth(dataInicial.getMonth() - 12);
-        dataFinal.setMonth(dataFinal.getMonth() - 6);
+      case 'esta-semana':
+        startAnterior.setDate(today.getDate() - today.getDay() - 7);
+        endAnterior.setDate(today.getDate() - today.getDay() - 1);
+        endAnterior.setHours(23, 59, 59, 999);
         break;
-      case 'ano':
-        dataInicial.setFullYear(dataInicial.getFullYear() - 2);
-        dataFinal.setFullYear(dataFinal.getFullYear() - 1);
+      case 'semana-passada':
+        startAnterior.setDate(today.getDate() - today.getDay() - 14);
+        endAnterior.setDate(today.getDate() - today.getDay() - 8);
+        endAnterior.setHours(23, 59, 59, 999);
         break;
-      default: // semana
-        dataInicial.setDate(dataInicial.getDate() - 14);
-        dataFinal.setDate(dataFinal.getDate() - 7);
+      case 'este-mes':
+        startAnterior = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        endAnterior = new Date(today.getFullYear(), today.getMonth(), 0);
+        endAnterior.setHours(23, 59, 59, 999);
+        break;
+      case 'mes-passado':
+        startAnterior = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+        endAnterior = new Date(today.getFullYear(), today.getMonth() - 1, 0);
+        endAnterior.setHours(23, 59, 59, 999);
+        break;
+      case 'ultimos-30-dias':
+        startAnterior.setDate(today.getDate() - 60);
+        endAnterior.setDate(today.getDate() - 31);
+        endAnterior.setHours(23, 59, 59, 999);
+        break;
+      case 'ultimos-90-dias':
+        startAnterior.setDate(today.getDate() - 180);
+        endAnterior.setDate(today.getDate() - 91);
+        endAnterior.setHours(23, 59, 59, 999);
+        break;
+      case 'este-ano':
+        startAnterior = new Date(today.getFullYear() - 1, 0, 1);
+        endAnterior = new Date(today.getFullYear() - 1, 11, 31);
+        endAnterior.setHours(23, 59, 59, 999);
+        break;
+      case 'ano-passado':
+        startAnterior = new Date(today.getFullYear() - 2, 0, 1);
+        endAnterior = new Date(today.getFullYear() - 2, 11, 31);
+        endAnterior.setHours(23, 59, 59, 999);
+        break;
+      default:
+        startAnterior.setDate(today.getDate() - 1);
+        endAnterior.setDate(today.getDate() - 1);
+        endAnterior.setHours(23, 59, 59, 999);
     }
-
-    return { dataInicial, dataFinal };
+    
+    return { startAnterior, endAnterior };
   };
 
-  const { dataInicial, dataFinal } = calcularCrescimento(0, timeFilter);
+  const { startAnterior, endAnterior } = getPeriodoAnterior(timeFilter);
   
-  // Receitas do período anterior
+  // Calcular dados do período anterior
   const receitasPeriodoAnterior = receitas.filter(r => {
     const data = new Date(r.data);
-    return data >= dataInicial && data <= dataFinal;
+    return data >= startAnterior && data <= endAnterior;
   }).reduce((sum, r) => sum + r.valor, 0);
 
-  // Despesas do período anterior
   const despesasPeriodoAnterior = despesas.filter(d => {
     const data = new Date(d.data);
-    return data >= dataInicial && data <= dataFinal;
+    return data >= startAnterior && data <= endAnterior;
   }).reduce((sum, d) => sum + d.valor, 0);
 
   const impostosPeriodoAnterior = impostos.filter(i => {
     const data = new Date(i.vencimento);
-    return data >= dataInicial && data <= dataFinal;
-  }).reduce((sum, i) => sum + i.valor, 0);
+    return data >= startAnterior && data <= endAnterior;
+  });
 
-  const totalDespesasPeriodoAnterior = despesasPeriodoAnterior + impostosPeriodoAnterior;
+  const totalImpostosPeriodoAnterior = impostosPeriodoAnterior.filter(i => i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
+  const totalTaxasPeriodoAnterior = impostosPeriodoAnterior.filter(i => i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
+  const lucroPeriodoAnterior = receitasPeriodoAnterior - despesasPeriodoAnterior - totalImpostosPeriodoAnterior - totalTaxasPeriodoAnterior;
+  const roiPeriodoAnterior = (despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior) > 0 
+    ? ((receitasPeriodoAnterior - (despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior)) / (despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior)) 
+    : 0;
 
   // Calcular crescimento percentual
   const crescimentoReceitas = receitasPeriodoAnterior > 0 
     ? ((totalReceitas - receitasPeriodoAnterior) / receitasPeriodoAnterior) * 100 
     : totalReceitas > 0 ? 100 : 0;
 
-  const crescimentoDespesas = totalDespesasPeriodoAnterior > 0 
-    ? ((totalTodasDespesas - totalDespesasPeriodoAnterior) / totalDespesasPeriodoAnterior) * 100 
-    : totalTodasDespesas > 0 ? 100 : 0;
+  const crescimentoDespesas = despesasPeriodoAnterior > 0 
+    ? ((totalDespesas - despesasPeriodoAnterior) / despesasPeriodoAnterior) * 100 
+    : totalDespesas > 0 ? 100 : 0;
+
+  const crescimentoImpostos = totalImpostosPeriodoAnterior > 0 
+    ? ((totalImpostos - totalImpostosPeriodoAnterior) / totalImpostosPeriodoAnterior) * 100 
+    : totalImpostos > 0 ? 100 : 0;
+
+  const crescimentoTaxas = totalTaxasPeriodoAnterior > 0 
+    ? ((totalTaxas - totalTaxasPeriodoAnterior) / totalTaxasPeriodoAnterior) * 100 
+    : totalTaxas > 0 ? 100 : 0;
+
+  const crescimentoLucro = lucroPeriodoAnterior !== 0 
+    ? ((lucroLiquido - lucroPeriodoAnterior) / Math.abs(lucroPeriodoAnterior)) * 100 
+    : lucroLiquido > 0 ? 100 : lucroLiquido < 0 ? -100 : 0;
+
+  const crescimentoROI = roiPeriodoAnterior !== 0 
+    ? ((roi - roiPeriodoAnterior) / Math.abs(roiPeriodoAnterior)) * 100 
+    : roi > 0 ? 100 : roi < 0 ? -100 : 0;
 
   // Dados para gráficos avançados
   const gerarDadosEvolutivos = () => {
@@ -240,17 +296,25 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
             <Icon className="h-5 w-5 text-primary" />
           </div>
         </div>
-        {change && (
+        {change !== undefined && (
           <div className="flex items-center gap-1 mt-2">
-            {changeType === 'positive' ? (
+            {change === 0 ? (
+              <Minus className="h-4 w-4 text-muted-foreground" />
+            ) : changeType === 'positive' ? (
               <ArrowUpRight className="h-4 w-4 text-green-600" />
-            ) : (
+            ) : changeType === 'negative' ? (
               <ArrowDownRight className="h-4 w-4 text-red-600" />
+            ) : (
+              <ArrowUpRight className="h-4 w-4 text-red-600" />
             )}
-            <span className={`text-sm font-medium ${changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
-              {change}%
+            <span className={`text-sm font-medium ${
+              change === 0 ? 'text-muted-foreground' : 
+              changeType === 'positive' ? 'text-green-600' : 
+              changeType === 'negative' ? 'text-red-600' : 'text-red-600'
+            }`}>
+              {change === 0 ? '0' : `${Math.abs(change).toFixed(1)}`}%
             </span>
-            <span className="text-xs text-muted-foreground">vs mês anterior</span>
+            <span className="text-xs text-muted-foreground">vs período anterior</span>
           </div>
         )}
       </CardHeader>
@@ -273,81 +337,86 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
          <MetricCard
            title="Total em Despesas"
            value={`R$ ${totalTodasDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-           change={Math.abs(crescimentoDespesas).toFixed(1)}
-           changeType={crescimentoDespesas >= 0 ? 'negative' : 'positive'}
+           change={crescimentoDespesas}
+           changeType={crescimentoDespesas <= 0 ? 'positive' : 'expense_increase'}
            icon={TrendingDown}
            gradient="from-red-500 to-rose-600"
          />
       </div>
 
-      {/* Demais KPIs */}
+       {/* Demais KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <MetricCard
+          title="Lucro Líquido"
+          value={`R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          change={crescimentoLucro}
+          changeType={crescimentoLucro >= 0 ? 'positive' : 'negative'}
+          icon={DollarSign}
+          gradient="from-green-500 to-emerald-600"
+        />
+        <MetricCard
+          title={
+            <div className="flex items-center gap-1">
+              ROI
+              <TooltipInfo content="Retorno sobre Investimento - Mede o retorno obtido em relação ao investimento realizado" />
+            </div>
+          }
+          value={roi.toFixed(2)}
+          change={crescimentoROI}
+          changeType={crescimentoROI >= 0 ? 'positive' : 'negative'}
+          icon={Target}
+          gradient="from-purple-500 to-violet-600"
+        />
+        <MetricCard
+          title="Gastos com Equipe"
+          value={`R$ ${totalGastosEquipe.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          icon={Users}
+          gradient="from-blue-500 to-indigo-600"
+        />
+        <MetricCard
+          title="Gastos com Fornecedores"
+          value={`R$ ${gastosComFornecedores.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          icon={Briefcase}
+          gradient="from-orange-500 to-amber-600"
+        />
         <MetricCard
           title="Total de Impostos"
           value={`R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          change={crescimentoImpostos}
+          changeType={crescimentoImpostos <= 0 ? 'positive' : 'negative'}
           icon={Receipt}
           gradient="from-blue-500 to-indigo-600"
-         />
-         <MetricCard
+        />
+        <MetricCard
           title="Total de Taxas"
           value={`R$ ${totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          change={crescimentoTaxas}
+          changeType={crescimentoTaxas <= 0 ? 'positive' : 'negative'}
           icon={DollarSign}
           gradient="from-orange-500 to-red-600"
-         />
-         <MetricCard
-           title="Gastos com Equipe"
-           value={`R$ ${totalGastosEquipe.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-           icon={Users}
-           gradient="from-blue-500 to-indigo-600"
-         />
-         <MetricCard
-           title="Gastos com Fornecedores"
-           value={`R$ ${gastosComFornecedores.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-           icon={Briefcase}
-           gradient="from-orange-500 to-amber-600"
-         />
-         <MetricCard
-           title="Lucro Líquido"
-           value={`R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-           change={margemLucro.toFixed(1)}
-           changeType={lucroLiquido >= 0 ? 'positive' : 'negative'}
-           icon={DollarSign}
-           gradient="from-green-500 to-emerald-600"
-         />
-         <MetricCard
-           title={
-             <div className="flex items-center gap-1">
-               ROI
-               <TooltipInfo content="Retorno sobre Investimento - Mede o retorno obtido em relação ao investimento realizado" />
-             </div>
-           }
-           value={roi.toFixed(2)}
-           changeType={roi >= 0 ? 'positive' : 'negative'}
-           icon={Target}
-           gradient="from-purple-500 to-violet-600"
-         />
-         <MetricCard
-           title={
-             <div className="flex items-center gap-1">
-               Pró-labore Recomendado
-               <TooltipInfo content="Remuneração recomendada para o sócio (28% da receita)" />
-             </div>
-           }
-           value={`R$ ${proLaboreRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-           icon={Crown}
-           gradient="from-yellow-500 to-orange-600"
-         />
-         <MetricCard
-           title={
-             <div className="flex items-center gap-1">
-               Capital de Giro Recomendado
-               <TooltipInfo content="Capital recomendado para manter as operações por 3 meses" />
-             </div>
-           }
-           value={`R$ ${capitalGiroRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-           icon={Zap}
-           gradient="from-teal-500 to-cyan-600"
-         />
+        />
+        <MetricCard
+          title={
+            <div className="flex items-center gap-1">
+              Pró-labore Recomendado
+              <TooltipInfo content="Remuneração recomendada para o sócio (28% da receita)" />
+            </div>
+          }
+          value={`R$ ${proLaboreRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          icon={Crown}
+          gradient="from-yellow-500 to-orange-600"
+        />
+        <MetricCard
+          title={
+            <div className="flex items-center gap-1">
+              Capital de Giro Recomendado
+              <TooltipInfo content="Capital recomendado para manter as operações por 3 meses" />
+            </div>
+          }
+          value={`R$ ${capitalGiroRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          icon={Zap}
+          gradient="from-teal-500 to-cyan-600"
+        />
       </div>
 
       {/* Gráficos Avançados */}
