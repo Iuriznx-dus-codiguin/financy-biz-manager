@@ -110,134 +110,104 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     idioma: 'pt-BR'
   });
 
-  // Cache de dados por dashboard
-  const [dashboardCache, setDashboardCache] = useState<Record<string, {
-    receitas: Receita[];
-    despesas: Despesa[];
-    impostos: Imposto[];
-    metas: Meta[];
-    lastUpdated: number;
-  }>>({});
-
   const { user } = useAuth();
   const { currentDashboard } = useDashboard();
 
   useEffect(() => {
-    if (user && currentDashboard) {
-      const cacheKey = currentDashboard.id;
-      const cached = dashboardCache[cacheKey];
-      const now = Date.now();
-      
-      // Se já tem dados em cache e não passaram 5 minutos, usar cache
-      if (cached && (now - cached.lastUpdated < 5 * 60 * 1000)) {
-        setReceitas(cached.receitas);
-        setDespesas(cached.despesas);
-        setImpostos(cached.impostos);
-        setMetas(cached.metas);
-      } else {
-        // Carregar dados do servidor
-        carregarDados();
-      }
+    // Não recarregar dados se já foram carregados pela tela de loading
+    if (user && currentDashboard && receitas.length === 0 && despesas.length === 0 && impostos.length === 0 && metas.length === 0) {
+      carregarDados();
     }
-  }, [user, currentDashboard]);
+  }, [user, currentDashboard, receitas.length, despesas.length, impostos.length, metas.length]);
 
   const carregarDados = async () => {
-    if (!currentDashboard) return;
-    
     try {
       // Carregar receitas
       const { data: receitasData } = await supabase
         .from('receitas')
         .select('*')
-        .eq('dashboard_id', currentDashboard.id)
+        .eq('dashboard_id', currentDashboard?.id)
         .order('data', { ascending: false });
 
-      const receitasFormatadas = receitasData?.map(r => ({
-        id: r.id,
-        data: r.data,
-        descricao: r.descricao,
-        categoria: r.categoria,
-        valor: r.valor,
-        cliente: r.cliente,
-        formaPagamento: r.forma_pagamento,
-        dashboard_id: r.dashboard_id
-      })) || [];
+      if (receitasData) {
+        const receitasFormatadas = receitasData.map(r => ({
+          id: r.id,
+          data: r.data,
+          descricao: r.descricao,
+          categoria: r.categoria,
+          valor: r.valor,
+          cliente: r.cliente,
+          formaPagamento: r.forma_pagamento,
+          dashboard_id: r.dashboard_id
+        }));
+        setReceitas(receitasFormatadas);
+      }
 
       // Carregar despesas
       const { data: despesasData } = await supabase
         .from('despesas')
         .select('*')
-        .eq('dashboard_id', currentDashboard.id)
+        .eq('dashboard_id', currentDashboard?.id)
         .order('data', { ascending: false });
 
-      const despesasFormatadas = despesasData?.map(d => ({
-        id: d.id,
-        data: d.data,
-        descricao: d.descricao,
-        categoria: d.categoria,
-        valor: d.valor,
-        fornecedor: d.fornecedor,
-        formaPagamento: d.forma_pagamento,
-        dashboard_id: d.dashboard_id
-      })) || [];
+      if (despesasData) {
+        const despesasFormatadas = despesasData.map(d => ({
+          id: d.id,
+          data: d.data,
+          descricao: d.descricao,
+          categoria: d.categoria,
+          valor: d.valor,
+          fornecedor: d.fornecedor,
+          formaPagamento: d.forma_pagamento,
+          dashboard_id: d.dashboard_id
+        }));
+        setDespesas(despesasFormatadas);
+      }
 
       // Carregar impostos
       const { data: impostosData } = await supabase
         .from('impostos')
         .select('*')
-        .eq('dashboard_id', currentDashboard.id)
+        .eq('dashboard_id', currentDashboard?.id)
         .order('vencimento', { ascending: false });
 
-      const impostosFormatados = impostosData?.map(i => ({
-        id: i.id,
-        descricao: i.descricao,
-        tipo: i.tipo,
-        valor: i.valor,
-        valorTipo: 'fixo' as const,
-        vencimento: i.vencimento,
-        pago: i.pago || false,
-        tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente',
-        dashboard_id: i.dashboard_id
-      })) || [];
+      if (impostosData) {
+        const impostosFormatados = impostosData.map(i => ({
+          id: i.id,
+          descricao: i.descricao,
+          tipo: i.tipo,
+          valor: i.valor,
+          valorTipo: 'fixo' as const,
+          vencimento: i.vencimento,
+          pago: i.pago || false,
+          tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente',
+          dashboard_id: i.dashboard_id
+        }));
+        setImpostos(impostosFormatados);
+      }
 
       // Carregar metas
       const { data: metasData } = await supabase
         .from('metas')
         .select('*')
-        .eq('dashboard_id', currentDashboard.id)
+        .eq('dashboard_id', currentDashboard?.id)
         .order('created_at', { ascending: false });
 
-      const metasFormatadas = metasData?.map(m => ({
-        id: m.id,
-        titulo: m.titulo,
-        valorMeta: m.valor_meta,
-        valorAtual: m.valor_atual,
-        progresso: m.progresso,
-        prazo: m.prazo,
-        categoria: m.categoria,
-        status: m.status as 'em_andamento' | 'concluida' | 'atrasada',
-        cor: m.cor,
-        dashboard_id: m.dashboard_id
-      })) || [];
-
-      // Atualizar estado
-      setReceitas(receitasFormatadas);
-      setDespesas(despesasFormatadas);
-      setImpostos(impostosFormatados);
-      setMetas(metasFormatadas);
-
-      // Salvar no cache
-      setDashboardCache(prev => ({
-        ...prev,
-        [currentDashboard.id]: {
-          receitas: receitasFormatadas,
-          despesas: despesasFormatadas,
-          impostos: impostosFormatados,
-          metas: metasFormatadas,
-          lastUpdated: Date.now()
-        }
-      }));
-      
+      if (metasData) {
+        const metasFormatadas = metasData.map(m => ({
+          id: m.id,
+          titulo: m.titulo,
+          valorMeta: m.valor_meta,
+          valorAtual: m.valor_atual,
+          progresso: m.progresso,
+          prazo: m.prazo,
+          categoria: m.categoria,
+          status: m.status as 'em_andamento' | 'concluida' | 'atrasada',
+          cor: m.cor,
+          dashboard_id: m.dashboard_id
+        }));
+        setMetas(metasFormatadas);
+      }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     }
@@ -277,18 +247,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         formaPagamento: data.forma_pagamento,
         dashboard_id: data.dashboard_id
       };
-      setReceitas(prev => {
-        const updated = [novaReceita, ...prev];
-        // Invalidar cache ao adicionar nova receita
-        if (currentDashboard) {
-          setDashboardCache(cache => {
-            const newCache = { ...cache };
-            delete newCache[currentDashboard.id];
-            return newCache;
-          });
-        }
-        return updated;
-      });
+      setReceitas(prev => [novaReceita, ...prev]);
     }
   };
 
@@ -326,18 +285,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         formaPagamento: data.forma_pagamento,
         dashboard_id: data.dashboard_id
       };
-      setDespesas(prev => {
-        const updated = [novaDespesa, ...prev];
-        // Invalidar cache ao adicionar nova despesa
-        if (currentDashboard) {
-          setDashboardCache(cache => {
-            const newCache = { ...cache };
-            delete newCache[currentDashboard.id];
-            return newCache;
-          });
-        }
-        return updated;
-      });
+      setDespesas(prev => [novaDespesa, ...prev]);
     }
   };
 
