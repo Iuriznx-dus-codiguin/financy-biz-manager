@@ -19,10 +19,12 @@ import {
   Target,
   Bot,
   Pin,
-  PinOff
+  PinOff,
+  Plus
 } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/hooks/useTheme';
+import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -65,6 +67,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   const { currentDashboard } = useDashboard();
   const [isPinned, setIsPinned] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   
   const isCollapsed = state === 'collapsed';
   const shouldExpand = isCollapsed && isHovered && !isPinned;
@@ -170,6 +173,24 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Dashboard Actions */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Dashboards</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setShowCreateDialog(true)}
+                  tooltip={isCollapsed && !shouldExpand ? "Criar Dashboard" : undefined}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Criar</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter>
@@ -186,6 +207,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
           )}
         </Button>
       </SidebarFooter>
+
+      <DashboardCreateDialog 
+        open={showCreateDialog} 
+        onOpenChange={setShowCreateDialog} 
+      />
     </Sidebar>
   );
 };
