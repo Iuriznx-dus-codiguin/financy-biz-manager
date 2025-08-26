@@ -18,6 +18,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useSettings, useCurrency } from '@/hooks/useSettings';
+import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +40,7 @@ import {
 
 const Configuracoes = () => {
   const { settings, updateSettings, loading } = useSettings();
+  const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { subscriptionData, subscriptionTier, loading: subscriptionLoading } = useSubscription();
   const { formatCurrency } = useCurrency();
@@ -192,10 +194,11 @@ const Configuracoes = () => {
           <div className="space-y-2">
             <Label htmlFor="tema">Tema</Label>
             <Select
-              value={settings.tema}
-              onValueChange={(value: 'light' | 'dark' | 'system') => 
-                updateSettings({ tema: value })
-              }
+              value={theme}
+              onValueChange={(value: 'light' | 'dark' | 'system') => {
+                setTheme(value);
+                updateSettings({ tema: value });
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o tema" />
@@ -280,31 +283,17 @@ const Configuracoes = () => {
             )}
           </div>
 
-          {(dashboards.length < limits.maxDashboards || limits.maxDashboards === -1) && (
-            <div className="space-y-2">
-              <Label>Criar Novo Dashboard</Label>
-              <Button 
-                onClick={() => setIsCreateDashboardOpen(true)}
-                disabled={isCreatingDashboard}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Dashboard Completo
-              </Button>
-            </div>
-          )}
-
-          {(limits.maxDashboards !== -1 && dashboards.length >= limits.maxDashboards) && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-md dark:bg-amber-950/50 dark:border-amber-900">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                <Crown className="h-4 w-4" />
-                <p className="text-sm">
-                  Você atingiu o limite de dashboards para seu plano atual. 
-                  Faça upgrade para criar mais dashboards.
-                </p>
-              </div>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label>Criar Novo Dashboard</Label>
+            <Button 
+              onClick={() => setIsCreateDashboardOpen(true)}
+              disabled={isCreatingDashboard}
+              className="w-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Criar Dashboard Completo
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

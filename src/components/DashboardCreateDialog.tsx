@@ -14,17 +14,19 @@ import { useAuth } from '@/hooks/useAuth';
 interface DashboardCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  dashboardType?: 'personal' | 'business' | null;
 }
 
-export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ open, onOpenChange }) => {
+export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ open, onOpenChange, dashboardType = null }) => {
   const { dashboards, createDashboard } = useDashboard();
-  const { getLimits } = useFeatureAccess();
+  const { getLimits, subscriptionTier } = useFeatureAccess();
   const { user } = useAuth();
   const { toast } = useToast();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const limits = getLimits();
-  const dashboardsRestantes = limits.maxDashboards - dashboards.length;
+  const dashboardsRestantes = limits.maxDashboards === -1 ? 999 : limits.maxDashboards - dashboards.length;
+  const isAtLimit = limits.maxDashboards !== -1 && dashboards.length >= limits.maxDashboards;
 
   const handleOnboardingComplete = async (data: OnboardingData) => {
     if (!user) return;
@@ -126,7 +128,7 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
 
   if (showOnboarding) {
     return (
-      <div className="fixed inset-0 z-50 bg-background">
+      <div className="fixed inset-0 z-[9999] bg-background">
         <OnboardingFlow onComplete={handleOnboardingComplete} />
       </div>
     );
@@ -160,41 +162,75 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              size="lg"
-              className="h-20 flex-col gap-2"
-              onClick={() => setShowOnboarding(true)}
-              disabled={dashboardsRestantes <= 0}
-            >
-              <User className="h-6 w-6" />
-              <div className="text-center">
-                <div className="text-sm font-medium">Configuração Completa</div>
-                <div className="text-xs text-muted-foreground">Com onboarding</div>
+          {isAtLimit ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg dark:bg-amber-950/50 dark:border-amber-900">
+                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                  <AlertTriangle className="h-5 w-5" />
+                  <div>
+                    <p className="text-sm font-medium">Limite de dashboards atingido</p>
+                    <p className="text-xs">
+                      Você atingiu o limite de {limits.maxDashboards} dashboard(s) para seu plano {subscriptionTier}. 
+                      Faça upgrade para criar mais dashboards.
+                    </p>
+                  </div>
+                </div>
               </div>
-            </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                size="lg"
+                className="h-20 flex-col gap-2"
+                onClick={() => {
+                  if (subscriptionTier === 'free' && dashboardType === 'business') {
+                    toast({
+                      title: "Recurso não disponível",
+                      description: "Dashboards empresariais não estão disponíveis no plano gratuito. Faça upgrade para acessar este recurso.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  setShowOnboarding(true);
+                }}
+              >
+                <User className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="text-sm font-medium">Configuração Completa</div>
+                  <div className="text-xs text-muted-foreground">Com onboarding</div>
+                </div>
+              </Button>
 
-            <Button
-              size="lg"
-              className="h-20 flex-col gap-2"
-              onClick={() => {
-                createDashboard(`Dashboard ${dashboards.length + 1}`, 'business');
-                onOpenChange(false);
-                toast({
-                  title: "Dashboard criado!",
-                  description: "Dashboard básico criado com sucesso.",
-                });
-              }}
-              disabled={dashboardsRestantes <= 0}
-            >
-              <Building className="h-6 w-6" />
-              <div className="text-center">
-                <div className="text-sm font-medium">Criação Simples</div>
-                <div className="text-xs opacity-90">Dashboard vazio</div>
-              </div>
-            </Button>
-          </div>
+              <Button
+                size="lg"
+                className="h-20 flex-col gap-2"
+                onClick={() => {
+                  const type = dashboardType || 'business';
+                  if (subscriptionTier === 'free' && type === 'business') {
+                    toast({
+                      title: "Recurso não disponível",
+                      description: "Dashboards empresariais não estão disponíveis no plano gratuito. Faça upgrade para acessar este recurso.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  createDashboard(`Dashboard ${dashboards.length + 1}`, type);
+                  onOpenChange(false);
+                  toast({
+                    title: "Dashboard criado!",
+                    description: "Dashboard básico criado com sucesso.",
+                  });
+                }}
+              >
+                <Building className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="text-sm font-medium">Criação Simples</div>
+                  <div className="text-xs opacity-90">Dashboard vazio</div>
+                </div>
+              </Button>
+            </div>
+          )}
 
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => onOpenChange(false)}>

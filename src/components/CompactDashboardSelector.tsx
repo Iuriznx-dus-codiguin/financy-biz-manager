@@ -12,7 +12,7 @@ export const CompactDashboardSelector = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const limits = getLimits();
-  const canCreateDashboard = isFeatureAvailable('multi_dashboard') && dashboards.length < limits.maxDashboards;
+  const { subscriptionTier } = useFeatureAccess();
 
   const personalDashboards = dashboards.filter(d => d.type === 'personal');
   const businessDashboards = dashboards.filter(d => d.type === 'business');
@@ -73,18 +73,16 @@ export const CompactDashboardSelector = () => {
           )}
 
           {/* Create New Dashboard */}
-          {canCreateDashboard && (
-            <>
-              <DropdownMenuSeparator />
-              <button
-                onClick={() => setIsCreateDialogOpen(true)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors text-primary"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Criar Dashboard</span>
-              </button>
-            </>
-          )}
+          <>
+            <DropdownMenuSeparator />
+            <button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors text-primary"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Criar Dashboard</span>
+            </button>
+          </>
         </DropdownMenuContent>
       </DropdownMenu>
 
