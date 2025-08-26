@@ -220,7 +220,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">
           {data.user_type === 'pessoal' 
-            ? 'Qual seu salário?' 
+            ? 'Qual sua faixa salarial?' 
             : 'Qual seu faturamento mensal?'
           }
         </h2>
@@ -236,6 +236,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         <Select 
           value={data.user_type === 'pessoal' ? data.salary_range : data.revenue_range} 
           onValueChange={(value) => {
+            console.log('Selecionado:', value, 'Tipo:', data.user_type);
             if (data.user_type === 'pessoal') {
               setData({ ...data, salary_range: value });
             } else {
@@ -243,17 +244,30 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             }
           }}
         >
-          <SelectTrigger className="w-full h-12">
+          <SelectTrigger className="w-full h-12 bg-background">
             <SelectValue placeholder="Selecione uma faixa" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background border shadow-lg z-50">
             {(data.user_type === 'pessoal' ? salaryRanges : revenueRanges).map((range) => (
-              <SelectItem key={range.value} value={range.value}>
+              <SelectItem key={range.value} value={range.value} className="cursor-pointer hover:bg-muted">
                 {range.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+
+        {/* Debug visual para mostrar seleção atual */}
+        {((data.user_type === 'pessoal' && data.salary_range) || (data.user_type === 'empresarial' && data.revenue_range)) && (
+          <div className="text-center p-3 bg-primary/10 rounded-lg border border-primary/20">
+            <p className="text-sm text-muted-foreground">Selecionado:</p>
+            <p className="font-medium text-primary">
+              {data.user_type === 'pessoal' 
+                ? salaryRanges.find(r => r.value === data.salary_range)?.label
+                : revenueRanges.find(r => r.value === data.revenue_range)?.label
+              }
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -355,22 +369,49 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl rounded-2xl shadow-xl">
         <CardHeader className="text-center space-y-4">
-          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto">
-            <span className="text-primary-foreground font-bold text-2xl">F</span>
+          <div className="flex justify-between items-start w-full">
+            <div className="flex-1" />
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-2xl">F</span>
+              </div>
+              
+              <div className="flex items-center justify-center space-x-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
+                  <div
+                    key={step}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      step <= currentStep ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              <p className="text-sm text-muted-foreground">{currentStep} / 8</p>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={async () => {
+                  // Completar onboarding com dados mínimos
+                  const minimalData: OnboardingData = {
+                    user_type: 'pessoal',
+                    how_did_you_know: 'other',
+                    salary_range: '0-2000',
+                    revenue_range: '',
+                    nome_preferido: 'Usuário',
+                    termos_aceitos: true,
+                    gastos_iniciais: []
+                  };
+                  await onComplete(minimalData);
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Pular
+              </Button>
+            </div>
           </div>
-          
-          <div className="flex items-center justify-center space-x-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
-              <div
-                key={step}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  step <= currentStep ? 'bg-primary' : 'bg-muted'
-                }`}
-              />
-            ))}
-          </div>
-          
-          <p className="text-sm text-muted-foreground">{currentStep} / 8</p>
         </CardHeader>
 
         <CardContent className="space-y-8">
