@@ -77,14 +77,14 @@ export const useFeatureAccess = () => {
 
   // Limites específicos para plano gratuito
   const getLimits = () => {
-    // Desenvolvedor tem acesso ilimitado a tudo
+    // Desenvolvedor tem acesso ilimitado a tudo, exceto dashboards (limite de 10)
     if (subscriptionTier === 'developer') {
       return {
         maxReceitas: -1,
         maxDespesas: -1,
         maxImpostos: -1,
         maxMetas: -1,
-        maxDashboards: -1
+        maxDashboards: 10
       };
     }
 
