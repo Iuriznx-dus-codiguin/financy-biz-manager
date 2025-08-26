@@ -12,7 +12,7 @@ interface ExpenseSheetStepProps {
   setData: (data: OnboardingData) => void;
 }
 
-const categoriasPadrao = [
+const categoriasPessoais = [
   'Moradia',
   'Alimentação', 
   'Transporte',
@@ -21,6 +21,45 @@ const categoriasPadrao = [
   'Lazer',
   'Outros'
 ];
+
+const categoriasEmpresariais = [
+  'Folha de Pagamento',
+  'Fornecedores',
+  'Aluguel e Estrutura',
+  'Marketing e Vendas',
+  'Tecnologia e Softwares',
+  'Manutenção e Serviços',
+  'Impostos e Taxas',
+  'Transporte e Logística',
+  'Treinamentos e RH',
+  'Outros'
+];
+
+const descricoesEmpresariais = {
+  'Folha de Pagamento': 'Salários, pró-labore, encargos trabalhistas',
+  'Fornecedores': 'Compra de mercadorias, insumos, matéria-prima',
+  'Aluguel e Estrutura': 'Aluguel, condomínio, energia, água, internet',
+  'Marketing e Vendas': 'Anúncios pagos, softwares de CRM, comissões',
+  'Tecnologia e Softwares': 'Hospedagem, SaaS, licenças, ferramentas digitais',
+  'Manutenção e Serviços': 'Limpeza, manutenção de equipamentos, segurança',
+  'Impostos e Taxas': 'ISS, ICMS, IRPJ, taxas bancárias, MEI/Simples',
+  'Transporte e Logística': 'Combustível, fretes, motoboy, transporte de mercadorias',
+  'Treinamentos e RH': 'Cursos, capacitação de funcionários, benefícios',
+  'Outros': 'Despesas diversas e não recorrentes'
+};
+
+const formasPagamentoPadrao = {
+  'Folha de Pagamento': 'Transferência',
+  'Fornecedores': 'Boleto',
+  'Aluguel e Estrutura': 'Boleto',
+  'Marketing e Vendas': 'Cartão de Crédito',
+  'Tecnologia e Softwares': 'Cartão de Crédito',
+  'Manutenção e Serviços': 'PIX',
+  'Impostos e Taxas': 'Boleto',
+  'Transporte e Logística': 'Cartão de Débito',
+  'Treinamentos e RH': 'Cartão de Crédito',
+  'Outros': 'PIX'
+};
 
 const formasPagamento = [
   'Dinheiro',
@@ -36,6 +75,8 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const gastos = data.gastos_iniciais || [];
+  const isEmpresarial = data.user_type === 'empresarial';
+  const categorias = isEmpresarial ? categoriasEmpresariais : categoriasPessoais;
 
   const adicionarGasto = () => {
     const novoGasto: GastoInicial = {
@@ -43,7 +84,7 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
       categoria: 'Outros',
       descricao: '',
       valor_mensal: 0,
-      forma_pagamento: 'Dinheiro'
+      forma_pagamento: isEmpresarial ? 'PIX' : 'Dinheiro'
     };
 
     setData({
@@ -70,12 +111,16 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
   };
 
   const gerarGastosPadrao = () => {
-    const gastosPadrao: GastoInicial[] = categoriasPadrao.map((categoria, index) => ({
+    const gastosPadrao: GastoInicial[] = categorias.map((categoria, index) => ({
       id: `default-${index}`,
       categoria,
-      descricao: `Gastos com ${categoria.toLowerCase()}`,
+      descricao: isEmpresarial 
+        ? descricoesEmpresariais[categoria as keyof typeof descricoesEmpresariais] 
+        : `Gastos com ${categoria.toLowerCase()}`,
       valor_mensal: 0,
-      forma_pagamento: 'Cartão de Débito'
+      forma_pagamento: isEmpresarial 
+        ? formasPagamentoPadrao[categoria as keyof typeof formasPagamentoPadrao] 
+        : 'Cartão de Débito'
     }));
 
     setData({
@@ -155,9 +200,14 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Planilha Inicial de Gastos</h2>
+        <h2 className="text-2xl font-bold">
+          {isEmpresarial ? 'Planilha de Custos Operacionais' : 'Planilha Inicial de Gastos'}
+        </h2>
         <p className="text-muted-foreground">
-          Registre seus gastos cotidianos para personalizar seu dashboard e relatórios.
+          {isEmpresarial 
+            ? 'Configure os custos operacionais da sua empresa para personalizar dashboards e relatórios.'
+            : 'Registre seus gastos cotidianos para personalizar seu dashboard e relatórios.'
+          }
         </p>
       </div>
 
@@ -169,7 +219,7 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
         
         <Button onClick={adicionarGasto} size="sm">
           <Plus className="w-4 h-4 mr-2" />
-          Adicionar Gasto
+          {isEmpresarial ? 'Adicionar Custo' : 'Adicionar Gasto'}
         </Button>
 
         <div className="relative">
@@ -215,7 +265,7 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {categoriasPadrao.map(cat => (
+                        {categorias.map(cat => (
                           <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                         ))}
                       </SelectContent>
@@ -225,7 +275,7 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
                     <Input
                       value={gasto.descricao}
                       onChange={(e) => atualizarGasto(gasto.id, 'descricao', e.target.value)}
-                      placeholder="Ex: Supermercado, combustível..."
+                      placeholder={isEmpresarial ? "Ex: Salário funcionários, fornecedor ABC..." : "Ex: Supermercado, combustível..."}
                       className="h-8"
                     />
                   </TableCell>
@@ -279,7 +329,9 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
 
       {gastos.length === 0 && (
         <div className="text-center py-8 space-y-4">
-          <p className="text-muted-foreground">Nenhum gasto adicionado ainda.</p>
+          <p className="text-muted-foreground">
+            {isEmpresarial ? 'Nenhum custo operacional adicionado ainda.' : 'Nenhum gasto adicionado ainda.'}
+          </p>
           <Button onClick={gerarGastosPadrao} className="mx-auto">
             <Plus className="w-4 h-4 mr-2" />
             Começar com categorias padrão
