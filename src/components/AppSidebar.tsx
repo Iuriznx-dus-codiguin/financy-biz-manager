@@ -110,6 +110,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
       collapsible="icon"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      className="lg:flex hidden"
     >
       <SidebarHeader>
         <div className="flex items-center justify-between p-4">

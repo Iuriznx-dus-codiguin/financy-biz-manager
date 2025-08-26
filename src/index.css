@@ -156,3 +156,32 @@
 .dark .bg-green-900\/20 {
   background-color: rgb(20 83 45 / 0.2);
 }
+
+/* Mobile responsive utilities */
+@media (max-width: 1024px) {
+  .sidebar-desktop {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sidebar-mobile {
+    display: none !important;
+  }
+}
+
+/* Ensure cards and components are mobile-friendly */
+@media (max-width: 768px) {
+  .grid-cols-2 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  
+  .text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+  
+  .space-y-6 > * + * {
+    margin-top: 1rem;
+  }
+}

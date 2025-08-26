@@ -18,8 +18,10 @@ import { GlobalSubscriptionAlert } from '@/components/GlobalSubscriptionAlert';
 import { FreeTrialNotification } from '@/components/FreeTrialNotification';
 import { useSubscriptionRedirect } from '@/hooks/useSubscriptionRedirect';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
+import { OnboardingData } from '@/types/onboarding';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { AppSidebar } from '@/components/AppSidebar';
+import { MobileSidebar } from '@/components/MobileSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
@@ -112,9 +114,10 @@ export default function Index() {
         <div className="flex h-full w-full">
           <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
           <div className="flex-1 flex flex-col overflow-hidden">
+            <MobileSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
             <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
             <FreeTrialNotification setActiveSection={setActiveSection} />
-            <main className="flex-1 overflow-y-auto p-8 space-y-6">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
               {renderActiveSection()}
             </main>
             <Footer />

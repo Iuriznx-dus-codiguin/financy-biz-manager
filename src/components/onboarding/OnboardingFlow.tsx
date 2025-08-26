@@ -375,14 +375,14 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-2 sm:p-4">
       <Card className="w-full max-w-4xl rounded-2xl shadow-xl">
-        <CardHeader className="text-center space-y-4">
+        <CardHeader className="text-center space-y-4 px-4 sm:px-6">
           <div className="flex justify-between items-start w-full">
             <div className="flex-1" />
             <div className="flex flex-col items-center space-y-4">
-              <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-2xl">F</span>
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-2xl flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-xl sm:text-2xl">F</span>
               </div>
               
               <div className="flex items-center justify-center space-x-2">
@@ -423,7 +423,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-8">
+        <CardContent className="space-y-4 sm:space-y-8 px-4 sm:px-6">
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
