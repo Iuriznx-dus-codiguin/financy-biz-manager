@@ -128,8 +128,10 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
 
   if (showOnboarding) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-background">
-        <OnboardingFlow onComplete={handleOnboardingComplete} />
+      <div className="fixed inset-0 z-[99999] bg-background/95 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-background">
+          <OnboardingFlow onComplete={handleOnboardingComplete} />
+        </div>
       </div>
     );
   }
