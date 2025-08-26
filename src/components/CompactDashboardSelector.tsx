@@ -72,7 +72,7 @@ export const CompactDashboardSelector = () => {
             </div>
           )}
 
-          {/* Add Dashboard Option */}
+          {/* Create New Dashboard */}
           {canCreateDashboard && (
             <>
               <DropdownMenuSeparator />
@@ -81,21 +81,7 @@ export const CompactDashboardSelector = () => {
                 className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors text-primary"
               >
                 <Plus className="h-4 w-4" />
-                <span>+ Adicionar Dashboard</span>
-              </button>
-            </>
-          )}
-
-          {/* Create New Dashboard with Onboarding */}
-          {canCreateDashboard && (
-            <>
-              <DropdownMenuSeparator />
-              <button
-                onClick={() => setIsCreateDialogOpen(true)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors text-green-600"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Criar</span>
+                <span>Criar Dashboard</span>
               </button>
             </>
           )}

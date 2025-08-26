@@ -23,6 +23,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useToast } from '@/hooks/use-toast';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
 import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
@@ -44,9 +45,9 @@ const Configuracoes = () => {
   const { dashboards, currentDashboard, createDashboard, deleteDashboard } = useDashboard();
   const { getLimits } = useFeatureAccess();
   const { toast } = useToast();
-  const [newDashboardName, setNewDashboardName] = useState('');
   const [isCreatingDashboard, setIsCreatingDashboard] = useState(false);
   const [isDeletingData, setIsDeletingData] = useState(false);
+  const [isCreateDashboardOpen, setIsCreateDashboardOpen] = useState(false);
 
   const limits = getLimits();
 
@@ -107,43 +108,6 @@ const Configuracoes = () => {
     return { status: 'Sem Assinatura', variant: 'secondary' };
   };
 
-  const handleCreateDashboard = async () => {
-    if (!newDashboardName.trim()) {
-      toast({
-        title: "Nome inválido",
-        description: "Por favor, insira um nome para o dashboard.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (dashboards.length >= limits.maxDashboards && limits.maxDashboards !== -1) {
-      toast({
-        title: "Limite atingido",
-        description: `Você atingiu o limite de ${limits.maxDashboards} dashboard(s) para seu plano atual.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsCreatingDashboard(true);
-      await createDashboard(newDashboardName, 'personal');
-      setNewDashboardName('');
-      toast({
-        title: "Dashboard criado",
-        description: "Seu novo dashboard foi criado com sucesso.",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar o dashboard.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingDashboard(false);
-    }
-  };
 
   const handleDeleteAllData = async () => {
     if (!user) return;
@@ -318,22 +282,15 @@ const Configuracoes = () => {
 
           {(dashboards.length < limits.maxDashboards || limits.maxDashboards === -1) && (
             <div className="space-y-2">
-              <Label htmlFor="newDashboard">Criar Novo Dashboard</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="newDashboard"
-                  placeholder="Nome do dashboard"
-                  value={newDashboardName}
-                  onChange={(e) => setNewDashboardName(e.target.value)}
-                />
-                <Button 
-                  onClick={handleCreateDashboard}
-                  disabled={isCreatingDashboard}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar
-                </Button>
-              </div>
+              <Label>Criar Novo Dashboard</Label>
+              <Button 
+                onClick={() => setIsCreateDashboardOpen(true)}
+                disabled={isCreatingDashboard}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Dashboard Completo
+              </Button>
             </div>
           )}
 
@@ -460,6 +417,12 @@ const Configuracoes = () => {
           </AlertDialog>
         </CardContent>
       </Card>
+
+      {/* Dashboard Create Dialog */}
+      <DashboardCreateDialog
+        open={isCreateDashboardOpen}
+        onOpenChange={setIsCreateDashboardOpen}
+      />
     </div>
   );
 };
