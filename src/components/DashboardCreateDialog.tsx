@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -127,15 +128,33 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
   };
 
   if (showOnboarding) {
-    return (
-      <>
-        <div className="fixed inset-0 z-[999999] bg-black/50" />
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
-          <div className="w-full h-full bg-background">
-            <OnboardingFlow onComplete={handleOnboardingComplete} />
-          </div>
+    return createPortal(
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'hsl(var(--background))',
+            overflow: 'auto'
+          }}
+        >
+          <OnboardingFlow onComplete={handleOnboardingComplete} />
         </div>
-      </>
+      </div>,
+      document.body
     );
   }
 
