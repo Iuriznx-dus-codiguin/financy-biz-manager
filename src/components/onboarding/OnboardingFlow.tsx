@@ -244,12 +244,21 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             }
           }}
         >
-          <SelectTrigger className="w-full h-12 bg-background">
+          <SelectTrigger className="w-full h-12 bg-background border-2 border-muted">
             <SelectValue placeholder="Selecione uma faixa" />
           </SelectTrigger>
-          <SelectContent className="bg-background border shadow-lg z-50">
+          <SelectContent 
+            className="bg-background border-2 border-muted shadow-2xl" 
+            style={{ zIndex: 10000 }}
+            position="popper"
+            sideOffset={5}
+          >
             {(data.user_type === 'pessoal' ? salaryRanges : revenueRanges).map((range) => (
-              <SelectItem key={range.value} value={range.value} className="cursor-pointer hover:bg-muted">
+              <SelectItem 
+                key={range.value} 
+                value={range.value} 
+                className="cursor-pointer hover:bg-muted focus:bg-muted bg-background"
+              >
                 {range.label}
               </SelectItem>
             ))}
