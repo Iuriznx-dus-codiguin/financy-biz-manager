@@ -475,6 +475,14 @@ export type Database = {
         Args: { data_atual: string; tipo: string }
         Returns: string
       }
+      get_user_profile_data: {
+        Args: { user_id: string }
+        Returns: {
+          nome_preferido: string
+          subscription_tier: string
+          user_type: string
+        }[]
+      }
       processar_despesas_recorrentes: {
         Args: Record<PropertyKey, never>
         Returns: undefined

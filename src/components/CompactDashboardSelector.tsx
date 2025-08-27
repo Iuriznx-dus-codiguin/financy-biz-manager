@@ -50,6 +50,7 @@ export const CompactDashboardSelector = () => {
                     <span>{dashboard.name}</span>
                     {dashboard.isDefault && <Badge variant="secondary" className="text-xs">Principal</Badge>}
                   </div>
+                  {currentDashboard?.id === dashboard.id && <Badge variant="outline" className="text-xs ml-auto">Atual</Badge>}
                 </button>
               ))}
             </div>
@@ -74,6 +75,7 @@ export const CompactDashboardSelector = () => {
                     <span>{dashboard.name}</span>
                     {dashboard.isDefault && <Badge variant="secondary" className="text-xs">Principal</Badge>}
                   </div>
+                  {currentDashboard?.id === dashboard.id && <Badge variant="outline" className="text-xs ml-auto">Atual</Badge>}
                 </button>
               ))}
             </div>

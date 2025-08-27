@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
+import { DashboardPersonalization } from '@/components/DashboardPersonalization';
 import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
@@ -305,6 +306,9 @@ const Configuracoes = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dashboard Principal */}
+      <DashboardPersonalization />
 
       {/* Dashboards */}
       <Card>
