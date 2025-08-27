@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Filter, Search, Trash2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
@@ -16,25 +17,37 @@ const Despesas = () => {
     data: '',
     descricao: '',
     categoria: '',
+    categoriaPersonalizada: '',
     fornecedor: '',
     valor: '',
-    formaPagamento: ''
+    formaPagamento: '',
+    recorrente: false,
+    tipoRecorrencia: '',
+    proximaData: ''
   });
 
   const handleAddDespesa = (e: React.FormEvent) => {
     e.preventDefault();
     if (novaDespesa.descricao && novaDespesa.valor) {
-      addDespesa({
+      const despesaData = {
         ...novaDespesa,
-        valor: parseFloat(novaDespesa.valor)
-      });
+        valor: parseFloat(novaDespesa.valor),
+        categoria_personalizada: novaDespesa.categoria === 'outros' ? novaDespesa.categoriaPersonalizada : null,
+        proxima_data: novaDespesa.recorrente ? novaDespesa.proximaData : null,
+        tipo_recorrencia: novaDespesa.recorrente ? novaDespesa.tipoRecorrencia : null
+      };
+      addDespesa(despesaData);
       setNovaDespesa({
         data: '',
         descricao: '',
         categoria: '',
+        categoriaPersonalizada: '',
         fornecedor: '',
         valor: '',
-        formaPagamento: ''
+        formaPagamento: '',
+        recorrente: false,
+        tipoRecorrencia: '',
+        proximaData: ''
       });
       setIsDialogOpen(false);
     }
@@ -103,15 +116,29 @@ const Despesas = () => {
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fornecedores">Fornecedores</SelectItem>
-                    <SelectItem value="equipe">Equipe</SelectItem>
-                    <SelectItem value="equipamentos">Equipamentos</SelectItem>
-                    <SelectItem value="manutencao">Manutenção</SelectItem>
-                    <SelectItem value="marketing">Marketing</SelectItem>
+                    <SelectItem value="moradia">Moradia</SelectItem>
+                    <SelectItem value="alimentacao">Alimentação</SelectItem>
+                    <SelectItem value="transporte">Transporte</SelectItem>
+                    <SelectItem value="saude">Saúde</SelectItem>
+                    <SelectItem value="educacao">Educação</SelectItem>
+                    <SelectItem value="lazer">Lazer</SelectItem>
                     <SelectItem value="outros">Outros</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              {novaDespesa.categoria === 'outros' && (
+                <div>
+                  <Label htmlFor="categoriaPersonalizada">Nome da Categoria</Label>
+                  <Input
+                    id="categoriaPersonalizada"
+                    placeholder="Digite o nome da categoria"
+                    value={novaDespesa.categoriaPersonalizada}
+                    onChange={(e) => setNovaDespesa(prev => ({...prev, categoriaPersonalizada: e.target.value}))}
+                    className="rounded-xl"
+                    required
+                  />
+                </div>
+              )}
               <div>
                 <Label htmlFor="fornecedor">Fornecedor</Label>
                 <Input
@@ -149,6 +176,45 @@ const Despesas = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="recorrente"
+                  checked={novaDespesa.recorrente}
+                  onCheckedChange={(checked) => setNovaDespesa(prev => ({...prev, recorrente: !!checked}))}
+                />
+                <Label htmlFor="recorrente">Despesa recorrente</Label>
+              </div>
+              {novaDespesa.recorrente && (
+                <>
+                  <div>
+                    <Label htmlFor="tipoRecorrencia">Tipo de Recorrência</Label>
+                    <Select 
+                      value={novaDespesa.tipoRecorrencia} 
+                      onValueChange={(value) => setNovaDespesa(prev => ({...prev, tipoRecorrencia: value}))}
+                    >
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecione a recorrência" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="diaria">Diária</SelectItem>
+                        <SelectItem value="semanal">Semanal</SelectItem>
+                        <SelectItem value="mensal">Mensal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="proximaData">Próxima Data de Cobrança</Label>
+                    <Input
+                      id="proximaData"
+                      type="date"
+                      value={novaDespesa.proximaData}
+                      onChange={(e) => setNovaDespesa(prev => ({...prev, proximaData: e.target.value}))}
+                      className="rounded-xl"
+                      required
+                    />
+                  </div>
+                </>
+              )}
               <Button type="submit" className="w-full rounded-xl">
                 Adicionar Despesa
               </Button>

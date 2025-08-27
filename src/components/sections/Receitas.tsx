@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Filter, Search, Trash2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
@@ -18,25 +19,37 @@ const Receitas = () => {
     data: '',
     descricao: '',
     categoria: '',
+    categoriaPersonalizada: '',
     cliente: '',
     valor: '',
-    formaPagamento: ''
+    formaPagamento: '',
+    recorrente: false,
+    tipoRecorrencia: '',
+    proximaData: ''
   });
 
   const handleAddReceita = (e: React.FormEvent) => {
     e.preventDefault();
     if (novaReceita.descricao && novaReceita.valor) {
-      addReceita({
+      const receitaData = {
         ...novaReceita,
-        valor: parseFloat(novaReceita.valor)
-      });
+        valor: parseFloat(novaReceita.valor),
+        categoria_personalizada: novaReceita.categoria === 'outros' ? novaReceita.categoriaPersonalizada : null,
+        proxima_data: novaReceita.recorrente ? novaReceita.proximaData : null,
+        tipo_recorrencia: novaReceita.recorrente ? novaReceita.tipoRecorrencia : null
+      };
+      addReceita(receitaData);
       setNovaReceita({
         data: '',
         descricao: '',
         categoria: '',
+        categoriaPersonalizada: '',
         cliente: '',
         valor: '',
-        formaPagamento: ''
+        formaPagamento: '',
+        recorrente: false,
+        tipoRecorrencia: '',
+        proximaData: ''
       });
       setIsDialogOpen(false);
     }
@@ -100,10 +113,26 @@ const Receitas = () => {
                     <SelectItem value="vendas">Vendas</SelectItem>
                     <SelectItem value="servicos">Serviços</SelectItem>
                     <SelectItem value="consultoria">Consultoria</SelectItem>
+                    <SelectItem value="salario">Salário</SelectItem>
+                    <SelectItem value="freelance">Freelance</SelectItem>
+                    <SelectItem value="investimentos">Investimentos</SelectItem>
                     <SelectItem value="outros">Outros</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              {novaReceita.categoria === 'outros' && (
+                <div>
+                  <Label htmlFor="categoriaPersonalizada">Nome da Categoria</Label>
+                  <Input
+                    id="categoriaPersonalizada"
+                    placeholder="Digite o nome da categoria"
+                    value={novaReceita.categoriaPersonalizada}
+                    onChange={(e) => setNovaReceita(prev => ({...prev, categoriaPersonalizada: e.target.value}))}
+                    className="rounded-xl"
+                    required
+                  />
+                </div>
+              )}
               <div>
                 <Label htmlFor="cliente">Cliente</Label>
                 <Input
@@ -141,6 +170,45 @@ const Receitas = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="recorrente"
+                  checked={novaReceita.recorrente}
+                  onCheckedChange={(checked) => setNovaReceita(prev => ({...prev, recorrente: !!checked}))}
+                />
+                <Label htmlFor="recorrente">Receita recorrente</Label>
+              </div>
+              {novaReceita.recorrente && (
+                <>
+                  <div>
+                    <Label htmlFor="tipoRecorrencia">Tipo de Recorrência</Label>
+                    <Select 
+                      value={novaReceita.tipoRecorrencia} 
+                      onValueChange={(value) => setNovaReceita(prev => ({...prev, tipoRecorrencia: value}))}
+                    >
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecione a recorrência" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="diaria">Diária</SelectItem>
+                        <SelectItem value="semanal">Semanal</SelectItem>
+                        <SelectItem value="mensal">Mensal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="proximaData">Próxima Data de Recebimento</Label>
+                    <Input
+                      id="proximaData"
+                      type="date"
+                      value={novaReceita.proximaData}
+                      onChange={(e) => setNovaReceita(prev => ({...prev, proximaData: e.target.value}))}
+                      className="rounded-xl"
+                      required
+                    />
+                  </div>
+                </>
+              )}
               <Button type="submit" className="w-full rounded-xl">
                 Adicionar Receita
               </Button>
