@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Filter, Search, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Filter, Search, Trash2, Calendar } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 const Despesas = () => {
@@ -69,6 +70,31 @@ const Despesas = () => {
     }
   };
 
+  // Função para gerar simulação mensal
+  const generateMonthlySimulation = useMemo(() => {
+    if (!novaDespesa.recorrente || !novaDespesa.proximaData || !novaDespesa.valor) {
+      return [];
+    }
+
+    const startDate = new Date(novaDespesa.proximaData);
+    const value = parseFloat(novaDespesa.valor);
+    const simulation = [];
+
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(startDate);
+      date.setMonth(date.getMonth() + i);
+      simulation.push({
+        month: date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
+        date: date.toLocaleDateString('pt-BR'),
+        value: value
+      });
+    }
+
+    return simulation;
+  }, [novaDespesa.recorrente, novaDespesa.proximaData, novaDespesa.valor]);
+
+  const totalAnualSimulado = generateMonthlySimulation.reduce((sum, item) => sum + item.value, 0);
+
   return (
     <section className="space-y-8">
       <div className="flex justify-between items-center">
@@ -83,138 +109,179 @@ const Despesas = () => {
               Nova Despesa
             </Button>
           </DialogTrigger>
-          <DialogContent className="rounded-2xl">
+          <DialogContent className="rounded-2xl max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Adicionar Nova Despesa</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleAddDespesa} className="space-y-4">
-              <div>
-                <Label htmlFor="data">Data</Label>
-                <Input
-                  id="data"
-                  type="date"
-                  value={novaDespesa.data}
-                  onChange={(e) => setNovaDespesa(prev => ({...prev, data: e.target.value}))}
-                  className="rounded-xl"
-                />
-              </div>
-              <div>
-                <Label htmlFor="descricao">Descrição</Label>
-                <Input
-                  id="descricao"
-                  placeholder="Descrição da despesa"
-                  value={novaDespesa.descricao}
-                  onChange={(e) => setNovaDespesa(prev => ({...prev, descricao: e.target.value}))}
-                  className="rounded-xl"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="categoria">Categoria</Label>
-                <Select value={novaDespesa.categoria} onValueChange={handleCategoriaChange}>
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Selecione uma categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="moradia">Moradia</SelectItem>
-                    <SelectItem value="alimentacao">Alimentação</SelectItem>
-                    <SelectItem value="transporte">Transporte</SelectItem>
-                    <SelectItem value="saude">Saúde</SelectItem>
-                    <SelectItem value="educacao">Educação</SelectItem>
-                    <SelectItem value="lazer">Lazer</SelectItem>
-                    <SelectItem value="outros">Outros</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {novaDespesa.categoria === 'outros' && (
-                <div>
-                  <Label htmlFor="categoriaPersonalizada">Nome da Categoria</Label>
-                  <Input
-                    id="categoriaPersonalizada"
-                    placeholder="Digite o nome da categoria"
-                    value={novaDespesa.categoriaPersonalizada}
-                    onChange={(e) => setNovaDespesa(prev => ({...prev, categoriaPersonalizada: e.target.value}))}
-                    className="rounded-xl"
-                    required
-                  />
-                </div>
-              )}
-              <div>
-                <Label htmlFor="fornecedor">Fornecedor</Label>
-                <Input
-                  id="fornecedor"
-                  placeholder="Nome do fornecedor"
-                  value={novaDespesa.fornecedor}
-                  onChange={(e) => setNovaDespesa(prev => ({...prev, fornecedor: e.target.value}))}
-                  className="rounded-xl"
-                />
-              </div>
-              <div>
-                <Label htmlFor="valor">Valor (R$)</Label>
-                <Input
-                  id="valor"
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  value={novaDespesa.valor}
-                  onChange={(e) => setNovaDespesa(prev => ({...prev, valor: e.target.value}))}
-                  className="rounded-xl"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
-                <Select value={novaDespesa.formaPagamento} onValueChange={handleFormaPagamentoChange}>
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Selecione a forma de pagamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                    <SelectItem value="pix">PIX</SelectItem>
-                    <SelectItem value="cartao">Cartão</SelectItem>
-                    <SelectItem value="transferencia">Transferência</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="recorrente"
-                  checked={novaDespesa.recorrente}
-                  onCheckedChange={(checked) => setNovaDespesa(prev => ({...prev, recorrente: !!checked}))}
-                />
-                <Label htmlFor="recorrente">Despesa recorrente</Label>
-              </div>
-              {novaDespesa.recorrente && (
-                <>
+            <form onSubmit={handleAddDespesa} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Coluna Esquerda - Dados Básicos */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground border-b pb-2">Informações Básicas</h3>
+                  
                   <div>
-                    <Label htmlFor="tipoRecorrencia">Tipo de Recorrência</Label>
-                    <Select 
-                      value={novaDespesa.tipoRecorrencia} 
-                      onValueChange={(value) => setNovaDespesa(prev => ({...prev, tipoRecorrencia: value}))}
-                    >
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue placeholder="Selecione a recorrência" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="diaria">Diária</SelectItem>
-                        <SelectItem value="semanal">Semanal</SelectItem>
-                        <SelectItem value="mensal">Mensal</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="proximaData">Próxima Data de Cobrança</Label>
+                    <Label htmlFor="descricao">Descrição</Label>
                     <Input
-                      id="proximaData"
-                      type="date"
-                      value={novaDespesa.proximaData}
-                      onChange={(e) => setNovaDespesa(prev => ({...prev, proximaData: e.target.value}))}
+                      id="descricao"
+                      placeholder="Descrição da despesa"
+                      value={novaDespesa.descricao}
+                      onChange={(e) => setNovaDespesa(prev => ({...prev, descricao: e.target.value}))}
                       className="rounded-xl"
                       required
                     />
                   </div>
-                </>
+
+                  <div>
+                    <Label htmlFor="categoria">Categoria</Label>
+                    <Select value={novaDespesa.categoria} onValueChange={handleCategoriaChange}>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecione uma categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="moradia">Moradia</SelectItem>
+                        <SelectItem value="alimentacao">Alimentação</SelectItem>
+                        <SelectItem value="transporte">Transporte</SelectItem>
+                        <SelectItem value="saude">Saúde</SelectItem>
+                        <SelectItem value="educacao">Educação</SelectItem>
+                        <SelectItem value="lazer">Lazer</SelectItem>
+                        <SelectItem value="outros">Outros</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {novaDespesa.categoria === 'outros' && (
+                    <div>
+                      <Label htmlFor="categoriaPersonalizada">Nome da Categoria</Label>
+                      <Input
+                        id="categoriaPersonalizada"
+                        placeholder="Digite o nome da categoria"
+                        value={novaDespesa.categoriaPersonalizada}
+                        onChange={(e) => setNovaDespesa(prev => ({...prev, categoriaPersonalizada: e.target.value}))}
+                        className="rounded-xl"
+                        required
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <Label htmlFor="fornecedor">Fornecedor</Label>
+                    <Input
+                      id="fornecedor"
+                      placeholder="Nome do fornecedor"
+                      value={novaDespesa.fornecedor}
+                      onChange={(e) => setNovaDespesa(prev => ({...prev, fornecedor: e.target.value}))}
+                      className="rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                {/* Coluna Direita - Dados Financeiros */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground border-b pb-2">Detalhes Financeiros</h3>
+                  
+                  <div>
+                    <Label htmlFor="data">Data</Label>
+                    <Input
+                      id="data"
+                      type="date"
+                      value={novaDespesa.data}
+                      onChange={(e) => setNovaDespesa(prev => ({...prev, data: e.target.value}))}
+                      className="rounded-xl"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="valor">Valor (R$)</Label>
+                    <Input
+                      id="valor"
+                      type="number"
+                      step="0.01"
+                      placeholder="0,00"
+                      value={novaDespesa.valor}
+                      onChange={(e) => setNovaDespesa(prev => ({...prev, valor: e.target.value}))}
+                      className="rounded-xl"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
+                    <Select value={novaDespesa.formaPagamento} onValueChange={handleFormaPagamentoChange}>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecione a forma de pagamento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                        <SelectItem value="pix">PIX</SelectItem>
+                        <SelectItem value="cartao">Cartão</SelectItem>
+                        <SelectItem value="transferencia">Transferência</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="recorrente"
+                      checked={novaDespesa.recorrente}
+                      onCheckedChange={(checked) => setNovaDespesa(prev => ({...prev, recorrente: !!checked, tipoRecorrencia: checked ? 'mensal' : ''}))}
+                    />
+                    <Label htmlFor="recorrente">Despesa recorrente mensal</Label>
+                  </div>
+
+                  {!novaDespesa.recorrente && (
+                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-200">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                          Despesa Única
+                        </Badge>
+                        <span className="text-sm text-blue-700">Esta despesa será registrada apenas uma vez</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {novaDespesa.recorrente && (
+                    <div>
+                      <Label htmlFor="proximaData">Data de Início da Recorrência</Label>
+                      <Input
+                        id="proximaData"
+                        type="date"
+                        value={novaDespesa.proximaData}
+                        onChange={(e) => setNovaDespesa(prev => ({...prev, proximaData: e.target.value}))}
+                        className="rounded-xl"
+                        required
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Seção de Simulação Mensal */}
+              {novaDespesa.recorrente && generateMonthlySimulation.length > 0 && (
+                <div className="mt-6 p-4 bg-red-50 rounded-xl border border-red-200">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Calendar className="h-5 w-5 text-red-600" />
+                    <h4 className="text-lg font-semibold text-red-700">Simulação Anual - Despesa Recorrente</h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+                    {generateMonthlySimulation.map((item, index) => (
+                      <div key={index} className="bg-white p-3 rounded-lg border border-red-200">
+                        <div className="text-sm font-medium text-red-700 capitalize">{item.month}</div>
+                        <div className="text-xs text-muted-foreground">{item.date}</div>
+                        <div className="text-sm font-bold text-red-600">R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="flex justify-between items-center p-3 bg-red-100 rounded-lg">
+                    <span className="text-red-700 font-semibold">Total Anual Estimado:</span>
+                    <span className="text-xl font-bold text-red-600">
+                      R$ {totalAnualSimulado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
               )}
+
               <Button type="submit" className="w-full rounded-xl">
                 Adicionar Despesa
               </Button>
