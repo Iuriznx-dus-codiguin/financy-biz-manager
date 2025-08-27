@@ -15,7 +15,10 @@ import {
   Plus,
   Crown,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  Edit3,
+  Save,
+  X
 } from 'lucide-react';
 import { useSettings, useCurrency } from '@/hooks/useSettings';
 import { useTheme } from '@/hooks/useTheme';
@@ -44,12 +47,14 @@ const Configuracoes = () => {
   const { user, signOut } = useAuth();
   const { subscriptionData, subscriptionTier, loading: subscriptionLoading } = useSubscription();
   const { formatCurrency } = useCurrency();
-  const { dashboards, currentDashboard, createDashboard, deleteDashboard } = useDashboard();
+  const { dashboards, currentDashboard, createDashboard, deleteDashboard, updateDashboardName } = useDashboard();
   const { getLimits } = useFeatureAccess();
   const { toast } = useToast();
   const [isCreatingDashboard, setIsCreatingDashboard] = useState(false);
   const [isDeletingData, setIsDeletingData] = useState(false);
   const [isCreateDashboardOpen, setIsCreateDashboardOpen] = useState(false);
+  const [editingDashboard, setEditingDashboard] = useState<string | null>(null);
+  const [newDashboardName, setNewDashboardName] = useState('');
 
   const limits = getLimits();
 
@@ -163,6 +168,64 @@ const Configuracoes = () => {
     }
   };
 
+  const handleEditDashboard = (dashboard: any) => {
+    setEditingDashboard(dashboard.id);
+    setNewDashboardName(dashboard.name);
+  };
+
+  const handleSaveDashboardName = async (dashboardId: string) => {
+    if (!newDashboardName.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome do dashboard não pode estar vazio.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await updateDashboardName(dashboardId, newDashboardName.trim());
+      setEditingDashboard(null);
+      toast({
+        title: "Sucesso",
+        description: "Nome do dashboard atualizado com sucesso."
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar nome do dashboard.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingDashboard(null);
+    setNewDashboardName('');
+  };
+
+  const handleDeleteDashboard = async (dashboardId: string, dashboardName: string) => {
+    const confirmed = window.confirm(
+      `Tem certeza que deseja excluir o dashboard "${dashboardName}"?\n\nTodos os dados salvos (receitas, despesas, metas, etc.) neste dashboard serão apagados permanentemente. Esta ação não pode ser desfeita.`
+    );
+    
+    if (confirmed) {
+      try {
+        await deleteDashboard(dashboardId);
+        toast({
+          title: "Dashboard excluído",
+          description: "Dashboard e todos os dados relacionados foram excluídos permanentemente."
+        });
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao excluir dashboard. Tente novamente.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   if (loading || subscriptionLoading) {
     return (
       <div className="p-6">
@@ -262,20 +325,61 @@ const Configuracoes = () => {
             ) : (
               <div className="space-y-2">
                 {dashboards.map((dashboard) => (
-                  <div key={dashboard.id} className="flex items-center justify-between p-2 border rounded">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{dashboard.name}</span>
-                      {dashboard.isDefault && <Badge variant="default">Padrão</Badge>}
-                      {currentDashboard?.id === dashboard.id && <Badge variant="outline">Atual</Badge>}
+                  <div key={dashboard.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-2 flex-1">
+                      {editingDashboard === dashboard.id ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input
+                            value={newDashboardName}
+                            onChange={(e) => setNewDashboardName(e.target.value)}
+                            className="flex-1"
+                            placeholder="Nome do dashboard"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveDashboardName(dashboard.id)}
+                          >
+                            <Save className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="font-medium">{dashboard.name}</span>
+                          {dashboard.isDefault && <Badge variant="default">Principal</Badge>}
+                          {currentDashboard?.id === dashboard.id && <Badge variant="outline">Atual</Badge>}
+                        </>
+                      )}
                     </div>
-                    {!dashboard.isDefault && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteDashboard(dashboard.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    
+                    {editingDashboard !== dashboard.id && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditDashboard(dashboard)}
+                          title="Editar nome"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                        {!dashboard.isDefault && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteDashboard(dashboard.id, dashboard.name)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Excluir dashboard"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 ))}

@@ -113,36 +113,23 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
       className="lg:flex hidden"
     >
       <SidebarHeader>
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center justify-center flex-1">
-            {isCollapsed && !shouldExpand ? (
-              <div className="w-10 h-10 flex items-center justify-center">
-                <img 
-                  src={currentLogo}
-                  alt="Financy" 
-                  className="w-8 h-8 object-contain"
-                />
-              </div>
-            ) : (
-              <div className="flex items-center justify-center w-full h-14 px-2">
-                <img 
-                  src={currentLogo}
-                  alt="Financy" 
-                  className="h-10 w-full object-contain"
-                />
-              </div>
-            )}
-          </div>
-          {(!isCollapsed || shouldExpand) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handlePinToggle}
-              className="h-6 w-6 p-0 hover:bg-accent"
-              title={isPinned ? "Desafixar sidebar" : "Fixar sidebar"}
-            >
-              {isPinned ? <Pin className="h-4 w-4" /> : <PinOff className="h-4 w-4" />}
-            </Button>
+        <div className="flex items-center justify-center p-4">
+          {isCollapsed && !shouldExpand ? (
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img 
+                src={currentLogo}
+                alt="Financy" 
+                className="w-8 h-8 object-contain"
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center w-full h-14 px-2">
+              <img 
+                src={currentLogo}
+                alt="Financy" 
+                className="h-10 w-full object-contain"
+              />
+            </div>
           )}
         </div>
       </SidebarHeader>

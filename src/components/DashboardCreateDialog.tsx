@@ -109,6 +109,9 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
             console.error('Erro ao salvar meta financeira:', metaError);
           }
         }
+
+        // Recarregar dashboards e definir o novo como atual
+        window.location.reload();
       }
 
       setShowOnboarding(false);
@@ -229,7 +232,7 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
               <Button
                 size="lg"
                 className="h-20 flex-col gap-2"
-                onClick={() => {
+onClick={async () => {
                   const type = dashboardType || 'business';
                   if (subscriptionTier === 'free' && type === 'business') {
                     toast({
@@ -239,12 +242,23 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
                     });
                     return;
                   }
-                  createDashboard(`Dashboard ${dashboards.length + 1}`, type);
-                  onOpenChange(false);
-                  toast({
-                    title: "Dashboard criado!",
-                    description: "Dashboard básico criado com sucesso.",
-                  });
+                  
+                  try {
+                    await createDashboard(`Dashboard ${dashboards.length + 1}`, type);
+                    onOpenChange(false);
+                    toast({
+                      title: "Dashboard criado!",
+                      description: "Dashboard básico criado com sucesso.",
+                    });
+                    // Recarregar para garantir que o novo dashboard seja ativado
+                    setTimeout(() => window.location.reload(), 1000);
+                  } catch (error) {
+                    toast({
+                      title: "Erro",
+                      description: "Erro ao criar dashboard. Tente novamente.",
+                      variant: "destructive"
+                    });
+                  }
                 }}
               >
                 <Building className="h-6 w-6" />

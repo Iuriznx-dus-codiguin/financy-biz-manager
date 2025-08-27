@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Building, User, Plus, ChevronDown, Briefcase } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -45,7 +46,10 @@ export const CompactDashboardSelector = () => {
                   }`}
                 >
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="flex-1 text-left">{dashboard.name}</span>
+                  <div className="flex-1 text-left flex items-center gap-2">
+                    <span>{dashboard.name}</span>
+                    {dashboard.isDefault && <Badge variant="secondary" className="text-xs">Principal</Badge>}
+                  </div>
                 </button>
               ))}
             </div>
@@ -66,7 +70,10 @@ export const CompactDashboardSelector = () => {
                   }`}
                 >
                   <Building className="h-4 w-4 text-muted-foreground" />
-                  <span className="flex-1 text-left">{dashboard.name}</span>
+                  <div className="flex-1 text-left flex items-center gap-2">
+                    <span>{dashboard.name}</span>
+                    {dashboard.isDefault && <Badge variant="secondary" className="text-xs">Principal</Badge>}
+                  </div>
                 </button>
               ))}
             </div>

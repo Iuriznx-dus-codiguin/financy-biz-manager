@@ -15,6 +15,7 @@ interface DashboardContextType {
   setCurrentDashboard: (dashboard: Dashboard) => void;
   createDashboard: (name: string, type: 'personal' | 'business') => Promise<void>;
   deleteDashboard: (id: string) => Promise<void>;
+  updateDashboardName: (id: string, newName: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -122,6 +123,8 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
       };
 
       setDashboards(prev => [...prev, newDashboard]);
+      // Automaticamente definir o novo dashboard como atual
+      setCurrentDashboard(newDashboard);
     } catch (error) {
       console.error('Error creating dashboard:', error);
       throw error;
@@ -130,6 +133,15 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const deleteDashboard = async (id: string) => {
     try {
+      // Deletar todos os dados relacionados ao dashboard
+      await Promise.all([
+        supabase.from('receitas').delete().eq('dashboard_id', id),
+        supabase.from('despesas').delete().eq('dashboard_id', id),
+        supabase.from('impostos').delete().eq('dashboard_id', id),
+        supabase.from('metas').delete().eq('dashboard_id', id),
+      ]);
+
+      // Deletar o dashboard
       const { error } = await supabase
         .from('user_dashboards')
         .delete()
@@ -150,6 +162,28 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   };
 
+  const updateDashboardName = async (id: string, newName: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_dashboards')
+        .update({ name: newName })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setDashboards(prev => prev.map(d => 
+        d.id === id ? { ...d, name: newName } : d
+      ));
+
+      if (currentDashboard?.id === id) {
+        setCurrentDashboard(prev => prev ? { ...prev, name: newName } : null);
+      }
+    } catch (error) {
+      console.error('Error updating dashboard name:', error);
+      throw error;
+    }
+  };
+
   return (
     <DashboardContext.Provider value={{
       currentDashboard,
@@ -157,6 +191,7 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
       setCurrentDashboard,
       createDashboard,
       deleteDashboard,
+      updateDashboardName,
       loading
     }}>
       {children}
