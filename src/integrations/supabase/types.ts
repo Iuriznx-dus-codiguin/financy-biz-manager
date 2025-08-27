@@ -151,6 +151,7 @@ export type Database = {
       despesas: {
         Row: {
           categoria: string
+          categoria_personalizada: string | null
           created_at: string | null
           dashboard_id: string | null
           data: string
@@ -158,11 +159,15 @@ export type Database = {
           forma_pagamento: string
           fornecedor: string | null
           id: number
+          proxima_data: string | null
+          recorrente: boolean | null
+          tipo_recorrencia: string | null
           user_id: string
           valor: number
         }
         Insert: {
           categoria: string
+          categoria_personalizada?: string | null
           created_at?: string | null
           dashboard_id?: string | null
           data: string
@@ -170,11 +175,15 @@ export type Database = {
           forma_pagamento: string
           fornecedor?: string | null
           id?: number
+          proxima_data?: string | null
+          recorrente?: boolean | null
+          tipo_recorrencia?: string | null
           user_id: string
           valor: number
         }
         Update: {
           categoria?: string
+          categoria_personalizada?: string | null
           created_at?: string | null
           dashboard_id?: string | null
           data?: string
@@ -182,6 +191,9 @@ export type Database = {
           forma_pagamento?: string
           fornecedor?: string | null
           id?: number
+          proxima_data?: string | null
+          recorrente?: boolean | null
+          tipo_recorrencia?: string | null
           user_id?: string
           valor?: number
         }
@@ -340,6 +352,7 @@ export type Database = {
       receitas: {
         Row: {
           categoria: string
+          categoria_personalizada: string | null
           cliente: string | null
           created_at: string | null
           dashboard_id: string | null
@@ -347,11 +360,15 @@ export type Database = {
           descricao: string
           forma_pagamento: string
           id: number
+          proxima_data: string | null
+          recorrente: boolean | null
+          tipo_recorrencia: string | null
           user_id: string
           valor: number
         }
         Insert: {
           categoria: string
+          categoria_personalizada?: string | null
           cliente?: string | null
           created_at?: string | null
           dashboard_id?: string | null
@@ -359,11 +376,15 @@ export type Database = {
           descricao: string
           forma_pagamento: string
           id?: number
+          proxima_data?: string | null
+          recorrente?: boolean | null
+          tipo_recorrencia?: string | null
           user_id: string
           valor: number
         }
         Update: {
           categoria?: string
+          categoria_personalizada?: string | null
           cliente?: string | null
           created_at?: string | null
           dashboard_id?: string | null
@@ -371,6 +392,9 @@ export type Database = {
           descricao?: string
           forma_pagamento?: string
           id?: number
+          proxima_data?: string | null
+          recorrente?: boolean | null
+          tipo_recorrencia?: string | null
           user_id?: string
           valor?: number
         }
@@ -447,7 +471,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calcular_proxima_data: {
+        Args: { data_atual: string; tipo: string }
+        Returns: string
+      }
+      processar_despesas_recorrentes: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      processar_receitas_recorrentes: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
