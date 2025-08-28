@@ -254,7 +254,7 @@ const Despesas = () => {
                       checked={novaDespesa.emAndamento}
                       onCheckedChange={(checked) => setNovaDespesa(prev => ({...prev, emAndamento: !!checked}))}
                     />
-                    <Label htmlFor="emAndamento">Em andamento (não contabilizar agora)</Label>
+                    <Label htmlFor="emAndamento">Em andamento (ainda não foi paga)</Label>
                   </div>
 
                   <div className="flex items-center space-x-2">
