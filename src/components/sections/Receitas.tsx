@@ -8,14 +8,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Filter, Search, Trash2, Calendar } from 'lucide-react';
+import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 
 const Receitas = () => {
-  const { receitas, addReceita, deleteReceita } = useAppContext();
+  const { receitas, addReceita, deleteReceita, updateReceita } = useAppContext();
   const { isFeatureAvailable, getFeatureLimitMessage, getLimits } = useFeatureAccess();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('todas');
   const [novaReceita, setNovaReceita] = useState({
     data: '',
     descricao: '',
@@ -26,7 +28,8 @@ const Receitas = () => {
     formaPagamento: '',
     recorrente: false,
     tipoRecorrencia: '',
-    proximaData: ''
+    proximaData: '',
+    emAndamento: false
   });
 
   const handleAddReceita = (e: React.FormEvent) => {
@@ -37,7 +40,8 @@ const Receitas = () => {
         valor: parseFloat(novaReceita.valor),
         categoria_personalizada: novaReceita.categoria === 'outros' ? novaReceita.categoriaPersonalizada : null,
         proxima_data: novaReceita.recorrente ? novaReceita.proximaData : null,
-        tipo_recorrencia: novaReceita.recorrente ? novaReceita.tipoRecorrencia : null
+        tipo_recorrencia: novaReceita.recorrente ? novaReceita.tipoRecorrencia : null,
+        status: novaReceita.emAndamento ? 'pendente' as const : 'paga' as const
       };
       addReceita(receitaData);
       setNovaReceita({
@@ -50,7 +54,8 @@ const Receitas = () => {
         formaPagamento: '',
         recorrente: false,
         tipoRecorrencia: '',
-        proximaData: ''
+        proximaData: '',
+        emAndamento: false
       });
       setIsDialogOpen(false);
     }
@@ -62,7 +67,31 @@ const Receitas = () => {
     }
   };
 
-  const totalReceitas = receitas.reduce((sum, receita) => sum + receita.valor, 0);
+  const handleMarkAsPaid = async (id: number) => {
+    await updateReceita(id, { status: 'paga' });
+  };
+
+  const totalReceitas = receitas
+    .filter(receita => receita.status === 'paga')
+    .reduce((sum, receita) => sum + receita.valor, 0);
+
+  // Filtrar receitas por status e busca
+  const filteredReceitas = useMemo(() => {
+    return receitas.filter(receita => {
+      const matchesStatus = statusFilter === 'todas' || 
+        (statusFilter === 'pagas' && receita.status === 'paga') ||
+        (statusFilter === 'pendentes' && receita.status === 'pendente');
+      
+      const matchesSearch = !searchTerm || 
+        (receita.cliente && receita.cliente.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        receita.descricao.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      return matchesStatus && matchesSearch;
+    });
+  }, [receitas, statusFilter, searchTerm]);
+
+  const receitasPagas = receitas.filter(r => r.status === 'paga').length;
+  const receitasPendentes = receitas.filter(r => r.status === 'pendente').length;
 
   // Função para gerar simulação mensal
   const generateMonthlySimulation = useMemo(() => {
@@ -215,6 +244,15 @@ const Receitas = () => {
 
                   <div className="flex items-center space-x-2">
                     <Checkbox 
+                      id="emAndamento"
+                      checked={novaReceita.emAndamento}
+                      onCheckedChange={(checked) => setNovaReceita(prev => ({...prev, emAndamento: !!checked}))}
+                    />
+                    <Label htmlFor="emAndamento">Em andamento (não contabilizar agora)</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
                       id="recorrente"
                       checked={novaReceita.recorrente}
                       onCheckedChange={(checked) => setNovaReceita(prev => ({...prev, recorrente: !!checked, tipoRecorrencia: checked ? 'mensal' : ''}))}
@@ -222,7 +260,18 @@ const Receitas = () => {
                     <Label htmlFor="recorrente">Receita recorrente mensal</Label>
                   </div>
 
-                  {!novaReceita.recorrente && (
+                  {novaReceita.emAndamento && (
+                    <div className="bg-orange-50 p-3 rounded-xl border border-orange-200">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                          Em Andamento
+                        </Badge>
+                        <span className="text-sm text-orange-700">Esta receita não será contabilizada até ser marcada como paga</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {!novaReceita.recorrente && !novaReceita.emAndamento && (
                     <div className="bg-green-50 p-3 rounded-xl border border-green-200">
                       <div className="flex items-center space-x-2">
                         <Badge variant="secondary" className="bg-green-100 text-green-700">
@@ -324,35 +373,69 @@ const Receitas = () => {
 
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Histórico de Receitas</CardTitle>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm" className="rounded-lg">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtrar
-              </Button>
-              <Button variant="outline" size="sm" className="rounded-lg">
-                <Search className="h-4 w-4 mr-2" />
-                Buscar
-              </Button>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <CardTitle>Transações Recentes</CardTitle>
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex gap-2">
+                <Button 
+                  variant={statusFilter === 'todas' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="rounded-lg"
+                  onClick={() => setStatusFilter('todas')}
+                >
+                  Todas ({receitas.length})
+                </Button>
+                <Button 
+                  variant={statusFilter === 'pagas' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="rounded-lg"
+                  onClick={() => setStatusFilter('pagas')}
+                >
+                  Pagas ({receitasPagas})
+                </Button>
+                <Button 
+                  variant={statusFilter === 'pendentes' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="rounded-lg"
+                  onClick={() => setStatusFilter('pendentes')}
+                >
+                  Pendentes ({receitasPendentes})
+                </Button>
+              </div>
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por cliente ou descrição..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 rounded-lg"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {receitas.length === 0 ? (
+          {filteredReceitas.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">💰</div>
-              <h3 className="text-xl font-semibold mb-2">Nenhuma receita cadastrada</h3>
-              <p className="text-muted-foreground mb-4">Comece adicionando sua primeira receita</p>
-              <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl">
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar Primeira Receita
-              </Button>
+              <h3 className="text-xl font-semibold mb-2">
+                {receitas.length === 0 ? 'Nenhuma receita cadastrada' : 'Nenhuma receita encontrada'}
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                {receitas.length === 0 ? 'Comece adicionando sua primeira receita' : 'Tente ajustar os filtros de busca'}
+              </p>
+              {receitas.length === 0 && (
+                <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar Primeira Receita
+                </Button>
+              )}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Status</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Categoria</TableHead>
@@ -363,8 +446,21 @@ const Receitas = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {receitas.map((receita) => (
+                {filteredReceitas.map((receita) => (
                   <TableRow key={receita.id}>
+                    <TableCell>
+                      {receita.status === 'paga' ? (
+                        <Badge variant="secondary" className="bg-green-100 text-green-700">
+                          <Check className="h-3 w-3 mr-1" />
+                          Paga
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Pendente
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell>{receita.data}</TableCell>
                     <TableCell>{receita.descricao}</TableCell>
                     <TableCell>{receita.categoria}</TableCell>
@@ -374,14 +470,26 @@ const Receitas = () => {
                       R$ {receita.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteReceita(receita.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1 justify-center">
+                        {receita.status === 'pendente' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleMarkAsPaid(receita.id)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteReceita(receita.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

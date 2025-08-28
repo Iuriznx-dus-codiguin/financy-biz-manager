@@ -13,6 +13,7 @@ export interface Receita {
   cliente?: string;
   formaPagamento: string;
   dashboard_id?: string;
+  status: 'paga' | 'pendente';
 }
 
 export interface Despesa {
@@ -24,6 +25,7 @@ export interface Despesa {
   fornecedor?: string;
   formaPagamento: string;
   dashboard_id?: string;
+  status: 'paga' | 'pendente';
 }
 
 export interface Imposto {
@@ -97,6 +99,8 @@ interface AppContextType {
   addMembroEquipe: (membro: Omit<MembroEquipe, 'id'>) => Promise<void>;
   updateMembroEquipe: (id: number, membro: Partial<MembroEquipe>) => Promise<void>;
   updateMeta: (id: string, meta: Partial<Meta>) => Promise<void>;
+  updateReceita: (id: number, receita: Partial<Receita>) => Promise<void>;
+  updateDespesa: (id: number, despesa: Partial<Despesa>) => Promise<void>;
   deleteReceita: (id: number) => Promise<void>;
   deleteDespesa: (id: number) => Promise<void>;
   deleteImposto: (id: number) => Promise<void>;
@@ -163,7 +167,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         valor: r.valor,
         cliente: r.cliente,
         formaPagamento: r.forma_pagamento,
-        dashboard_id: r.dashboard_id
+        dashboard_id: r.dashboard_id,
+        status: (r.status || 'paga') as 'paga' | 'pendente'
       })) || [];
 
       // Carregar despesas
@@ -181,7 +186,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         valor: d.valor,
         fornecedor: d.fornecedor,
         formaPagamento: d.forma_pagamento,
-        dashboard_id: d.dashboard_id
+        dashboard_id: d.dashboard_id,
+        status: (d.status || 'paga') as 'paga' | 'pendente'
       })) || [];
 
       // Carregar impostos
@@ -259,7 +265,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         categoria: receita.categoria,
         valor: receita.valor,
         cliente: receita.cliente,
-        forma_pagamento: receita.formaPagamento
+        forma_pagamento: receita.formaPagamento,
+        status: receita.status || 'paga'
       })
       .select()
       .single();
@@ -278,7 +285,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         valor: data.valor,
         cliente: data.cliente,
         formaPagamento: data.forma_pagamento,
-        dashboard_id: data.dashboard_id
+        dashboard_id: data.dashboard_id,
+        status: (data.status || 'paga') as 'paga' | 'pendente'
       };
       setReceitas(prev => [novaReceita, ...prev]);
     }
@@ -297,7 +305,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         categoria: despesa.categoria,
         valor: despesa.valor,
         fornecedor: despesa.fornecedor,
-        forma_pagamento: despesa.formaPagamento
+        forma_pagamento: despesa.formaPagamento,
+        status: despesa.status || 'paga'
       })
       .select()
       .single();
@@ -316,7 +325,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         valor: data.valor,
         fornecedor: data.fornecedor,
         formaPagamento: data.forma_pagamento,
-        dashboard_id: data.dashboard_id
+        dashboard_id: data.dashboard_id,
+        status: (data.status || 'paga') as 'paga' | 'pendente'
       };
       setDespesas(prev => [novaDespesa, ...prev]);
     }
@@ -414,6 +424,54 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateMembroEquipe = async (id: number, membro: Partial<MembroEquipe>) => {
     setMembrosEquipe(prev => 
       prev.map(m => m.id === id ? { ...m, ...membro } : m)
+    );
+  };
+
+  const updateReceita = async (id: number, receita: Partial<Receita>) => {
+    const { error } = await supabase
+      .from('receitas')
+      .update({
+        data: receita.data,
+        descricao: receita.descricao,
+        categoria: receita.categoria,
+        valor: receita.valor,
+        cliente: receita.cliente,
+        forma_pagamento: receita.formaPagamento,
+        status: receita.status
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao atualizar receita:', error);
+      return;
+    }
+
+    setReceitas(prev => 
+      prev.map(r => r.id === id ? { ...r, ...receita } : r)
+    );
+  };
+
+  const updateDespesa = async (id: number, despesa: Partial<Despesa>) => {
+    const { error } = await supabase
+      .from('despesas')
+      .update({
+        data: despesa.data,
+        descricao: despesa.descricao,
+        categoria: despesa.categoria,
+        valor: despesa.valor,
+        fornecedor: despesa.fornecedor,
+        forma_pagamento: despesa.formaPagamento,
+        status: despesa.status
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao atualizar despesa:', error);
+      return;
+    }
+
+    setDespesas(prev => 
+      prev.map(d => d.id === id ? { ...d, ...despesa } : d)
     );
   };
 
@@ -556,6 +614,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addMembroEquipe,
       updateMembroEquipe,
       updateMeta,
+      updateReceita,
+      updateDespesa,
       deleteReceita,
       deleteDespesa,
       deleteImposto,

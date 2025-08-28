@@ -8,12 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Filter, Search, Trash2, Calendar } from 'lucide-react';
+import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 const Despesas = () => {
-  const { despesas, addDespesa, deleteDespesa } = useAppContext();
+  const { despesas, addDespesa, deleteDespesa, updateDespesa } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('todas');
   const [novaDespesa, setNovaDespesa] = useState({
     data: '',
     descricao: '',
@@ -24,7 +26,8 @@ const Despesas = () => {
     formaPagamento: '',
     recorrente: false,
     tipoRecorrencia: '',
-    proximaData: ''
+    proximaData: '',
+    emAndamento: false
   });
 
   const handleAddDespesa = (e: React.FormEvent) => {
@@ -35,7 +38,8 @@ const Despesas = () => {
         valor: parseFloat(novaDespesa.valor),
         categoria_personalizada: novaDespesa.categoria === 'outros' ? novaDespesa.categoriaPersonalizada : null,
         proxima_data: novaDespesa.recorrente ? novaDespesa.proximaData : null,
-        tipo_recorrencia: novaDespesa.recorrente ? novaDespesa.tipoRecorrencia : null
+        tipo_recorrencia: novaDespesa.recorrente ? novaDespesa.tipoRecorrencia : null,
+        status: novaDespesa.emAndamento ? 'pendente' as const : 'paga' as const
       };
       addDespesa(despesaData);
       setNovaDespesa({
@@ -48,7 +52,8 @@ const Despesas = () => {
         formaPagamento: '',
         recorrente: false,
         tipoRecorrencia: '',
-        proximaData: ''
+        proximaData: '',
+        emAndamento: false
       });
       setIsDialogOpen(false);
     }
@@ -62,13 +67,37 @@ const Despesas = () => {
     setNovaDespesa(prev => ({ ...prev, formaPagamento: value }));
   };
 
-  const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
+  const totalDespesas = despesas
+    .filter(despesa => despesa.status === 'paga')
+    .reduce((sum, despesa) => sum + despesa.valor, 0);
 
   const handleDeleteDespesa = async (id: number) => {
     if (confirm('Tem certeza que deseja excluir esta despesa?')) {
       await deleteDespesa(id);
     }
   };
+
+  const handleMarkAsPaid = async (id: number) => {
+    await updateDespesa(id, { status: 'paga' });
+  };
+
+  // Filtrar despesas por status e busca
+  const filteredDespesas = useMemo(() => {
+    return despesas.filter(despesa => {
+      const matchesStatus = statusFilter === 'todas' || 
+        (statusFilter === 'pagas' && despesa.status === 'paga') ||
+        (statusFilter === 'pendentes' && despesa.status === 'pendente');
+      
+      const matchesSearch = !searchTerm || 
+        (despesa.fornecedor && despesa.fornecedor.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        despesa.descricao.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      return matchesStatus && matchesSearch;
+    });
+  }, [despesas, statusFilter, searchTerm]);
+
+  const despesasPagas = despesas.filter(d => d.status === 'paga').length;
+  const despesasPendentes = despesas.filter(d => d.status === 'pendente').length;
 
   // Função para gerar simulação mensal
   const generateMonthlySimulation = useMemo(() => {
@@ -221,6 +250,15 @@ const Despesas = () => {
 
                   <div className="flex items-center space-x-2">
                     <Checkbox 
+                      id="emAndamento"
+                      checked={novaDespesa.emAndamento}
+                      onCheckedChange={(checked) => setNovaDespesa(prev => ({...prev, emAndamento: !!checked}))}
+                    />
+                    <Label htmlFor="emAndamento">Em andamento (não contabilizar agora)</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
                       id="recorrente"
                       checked={novaDespesa.recorrente}
                       onCheckedChange={(checked) => setNovaDespesa(prev => ({...prev, recorrente: !!checked, tipoRecorrencia: checked ? 'mensal' : ''}))}
@@ -228,7 +266,18 @@ const Despesas = () => {
                     <Label htmlFor="recorrente">Despesa recorrente mensal</Label>
                   </div>
 
-                  {!novaDespesa.recorrente && (
+                  {novaDespesa.emAndamento && (
+                    <div className="bg-orange-50 p-3 rounded-xl border border-orange-200">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                          Em Andamento
+                        </Badge>
+                        <span className="text-sm text-orange-700">Esta despesa não será contabilizada até ser marcada como paga</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {!novaDespesa.recorrente && !novaDespesa.emAndamento && (
                     <div className="bg-blue-50 p-3 rounded-xl border border-blue-200">
                       <div className="flex items-center space-x-2">
                         <Badge variant="secondary" className="bg-blue-100 text-blue-700">
@@ -330,35 +379,69 @@ const Despesas = () => {
 
       <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Histórico de Despesas</CardTitle>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm" className="rounded-lg">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtrar
-              </Button>
-              <Button variant="outline" size="sm" className="rounded-lg">
-                <Search className="h-4 w-4 mr-2" />
-                Buscar
-              </Button>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <CardTitle>Transações Recentes</CardTitle>
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex gap-2">
+                <Button 
+                  variant={statusFilter === 'todas' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="rounded-lg"
+                  onClick={() => setStatusFilter('todas')}
+                >
+                  Todas ({despesas.length})
+                </Button>
+                <Button 
+                  variant={statusFilter === 'pagas' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="rounded-lg"
+                  onClick={() => setStatusFilter('pagas')}
+                >
+                  Pagas ({despesasPagas})
+                </Button>
+                <Button 
+                  variant={statusFilter === 'pendentes' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="rounded-lg"
+                  onClick={() => setStatusFilter('pendentes')}
+                >
+                  Pendentes ({despesasPendentes})
+                </Button>
+              </div>
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por fornecedor ou descrição..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 rounded-lg"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {despesas.length === 0 ? (
+          {filteredDespesas.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">💸</div>
-              <h3 className="text-xl font-semibold mb-2">Nenhuma despesa cadastrada</h3>
-              <p className="text-muted-foreground mb-4">Comece adicionando sua primeira despesa</p>
-              <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl">
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar Primeira Despesa
-              </Button>
+              <h3 className="text-xl font-semibold mb-2">
+                {despesas.length === 0 ? 'Nenhuma despesa cadastrada' : 'Nenhuma despesa encontrada'}
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                {despesas.length === 0 ? 'Comece adicionando sua primeira despesa' : 'Tente ajustar os filtros de busca'}
+              </p>
+              {despesas.length === 0 && (
+                <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar Primeira Despesa
+                </Button>
+              )}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Status</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Categoria</TableHead>
@@ -369,8 +452,21 @@ const Despesas = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {despesas.map((despesa) => (
+                {filteredDespesas.map((despesa) => (
                   <TableRow key={despesa.id}>
+                    <TableCell>
+                      {despesa.status === 'paga' ? (
+                        <Badge variant="secondary" className="bg-green-100 text-green-700">
+                          <Check className="h-3 w-3 mr-1" />
+                          Paga
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Pendente
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell>{despesa.data}</TableCell>
                     <TableCell>{despesa.descricao}</TableCell>
                     <TableCell>{despesa.categoria}</TableCell>
@@ -380,14 +476,26 @@ const Despesas = () => {
                       R$ {despesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteDespesa(despesa.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1 justify-center">
+                        {despesa.status === 'pendente' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleMarkAsPaid(despesa.id)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteDespesa(despesa.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

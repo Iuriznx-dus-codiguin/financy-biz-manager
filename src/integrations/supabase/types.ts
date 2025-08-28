@@ -161,6 +161,7 @@ export type Database = {
           id: number
           proxima_data: string | null
           recorrente: boolean | null
+          status: string
           tipo_recorrencia: string | null
           user_id: string
           valor: number
@@ -177,6 +178,7 @@ export type Database = {
           id?: number
           proxima_data?: string | null
           recorrente?: boolean | null
+          status?: string
           tipo_recorrencia?: string | null
           user_id: string
           valor: number
@@ -193,6 +195,7 @@ export type Database = {
           id?: number
           proxima_data?: string | null
           recorrente?: boolean | null
+          status?: string
           tipo_recorrencia?: string | null
           user_id?: string
           valor?: number
@@ -362,6 +365,7 @@ export type Database = {
           id: number
           proxima_data: string | null
           recorrente: boolean | null
+          status: string
           tipo_recorrencia: string | null
           user_id: string
           valor: number
@@ -378,6 +382,7 @@ export type Database = {
           id?: number
           proxima_data?: string | null
           recorrente?: boolean | null
+          status?: string
           tipo_recorrencia?: string | null
           user_id: string
           valor: number
@@ -394,6 +399,7 @@ export type Database = {
           id?: number
           proxima_data?: string | null
           recorrente?: boolean | null
+          status?: string
           tipo_recorrencia?: string | null
           user_id?: string
           valor?: number

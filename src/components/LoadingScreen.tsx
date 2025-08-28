@@ -93,7 +93,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
               valor: r.valor,
               cliente: r.cliente,
               formaPagamento: r.forma_pagamento,
-              dashboard_id: r.dashboard_id
+              dashboard_id: r.dashboard_id,
+              status: (r.status || 'paga') as 'paga' | 'pendente'
             }));
             setReceitas(receitasFormatadas);
           }
@@ -114,7 +115,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
               valor: d.valor,
               fornecedor: d.fornecedor,
               formaPagamento: d.forma_pagamento,
-              dashboard_id: d.dashboard_id
+              dashboard_id: d.dashboard_id,
+              status: (d.status || 'paga') as 'paga' | 'pendente'
             }));
             setDespesas(despesasFormatadas);
           }
