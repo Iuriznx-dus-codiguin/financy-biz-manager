@@ -78,7 +78,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   });
 
   const handleThemeToggle = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
   };
 
   const handlePinToggle = () => {

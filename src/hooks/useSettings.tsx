@@ -26,7 +26,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<UserSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -35,10 +35,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     loadSettings();
   }, [user]);
 
-  // Sincronizar tema com o ThemeProvider
+  // Sincronizar configurações com o tema atual
   useEffect(() => {
-    setTheme(settings.tema);
-  }, [settings.tema, setTheme]);
+    if (settings.tema !== theme && !loading) {
+      setSettings(prev => ({ ...prev, tema: theme }));
+    }
+  }, [theme, settings.tema, loading]);
 
   const loadSettings = async () => {
     try {
@@ -48,7 +50,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const localSettings = localStorage.getItem('financy-settings');
       if (localSettings) {
         const parsed = JSON.parse(localSettings);
-        setSettings({ ...defaultSettings, ...parsed });
+        const mergedSettings = { ...defaultSettings, ...parsed };
+        setSettings(mergedSettings);
+        // Sincronizar tema
+        if (mergedSettings.tema !== theme) {
+          setTheme(mergedSettings.tema);
+        }
+      } else {
+        // Se não há configurações locais, use o tema atual
+        const initialSettings = { ...defaultSettings, tema: theme };
+        setSettings(initialSettings);
       }
 
       // Se há usuário logado, carregar do Supabase também
@@ -61,9 +72,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
         if (profile && (profile as any).settings) {
           const remoteSettings = JSON.parse((profile as any).settings);
-          setSettings({ ...defaultSettings, ...remoteSettings });
-          // Sincronizar com localStorage
-          localStorage.setItem('financy-settings', JSON.stringify(remoteSettings));
+          const finalSettings = { ...defaultSettings, ...remoteSettings };
+          setSettings(finalSettings);
+          // Sincronizar com localStorage e tema
+          localStorage.setItem('financy-settings', JSON.stringify(finalSettings));
+          if (finalSettings.tema !== theme) {
+            setTheme(finalSettings.tema);
+          }
         }
       }
     } catch (error) {
@@ -77,6 +92,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     try {
       const updatedSettings = { ...settings, ...newSettings };
       setSettings(updatedSettings);
+
+      // Se o tema foi alterado, atualizar no ThemeProvider também
+      if (newSettings.tema && newSettings.tema !== theme) {
+        setTheme(newSettings.tema);
+      }
 
       // Salvar no localStorage
       localStorage.setItem('financy-settings', JSON.stringify(updatedSettings));

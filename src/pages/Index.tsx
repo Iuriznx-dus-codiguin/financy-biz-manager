@@ -114,7 +114,9 @@ export default function Index() {
         <div className="flex h-full w-full">
           <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <MobileSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+            <div className="lg:hidden">
+              <MobileSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+            </div>
             <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
             <FreeTrialNotification setActiveSection={setActiveSection} />
             <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">

@@ -258,9 +258,8 @@ const Configuracoes = () => {
           <div className="space-y-2">
             <Label htmlFor="tema">Tema</Label>
             <Select
-              value={theme}
+              value={settings.tema}
               onValueChange={(value: 'light' | 'dark' | 'system') => {
-                setTheme(value);
                 updateSettings({ tema: value });
               }}
             >

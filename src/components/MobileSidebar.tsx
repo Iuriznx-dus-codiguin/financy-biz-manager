@@ -40,7 +40,8 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   });
 
   const handleThemeToggle = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
   };
 
   const handleMenuClick = (section: string) => {
