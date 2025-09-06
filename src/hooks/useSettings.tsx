@@ -46,7 +46,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       
-      // Carregar do localStorage primeiro (mais rápido)
+      // Carregar do localStorage primeiro (mais rápido) - TODO: Migrar para cookies HttpOnly
       const localSettings = localStorage.getItem('financy-settings');
       if (localSettings) {
         const parsed = JSON.parse(localSettings);
@@ -98,7 +98,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setTheme(newSettings.tema);
       }
 
-      // Salvar no localStorage
+      // Salvar no localStorage - TODO: Migrar para cookies HttpOnly
       localStorage.setItem('financy-settings', JSON.stringify(updatedSettings));
 
       // Salvar no Supabase se há usuário logado

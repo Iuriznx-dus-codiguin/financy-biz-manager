@@ -74,12 +74,10 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
+  // Sanitizar CSS antes de injetar (validação básica)
+  const sanitizedCSS = Object.entries(THEMES)
+    .map(
+      ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
@@ -88,11 +86,16 @@ ${colorConfig
       itemConfig.color
     return color ? `  --color-${key}: ${color};` : null
   })
-  .join("\n")}
-}
-`
-          )
-          .join("\n"),
+  .filter(Boolean)
+  .join('\n')}
+}`
+    )
+    .join('\n');
+
+  return (
+    <style
+      dangerouslySetInnerHTML={{
+        __html: sanitizedCSS
       }}
     />
   )

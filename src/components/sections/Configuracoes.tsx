@@ -146,7 +146,7 @@ const Configuracoes = () => {
         .update({ settings: null } as any)
         .eq('id', user.id);
 
-      // Limpar localStorage das configurações
+      // Limpar localStorage das configurações - TODO: Também limpar cookies quando migrar
       localStorage.removeItem('financy-settings');
       
       toast({

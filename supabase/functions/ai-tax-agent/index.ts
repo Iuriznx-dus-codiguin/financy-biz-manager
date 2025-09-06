@@ -1,41 +1,45 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkEnv, safeHandler, checkRateLimit } from '../_shared/utils.ts';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': '*', // TODO: Restringir para domínios confiáveis em produção
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+serve(safeHandler(async (req) => {
+  // Validar variáveis de ambiente obrigatórias
+  const envVars = checkEnv(['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
+  const supabase = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_SERVICE_ROLE_KEY);
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  // Autenticar usuário
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader) {
+    throw new Error('Unauthorized');
+  }
+  
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+  if (authError || !user) {
+    throw new Error('Unauthorized');
   }
 
-  try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user } } = await supabase.auth.getUser(token);
+  // Verificar rate limit
+  if (!checkRateLimit(user.id, 10, 60000)) {
+    throw new Error('Rate limit exceeded - Limite de requisições atingido');
+  }
 
-    if (!user) {
-      throw new Error('Unauthorized');
-    }
+  const body = await req.json();
+  const { message } = body;
 
-    const body = await req.json();
-    const { message } = body;
+  if (!message) {
+    throw new Error('Bad request - Message is required');
+  }
 
-    if (!message) {
-      throw new Error('Message is required');
-    }
-
-    // Sistema prompt para o especialista em impostos
-    const systemPrompt = `Você é o Especialista em Impostos da Financy, um contador virtual inteligente especializado em tributação brasileira.
+  // Sistema prompt para o especialista em impostos
+  const systemPrompt = `Você é o Especialista em Impostos da Financy, um contador virtual inteligente especializado em tributação brasileira.
 
     Suas especialidades:
     - MEI (Microempreendedor Individual) e DAS
@@ -62,60 +66,61 @@ serve(async (req) => {
 
     Responda sempre em português brasileiro e seja proativo em sugerir melhorias na gestão tributária.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
-        ],
-        temperature: 0.7,
-        max_tokens: 600
-      }),
-    });
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${envVars.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message }
+      ],
+      temperature: 0.7,
+      max_tokens: 600
+    }),
+  });
 
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
-
-    // Verificar se mencionou algum imposto para marcar como relevante
-    const taxKeywords = ['MEI', 'DAS', 'ICMS', 'ISS', 'IRPF', 'IRPJ', 'Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'PIS', 'COFINS', 'imposto', 'tributo'];
-    const hasTaxContent = taxKeywords.some(keyword => 
-      message.toLowerCase().includes(keyword.toLowerCase()) || 
-      aiResponse.toLowerCase().includes(keyword.toLowerCase())
-    );
-
-    // Salvar conversa no banco
-    await supabase
-      .from('ai_conversations')
-      .insert({
-        user_id: user.id,
-        agent_type: 'tax_specialist',
-        message,
-        response: aiResponse,
-        metadata: { 
-          has_tax_content: hasTaxContent,
-          timestamp: new Date().toISOString()
-        }
-      });
-
-    return new Response(JSON.stringify({ 
-      response: aiResponse,
-      agent: 'tax_specialist',
-      has_tax_content: hasTaxContent
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
-  } catch (error) {
-    console.error('Error in tax agent:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+  if (!response.ok) {
+    console.error('Erro da API OpenAI:', await response.text());
+    throw new Error('Erro ao processar solicitação de IA');
   }
-});
+
+  const data = await response.json();
+  const aiResponse = data.choices[0].message.content;
+
+  // Verificar se mencionou algum imposto para marcar como relevante
+  const taxKeywords = ['MEI', 'DAS', 'ICMS', 'ISS', 'IRPF', 'IRPJ', 'Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'PIS', 'COFINS', 'imposto', 'tributo'];
+  const hasTaxContent = taxKeywords.some(keyword => 
+    message.toLowerCase().includes(keyword.toLowerCase()) || 
+    aiResponse.toLowerCase().includes(keyword.toLowerCase())
+  );
+
+  // Salvar conversa no banco
+  const { error: saveError } = await supabase
+    .from('ai_conversations')
+    .insert({
+      user_id: user.id,
+      agent_type: 'tax_specialist',
+      message,
+      response: aiResponse,
+      metadata: { 
+        has_tax_content: hasTaxContent,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+  if (saveError) {
+    console.error('Erro ao salvar conversa:', saveError);
+  }
+
+  return new Response(JSON.stringify({ 
+    response: aiResponse,
+    agent: 'tax_specialist',
+    has_tax_content: hasTaxContent
+  }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}));

@@ -28,6 +28,7 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
+    // TODO: Migrar para cookies HttpOnly para maior segurança
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
 
@@ -52,6 +53,7 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (newTheme: Theme) => {
+      // TODO: Migrar para cookies HttpOnly
       localStorage.setItem(storageKey, newTheme);
       setTheme(newTheme);
     },
