@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { CategorySelector } from '@/components/CategorySelector';
 
 const Receitas = () => {
   const { receitas, addReceita, deleteReceita, updateReceita } = useAppContext();
@@ -155,21 +156,12 @@ const Receitas = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="categoria">Categoria</Label>
-                    <Select value={novaReceita.categoria} onValueChange={(value) => setNovaReceita(prev => ({ ...prev, categoria: value }))}>
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="vendas">Vendas</SelectItem>
-                        <SelectItem value="servicos">Serviços</SelectItem>
-                        <SelectItem value="consultoria">Consultoria</SelectItem>
-                        <SelectItem value="salario">Salário</SelectItem>
-                        <SelectItem value="freelance">Freelance</SelectItem>
-                        <SelectItem value="investimentos">Investimentos</SelectItem>
-                        <SelectItem value="outros">Outros</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <CategorySelector
+                      tipo="receita"
+                      value={novaReceita.categoria}
+                      onChange={(value) => setNovaReceita(prev => ({ ...prev, categoria: value }))}
+                      className=""
+                    />
                   </div>
 
                   {novaReceita.categoria === 'outros' && (

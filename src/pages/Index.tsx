@@ -13,6 +13,7 @@ import Assinatura from '@/components/sections/Assinatura';
 import AgentesIA from '@/components/sections/AgentesIA';
 import Configuracoes from '@/components/sections/Configuracoes';
 import Ajuda from '@/components/sections/Ajuda';
+import { Categorias } from '@/components/sections/Categorias';
 
 import { GlobalSubscriptionAlert } from '@/components/GlobalSubscriptionAlert';
 import { FreeTrialNotification } from '@/components/FreeTrialNotification';
@@ -85,6 +86,8 @@ export default function Index() {
         return <Receitas />;
       case 'despesas':
         return <Despesas />;
+      case 'categorias':
+        return <Categorias />;
       case 'impostos':
         return <Impostos />;
       case 'equipe':

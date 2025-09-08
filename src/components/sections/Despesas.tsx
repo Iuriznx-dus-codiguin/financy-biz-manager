@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
+import { CategorySelector } from '@/components/CategorySelector';
 
 const Despesas = () => {
   const { despesas, addDespesa, deleteDespesa, updateDespesa } = useAppContext();
@@ -161,21 +162,12 @@ const Despesas = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="categoria">Categoria</Label>
-                    <Select value={novaDespesa.categoria} onValueChange={handleCategoriaChange}>
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="moradia">Moradia</SelectItem>
-                        <SelectItem value="alimentacao">Alimentação</SelectItem>
-                        <SelectItem value="transporte">Transporte</SelectItem>
-                        <SelectItem value="saude">Saúde</SelectItem>
-                        <SelectItem value="educacao">Educação</SelectItem>
-                        <SelectItem value="lazer">Lazer</SelectItem>
-                        <SelectItem value="outros">Outros</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <CategorySelector
+                      tipo="despesa"
+                      value={novaDespesa.categoria}
+                      onChange={handleCategoriaChange}
+                      className=""
+                    />
                   </div>
 
                   {novaDespesa.categoria === 'outros' && (

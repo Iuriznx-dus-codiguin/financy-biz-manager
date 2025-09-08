@@ -19,7 +19,8 @@ import {
   Target,
   Bot,
   Pin,
-  PinOff
+  PinOff,
+  Folder
 } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/hooks/useTheme';
@@ -43,6 +44,7 @@ const allMenuItems = [
   { id: 'painel', label: 'Painel', icon: Layout, businessOnly: false },
   { id: 'receitas', label: 'Receitas', icon: TrendingUp, businessOnly: false },
   { id: 'despesas', label: 'Despesas', icon: TrendingDown, businessOnly: false },
+  { id: 'categorias', label: 'Categorias', icon: Folder, businessOnly: false },
   { id: 'impostos', label: 'Impostos e Taxas', icon: Receipt, businessOnly: false },
   { id: 'equipe', label: 'Equipe', icon: Users, businessOnly: true },
   { id: 'metas', label: 'Objetivos', icon: Target, businessOnly: false },

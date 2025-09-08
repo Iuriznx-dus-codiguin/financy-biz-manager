@@ -94,6 +94,45 @@ export type Database = {
           },
         ]
       }
+      categorias_personalizadas: {
+        Row: {
+          ativo: boolean
+          cor: string
+          created_at: string
+          dashboard_id: string | null
+          icone: string | null
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          dashboard_id?: string | null
+          icone?: string | null
+          id?: string
+          nome: string
+          tipo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          dashboard_id?: string | null
+          icone?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       customer_subscriptions: {
         Row: {
           amount: number
