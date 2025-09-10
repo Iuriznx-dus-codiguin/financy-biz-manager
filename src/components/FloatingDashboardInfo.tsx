@@ -7,6 +7,7 @@ import { Crown, Zap, Star, Settings, Code, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { NotificationCenter } from '@/components/NotificationCenter';
 
 interface FloatingDashboardInfoProps {
   timeFilter: string;
@@ -131,6 +132,7 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
 
           {/* Controles */}
           <div className="flex items-center gap-3">
+            <NotificationCenter />
             <CompactDashboardSelector />
             <TimeFilter value={timeFilter} onChange={setTimeFilter} />
           </div>

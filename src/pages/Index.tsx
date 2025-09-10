@@ -126,8 +126,6 @@ export default function Index() {
             <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
             <FreeTrialNotification setActiveSection={setActiveSection} />
             
-            {/* Notification Center */}
-            <NotificationCenter />
             
             <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6" data-tour="main-content">
               {renderActiveSection()}
