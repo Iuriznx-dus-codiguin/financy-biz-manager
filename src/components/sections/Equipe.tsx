@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Users, UserPlus, Mail, Phone, Edit, Trash2 } from 'lucide-react';
-import { useAppContext } from '@/contexts/AppContext';
-import { MembroEquipe } from '@/contexts/AppContext';
+import { Badge } from '@/components/ui/badge';
+import { Users, UserPlus, Mail, Phone, Edit, Trash2, Shield, Eye, PenTool } from 'lucide-react';
+import { useTeamManagement } from '@/hooks/useTeamManagement';
+import { FeatureGate } from '@/components/EnhancedFeatureAccess';
+import { LoadingStats, LoadingList } from '@/components/LoadingStates';
 
 const Equipe = () => {
-  const { membrosEquipe, addMembroEquipe, updateMembroEquipe, deleteMembroEquipe } = useAppContext();
+  const { members, loading, stats, addMember, updateMember, deleteMember } = useTeamManagement();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<MembroEquipe | null>(null);

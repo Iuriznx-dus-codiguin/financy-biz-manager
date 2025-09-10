@@ -191,6 +191,7 @@ export type Database = {
         Row: {
           categoria: string
           categoria_personalizada: string | null
+          configuracao_recorrencia: Json | null
           created_at: string | null
           dashboard_id: string | null
           data: string
@@ -208,6 +209,7 @@ export type Database = {
         Insert: {
           categoria: string
           categoria_personalizada?: string | null
+          configuracao_recorrencia?: Json | null
           created_at?: string | null
           dashboard_id?: string | null
           data: string
@@ -225,6 +227,7 @@ export type Database = {
         Update: {
           categoria?: string
           categoria_personalizada?: string | null
+          configuracao_recorrencia?: Json | null
           created_at?: string | null
           dashboard_id?: string | null
           data?: string
@@ -240,6 +243,65 @@ export type Database = {
           valor?: number
         }
         Relationships: []
+      }
+      equipe_membros: {
+        Row: {
+          cargo: string
+          created_at: string
+          dashboard_id: string | null
+          data_admissao: string
+          email: string
+          id: string
+          nome: string
+          periodicidade: string
+          permissoes: Json | null
+          salario: number
+          status: string
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cargo: string
+          created_at?: string
+          dashboard_id?: string | null
+          data_admissao?: string
+          email: string
+          id?: string
+          nome: string
+          periodicidade?: string
+          permissoes?: Json | null
+          salario?: number
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cargo?: string
+          created_at?: string
+          dashboard_id?: string | null
+          data_admissao?: string
+          email?: string
+          id?: string
+          nome?: string
+          periodicidade?: string
+          permissoes?: Json | null
+          salario?: number
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipe_membros_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "user_dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       impostos: {
         Row: {
@@ -328,6 +390,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notificacoes: {
+        Row: {
+          created_at: string
+          data_vencimento: string | null
+          id: string
+          lida: boolean | null
+          mensagem: string
+          metadata: Json | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_vencimento?: string | null
+          id?: string
+          lida?: boolean | null
+          mensagem: string
+          metadata?: Json | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_vencimento?: string | null
+          id?: string
+          lida?: boolean | null
+          mensagem?: string
+          metadata?: Json | null
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       onboarding_data: {
         Row: {
           created_at: string
@@ -396,6 +494,7 @@ export type Database = {
           categoria: string
           categoria_personalizada: string | null
           cliente: string | null
+          configuracao_recorrencia: Json | null
           created_at: string | null
           dashboard_id: string | null
           data: string
@@ -413,6 +512,7 @@ export type Database = {
           categoria: string
           categoria_personalizada?: string | null
           cliente?: string | null
+          configuracao_recorrencia?: Json | null
           created_at?: string | null
           dashboard_id?: string | null
           data: string
@@ -430,6 +530,7 @@ export type Database = {
           categoria?: string
           categoria_personalizada?: string | null
           cliente?: string | null
+          configuracao_recorrencia?: Json | null
           created_at?: string | null
           dashboard_id?: string | null
           data?: string
@@ -506,6 +607,36 @@ export type Database = {
           is_default?: boolean
           name?: string
           type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_tour_progress: {
+        Row: {
+          completed: boolean | null
+          created_at: string
+          id: string
+          step_completed: number | null
+          tour_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string
+          id?: string
+          step_completed?: number | null
+          tour_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string
+          id?: string
+          step_completed?: number | null
+          tour_name?: string
           updated_at?: string
           user_id?: string
         }
