@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useTheme } from '@/hooks/useTheme';
 import { useDashboard } from '@/hooks/useDashboard';
+import { NotificationCenter } from '@/components/NotificationCenter';
 
 const financyLogo = '/lovable-uploads/11a67f5c-242f-4740-b1f7-1ed6c6895f51.png';
 
@@ -11,6 +12,7 @@ const allMenuItems = [
   { id: 'painel', label: 'Painel', businessOnly: false },
   { id: 'receitas', label: 'Receitas', businessOnly: false },
   { id: 'despesas', label: 'Despesas', businessOnly: false },
+  { id: 'categorias', label: 'Categorias', businessOnly: false },
   { id: 'impostos', label: 'Impostos e Taxas', businessOnly: false },
   { id: 'equipe', label: 'Equipe', businessOnly: true },
   { id: 'metas', label: 'Objetivos', businessOnly: false },
@@ -60,6 +62,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
       </div>
       
       <div className="flex items-center gap-2">
+        <NotificationCenter />
         <Button
           variant="ghost"
           size="sm"
