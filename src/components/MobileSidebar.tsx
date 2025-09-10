@@ -50,8 +50,8 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   };
 
   return (
-    <div className="lg:hidden flex items-center justify-between p-4 bg-background border-b">
-      <div className="flex items-center">
+    <div className="lg:hidden flex items-center justify-between p-4 bg-background border-b" data-tour="mobile-header">
+      <div className="flex items-center" data-tour="mobile-logo">
         <img 
           src={financyLogo}
           alt="Financy" 
@@ -65,13 +65,14 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
           size="sm"
           onClick={handleThemeToggle}
           className="p-2"
+          data-tour="mobile-theme-toggle"
         >
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
         
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="sm" className="p-2">
+            <Button variant="ghost" size="sm" className="p-2" data-tour="mobile-menu-trigger">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
@@ -79,13 +80,14 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
             <SheetHeader>
               <SheetTitle className="text-left">Menu</SheetTitle>
             </SheetHeader>
-            <div className="mt-6 space-y-2">
+            <div className="mt-6 space-y-2" data-tour="mobile-menu-items">
               {menuItems.map((item) => (
                 <Button
                   key={item.id}
                   variant={activeSection === item.id ? "default" : "ghost"}
                   className="w-full justify-start"
                   onClick={() => handleMenuClick(item.id)}
+                  data-tour={`mobile-menu-${item.id}`}
                 >
                   {item.label}
                 </Button>

@@ -27,6 +27,9 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
 import { DashboardProvider } from '@/hooks/useDashboard';
+import { TourGuide } from '@/components/TourGuide';
+import { NotificationCenter } from '@/components/NotificationCenter';
+import { RecurringTransactionManager } from '@/components/RecurringTransactionManager';
 
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
@@ -122,10 +125,18 @@ export default function Index() {
             </div>
             <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
             <FreeTrialNotification setActiveSection={setActiveSection} />
-            <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
+            
+            {/* Notification Center */}
+            <NotificationCenter />
+            
+            <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6" data-tour="main-content">
               {renderActiveSection()}
             </main>
             <Footer />
+            
+            {/* Tour Guide and Background Managers */}
+            <TourGuide />
+            <RecurringTransactionManager />
           </div>
         </div>
       </SidebarProvider>

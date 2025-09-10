@@ -59,10 +59,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   // Dashboard avançado para planos premium
   if (hasAdvancedDashboard) {
     return (
-      <section id="painel" className="space-y-6">
+      <section id="painel" className="space-y-6" data-tour="dashboard-advanced">
         {/* Saudação personalizada */}
         {onboardingData?.nome_preferido && (
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20" data-tour="welcome-message">
             <h1 className="text-2xl font-bold text-primary">
               Olá, {onboardingData.nome_preferido}! 👋
             </h1>
@@ -78,7 +78,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           dashboardType="advanced"
         />
 
-        <DashboardAvancado timeFilter={timeFilter} setTimeFilter={setTimeFilter} />
+        <div data-tour="advanced-dashboard-content">
+          <DashboardAvancado timeFilter={timeFilter} setTimeFilter={setTimeFilter} />
+        </div>
 
         {hasAdvancedIntelligence ? (
           <InteligenciaFinanceiraAprimorada
@@ -106,10 +108,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
 
   // Dashboard básico
   return (
-    <section id="painel" className="space-y-6">
+    <section id="painel" className="space-y-6" data-tour="dashboard-basic">
       {/* Saudação personalizada */}
       {onboardingData?.nome_preferido && (
-        <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20" data-tour="welcome-message">
           <h1 className="text-2xl font-bold text-primary">
             Olá, {onboardingData.nome_preferido}! 👋
           </h1>
@@ -133,8 +135,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         dismissible={true}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        <Card className="hover:shadow-lg transition-shadow">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3" data-tour="dashboard-cards">
+        <Card className="hover:shadow-lg transition-shadow" data-tour="receitas-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total de Receitas
@@ -150,7 +152,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow" data-tour="despesas-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total de Despesas
@@ -166,7 +168,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow" data-tour="saldo-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Saldo
@@ -228,12 +230,14 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           impostos={filteredImpostos}
         />
       ) : (
-        <UpgradeCard
-          feature="Inteligência Financeira"
-          description="Análises básicas de suas finanças com insights relevantes"
-          requiredPlan="Plano gratuito"
-          onUpgrade={() => setActiveSection?.('assinatura')}
-        />
+        <div data-tour="intelligence-upgrade">
+          <UpgradeCard
+            feature="Inteligência Financeira"
+            description="Análises básicas de suas finanças com insights relevantes"
+            requiredPlan="Plano gratuito"
+            onUpgrade={() => setActiveSection?.('assinatura')}
+          />
+        </div>
       )}
     </section>
   );
