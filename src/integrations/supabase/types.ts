@@ -133,6 +133,95 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_integrations: {
+        Row: {
+          access_token: string | null
+          api_key: string | null
+          created_at: string
+          crm_type: string
+          id: string
+          is_active: boolean | null
+          last_sync: string | null
+          portal_id: string | null
+          refresh_token: string | null
+          sync_errors: Json | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          api_key?: string | null
+          created_at?: string
+          crm_type?: string
+          id?: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          portal_id?: string | null
+          refresh_token?: string | null
+          sync_errors?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          api_key?: string | null
+          created_at?: string
+          crm_type?: string
+          id?: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          portal_id?: string | null
+          refresh_token?: string | null
+          sync_errors?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      crm_sync_logs: {
+        Row: {
+          created_at: string
+          crm_integration_id: string | null
+          data_synced: Json | null
+          error_message: string | null
+          hubspot_contact_id: string | null
+          id: string
+          success: boolean | null
+          sync_type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          crm_integration_id?: string | null
+          data_synced?: Json | null
+          error_message?: string | null
+          hubspot_contact_id?: string | null
+          id?: string
+          success?: boolean | null
+          sync_type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          crm_integration_id?: string | null
+          data_synced?: Json | null
+          error_message?: string | null
+          hubspot_contact_id?: string | null
+          id?: string
+          success?: boolean | null
+          sync_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_sync_logs_crm_integration_id_fkey"
+            columns: ["crm_integration_id"]
+            isOneToOne: false
+            referencedRelation: "crm_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_subscriptions: {
         Row: {
           amount: number
@@ -469,6 +558,7 @@ export type Database = {
           id: string
           nome_completo: string | null
           settings: Json | null
+          telefone: string | null
           updated_at: string
         }
         Insert: {
@@ -477,6 +567,7 @@ export type Database = {
           id: string
           nome_completo?: string | null
           settings?: Json | null
+          telefone?: string | null
           updated_at?: string
         }
         Update: {
@@ -485,6 +576,7 @@ export type Database = {
           id?: string
           nome_completo?: string | null
           settings?: Json | null
+          telefone?: string | null
           updated_at?: string
         }
         Relationships: []
