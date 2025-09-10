@@ -1,24 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Users, UserPlus, Mail, Phone, Edit, Trash2, Shield, Eye, PenTool } from 'lucide-react';
 import { useTeamManagement } from '@/hooks/useTeamManagement';
 import { FeatureGate } from '@/components/EnhancedFeatureAccess';
 import { LoadingStats, LoadingList } from '@/components/LoadingStates';
 
+interface TeamMember {
+  id: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+  cargo: string;
+  salario: number;
+  periodicidade: string;
+  data_admissao: string;
+  status: string;
+}
+
 const Equipe = () => {
   const { members, loading, stats, addMember, updateMember, deleteMember } = useTeamManagement();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingMember, setEditingMember] = useState<MembroEquipe | null>(null);
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
     telefone: '',
     cargo: '',
     salario: 0,
-    periodicidade: 'mensal' as 'mensal' | 'semanal' | 'quinzenal',
+    periodicidade: 'mensal' as string,
     dataAdmissao: new Date().toISOString().split('T')[0]
   });
 
@@ -29,7 +45,7 @@ const Equipe = () => {
       telefone: '',
       cargo: '',
       salario: 0,
-      periodicidade: 'mensal',
+    periodicidade: 'mensal',
       dataAdmissao: new Date().toISOString().split('T')[0]
     });
   };
@@ -41,15 +57,17 @@ const Equipe = () => {
 
     const novoMembro = {
       ...formData,
+      data_admissao: formData.dataAdmissao,
+      permissoes: {},
       status: 'ativo' as const
     };
 
-    await addMembroEquipe(novoMembro);
+    await addMember(novoMembro);
     resetForm();
     setIsAddDialogOpen(false);
   };
 
-  const handleEdit = (member: MembroEquipe) => {
+  const handleEdit = (member: TeamMember) => {
     setEditingMember(member);
     setFormData({
       nome: member.nome,
@@ -58,7 +76,7 @@ const Equipe = () => {
       cargo: member.cargo,
       salario: member.salario,
       periodicidade: member.periodicidade,
-      dataAdmissao: member.dataAdmissao
+      dataAdmissao: member.data_admissao
     });
     setIsEditDialogOpen(true);
   };
@@ -68,7 +86,7 @@ const Equipe = () => {
       return;
     }
 
-    await updateMembroEquipe(editingMember.id, {
+    await updateMember(editingMember.id, {
       ...formData,
       status: 'ativo'
     });
@@ -78,14 +96,14 @@ const Equipe = () => {
     setIsEditDialogOpen(false);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja remover este membro da equipe?')) {
-      await deleteMembroEquipe(id);
+      await deleteMember(id);
     }
   };
 
   const calcularCustoTotal = () => {
-    return membrosEquipe.reduce((total, membro) => {
+    return members.reduce((total, membro) => {
       if (membro.status === 'ativo') {
         switch (membro.periodicidade) {
           case 'mensal':
@@ -171,7 +189,7 @@ const Equipe = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="periodicidade">Periodicidade</Label>
-                  <Select value={formData.periodicidade} onValueChange={(value: 'mensal' | 'semanal' | 'quinzenal') => setFormData({ ...formData, periodicidade: value })}>
+                  <Select value={formData.periodicidade} onValueChange={(value: string) => setFormData({ ...formData, periodicidade: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -206,7 +224,7 @@ const Equipe = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {membrosEquipe.map((membro) => (
+        {members.map((membro) => (
           <Card key={membro.id} className="rounded-2xl shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center space-x-4 mb-4">
@@ -252,7 +270,7 @@ const Equipe = () => {
                     {membro.status}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Desde {new Date(membro.dataAdmissao).toLocaleDateString('pt-BR')}
+                    Desde {new Date(membro.data_admissao).toLocaleDateString('pt-BR')}
                   </span>
                 </div>
               </div>
@@ -286,7 +304,7 @@ const Equipe = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-              <p className="text-2xl font-bold text-blue-600">{membrosEquipe.filter(m => m.status === 'ativo').length}</p>
+              <p className="text-2xl font-bold text-blue-600">{members.filter(m => m.status === 'ativo').length}</p>
               <p className="text-sm text-muted-foreground">Membros Ativos</p>
             </div>
             <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
@@ -297,7 +315,7 @@ const Equipe = () => {
             </div>
             <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
               <p className="text-2xl font-bold text-purple-600">
-                {membrosEquipe.length > 0 ? '100%' : '0%'}
+                {members.length > 0 ? '100%' : '0%'}
               </p>
               <p className="text-sm text-muted-foreground">Taxa de Atividade</p>
             </div>
@@ -362,7 +380,7 @@ const Equipe = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-periodicidade">Periodicidade</Label>
-                <Select value={formData.periodicidade} onValueChange={(value: 'mensal' | 'semanal' | 'quinzenal') => setFormData({ ...formData, periodicidade: value })}>
+                <Select value={formData.periodicidade} onValueChange={(value: string) => setFormData({ ...formData, periodicidade: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
