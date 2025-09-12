@@ -3,6 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { toast } from '@/hooks/use-toast';
+import { 
+  sanitizeInput, 
+  isValidEmail, 
+  sanitizeNumericInput, 
+  validateAndSanitizeInput 
+} from '@/utils/security';
 
 interface TeamMember {
   id: string;
@@ -104,13 +110,44 @@ export const useTeamManagement = () => {
 
   const addMember = async (memberData: Omit<TeamMember, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Validate and sanitize input data
+      const emailValidation = validateAndSanitizeInput(memberData.email, { 
+        maxLength: 255, 
+        isEmail: true 
+      });
+      
+      if (!emailValidation.isValid) {
+        throw new Error(emailValidation.error || 'Email inválido');
+      }
+
+      const nomeValidation = validateAndSanitizeInput(memberData.nome, { 
+        maxLength: 100 
+      });
+      
+      if (!nomeValidation.isValid) {
+        throw new Error(nomeValidation.error || 'Nome inválido');
+      }
+
+      // Sanitize and validate sensitive data
+      const sanitizedData = {
+        ...memberData,
+        nome: nomeValidation.sanitized,
+        email: emailValidation.sanitized,
+        telefone: memberData.telefone ? sanitizeInput(memberData.telefone) : null,
+        cargo: sanitizeInput(memberData.cargo),
+        salario: sanitizeNumericInput(memberData.salario),
+        user_id: user!.id,
+        dashboard_id: currentDashboard?.id || null
+      };
+
+      // Additional validation
+      if (sanitizedData.salario < 0) {
+        throw new Error('Salário deve ser um valor positivo');
+      }
+
       const { data, error } = await supabase
         .from('equipe_membros')
-        .insert([{
-          ...memberData,
-          user_id: user!.id,
-          dashboard_id: currentDashboard?.id || null
-        }])
+        .insert([sanitizedData])
         .select()
         .single();
 
@@ -138,9 +175,60 @@ export const useTeamManagement = () => {
 
   const updateMember = async (id: string, updates: Partial<TeamMember>) => {
     try {
+      // Validate and sanitize update data
+      const sanitizedUpdates: Partial<TeamMember> = {};
+
+      if (updates.nome) {
+        const nomeValidation = validateAndSanitizeInput(updates.nome, { maxLength: 100 });
+        if (!nomeValidation.isValid) {
+          throw new Error(nomeValidation.error || 'Nome inválido');
+        }
+        sanitizedUpdates.nome = nomeValidation.sanitized;
+      }
+
+      if (updates.email) {
+        const emailValidation = validateAndSanitizeInput(updates.email, { 
+          maxLength: 255, 
+          isEmail: true 
+        });
+        if (!emailValidation.isValid) {
+          throw new Error(emailValidation.error || 'Email inválido');
+        }
+        sanitizedUpdates.email = emailValidation.sanitized;
+      }
+
+      if (updates.telefone) {
+        sanitizedUpdates.telefone = sanitizeInput(updates.telefone);
+      }
+
+      if (updates.cargo) {
+        sanitizedUpdates.cargo = sanitizeInput(updates.cargo);
+      }
+
+      if (updates.salario !== undefined) {
+        sanitizedUpdates.salario = sanitizeNumericInput(updates.salario);
+        if (sanitizedUpdates.salario < 0) {
+          throw new Error('Salário deve ser um valor positivo');
+        }
+      }
+
+      // Copy other non-sensitive fields
+      if (updates.periodicidade !== undefined) {
+        sanitizedUpdates.periodicidade = updates.periodicidade;
+      }
+      if (updates.data_admissao !== undefined) {
+        sanitizedUpdates.data_admissao = updates.data_admissao;
+      }
+      if (updates.status !== undefined) {
+        sanitizedUpdates.status = updates.status;
+      }
+      if (updates.permissoes !== undefined) {
+        sanitizedUpdates.permissoes = updates.permissoes;
+      }
+
       const { data, error } = await supabase
         .from('equipe_membros')
-        .update(updates)
+        .update(sanitizedUpdates)
         .eq('id', id)
         .eq('user_id', user!.id)
         .select()

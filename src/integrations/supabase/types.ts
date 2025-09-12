@@ -392,6 +392,42 @@ export type Database = {
           },
         ]
       }
+      equipe_membros_audit: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          member_id: string | null
+          new_data: Json | null
+          old_data: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          member_id?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          member_id?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       impostos: {
         Row: {
           created_at: string | null
