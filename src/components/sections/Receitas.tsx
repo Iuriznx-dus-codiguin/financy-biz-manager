@@ -13,7 +13,11 @@ import { useAppContext } from '@/contexts/AppContext';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { CategorySelector } from '@/components/CategorySelector';
 
-const Receitas = () => {
+interface ReceitasProps {
+  presetRecurring?: boolean;
+}
+
+const Receitas = ({ presetRecurring = false }: ReceitasProps) => {
   const { receitas, addReceita, deleteReceita, updateReceita } = useAppContext();
   const { isFeatureAvailable, getFeatureLimitMessage, getLimits } = useFeatureAccess();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -27,7 +31,7 @@ const Receitas = () => {
     cliente: '',
     valor: '',
     formaPagamento: '',
-    recorrente: false,
+    recorrente: presetRecurring,
     tipoRecorrencia: '',
     proximaData: '',
     emAndamento: false

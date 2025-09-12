@@ -13,12 +13,17 @@ import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
 import { LoadingSpinner, LoadingCard } from '@/components/LoadingStates';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { RecurringTransactionSelector } from './RecurringTransactionSelector';
 
 interface RecurringTransactionManagerProps {
   className?: string;
+  onNavigateToSection?: (section: string, options?: any) => void;
 }
 
-export const RecurringTransactionManager: React.FC<RecurringTransactionManagerProps> = ({ className }) => {
+export const RecurringTransactionManager: React.FC<RecurringTransactionManagerProps> = ({ 
+  className, 
+  onNavigateToSection 
+}) => {
   const {
     transactions,
     loading,
@@ -42,19 +47,9 @@ export const RecurringTransactionManager: React.FC<RecurringTransactionManagerPr
   const dueToday = getTransactionsDueToday();
   const dueSoon = getTransactionsDueSoon(7);
 
-  const handleProcessRecurring = async () => {
-    try {
-      await processRecurringTransactions();
-      toast({
-        title: 'Sucesso',
-        description: 'Transações recorrentes processadas com sucesso!'
-      });
-    } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Falha ao processar transações recorrentes.',
-        variant: 'destructive'
-      });
+  const handleSelectTransactionType = (type: 'receita' | 'despesa') => {
+    if (onNavigateToSection) {
+      onNavigateToSection(type === 'receita' ? 'receitas' : 'despesas', { recurring: true });
     }
   };
 
@@ -158,16 +153,10 @@ export const RecurringTransactionManager: React.FC<RecurringTransactionManagerPr
       {/* Actions */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <RefreshCw className="h-5 w-5" />
-              Gerenciar Transações Recorrentes
-            </CardTitle>
-            <Button onClick={handleProcessRecurring} size="sm">
-              <Play className="h-4 w-4 mr-2" />
-              Processar Agora
-            </Button>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <RefreshCw className="h-5 w-5" />
+            Gerenciar Transações Recorrentes
+          </CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -178,10 +167,7 @@ export const RecurringTransactionManager: React.FC<RecurringTransactionManagerPr
               <p className="text-sm text-muted-foreground mb-4">
                 Configure transações automáticas para receitas e despesas que se repetem regularmente.
               </p>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Configurar Primeira Recorrência
-              </Button>
+              <RecurringTransactionSelector onSelectType={handleSelectTransactionType} />
             </div>
           ) : (
             <div className="space-y-4">

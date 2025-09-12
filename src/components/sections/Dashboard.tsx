@@ -24,6 +24,8 @@ interface DashboardProps {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
+import { useEffect } from 'react';
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -32,11 +34,25 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [isClosingCash, setIsClosingCash] = useState(false);
   const { receitas, despesas, impostos } = useAppContext();
   const { onboardingData } = useOnboarding();
+  const { processRecurringTransactions } = useRecurringTransactions();
   
   const { isFeatureAvailable } = useFeatureAccess();
   const hasBasicIntelligence = isFeatureAvailable('inteligencia_basica');
   const hasAdvancedIntelligence = isFeatureAvailable('inteligencia_avancada');
   const hasAdvancedDashboard = isFeatureAvailable('dashboard_avancado');
+
+  // Processar transações recorrentes automaticamente ao carregar o dashboard
+  useEffect(() => {
+    const processRecurring = async () => {
+      try {
+        await processRecurringTransactions();
+      } catch (error) {
+        console.error('Erro ao processar transações recorrentes automaticamente:', error);
+      }
+    };
+
+    processRecurring();
+  }, []); // Executa apenas uma vez ao montar o componente
 
   const handleCloseCash = async () => {
     setIsClosingCash(true);
