@@ -94,6 +94,33 @@ export type Database = {
           },
         ]
       }
+      auth_rate_limits: {
+        Row: {
+          attempts: number | null
+          blocked_until: string | null
+          created_at: string | null
+          id: string
+          identifier: string
+          window_start: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          identifier: string
+          window_start?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          identifier?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       categorias_personalizadas: {
         Row: {
           ativo: boolean
@@ -132,95 +159,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      crm_integrations: {
-        Row: {
-          access_token: string | null
-          api_key: string | null
-          created_at: string
-          crm_type: string
-          id: string
-          is_active: boolean | null
-          last_sync: string | null
-          portal_id: string | null
-          refresh_token: string | null
-          sync_errors: Json | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          access_token?: string | null
-          api_key?: string | null
-          created_at?: string
-          crm_type?: string
-          id?: string
-          is_active?: boolean | null
-          last_sync?: string | null
-          portal_id?: string | null
-          refresh_token?: string | null
-          sync_errors?: Json | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          access_token?: string | null
-          api_key?: string | null
-          created_at?: string
-          crm_type?: string
-          id?: string
-          is_active?: boolean | null
-          last_sync?: string | null
-          portal_id?: string | null
-          refresh_token?: string | null
-          sync_errors?: Json | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      crm_sync_logs: {
-        Row: {
-          created_at: string
-          crm_integration_id: string | null
-          data_synced: Json | null
-          error_message: string | null
-          hubspot_contact_id: string | null
-          id: string
-          success: boolean | null
-          sync_type: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          crm_integration_id?: string | null
-          data_synced?: Json | null
-          error_message?: string | null
-          hubspot_contact_id?: string | null
-          id?: string
-          success?: boolean | null
-          sync_type: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          crm_integration_id?: string | null
-          data_synced?: Json | null
-          error_message?: string | null
-          hubspot_contact_id?: string | null
-          id?: string
-          success?: boolean | null
-          sync_type?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crm_sync_logs_crm_integration_id_fkey"
-            columns: ["crm_integration_id"]
-            isOneToOne: false
-            referencedRelation: "crm_integrations"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       customer_subscriptions: {
         Row: {
@@ -674,6 +612,48 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_logs: {
+        Row: {
+          action: string
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          risk_level: string | null
+          table_name: string
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          risk_level?: string | null
+          table_name: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          risk_level?: string | null
+          table_name?: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -779,6 +759,19 @@ export type Database = {
         Args: { data_atual: string; tipo: string }
         Returns: string
       }
+      check_auth_rate_limit: {
+        Args: {
+          p_block_minutes?: number
+          p_identifier: string
+          p_max_attempts?: number
+          p_window_minutes?: number
+        }
+        Returns: boolean
+      }
+      encrypt_sensitive_data: {
+        Args: { data: string; salt?: string }
+        Returns: string
+      }
       get_user_profile_data: {
         Args: { user_id: string }
         Returns: {
@@ -786,6 +779,18 @@ export type Database = {
           subscription_tier: string
           user_type: string
         }[]
+      }
+      log_security_event: {
+        Args: {
+          p_action: string
+          p_new_values?: Json
+          p_old_values?: Json
+          p_record_id?: string
+          p_risk_level?: string
+          p_table_name: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
       processar_despesas_recorrentes: {
         Args: Record<PropertyKey, never>
