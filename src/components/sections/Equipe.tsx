@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Users, UserPlus, Mail, Phone, Edit, Trash2, Shield, Eye, PenTool } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Users, UserPlus, Mail, Phone, Edit, Trash2, Shield, Eye, PenTool, EyeOff } from 'lucide-react';
 import { useTeamManagement } from '@/hooks/useTeamManagement';
 import { FeatureGate } from '@/components/EnhancedFeatureAccess';
 import { LoadingStats, LoadingList } from '@/components/LoadingStates';
@@ -24,10 +25,11 @@ interface TeamMember {
 }
 
 const Equipe = () => {
-  const { members, loading, stats, addMember, updateMember, deleteMember } = useTeamManagement();
+  const { members, loading, stats, addMember, updateMember, deleteMember, getMaskedMemberData } = useTeamManagement();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [showSensitiveData, setShowSensitiveData] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -143,14 +145,26 @@ const Equipe = () => {
             <h2 className="text-3xl font-bold text-foreground">Equipe</h2>
             <p className="text-muted-foreground">Gerencie os membros da sua equipe financeira</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="rounded-xl" data-tour="add-member-button">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Adicionar Membro
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md rounded-2xl">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="show-sensitive"
+                checked={showSensitiveData}
+                onCheckedChange={setShowSensitiveData}
+              />
+              <Label htmlFor="show-sensitive" className="text-sm flex items-center gap-1">
+                {showSensitiveData ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                Mostrar dados sensíveis
+              </Label>
+            </div>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="rounded-xl" data-tour="add-member-button">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Adicionar Membro
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md rounded-2xl">
               <DialogHeader>
                 <DialogTitle>Adicionar Novo Membro</DialogTitle>
               </DialogHeader>
@@ -237,6 +251,7 @@ const Equipe = () => {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-tour="team-members-grid">
@@ -264,12 +279,16 @@ const Equipe = () => {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{membro.email}</span>
+                    <span className="text-sm">
+                      {showSensitiveData ? membro.email : getMaskedMemberData(membro, 'email')}
+                    </span>
                   </div>
                   {membro.telefone && (
                     <div className="flex items-center space-x-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{membro.telefone}</span>
+                      <span className="text-sm">
+                        {showSensitiveData ? membro.telefone : getMaskedMemberData(membro, 'telefone')}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -277,8 +296,13 @@ const Equipe = () => {
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-muted-foreground">Salário ({membro.periodicidade})</span>
-                    <span className="font-bold text-green-600">
-                      R$ {membro.salario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    <span className="font-bold text-green-600 flex items-center gap-1">
+                      {showSensitiveData ? (
+                        `R$ ${membro.salario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                      ) : (
+                        getMaskedMemberData(membro, 'salario')
+                      )}
+                      {!showSensitiveData && <Shield className="h-3 w-3 text-muted-foreground" />}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
