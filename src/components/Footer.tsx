@@ -3,7 +3,7 @@ import React from 'react';
 
 const Footer = () => {
   return (
-    <footer className="bg-background border-t border-border px-6 py-4">
+    <footer className="mt-auto bg-background border-t border-border px-6 py-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
         <div>
           Financy © 2025 - Todos os direitos reservados
