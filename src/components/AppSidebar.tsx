@@ -20,13 +20,11 @@ import {
   Bot,
   Pin,
   PinOff,
-  Folder,
-  RefreshCw
+  Folder
 } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/ui/button';
-import { RecurringTransactionManager } from '@/components/RecurringTransactionManager';
 import {
   Sidebar,
   SidebarContent,
@@ -164,24 +162,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {/* Gerenciador de Transações Recorrentes - aparece apenas na seção dashboard */}
-        {activeSection === 'painel' && !isCollapsed && (
-          <SidebarGroup>
-            <SidebarGroupLabel>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Transações Automáticas
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <div className="px-2">
-                <RecurringTransactionManager 
-                  onNavigateToSection={setActiveSection} 
-                  className="text-sm"
-                />
-              </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       <SidebarFooter>
