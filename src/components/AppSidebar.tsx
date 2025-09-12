@@ -166,11 +166,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
         </SidebarGroup>
 
         {/* Gerenciador de Transações Recorrentes - aparece apenas na seção dashboard */}
-        {activeSection === 'painel' && (
+        {activeSection === 'painel' && !isCollapsed && (
           <SidebarGroup>
-            <SidebarGroupLabel>Transações Automáticas</SidebarGroupLabel>
+            <SidebarGroupLabel>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Transações Automáticas
+            </SidebarGroupLabel>
             <SidebarGroupContent>
-              <div className="p-2">
+              <div className="px-2">
                 <RecurringTransactionManager 
                   onNavigateToSection={setActiveSection} 
                   className="text-sm"
