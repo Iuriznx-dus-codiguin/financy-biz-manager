@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -33,12 +33,14 @@ export const useRecurringTransactions = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (user && currentDashboard) {
       loadRecurringTransactions();
     }
-  }, [user, currentDashboard]);
+  }, [user?.id, currentDashboard?.id]); // Only depend on IDs to avoid loops
 
-  const loadRecurringTransactions = async () => {
+  const loadRecurringTransactions = useCallback(async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
       
@@ -46,7 +48,7 @@ export const useRecurringTransactions = () => {
       const { data: receitas, error: receitasError } = await supabase
         .from('receitas')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .eq('recorrente', true)
         .not('configuracao_recorrencia', 'is', null);
 
@@ -56,7 +58,7 @@ export const useRecurringTransactions = () => {
       const { data: despesas, error: despesasError } = await supabase
         .from('despesas')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .eq('recorrente', true)
         .not('configuracao_recorrencia', 'is', null);
 
@@ -97,7 +99,7 @@ export const useRecurringTransactions = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const calculateNextDate = (config: RecurringConfig): Date => {
     const now = new Date();
@@ -193,7 +195,9 @@ export const useRecurringTransactions = () => {
     }
   };
 
-  const processRecurringTransactions = async () => {
+  const processRecurringTransactions = useCallback(async () => {
+    if (!user || transactions.length === 0) return;
+    
     try {
       const today = new Date();
       
@@ -203,7 +207,7 @@ export const useRecurringTransactions = () => {
         if (nextDate <= today && transaction.config.enabled) {
           // Create new transaction
           const newTransaction = {
-            user_id: user!.id,
+            user_id: user.id,
             data: today.toISOString().split('T')[0],
             valor: transaction.amount,
             categoria: transaction.category,
@@ -233,7 +237,7 @@ export const useRecurringTransactions = () => {
               }
             })
             .eq('id', parseInt(transaction.id))
-            .eq('user_id', user!.id);
+            .eq('user_id', user.id);
 
           // Create notification
           await createRecurringTransactionNotification(
@@ -249,17 +253,17 @@ export const useRecurringTransactions = () => {
       console.error('Erro ao processar transações recorrentes:', error);
       throw error;
     }
-  };
+  }, [user, transactions, currentDashboard, createRecurringTransactionNotification, loadRecurringTransactions]);
 
-  const getTransactionsDueToday = () => {
+  const getTransactionsDueToday = useCallback(() => {
     const today = new Date();
     return transactions.filter(t => {
       const nextDate = new Date(t.config.next_date);
       return nextDate.toDateString() === today.toDateString() && t.config.enabled;
     });
-  };
+  }, [transactions]);
 
-  const getTransactionsDueSoon = (days = 7) => {
+  const getTransactionsDueSoon = useCallback((days = 7) => {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + days);
     
@@ -267,7 +271,7 @@ export const useRecurringTransactions = () => {
       const nextDate = new Date(t.config.next_date);
       return nextDate <= futureDate && nextDate > new Date() && t.config.enabled;
     });
-  };
+  }, [transactions]);
 
   return {
     transactions,

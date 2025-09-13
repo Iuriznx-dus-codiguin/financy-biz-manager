@@ -18,11 +18,13 @@ import { RecurringTransactionSelector } from './RecurringTransactionSelector';
 interface RecurringTransactionManagerProps {
   className?: string;
   onNavigateToSection?: (section: string, options?: any) => void;
+  activeSection?: string;
 }
 
 export const RecurringTransactionManager: React.FC<RecurringTransactionManagerProps> = ({ 
   className, 
-  onNavigateToSection 
+  onNavigateToSection,
+  activeSection = 'painel'
 }) => {
   const {
     transactions,
@@ -44,8 +46,49 @@ export const RecurringTransactionManager: React.FC<RecurringTransactionManagerPr
     max_occurrences: undefined as number | undefined
   });
 
-  const dueToday = getTransactionsDueToday();
-  const dueSoon = getTransactionsDueSoon(7);
+  // Filter transactions based on active section
+  const getFilteredTransactions = () => {
+    if (activeSection === 'receitas') {
+      return transactions.filter(t => t.type === 'receita');
+    }
+    if (activeSection === 'despesas') {
+      return transactions.filter(t => t.type === 'despesa');
+    }
+    return transactions; // Show all in dashboard
+  };
+
+  const filteredTransactions = getFilteredTransactions();
+  const dueToday = getTransactionsDueToday().filter(t => 
+    activeSection === 'painel' || 
+    (activeSection === 'receitas' && t.type === 'receita') ||
+    (activeSection === 'despesas' && t.type === 'despesa')
+  );
+  const dueSoon = getTransactionsDueSoon(7).filter(t => 
+    activeSection === 'painel' || 
+    (activeSection === 'receitas' && t.type === 'receita') ||
+    (activeSection === 'despesas' && t.type === 'despesa')
+  );
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await processRecurringTransactions();
+      toast({
+        title: "Atualizado",
+        description: "Transações recorrentes processadas com sucesso!"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao processar transações recorrentes",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleSelectTransactionType = (type: 'receita' | 'despesa') => {
     if (onNavigateToSection) {
@@ -115,7 +158,7 @@ export const RecurringTransactionManager: React.FC<RecurringTransactionManagerPr
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Transações Recorrentes</p>
-                <p className="text-2xl font-bold">{transactions.length}</p>
+                <p className="text-2xl font-bold">{filteredTransactions.length}</p>
               </div>
             </div>
           </CardContent>
@@ -153,17 +196,39 @@ export const RecurringTransactionManager: React.FC<RecurringTransactionManagerPr
       {/* Actions */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <RefreshCw className="h-5 w-5" />
-            Gerenciar Transações Recorrentes
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5" />
+              Gerenciar Transações Recorrentes
+              {activeSection !== 'painel' && (
+                <Badge variant="outline" className="text-xs">
+                  {activeSection === 'receitas' ? 'Receitas' : 'Despesas'}
+                </Badge>
+              )}
+            </CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="gap-2"
+            >
+              <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+              Atualizar
+            </Button>
+          </div>
         </CardHeader>
 
         <CardContent>
-          {transactions.length === 0 ? (
+          {filteredTransactions.length === 0 ? (
             <div className="text-center py-8">
               <RefreshCw className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">Nenhuma Transação Recorrente</h3>
+              <h3 className="font-semibold mb-2">
+                {activeSection === 'painel' 
+                  ? 'Nenhuma Transação Recorrente' 
+                  : `Nenhuma ${activeSection === 'receitas' ? 'Receita' : 'Despesa'} Recorrente`
+                }
+              </h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Configure transações automáticas para receitas e despesas que se repetem regularmente.
               </p>
@@ -171,7 +236,7 @@ export const RecurringTransactionManager: React.FC<RecurringTransactionManagerPr
             </div>
           ) : (
             <div className="space-y-4">
-              {transactions.map((transaction) => (
+              {filteredTransactions.map((transaction) => (
                 <div key={transaction.id} className="border rounded-lg p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
@@ -239,7 +304,7 @@ export const RecurringTransactionManager: React.FC<RecurringTransactionManagerPr
         </CardContent>
       </Card>
 
-      {/* Upcoming Transactions */}
+      {/* Upcoming Transactions - only show if there are any for the current section */}
       {dueSoon.length > 0 && (
         <Card>
           <CardHeader>

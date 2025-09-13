@@ -126,7 +126,7 @@ export default function Index() {
       <SidebarProvider defaultOpen={false}>
         <div className="flex flex-1">
           <AppSidebar activeSection={activeSection} setActiveSection={handleSetActiveSection} />
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             <div className="lg:hidden">
               <MobileSidebar activeSection={activeSection} setActiveSection={handleSetActiveSection} />
             </div>
@@ -137,12 +137,22 @@ export default function Index() {
               {renderActiveSection()}
             </main>
             
-            {/* Tour Guide and Background Managers */}
+            {/* Conditional Recurring Transaction Manager - only for specific sections */}
+            {(['painel', 'receitas', 'despesas'].includes(activeSection)) && user && (
+              <div className="px-4 lg:px-8 pb-4">
+                <RecurringTransactionManager 
+                  onNavigateToSection={handleSetActiveSection} 
+                  activeSection={activeSection}
+                />
+              </div>
+            )}
+            
+            <Footer />
+            
+            {/* Tour Guide */}
             <TourGuide />
-            <RecurringTransactionManager onNavigateToSection={handleSetActiveSection} />
           </div>
         </div>
-        <Footer />
       </SidebarProvider>
     </div>
   );
