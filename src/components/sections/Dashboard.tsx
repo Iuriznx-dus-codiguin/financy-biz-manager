@@ -8,7 +8,6 @@ import { useAppContext } from '@/contexts/AppContext';
 import { InteligenciaFinanceiraAprimorada } from '@/components/InteligenciaFinanceiraAprimorada';
 import { InteligenciaFinanceiraBasica } from '@/components/InteligenciaFinanceiraBasica';
 import { UpgradeCard } from '@/components/UpgradeCard';
-import { RecurringTransactionManager } from '@/components/RecurringTransactionManager';
 
 import { TimeFilter } from '@/components/TimeFilter';
 import { TooltipInfo } from '@/components/TooltipInfo';
@@ -119,16 +118,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
             onUpgrade={() => setActiveSection?.('assinatura')}
           />
         )}
-
-        {/* Transações Automáticas no final do dashboard avançado */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Transações Automáticas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RecurringTransactionManager onNavigateToSection={setActiveSection} />
-          </CardContent>
-        </Card>
       </section>
     );
   }
@@ -266,16 +255,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           />
         </div>
       )}
-
-      {/* Transações Automáticas no final do dashboard básico */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Transações Automáticas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RecurringTransactionManager onNavigateToSection={setActiveSection} />
-        </CardContent>
-      </Card>
     </section>
   );
 };

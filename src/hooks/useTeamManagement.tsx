@@ -2,15 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
-import { useSecurity } from '@/hooks/useSecurity';
 import { toast } from '@/hooks/use-toast';
 import { 
   sanitizeInput, 
   isValidEmail, 
   sanitizeNumericInput, 
-  validateAndSanitizeInput,
-  maskSensitiveData,
-  assessSecurityRisk
+  validateAndSanitizeInput 
 } from '@/utils/security';
 
 interface TeamMember {
@@ -40,7 +37,6 @@ interface TeamStats {
 export const useTeamManagement = () => {
   const { user } = useAuth();
   const { currentDashboard } = useDashboard();
-  const { logSecurityEvent } = useSecurity();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<TeamStats>({
@@ -73,31 +69,10 @@ export const useTeamManagement = () => {
 
       if (error) throw error;
 
-      // Log security event for accessing sensitive team data
-      await logSecurityEvent(
-        'VIEW_TEAM_MEMBERS',
-        'equipe_membros',
-        undefined,
-        undefined,
-        undefined,
-        'medium'
-      );
-
       setMembers(data || []);
       calculateStats(data || []);
     } catch (error) {
       console.error('Erro ao carregar membros da equipe:', error);
-      
-      // Log security event for failed access
-      await logSecurityEvent(
-        'FAILED_VIEW_TEAM_MEMBERS',
-        'equipe_membros',
-        undefined,
-        undefined,
-        undefined,
-        'high'
-      );
-      
       toast({
         title: 'Erro',
         description: 'Não foi possível carregar os membros da equipe.',
@@ -153,15 +128,6 @@ export const useTeamManagement = () => {
         throw new Error(nomeValidation.error || 'Nome inválido');
       }
 
-      // Enhanced salary validation
-      const sanitizedSalary = sanitizeNumericInput(memberData.salario);
-      if (sanitizedSalary < 0) {
-        throw new Error('Salário deve ser um valor positivo');
-      }
-      if (sanitizedSalary > 1000000) {
-        throw new Error('Salário muito alto - verifique o valor inserido');
-      }
-
       // Sanitize and validate sensitive data
       const sanitizedData = {
         ...memberData,
@@ -169,13 +135,15 @@ export const useTeamManagement = () => {
         email: emailValidation.sanitized,
         telefone: memberData.telefone ? sanitizeInput(memberData.telefone) : null,
         cargo: sanitizeInput(memberData.cargo),
-        salario: sanitizedSalary,
+        salario: sanitizeNumericInput(memberData.salario),
         user_id: user!.id,
         dashboard_id: currentDashboard?.id || null
       };
 
-      // Assess security risk for this operation
-      const riskLevel = assessSecurityRisk('CREATE_TEAM_MEMBER', sanitizedData);
+      // Additional validation
+      if (sanitizedData.salario < 0) {
+        throw new Error('Salário deve ser um valor positivo');
+      }
 
       const { data, error } = await supabase
         .from('equipe_membros')
@@ -184,16 +152,6 @@ export const useTeamManagement = () => {
         .single();
 
       if (error) throw error;
-
-      // Log security event with appropriate risk level
-      await logSecurityEvent(
-        'CREATE_TEAM_MEMBER',
-        'equipe_membros',
-        data.id,
-        undefined,
-        sanitizedData,
-        riskLevel
-      );
 
       setMembers(prev => [data, ...prev]);
       calculateStats([data, ...members]);
@@ -206,17 +164,6 @@ export const useTeamManagement = () => {
       return data;
     } catch (error) {
       console.error('Erro ao adicionar membro:', error);
-      
-      // Log failed attempt as high-risk security event
-      await logSecurityEvent(
-        'FAILED_CREATE_TEAM_MEMBER',
-        'equipe_membros',
-        undefined,
-        undefined,
-        memberData,
-        'high'
-      );
-      
       toast({
         title: 'Erro',
         description: 'Não foi possível adicionar o membro.',
@@ -228,9 +175,6 @@ export const useTeamManagement = () => {
 
   const updateMember = async (id: string, updates: Partial<TeamMember>) => {
     try {
-      // Get current member data for logging
-      const currentMember = members.find(m => m.id === id);
-      
       // Validate and sanitize update data
       const sanitizedUpdates: Partial<TeamMember> = {};
 
@@ -262,14 +206,10 @@ export const useTeamManagement = () => {
       }
 
       if (updates.salario !== undefined) {
-        const sanitizedSalary = sanitizeNumericInput(updates.salario);
-        if (sanitizedSalary < 0) {
+        sanitizedUpdates.salario = sanitizeNumericInput(updates.salario);
+        if (sanitizedUpdates.salario < 0) {
           throw new Error('Salário deve ser um valor positivo');
         }
-        if (sanitizedSalary > 1000000) {
-          throw new Error('Salário muito alto - verifique o valor inserido');
-        }
-        sanitizedUpdates.salario = sanitizedSalary;
       }
 
       // Copy other non-sensitive fields
@@ -286,10 +226,6 @@ export const useTeamManagement = () => {
         sanitizedUpdates.permissoes = updates.permissoes;
       }
 
-      // Assess security risk - salary changes are high risk
-      const riskLevel = updates.salario !== undefined ? 'high' : 
-                       (updates.email || updates.telefone) ? 'medium' : 'low';
-
       const { data, error } = await supabase
         .from('equipe_membros')
         .update(sanitizedUpdates)
@@ -299,16 +235,6 @@ export const useTeamManagement = () => {
         .single();
 
       if (error) throw error;
-
-      // Log security event for sensitive data modification
-      await logSecurityEvent(
-        'UPDATE_TEAM_MEMBER',
-        'equipe_membros',
-        id,
-        currentMember,
-        sanitizedUpdates,
-        riskLevel
-      );
 
       setMembers(prev => prev.map(m => m.id === id ? data : m));
       calculateStats(members.map(m => m.id === id ? data : m));
@@ -321,17 +247,6 @@ export const useTeamManagement = () => {
       return data;
     } catch (error) {
       console.error('Erro ao atualizar membro:', error);
-      
-      // Log failed attempt as high-risk security event
-      await logSecurityEvent(
-        'FAILED_UPDATE_TEAM_MEMBER',
-        'equipe_membros',
-        id,
-        undefined,
-        updates,
-        'high'
-      );
-      
       toast({
         title: 'Erro',
         description: 'Não foi possível atualizar o membro.',
@@ -343,8 +258,6 @@ export const useTeamManagement = () => {
 
   const deleteMember = async (id: string) => {
     try {
-      const memberToDelete = members.find(m => m.id === id);
-      
       const { error } = await supabase
         .from('equipe_membros')
         .delete()
@@ -352,16 +265,6 @@ export const useTeamManagement = () => {
         .eq('user_id', user!.id);
 
       if (error) throw error;
-
-      // Log high-risk security event for data deletion
-      await logSecurityEvent(
-        'DELETE_TEAM_MEMBER',
-        'equipe_membros',
-        id,
-        memberToDelete,
-        undefined,
-        'high'
-      );
 
       setMembers(prev => prev.filter(m => m.id !== id));
       calculateStats(members.filter(m => m.id !== id));
@@ -372,17 +275,6 @@ export const useTeamManagement = () => {
       });
     } catch (error) {
       console.error('Erro ao remover membro:', error);
-      
-      // Log failed deletion attempt
-      await logSecurityEvent(
-        'FAILED_DELETE_TEAM_MEMBER',
-        'equipe_membros',
-        id,
-        undefined,
-        undefined,
-        'critical'
-      );
-      
       toast({
         title: 'Erro',
         description: 'Não foi possível remover o membro.',
@@ -396,21 +288,6 @@ export const useTeamManagement = () => {
     return updateMember(id, { permissoes: permissions });
   };
 
-  // Helper function to get masked member data for display
-  const getMaskedMemberData = (member: TeamMember, field: keyof TeamMember) => {
-    switch (field) {
-      case 'email':
-        return maskSensitiveData(member.email, 'email');
-      case 'telefone':
-        return member.telefone ? maskSensitiveData(member.telefone, 'phone') : '';
-      case 'salario':
-        // Only show masked salary unless user has specific permission
-        return maskSensitiveData(member.salario.toString(), 'salary');
-      default:
-        return member[field];
-    }
-  };
-
   return {
     members,
     loading,
@@ -419,7 +296,6 @@ export const useTeamManagement = () => {
     updateMember,
     deleteMember,
     updateMemberPermissions,
-    loadTeamMembers,
-    getMaskedMemberData
+    loadTeamMembers
   };
 };

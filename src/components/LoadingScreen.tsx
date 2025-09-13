@@ -32,27 +32,10 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   ];
 
   useEffect(() => {
-    let isMounted = true;
-    let hasCompleted = false;
-
-    // Timeout de segurança para forçar o completion após 8 segundos
-    const safetyTimeout = setTimeout(() => {
-      if (isMounted && !hasCompleted) {
-        console.warn('LoadingScreen: Forçando completion por timeout de segurança');
-        hasCompleted = true;
-        onComplete();
-      }
-    }, 8000);
-
     const loadAllData = async () => {
       if (!user) {
         // Se não há usuário, completar o loading mesmo assim
-        setTimeout(() => {
-          if (isMounted && !hasCompleted) {
-            hasCompleted = true;
-            onComplete();
-          }
-        }, 1000);
+        setTimeout(onComplete, 1000);
         return;
       }
 
@@ -60,8 +43,6 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
       const totalSteps = loadingSteps.length;
 
       const updateProgress = (stepKey: string) => {
-        if (!isMounted) return;
-        
         completedSteps++;
         const newProgress = (completedSteps / totalSteps) * 100;
         setProgress(newProgress);
@@ -75,50 +56,36 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
       try {
         // Passo 1: Inicialização
         await new Promise(resolve => setTimeout(resolve, 300));
-        if (!isMounted) return;
         updateProgress('init');
 
         // Passo 2: Carregar perfil
         await new Promise(resolve => setTimeout(resolve, 200));
-        if (!isMounted) return;
         updateProgress('profile');
 
-        // Passo 3: Verificar assinatura (com timeout)
+        // Passo 3: Verificar assinatura
         try {
-          await Promise.race([
-            Promise.all([
-              supabase.from('customer_subscriptions').select('*').eq('user_id', user.id).maybeSingle(),
-              supabase.from('subscribers').select('*').eq('user_id', user.id).maybeSingle()
-            ]),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+          await Promise.all([
+            supabase.from('customer_subscriptions').select('*').eq('user_id', user.id).maybeSingle(),
+            supabase.from('subscribers').select('*').eq('user_id', user.id).maybeSingle()
           ]);
         } catch (error) {
           // Erro ao carregar subscription, continuando...
         }
-        if (!isMounted) return;
         updateProgress('subscription');
 
-        // Passo 4: Carregar dashboards (com timeout)
+        // Passo 4: Carregar dashboards
         try {
-          await Promise.race([
-            supabase.from('user_dashboards').select('*').eq('user_id', user.id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
-          ]);
+          await supabase.from('user_dashboards').select('*').eq('user_id', user.id);
         } catch (error) {
           // Erro ao carregar dashboards, continuando...
         }
-        if (!isMounted) return;
         updateProgress('dashboards');
 
-        // Passo 5: Carregar receitas (com timeout)
+        // Passo 5: Carregar receitas
         try {
-          const receitasResult = await Promise.race([
-            supabase.from('receitas').select('*').eq('user_id', user.id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
-          ]) as any;
-          
-          if (receitasResult?.data && isMounted) {
-            const receitasFormatadas = receitasResult.data.map((r: any) => ({
+          const receitasResult = await supabase.from('receitas').select('*').eq('user_id', user.id);
+          if (receitasResult.data) {
+            const receitasFormatadas = receitasResult.data.map(r => ({
               id: r.id,
               data: r.data,
               descricao: r.descricao,
@@ -134,18 +101,13 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         } catch (error) {
           // Erro ao carregar receitas, continuando...
         }
-        if (!isMounted) return;
         updateProgress('receitas');
 
-        // Passo 6: Carregar despesas (com timeout)
+        // Passo 6: Carregar despesas
         try {
-          const despesasResult = await Promise.race([
-            supabase.from('despesas').select('*').eq('user_id', user.id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
-          ]) as any;
-          
-          if (despesasResult?.data && isMounted) {
-            const despesasFormatadas = despesasResult.data.map((d: any) => ({
+          const despesasResult = await supabase.from('despesas').select('*').eq('user_id', user.id);
+          if (despesasResult.data) {
+            const despesasFormatadas = despesasResult.data.map(d => ({
               id: d.id,
               data: d.data,
               descricao: d.descricao,
@@ -161,18 +123,13 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         } catch (error) {
           // Erro ao carregar despesas, continuando...
         }
-        if (!isMounted) return;
         updateProgress('despesas');
 
-        // Passo 7: Carregar impostos (com timeout)
+        // Passo 7: Carregar impostos
         try {
-          const impostosResult = await Promise.race([
-            supabase.from('impostos').select('*').eq('user_id', user.id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
-          ]) as any;
-          
-          if (impostosResult?.data && isMounted) {
-            const impostosFormatados = impostosResult.data.map((i: any) => ({
+          const impostosResult = await supabase.from('impostos').select('*').eq('user_id', user.id);
+          if (impostosResult.data) {
+            const impostosFormatados = impostosResult.data.map(i => ({
               id: i.id,
               descricao: i.descricao,
               tipo: i.tipo,
@@ -188,18 +145,13 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         } catch (error) {
           // Erro ao carregar impostos, continuando...
         }
-        if (!isMounted) return;
         updateProgress('impostos');
 
-        // Passo 8: Carregar metas (com timeout)
+        // Passo 8: Carregar metas
         try {
-          const metasResult = await Promise.race([
-            supabase.from('metas').select('*').eq('user_id', user.id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
-          ]) as any;
-          
-          if (metasResult?.data && isMounted) {
-            const metasFormatadas = metasResult.data.map((m: any) => ({
+          const metasResult = await supabase.from('metas').select('*').eq('user_id', user.id);
+          if (metasResult.data) {
+            const metasFormatadas = metasResult.data.map(m => ({
               id: m.id,
               titulo: m.titulo,
               valorMeta: m.valor_meta,
@@ -216,47 +168,28 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         } catch (error) {
           // Erro ao carregar metas, continuando...
         }
-        if (!isMounted) return;
         updateProgress('metas');
 
         // Passo 9: Finalização
         await new Promise(resolve => setTimeout(resolve, 300));
-        if (!isMounted) return;
         updateProgress('finish');
 
         // Aguardar um pouco para a animação terminar
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        if (isMounted && !hasCompleted) {
-          hasCompleted = true;
-          onComplete();
-        }
+        onComplete();
 
       } catch (error) {
         console.error('Erro geral durante o carregamento:', error);
-        
-        if (isMounted && !hasCompleted) {
-          // Forçar completar o loading mesmo com erro
-          setProgress(100);
-          setLoadingText('Finalizando...');
-          setTimeout(() => {
-            if (!hasCompleted) {
-              hasCompleted = true;
-              onComplete();
-            }
-          }, 500);
-        }
+        // Forçar completar o loading mesmo com erro
+        setProgress(100);
+        setLoadingText('Finalizando...');
+        setTimeout(onComplete, 500);
       }
     };
 
     loadAllData();
-
-    // Cleanup
-    return () => {
-      isMounted = false;
-      clearTimeout(safetyTimeout);
-    };
-  }, [user]); // Removidas dependências desnecessárias
+  }, [user, onComplete, setReceitas, setDespesas, setImpostos, setMetas]);
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-primary/20 via-background to-primary/10 flex items-center justify-center z-50">

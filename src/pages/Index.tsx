@@ -29,6 +29,7 @@ import { AppProvider } from '@/contexts/AppContext';
 import { DashboardProvider } from '@/hooks/useDashboard';
 import { TourGuide } from '@/components/TourGuide';
 import { NotificationCenter } from '@/components/NotificationCenter';
+import { RecurringTransactionManager } from '@/components/RecurringTransactionManager';
 
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
@@ -136,12 +137,13 @@ export default function Index() {
               {renderActiveSection()}
             </main>
             
-            {/* Tour Guide */}
+            {/* Tour Guide and Background Managers */}
             <TourGuide />
+            <RecurringTransactionManager onNavigateToSection={handleSetActiveSection} />
           </div>
         </div>
+        <Footer />
       </SidebarProvider>
-      <Footer />
     </div>
   );
 }
