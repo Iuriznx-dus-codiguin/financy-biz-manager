@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -31,14 +31,18 @@ export const useRecurringTransactions = () => {
   const { createRecurringTransactionNotification } = useNotifications();
   const [transactions, setTransactions] = useState<RecurringTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    if (user) {
-      loadRecurringTransactions();
-    }
-  }, [user, currentDashboard]);
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
-  const loadRecurringTransactions = async () => {
+  const loadRecurringTransactions = useCallback(async () => {
+    if (!user || !isMountedRef.current) return;
+    
     try {
       setLoading(true);
       
@@ -46,7 +50,7 @@ export const useRecurringTransactions = () => {
       const { data: receitas, error: receitasError } = await supabase
         .from('receitas')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .eq('recorrente', true)
         .not('configuracao_recorrencia', 'is', null);
 
@@ -56,11 +60,13 @@ export const useRecurringTransactions = () => {
       const { data: despesas, error: despesasError } = await supabase
         .from('despesas')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .eq('recorrente', true)
         .not('configuracao_recorrencia', 'is', null);
 
       if (despesasError) throw despesasError;
+
+      if (!isMountedRef.current) return;
 
       // Transform to unified format
       const allTransactions: RecurringTransaction[] = [
@@ -89,15 +95,27 @@ export const useRecurringTransactions = () => {
       setTransactions(allTransactions);
     } catch (error) {
       console.error('Erro ao carregar transações recorrentes:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar as transações recorrentes.',
-        variant: 'destructive'
-      });
+      if (isMountedRef.current) {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível carregar as transações recorrentes.',
+          variant: 'destructive'
+        });
+      }
     } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [user, createRecurringTransactionNotification]);
+
+  useEffect(() => {
+    if (user) {
+      loadRecurringTransactions();
+    } else {
       setLoading(false);
     }
-  };
+  }, [user, loadRecurringTransactions]);
 
   const calculateNextDate = (config: RecurringConfig): Date => {
     const now = new Date();
@@ -149,14 +167,19 @@ export const useRecurringTransactions = () => {
         description: 'Transação recorrente configurada com sucesso!'
       });
 
-      await loadRecurringTransactions();
+      // Reload transactions only if component is still mounted
+      if (isMountedRef.current) {
+        await loadRecurringTransactions();
+      }
     } catch (error) {
       console.error('Erro ao configurar transação recorrente:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível configurar a transação recorrente.',
-        variant: 'destructive'
-      });
+      if (isMountedRef.current) {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível configurar a transação recorrente.',
+          variant: 'destructive'
+        });
+      }
       throw error;
     }
   };
@@ -181,20 +204,27 @@ export const useRecurringTransactions = () => {
         description: 'Recorrência desabilitada com sucesso!'
       });
 
-      await loadRecurringTransactions();
+      // Reload transactions only if component is still mounted
+      if (isMountedRef.current) {
+        await loadRecurringTransactions();
+      }
     } catch (error) {
       console.error('Erro ao desabilitar recorrência:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível desabilitar a recorrência.',
-        variant: 'destructive'
-      });
+      if (isMountedRef.current) {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível desabilitar a recorrência.',
+          variant: 'destructive'
+        });
+      }
       throw error;
     }
   };
 
   const processRecurringTransactions = async () => {
     try {
+      if (!isMountedRef.current) return;
+      
       const today = new Date();
       
       for (const transaction of transactions) {
@@ -244,7 +274,10 @@ export const useRecurringTransactions = () => {
         }
       }
 
-      await loadRecurringTransactions();
+      // Reload transactions only if component is still mounted
+      if (isMountedRef.current) {
+        await loadRecurringTransactions();
+      }
     } catch (error) {
       console.error('Erro ao processar transações recorrentes:', error);
       throw error;
