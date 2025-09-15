@@ -33,10 +33,15 @@ export const useRecurringTransactions = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && currentDashboard) {
-      loadRecurringTransactions();
-    }
-  }, [user?.id, currentDashboard?.id]); // Only depend on IDs to avoid loops
+    // Aguardar carregamento inicial para evitar conflitos
+    const timer = setTimeout(() => {
+      if (user && currentDashboard) {
+        loadRecurringTransactions();
+      }
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [user?.id, currentDashboard?.id]);
 
   const loadRecurringTransactions = useCallback(async () => {
     if (!user) return;

@@ -133,9 +133,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const CACHE_TIMEOUT = 5 * 60 * 1000;
 
   useEffect(() => {
-    if (user && currentDashboard) {
-      carregarDados();
-    }
+    // Aguardar um pouco após o carregamento inicial para evitar conflitos
+    const timer = setTimeout(() => {
+      if (user && currentDashboard) {
+        carregarDados();
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [user, currentDashboard]);
 
   const carregarDados = async () => {
