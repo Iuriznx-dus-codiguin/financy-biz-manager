@@ -138,7 +138,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (user && currentDashboard) {
         carregarDados();
       }
-    }, 100);
+    }, 150); // Reduzido para 150ms para melhor fluidez
 
     return () => clearTimeout(timer);
   }, [user, currentDashboard]);

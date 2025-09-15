@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -30,23 +30,35 @@ export const useRecurringTransactions = () => {
   const { currentDashboard } = useDashboard();
   const { createRecurringTransactionNotification } = useNotifications();
   const [transactions, setTransactions] = useState<RecurringTransaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const loadingRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     // Aguardar carregamento inicial para evitar conflitos
-    const timer = setTimeout(() => {
-      if (user && currentDashboard) {
-        loadRecurringTransactions();
-      }
-    }, 1500);
+    if (!isInitialized && user && currentDashboard && mountedRef.current) {
+      const timer = setTimeout(() => {
+        if (mountedRef.current && !loadingRef.current) {
+          loadRecurringTransactions();
+        }
+      }, 2000); // Aumentado para 2 segundos
 
-    return () => clearTimeout(timer);
-  }, [user?.id, currentDashboard?.id]);
+      return () => clearTimeout(timer);
+    }
+  }, [user?.id, currentDashboard?.id, isInitialized]);
 
   const loadRecurringTransactions = useCallback(async () => {
-    if (!user) return;
+    if (!user || loadingRef.current || !mountedRef.current) return;
     
     try {
+      loadingRef.current = true;
       setLoading(true);
       
       // Load receitas with recurring config
@@ -69,40 +81,48 @@ export const useRecurringTransactions = () => {
 
       if (despesasError) throw despesasError;
 
-      // Transform to unified format
-      const allTransactions: RecurringTransaction[] = [
-        ...(receitas || []).map(r => ({
-          id: r.id.toString(),
-          type: 'receita' as const,
-          description: r.descricao,
-          amount: Number(r.valor),
-          category: r.categoria,
-          config: (r.configuracao_recorrencia as any) || {},
-          created_count: 0, // TODO: Track this
-          last_created: null
-        })),
-        ...(despesas || []).map(d => ({
-          id: d.id.toString(),
-          type: 'despesa' as const,
-          description: d.descricao,
-          amount: Number(d.valor),
-          category: d.categoria,
-          config: (d.configuracao_recorrencia as any) || {},
-          created_count: 0, // TODO: Track this
-          last_created: null
-        }))
-      ];
+      if (mountedRef.current) {
+        // Transform to unified format
+        const allTransactions: RecurringTransaction[] = [
+          ...(receitas || []).map(r => ({
+            id: r.id.toString(),
+            type: 'receita' as const,
+            description: r.descricao,
+            amount: Number(r.valor),
+            category: r.categoria,
+            config: (r.configuracao_recorrencia as any) || {},
+            created_count: 0, // TODO: Track this
+            last_created: null
+          })),
+          ...(despesas || []).map(d => ({
+            id: d.id.toString(),
+            type: 'despesa' as const,
+            description: d.descricao,
+            amount: Number(d.valor),
+            category: d.categoria,
+            config: (d.configuracao_recorrencia as any) || {},
+            created_count: 0, // TODO: Track this
+            last_created: null
+          }))
+        ];
 
-      setTransactions(allTransactions);
+        setTransactions(allTransactions);
+        setIsInitialized(true);
+      }
     } catch (error) {
       console.error('Erro ao carregar transações recorrentes:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar as transações recorrentes.',
-        variant: 'destructive'
-      });
+      if (mountedRef.current) {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível carregar as transações recorrentes.',
+          variant: 'destructive'
+        });
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
+      loadingRef.current = false;
     }
   }, [user]);
 
@@ -286,6 +306,7 @@ export const useRecurringTransactions = () => {
     disableRecurring,
     processRecurringTransactions,
     getTransactionsDueToday,
-    getTransactionsDueSoon
+    getTransactionsDueSoon,
+    isInitialized
   };
 };

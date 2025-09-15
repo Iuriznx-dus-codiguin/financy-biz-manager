@@ -50,44 +50,44 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           }
         };
 
-        // Passo 1: Inicialização
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Passo 1: Inicialização - mais rápida
+        await new Promise(resolve => setTimeout(resolve, 150));
         updateProgress('init');
 
         // Passo 2: Preparando ambiente
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 100));
         updateProgress('profile');
 
         // Passo 3: Configurando sistema
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 100));
         updateProgress('subscription');
 
         // Passo 4: Carregando workspace
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 150));
         updateProgress('dashboards');
 
         // Passo 5: Inicializando dados
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 150));
         updateProgress('receitas');
 
         // Passo 6: Preparando interface
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 100));
         updateProgress('despesas');
 
         // Passo 7: Configurando recursos
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 100));
         updateProgress('impostos');
 
         // Passo 8: Finalizando configuração
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 100));
         updateProgress('metas');
 
         // Passo 9: Finalização
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 200));
         updateProgress('finish');
 
-        // Aguardar animação
-        await new Promise(resolve => setTimeout(resolve, 400));
+        // Aguardar animação final
+        await new Promise(resolve => setTimeout(resolve, 300));
 
         if (mountedRef.current && !isCompleted) {
           setIsCompleted(true);
@@ -100,14 +100,16 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           setProgress(100);
           setLoadingText('Finalizando...');
           setTimeout(() => {
-            setIsCompleted(true);
-            onComplete();
-          }, 500);
+            if (mountedRef.current) {
+              setIsCompleted(true);
+              onComplete();
+            }
+          }, 300);
         }
       }
     };
 
-    // Timeout de segurança
+    // Timeout de segurança reduzido
     const timeoutId = setTimeout(() => {
       if (!isCompleted && mountedRef.current) {
         console.warn('Loading timeout - forçando conclusão');
@@ -116,7 +118,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         setIsCompleted(true);
         onComplete();
       }
-    }, 8000);
+    }, 3000); // Reduzido para 3 segundos
 
     loadWithTimeout();
 

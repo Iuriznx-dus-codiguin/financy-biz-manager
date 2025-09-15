@@ -20,7 +20,13 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
 
   useEffect(() => {
-    checkOnboardingStatus();
+    if (user) {
+      checkOnboardingStatus();
+    } else {
+      setIsOnboardingComplete(false);
+      setOnboardingData(null);
+      setLoading(false);
+    }
   }, [user]);
 
   const checkOnboardingStatus = async () => {
@@ -54,10 +60,12 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!user) return;
 
     try {
-      // Salvar dados de onboarding
+      setLoading(true);
+
+      // Usar upsert para evitar erros de duplicação
       const { error: onboardingError } = await supabase
         .from('onboarding_data')
-        .insert({
+        .upsert({
           user_id: user.id,
           user_type: data.user_type,
           how_did_you_know: data.how_did_you_know,
@@ -65,6 +73,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           revenue_range: data.revenue_range,
           nome_preferido: data.nome_preferido,
           termos_aceitos: data.termos_aceitos
+        }, {
+          onConflict: 'user_id'
         });
 
       if (onboardingError) {
@@ -133,10 +143,14 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
 
+      // Atualizar estados locais
       setIsOnboardingComplete(true);
+      setOnboardingData(data);
     } catch (error) {
       console.error('Erro ao completar onboarding:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
