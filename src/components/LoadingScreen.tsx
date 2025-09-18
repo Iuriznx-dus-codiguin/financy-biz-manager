@@ -69,7 +69,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 flex items-center justify-center z-50 overflow-hidden">
+    <div className="fixed inset-0 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-green-900 dark:to-emerald-900 flex items-center justify-center z-50 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute inset-0 bg-grid-pattern"></div>
@@ -115,8 +115,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           }}
           className="relative mx-auto w-24 h-24"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-blue-500 to-indigo-500 rounded-full opacity-20 animate-pulse" />
-          <div className="absolute -inset-2 bg-gradient-to-r from-primary/30 to-indigo-500/30 rounded-full blur-lg animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-full opacity-20 animate-pulse" />
+          <div className="absolute -inset-2 bg-gradient-to-r from-green-500/30 to-teal-500/30 rounded-full blur-lg animate-pulse" />
           <img 
             src={financyLogo} 
             alt="Financy Logo" 
@@ -131,7 +131,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           transition={{ delay: 0.8, duration: 0.8 }}
           className="space-y-2"
         >
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
             Financy
           </h1>
           <p className="text-muted-foreground text-sm font-medium">
@@ -155,7 +155,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
               transition={{ duration: 0.5 }}
               className="flex items-center space-x-4"
             >
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-indigo-500 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
                 {React.createElement(features[currentFeature].icon, { className: "w-6 h-6 text-white" })}
               </div>
               <div className="flex-1 text-left">
@@ -180,7 +180,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           <div className="relative">
             <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-primary via-blue-500 to-indigo-500"
+                className="h-full bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500"
                 initial={{ width: "0%" }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
@@ -189,7 +189,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             
             {/* Progress indicator */}
             <motion.div 
-              className="absolute -top-1 w-5 h-5 bg-white border-2 border-primary rounded-full shadow-lg"
+              className="absolute -top-1 w-5 h-5 bg-white border-2 border-green-500 rounded-full shadow-lg"
               initial={{ left: "0%" }}
               animate={{ left: `${progress}%` }}
               transition={{ duration: 0.3, ease: "easeOut" }}
@@ -223,9 +223,9 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.6 }}
-            className="bg-gradient-to-r from-primary/10 to-indigo-500/10 backdrop-blur-sm rounded-xl p-4 border border-primary/20"
+            className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 backdrop-blur-sm rounded-xl p-4 border border-green-500/20"
           >
-            <p className="text-primary font-medium">
+            <p className="text-green-600 dark:text-green-400 font-medium">
               Olá, {onboardingData.nome_preferido}! 👋
             </p>
             <p className="text-sm text-muted-foreground mt-1">
