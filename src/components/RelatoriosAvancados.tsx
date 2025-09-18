@@ -15,7 +15,11 @@ import * as XLSX from 'xlsx';
 interface ReportData {
   tipo: string;
   periodo: string;
-  dados: any[];
+  dados: {
+    receitas: any[];
+    despesas: any[];
+    gastos_categoria: Record<string, number>;
+  };
   resumo: {
     total_receitas: number;
     total_despesas: number;
@@ -76,7 +80,7 @@ export const RelatoriosAvancados: React.FC = () => {
         receitas: receitasFiltradas,
         despesas: despesasFiltradas,
         gastos_categoria: gastosPorCategoria
-      } as any,
+      },
       resumo: {
         total_receitas: totalReceitas,
         total_despesas: totalDespesas,
