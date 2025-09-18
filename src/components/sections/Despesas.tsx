@@ -12,11 +12,7 @@ import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-rea
 import { useAppContext } from '@/contexts/AppContext';
 import { CategorySelector } from '@/components/CategorySelector';
 
-interface DespesasProps {
-  presetRecurring?: boolean;
-}
-
-const Despesas = ({ presetRecurring = false }: DespesasProps) => {
+const Despesas = () => {
   const { despesas, addDespesa, deleteDespesa, updateDespesa } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,7 +25,7 @@ const Despesas = ({ presetRecurring = false }: DespesasProps) => {
     fornecedor: '',
     valor: '',
     formaPagamento: '',
-    recorrente: presetRecurring,
+    recorrente: false,
     tipoRecorrencia: '',
     proximaData: '',
     emAndamento: false

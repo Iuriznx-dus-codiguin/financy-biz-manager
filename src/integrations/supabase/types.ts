@@ -94,33 +94,6 @@ export type Database = {
           },
         ]
       }
-      auth_rate_limits: {
-        Row: {
-          attempts: number | null
-          blocked_until: string | null
-          created_at: string | null
-          id: string
-          identifier: string
-          window_start: string | null
-        }
-        Insert: {
-          attempts?: number | null
-          blocked_until?: string | null
-          created_at?: string | null
-          id?: string
-          identifier: string
-          window_start?: string | null
-        }
-        Update: {
-          attempts?: number | null
-          blocked_until?: string | null
-          created_at?: string | null
-          id?: string
-          identifier?: string
-          window_start?: string | null
-        }
-        Relationships: []
-      }
       categorias_personalizadas: {
         Row: {
           ativo: boolean
@@ -218,7 +191,6 @@ export type Database = {
         Row: {
           categoria: string
           categoria_personalizada: string | null
-          configuracao_recorrencia: Json | null
           created_at: string | null
           dashboard_id: string | null
           data: string
@@ -236,7 +208,6 @@ export type Database = {
         Insert: {
           categoria: string
           categoria_personalizada?: string | null
-          configuracao_recorrencia?: Json | null
           created_at?: string | null
           dashboard_id?: string | null
           data: string
@@ -254,7 +225,6 @@ export type Database = {
         Update: {
           categoria?: string
           categoria_personalizada?: string | null
-          configuracao_recorrencia?: Json | null
           created_at?: string | null
           dashboard_id?: string | null
           data?: string
@@ -268,101 +238,6 @@ export type Database = {
           tipo_recorrencia?: string | null
           user_id?: string
           valor?: number
-        }
-        Relationships: []
-      }
-      equipe_membros: {
-        Row: {
-          cargo: string
-          created_at: string
-          dashboard_id: string | null
-          data_admissao: string
-          email: string
-          id: string
-          nome: string
-          periodicidade: string
-          permissoes: Json | null
-          salario: number
-          status: string
-          telefone: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          cargo: string
-          created_at?: string
-          dashboard_id?: string | null
-          data_admissao?: string
-          email: string
-          id?: string
-          nome: string
-          periodicidade?: string
-          permissoes?: Json | null
-          salario?: number
-          status?: string
-          telefone?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          cargo?: string
-          created_at?: string
-          dashboard_id?: string | null
-          data_admissao?: string
-          email?: string
-          id?: string
-          nome?: string
-          periodicidade?: string
-          permissoes?: Json | null
-          salario?: number
-          status?: string
-          telefone?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "equipe_membros_dashboard_id_fkey"
-            columns: ["dashboard_id"]
-            isOneToOne: false
-            referencedRelation: "user_dashboards"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      equipe_membros_audit: {
-        Row: {
-          action: string
-          created_at: string
-          id: string
-          ip_address: string | null
-          member_id: string | null
-          new_data: Json | null
-          old_data: Json | null
-          user_agent: string | null
-          user_id: string
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          member_id?: string | null
-          new_data?: Json | null
-          old_data?: Json | null
-          user_agent?: string | null
-          user_id: string
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          member_id?: string | null
-          new_data?: Json | null
-          old_data?: Json | null
-          user_agent?: string | null
-          user_id?: string
         }
         Relationships: []
       }
@@ -453,42 +328,6 @@ export type Database = {
         }
         Relationships: []
       }
-      notificacoes: {
-        Row: {
-          created_at: string
-          data_vencimento: string | null
-          id: string
-          lida: boolean | null
-          mensagem: string
-          metadata: Json | null
-          tipo: string
-          titulo: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          data_vencimento?: string | null
-          id?: string
-          lida?: boolean | null
-          mensagem: string
-          metadata?: Json | null
-          tipo: string
-          titulo: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          data_vencimento?: string | null
-          id?: string
-          lida?: boolean | null
-          mensagem?: string
-          metadata?: Json | null
-          tipo?: string
-          titulo?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       onboarding_data: {
         Row: {
           created_at: string
@@ -532,7 +371,6 @@ export type Database = {
           id: string
           nome_completo: string | null
           settings: Json | null
-          telefone: string | null
           updated_at: string
         }
         Insert: {
@@ -541,7 +379,6 @@ export type Database = {
           id: string
           nome_completo?: string | null
           settings?: Json | null
-          telefone?: string | null
           updated_at?: string
         }
         Update: {
@@ -550,7 +387,6 @@ export type Database = {
           id?: string
           nome_completo?: string | null
           settings?: Json | null
-          telefone?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -560,7 +396,6 @@ export type Database = {
           categoria: string
           categoria_personalizada: string | null
           cliente: string | null
-          configuracao_recorrencia: Json | null
           created_at: string | null
           dashboard_id: string | null
           data: string
@@ -578,7 +413,6 @@ export type Database = {
           categoria: string
           categoria_personalizada?: string | null
           cliente?: string | null
-          configuracao_recorrencia?: Json | null
           created_at?: string | null
           dashboard_id?: string | null
           data: string
@@ -596,7 +430,6 @@ export type Database = {
           categoria?: string
           categoria_personalizada?: string | null
           cliente?: string | null
-          configuracao_recorrencia?: Json | null
           created_at?: string | null
           dashboard_id?: string | null
           data?: string
@@ -609,48 +442,6 @@ export type Database = {
           tipo_recorrencia?: string | null
           user_id?: string
           valor?: number
-        }
-        Relationships: []
-      }
-      security_audit_logs: {
-        Row: {
-          action: string
-          id: string
-          ip_address: unknown | null
-          new_values: Json | null
-          old_values: Json | null
-          record_id: string | null
-          risk_level: string | null
-          table_name: string
-          timestamp: string | null
-          user_agent: string | null
-          user_id: string
-        }
-        Insert: {
-          action: string
-          id?: string
-          ip_address?: unknown | null
-          new_values?: Json | null
-          old_values?: Json | null
-          record_id?: string | null
-          risk_level?: string | null
-          table_name: string
-          timestamp?: string | null
-          user_agent?: string | null
-          user_id: string
-        }
-        Update: {
-          action?: string
-          id?: string
-          ip_address?: unknown | null
-          new_values?: Json | null
-          old_values?: Json | null
-          record_id?: string | null
-          risk_level?: string | null
-          table_name?: string
-          timestamp?: string | null
-          user_agent?: string | null
-          user_id?: string
         }
         Relationships: []
       }
@@ -720,36 +511,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_tour_progress: {
-        Row: {
-          completed: boolean | null
-          created_at: string
-          id: string
-          step_completed: number | null
-          tour_name: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          completed?: boolean | null
-          created_at?: string
-          id?: string
-          step_completed?: number | null
-          tour_name: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          completed?: boolean | null
-          created_at?: string
-          id?: string
-          step_completed?: number | null
-          tour_name?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -759,19 +520,6 @@ export type Database = {
         Args: { data_atual: string; tipo: string }
         Returns: string
       }
-      check_auth_rate_limit: {
-        Args: {
-          p_block_minutes?: number
-          p_identifier: string
-          p_max_attempts?: number
-          p_window_minutes?: number
-        }
-        Returns: boolean
-      }
-      encrypt_sensitive_data: {
-        Args: { data: string; salt?: string }
-        Returns: string
-      }
       get_user_profile_data: {
         Args: { user_id: string }
         Returns: {
@@ -779,18 +527,6 @@ export type Database = {
           subscription_tier: string
           user_type: string
         }[]
-      }
-      log_security_event: {
-        Args: {
-          p_action: string
-          p_new_values?: Json
-          p_old_values?: Json
-          p_record_id?: string
-          p_risk_level?: string
-          p_table_name: string
-          p_user_id: string
-        }
-        Returns: undefined
       }
       processar_despesas_recorrentes: {
         Args: Record<PropertyKey, never>

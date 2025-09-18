@@ -106,15 +106,13 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     if (currentStep < 8) {
       setCurrentStep(currentStep + 1);
     } else {
-      if (loading) return; // Evitar múltiplos cliques
-      
       setLoading(true);
       try {
         await onComplete(data);
         triggerConfetti();
         toast({
           title: "Bem-vindo ao Financy!",
-          description: `Olá ${data.nome_preferido || 'Usuário'}! Sua plataforma foi personalizada com sucesso.`,
+          description: `Olá ${data.nome_preferido}! Sua plataforma foi personalizada com sucesso.`,
         });
       } catch (error) {
         console.error('Erro ao completar onboarding:', error);
@@ -123,7 +121,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           description: "Houve um erro ao salvar suas preferências. Tente novamente.",
           variant: "destructive"
         });
-        setLoading(false); // Permitir nova tentativa
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -404,40 +403,21 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 variant="ghost" 
                 size="sm"
                 onClick={async () => {
-                  if (loading) return; // Evitar múltiplos cliques
-                  
-                  setLoading(true);
-                  try {
-                    // Completar onboarding com dados mínimos
-                    const minimalData: OnboardingData = {
-                      user_type: 'pessoal',
-                      how_did_you_know: 'other',
-                      salary_range: '0-2000',
-                      revenue_range: '',
-                      nome_preferido: 'Usuário',
-                      termos_aceitos: true,
-                      gastos_iniciais: []
-                    };
-                    await onComplete(minimalData);
-                    triggerConfetti();
-                    toast({
-                      title: "Bem-vindo ao Financy!",
-                      description: "Sua conta foi configurada com sucesso!",
-                    });
-                  } catch (error) {
-                    console.error('Erro ao pular onboarding:', error);
-                    toast({
-                      title: "Erro",
-                      description: "Houve um erro ao configurar sua conta. Tente novamente.",
-                      variant: "destructive"
-                    });
-                    setLoading(false);
-                  }
+                  // Completar onboarding com dados mínimos
+                  const minimalData: OnboardingData = {
+                    user_type: 'pessoal',
+                    how_did_you_know: 'other',
+                    salary_range: '0-2000',
+                    revenue_range: '',
+                    nome_preferido: 'Usuário',
+                    termos_aceitos: true,
+                    gastos_iniciais: []
+                  };
+                  await onComplete(minimalData);
                 }}
-                disabled={loading}
                 className="text-muted-foreground hover:text-foreground"
               >
-                {loading ? 'Aguarde...' : 'Pular'}
+                Pular
               </Button>
             </div>
           </div>

@@ -27,9 +27,6 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
 import { DashboardProvider } from '@/hooks/useDashboard';
-import { TourGuide } from '@/components/TourGuide';
-import { NotificationCenter } from '@/components/NotificationCenter';
-import { RecurringTransactionManager } from '@/components/RecurringTransactionManager';
 
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
@@ -39,21 +36,14 @@ export default function Index() {
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
   const [showLoading, setShowLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('painel');
-  const [navigationOptions, setNavigationOptions] = useState<any>({});
-
-  // Função para navegação com opções
-  const handleSetActiveSection = (section: string, options?: any) => {
-    setActiveSection(section);
-    setNavigationOptions(options || {});
-  };
 
   // Hook para gerenciar redirecionamentos baseados na assinatura
-  useSubscriptionRedirect({ setActiveSection: handleSetActiveSection, currentSection: activeSection });
+  useSubscriptionRedirect({ setActiveSection, currentSection: activeSection });
 
   // Adicionar listener para navegação customizada dos agentes
   useEffect(() => {
     const handleNavigateToSection = (event: any) => {
-      handleSetActiveSection(event.detail);
+      setActiveSection(event.detail);
     };
 
     window.addEventListener('navigate-to-section', handleNavigateToSection);
@@ -63,38 +53,24 @@ export default function Index() {
     };
   }, []);
 
-  // Se ainda está carregando autenticação
-  if (authLoading) {
+  if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Verificando autenticação...</p>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
   }
 
-  // Se não há usuário, mostrar página de login
-  if (!user) {
-    return <AuthPage />;
-  }
-
-  // Mostrar loading screen apenas para usuários autenticados
+  // Mostrar loading screen primeiro
   if (showLoading) {
     return <LoadingScreen onComplete={() => setShowLoading(false)} />;
   }
 
-  // Se ainda está carregando dados de onboarding
-  if (onboardingLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando configurações...</p>
-        </div>
-      </div>
-    );
+  if (!user) {
+    return <AuthPage />;
   }
 
   // Mostrar onboarding para novos usuários
@@ -105,11 +81,11 @@ export default function Index() {
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'painel':
-        return <Dashboard setActiveSection={handleSetActiveSection} />;
+        return <Dashboard setActiveSection={setActiveSection} />;
       case 'receitas':
-        return <Receitas presetRecurring={navigationOptions?.recurring} />;
+        return <Receitas />;
       case 'despesas':
-        return <Despesas presetRecurring={navigationOptions?.recurring} />;
+        return <Despesas />;
       case 'categorias':
         return <Categorias />;
       case 'impostos':
@@ -131,40 +107,25 @@ export default function Index() {
       case 'ajuda':
         return <Ajuda />;
       default:
-        return <Dashboard setActiveSection={handleSetActiveSection} />;
+        return <Dashboard setActiveSection={setActiveSection} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background">
       <SidebarProvider defaultOpen={false}>
-        <div className="flex flex-1">
-          <AppSidebar activeSection={activeSection} setActiveSection={handleSetActiveSection} />
-          <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex h-full w-full">
+          <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+          <div className="flex-1 flex flex-col overflow-hidden">
             <div className="lg:hidden">
-              <MobileSidebar activeSection={activeSection} setActiveSection={handleSetActiveSection} />
+              <MobileSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
             </div>
-            <GlobalSubscriptionAlert setActiveSection={handleSetActiveSection} />
-            <FreeTrialNotification setActiveSection={handleSetActiveSection} />
-            
-            <main className="flex-1 p-4 lg:p-8 space-y-6" data-tour="main-content">
+            <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
+            <FreeTrialNotification setActiveSection={setActiveSection} />
+            <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
               {renderActiveSection()}
             </main>
-            
-            {/* Conditional Recurring Transaction Manager - only for specific sections */}
-            {(['painel', 'receitas', 'despesas'].includes(activeSection)) && user && (
-              <div className="px-4 lg:px-8 pb-4">
-                <RecurringTransactionManager 
-                  onNavigateToSection={handleSetActiveSection} 
-                  activeSection={activeSection}
-                />
-              </div>
-            )}
-            
             <Footer />
-            
-            {/* Tour Guide */}
-            <TourGuide />
           </div>
         </div>
       </SidebarProvider>

@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { useAppContext } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
 
 // Import da logo
 const financyLogo = '/lovable-uploads/11a67f5c-242f-4740-b1f7-1ed6c6895f51.png';
@@ -15,8 +17,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   const [loadingText, setLoadingText] = useState('Inicializando...');
   const { user } = useAuth();
   const { onboardingData } = useOnboarding();
-  const mountedRef = useRef(true);
-  const [isCompleted, setIsCompleted] = useState(false);
+  const { setReceitas, setDespesas, setImpostos, setMetas } = useAppContext();
 
   const loadingSteps = [
     { text: 'Inicializando conexão...', key: 'init' },
@@ -31,102 +32,164 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   ];
 
   useEffect(() => {
-    if (isCompleted) return;
+    const loadAllData = async () => {
+      if (!user) {
+        // Se não há usuário, completar o loading mesmo assim
+        setTimeout(onComplete, 1000);
+        return;
+      }
 
-    const loadWithTimeout = async () => {
+      let completedSteps = 0;
+      const totalSteps = loadingSteps.length;
+
+      const updateProgress = (stepKey: string) => {
+        completedSteps++;
+        const newProgress = (completedSteps / totalSteps) * 100;
+        setProgress(newProgress);
+        
+        const step = loadingSteps.find(s => s.key === stepKey);
+        if (step) {
+          setLoadingText(step.text);
+        }
+      };
+
       try {
-        let completedSteps = 0;
-        const totalSteps = loadingSteps.length;
-
-        const updateProgress = (stepKey: string) => {
-          if (!mountedRef.current) return;
-          completedSteps++;
-          const newProgress = (completedSteps / totalSteps) * 100;
-          setProgress(newProgress);
-          
-          const step = loadingSteps.find(s => s.key === stepKey);
-          if (step) {
-            setLoadingText(step.text);
-          }
-        };
-
-        // Passo 1: Inicialização - mais rápida
-        await new Promise(resolve => setTimeout(resolve, 150));
+        // Passo 1: Inicialização
+        await new Promise(resolve => setTimeout(resolve, 300));
         updateProgress('init');
 
-        // Passo 2: Preparando ambiente
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Passo 2: Carregar perfil
+        await new Promise(resolve => setTimeout(resolve, 200));
         updateProgress('profile');
 
-        // Passo 3: Configurando sistema
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Passo 3: Verificar assinatura
+        try {
+          await Promise.all([
+            supabase.from('customer_subscriptions').select('*').eq('user_id', user.id).maybeSingle(),
+            supabase.from('subscribers').select('*').eq('user_id', user.id).maybeSingle()
+          ]);
+        } catch (error) {
+          // Erro ao carregar subscription, continuando...
+        }
         updateProgress('subscription');
 
-        // Passo 4: Carregando workspace
-        await new Promise(resolve => setTimeout(resolve, 150));
+        // Passo 4: Carregar dashboards
+        try {
+          await supabase.from('user_dashboards').select('*').eq('user_id', user.id);
+        } catch (error) {
+          // Erro ao carregar dashboards, continuando...
+        }
         updateProgress('dashboards');
 
-        // Passo 5: Inicializando dados
-        await new Promise(resolve => setTimeout(resolve, 150));
+        // Passo 5: Carregar receitas
+        try {
+          const receitasResult = await supabase.from('receitas').select('*').eq('user_id', user.id);
+          if (receitasResult.data) {
+            const receitasFormatadas = receitasResult.data.map(r => ({
+              id: r.id,
+              data: r.data,
+              descricao: r.descricao,
+              categoria: r.categoria,
+              valor: r.valor,
+              cliente: r.cliente,
+              formaPagamento: r.forma_pagamento,
+              dashboard_id: r.dashboard_id,
+              status: (r.status || 'paga') as 'paga' | 'pendente'
+            }));
+            setReceitas(receitasFormatadas);
+          }
+        } catch (error) {
+          // Erro ao carregar receitas, continuando...
+        }
         updateProgress('receitas');
 
-        // Passo 6: Preparando interface
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Passo 6: Carregar despesas
+        try {
+          const despesasResult = await supabase.from('despesas').select('*').eq('user_id', user.id);
+          if (despesasResult.data) {
+            const despesasFormatadas = despesasResult.data.map(d => ({
+              id: d.id,
+              data: d.data,
+              descricao: d.descricao,
+              categoria: d.categoria,
+              valor: d.valor,
+              fornecedor: d.fornecedor,
+              formaPagamento: d.forma_pagamento,
+              dashboard_id: d.dashboard_id,
+              status: (d.status || 'paga') as 'paga' | 'pendente'
+            }));
+            setDespesas(despesasFormatadas);
+          }
+        } catch (error) {
+          // Erro ao carregar despesas, continuando...
+        }
         updateProgress('despesas');
 
-        // Passo 7: Configurando recursos
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Passo 7: Carregar impostos
+        try {
+          const impostosResult = await supabase.from('impostos').select('*').eq('user_id', user.id);
+          if (impostosResult.data) {
+            const impostosFormatados = impostosResult.data.map(i => ({
+              id: i.id,
+              descricao: i.descricao,
+              tipo: i.tipo,
+              valor: i.valor,
+              valorTipo: 'fixo' as const,
+              vencimento: i.vencimento,
+              pago: i.pago || false,
+              tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente',
+              dashboard_id: i.dashboard_id
+            }));
+            setImpostos(impostosFormatados);
+          }
+        } catch (error) {
+          // Erro ao carregar impostos, continuando...
+        }
         updateProgress('impostos');
 
-        // Passo 8: Finalizando configuração
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Passo 8: Carregar metas
+        try {
+          const metasResult = await supabase.from('metas').select('*').eq('user_id', user.id);
+          if (metasResult.data) {
+            const metasFormatadas = metasResult.data.map(m => ({
+              id: m.id,
+              titulo: m.titulo,
+              valorMeta: m.valor_meta,
+              valorAtual: m.valor_atual,
+              progresso: m.progresso,
+              prazo: m.prazo,
+              categoria: m.categoria,
+              status: m.status as 'em_andamento' | 'concluida' | 'atrasada',
+              cor: m.cor,
+              dashboard_id: m.dashboard_id
+            }));
+            setMetas(metasFormatadas);
+          }
+        } catch (error) {
+          // Erro ao carregar metas, continuando...
+        }
         updateProgress('metas');
 
         // Passo 9: Finalização
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 300));
         updateProgress('finish');
 
-        // Aguardar animação final
+        // Aguardar um pouco para a animação terminar
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        if (mountedRef.current && !isCompleted) {
-          setIsCompleted(true);
-          onComplete();
-        }
+        onComplete();
 
       } catch (error) {
-        console.error('Erro durante carregamento:', error);
-        if (mountedRef.current && !isCompleted) {
-          setProgress(100);
-          setLoadingText('Finalizando...');
-          setTimeout(() => {
-            if (mountedRef.current) {
-              setIsCompleted(true);
-              onComplete();
-            }
-          }, 300);
-        }
-      }
-    };
-
-    // Timeout de segurança reduzido
-    const timeoutId = setTimeout(() => {
-      if (!isCompleted && mountedRef.current) {
-        console.warn('Loading timeout - forçando conclusão');
+        console.error('Erro geral durante o carregamento:', error);
+        // Forçar completar o loading mesmo com erro
         setProgress(100);
         setLoadingText('Finalizando...');
-        setIsCompleted(true);
-        onComplete();
+        setTimeout(onComplete, 500);
       }
-    }, 3000); // Reduzido para 3 segundos
-
-    loadWithTimeout();
-
-    return () => {
-      clearTimeout(timeoutId);
-      mountedRef.current = false;
     };
-  }, [onComplete, isCompleted]);
+
+    loadAllData();
+  }, [user, onComplete, setReceitas, setDespesas, setImpostos, setMetas]);
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-primary/20 via-background to-primary/10 flex items-center justify-center z-50">

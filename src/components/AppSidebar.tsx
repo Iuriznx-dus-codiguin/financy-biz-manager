@@ -116,7 +116,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
       className="lg:flex hidden"
     >
       <SidebarHeader>
-        <div className="flex items-center justify-center p-4" data-tour="sidebar-logo">
+        <div className="flex items-center justify-center p-4">
           {isCollapsed && !shouldExpand ? (
             <div className="w-10 h-10 flex items-center justify-center">
               <img 
@@ -140,7 +140,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
-          <SidebarGroupContent data-tour="sidebar-menu">
+          <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
                 const Icon = item.icon;
@@ -151,7 +151,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
                       onClick={() => setActiveSection(item.id)}
                       tooltip={isCollapsed && !shouldExpand ? item.label : undefined}
                       isActive={activeSection === item.id}
-                      data-tour={`menu-${item.id}`}
                     >
                       <Icon className="h-4 w-4" />
                       <span>{item.label}</span>
@@ -169,7 +168,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
           variant="outline"
           onClick={handleThemeToggle}
           className="w-full"
-          data-tour="theme-toggle"
         >
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           {(!isCollapsed || shouldExpand) && (

@@ -24,8 +24,6 @@ interface DashboardProps {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 import { useOnboarding } from '@/hooks/useOnboarding';
-import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
-import { useEffect } from 'react';
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -34,25 +32,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [isClosingCash, setIsClosingCash] = useState(false);
   const { receitas, despesas, impostos } = useAppContext();
   const { onboardingData } = useOnboarding();
-  const { processRecurringTransactions } = useRecurringTransactions();
   
   const { isFeatureAvailable } = useFeatureAccess();
   const hasBasicIntelligence = isFeatureAvailable('inteligencia_basica');
   const hasAdvancedIntelligence = isFeatureAvailable('inteligencia_avancada');
   const hasAdvancedDashboard = isFeatureAvailable('dashboard_avancado');
-
-  // Processar transações recorrentes automaticamente ao carregar o dashboard
-  useEffect(() => {
-    const processRecurring = async () => {
-      try {
-        await processRecurringTransactions();
-      } catch (error) {
-        console.error('Erro ao processar transações recorrentes automaticamente:', error);
-      }
-    };
-
-    processRecurring();
-  }, []); // Executa apenas uma vez ao montar o componente
 
   const handleCloseCash = async () => {
     setIsClosingCash(true);
@@ -75,10 +59,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   // Dashboard avançado para planos premium
   if (hasAdvancedDashboard) {
     return (
-      <section id="painel" className="space-y-6" data-tour="dashboard-advanced">
+      <section id="painel" className="space-y-6">
         {/* Saudação personalizada */}
         {onboardingData?.nome_preferido && (
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20" data-tour="welcome-message">
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
             <h1 className="text-2xl font-bold text-primary">
               Olá, {onboardingData.nome_preferido}! 👋
             </h1>
@@ -94,9 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           dashboardType="advanced"
         />
 
-        <div data-tour="advanced-dashboard-content">
-          <DashboardAvancado timeFilter={timeFilter} setTimeFilter={setTimeFilter} />
-        </div>
+        <DashboardAvancado timeFilter={timeFilter} setTimeFilter={setTimeFilter} />
 
         {hasAdvancedIntelligence ? (
           <InteligenciaFinanceiraAprimorada
@@ -124,10 +106,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
 
   // Dashboard básico
   return (
-    <section id="painel" className="space-y-6" data-tour="dashboard-basic">
+    <section id="painel" className="space-y-6">
       {/* Saudação personalizada */}
       {onboardingData?.nome_preferido && (
-        <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20" data-tour="welcome-message">
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
           <h1 className="text-2xl font-bold text-primary">
             Olá, {onboardingData.nome_preferido}! 👋
           </h1>
@@ -151,8 +133,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         dismissible={true}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3" data-tour="dashboard-cards">
-        <Card className="hover:shadow-lg transition-shadow" data-tour="receitas-card">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total de Receitas
@@ -168,7 +150,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow" data-tour="despesas-card">
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total de Despesas
@@ -184,7 +166,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow" data-tour="saldo-card">
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Saldo
@@ -246,14 +228,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           impostos={filteredImpostos}
         />
       ) : (
-        <div data-tour="intelligence-upgrade">
-          <UpgradeCard
-            feature="Inteligência Financeira"
-            description="Análises básicas de suas finanças com insights relevantes"
-            requiredPlan="Plano gratuito"
-            onUpgrade={() => setActiveSection?.('assinatura')}
-          />
-        </div>
+        <UpgradeCard
+          feature="Inteligência Financeira"
+          description="Análises básicas de suas finanças com insights relevantes"
+          requiredPlan="Plano gratuito"
+          onUpgrade={() => setActiveSection?.('assinatura')}
+        />
       )}
     </section>
   );

@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useTheme } from '@/hooks/useTheme';
 import { useDashboard } from '@/hooks/useDashboard';
-import { NotificationCenter } from '@/components/NotificationCenter';
 
 const financyLogo = '/lovable-uploads/11a67f5c-242f-4740-b1f7-1ed6c6895f51.png';
 
@@ -12,7 +11,6 @@ const allMenuItems = [
   { id: 'painel', label: 'Painel', businessOnly: false },
   { id: 'receitas', label: 'Receitas', businessOnly: false },
   { id: 'despesas', label: 'Despesas', businessOnly: false },
-  { id: 'categorias', label: 'Categorias', businessOnly: false },
   { id: 'impostos', label: 'Impostos e Taxas', businessOnly: false },
   { id: 'equipe', label: 'Equipe', businessOnly: true },
   { id: 'metas', label: 'Objetivos', businessOnly: false },
@@ -52,8 +50,8 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   };
 
   return (
-    <div className="lg:hidden flex items-center justify-between p-4 bg-background border-b" data-tour="mobile-header">
-      <div className="flex items-center" data-tour="mobile-logo">
+    <div className="lg:hidden flex items-center justify-between p-4 bg-background border-b">
+      <div className="flex items-center">
         <img 
           src={financyLogo}
           alt="Financy" 
@@ -62,20 +60,18 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
       </div>
       
       <div className="flex items-center gap-2">
-        <NotificationCenter />
         <Button
           variant="ghost"
           size="sm"
           onClick={handleThemeToggle}
           className="p-2"
-          data-tour="mobile-theme-toggle"
         >
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
         
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="sm" className="p-2" data-tour="mobile-menu-trigger">
+            <Button variant="ghost" size="sm" className="p-2">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
@@ -83,14 +79,13 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
             <SheetHeader>
               <SheetTitle className="text-left">Menu</SheetTitle>
             </SheetHeader>
-            <div className="mt-6 space-y-2" data-tour="mobile-menu-items">
+            <div className="mt-6 space-y-2">
               {menuItems.map((item) => (
                 <Button
                   key={item.id}
                   variant={activeSection === item.id ? "default" : "ghost"}
                   className="w-full justify-start"
                   onClick={() => handleMenuClick(item.id)}
-                  data-tour={`mobile-menu-${item.id}`}
                 >
                   {item.label}
                 </Button>
