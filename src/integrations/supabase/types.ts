@@ -555,6 +555,33 @@ export type Database = {
         }
         Relationships: []
       }
+      query_cache: {
+        Row: {
+          cached_data: Json
+          created_at: string | null
+          expires_at: string
+          id: string
+          query_key: string
+          user_id: string
+        }
+        Insert: {
+          cached_data: Json
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          query_key: string
+          user_id: string
+        }
+        Update: {
+          cached_data?: Json
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          query_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       receitas: {
         Row: {
           categoria: string
@@ -772,6 +799,14 @@ export type Database = {
         Args: { data: string; salt?: string }
         Returns: string
       }
+      get_dashboard_data: {
+        Args: {
+          p_dashboard_id: string
+          p_use_cache?: boolean
+          p_user_id: string
+        }
+        Returns: Json
+      }
       get_user_profile_data: {
         Args: { user_id: string }
         Returns: {
@@ -791,6 +826,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      mask_sensitive_data: {
+        Args: { input_text: string; mask_type?: string }
+        Returns: string
       }
       processar_despesas_recorrentes: {
         Args: Record<PropertyKey, never>
