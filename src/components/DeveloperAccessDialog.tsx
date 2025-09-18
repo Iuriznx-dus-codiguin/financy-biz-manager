@@ -22,32 +22,43 @@ export const DeveloperAccessDialog: React.FC<DeveloperAccessDialogProps> = ({
   const { user } = useAuth();
 
   const VALID_DEVELOPER_KEYS = [
-    'A8k9mN2pQ7xW4vB3zR6y',
-    'F5jL8dE9rT1nY4hU6cV0',
-    'M3wP7bG2sI9kX5oQ8fA1',
-    'R6vN4kL9dF2eT8wY3cB7',
-    'S1pX9mH4qL7vN2kF6rE8',
-    'T9kR3bY8sW1mP5vN7qL4',
-    'U2hF6pK9dL3vN8cR4wX7',
-    'V7mP2kY9sW4vN6bF1qL8',
-    'W4cR8pN2kF9vL3mY7bX5',
-    'X1vN6kP9dF4mL8wY2cR7'
+    'DEV_2024_7K9mQ3xW8vN5',
+    'FINCY_DEV_3M8kL2pR9wY',
+    'ACCESS_2024_5P7nF4vX9k',
+    'MASTER_KEY_8Q2mL6vN3k',
+    'SUPER_DEV_9X5kP7mW2v',
+    'ULTRA_ACCESS_4K8mP3vX',
+    'ELITE_DEV_7M2kL9pW5v',
+    'PREMIUM_KEY_6N8kM3vP',
+    'ALPHA_DEV_2K9mL7pW4v',
+    'BETA_ACCESS_5M8kP6vN',
+    'GAMMA_KEY_3L9mP7kW2v',
+    'DELTA_DEV_8K5mL6pW9v'
   ];
 
   const handleValidateAccess = async () => {
     if (!user) {
-      toast.error('Você precisa estar logado');
+      toast.error('Você precisa estar logado para acessar esta funcionalidade');
       return;
     }
 
-    if (!VALID_DEVELOPER_KEYS.includes(accessKey)) {
-      toast.error('Chave de acesso inválida');
+    if (!accessKey.trim()) {
+      toast.error('Por favor, digite uma chave de acesso');
+      return;
+    }
+
+    if (!VALID_DEVELOPER_KEYS.includes(accessKey.trim())) {
+      toast.error('Chave de acesso inválida. Verifique e tente novamente.');
+      setAccessKey(''); // Limpar campo após erro
       return;
     }
 
     setIsValidating(true);
     
     try {
+      // Log da tentativa de ativação
+      console.log('Ativando modo desenvolvedor para:', user.email);
+      
       // Verificar se já existe um registro para este usuário
       const { data: existingSubscriber, error: checkError } = await supabase
         .from('subscribers')
@@ -56,24 +67,23 @@ export const DeveloperAccessDialog: React.FC<DeveloperAccessDialogProps> = ({
         .single();
 
       if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
+        console.warn('Erro ao verificar subscriber existente:', checkError);
       }
 
+      // Atualizar ou criar na tabela subscribers
       if (existingSubscriber) {
-        // Atualizar registro existente
         const { error: updateError } = await supabase
           .from('subscribers')
           .update({
             subscribed: true,
             subscription_tier: 'developer',
-            subscription_end: null, // Acesso ilimitado
+            subscription_end: null,
             updated_at: new Date().toISOString()
           })
           .eq('email', user.email);
 
         if (updateError) throw updateError;
       } else {
-        // Criar novo registro
         const { error: insertError } = await supabase
           .from('subscribers')
           .insert({
@@ -81,24 +91,31 @@ export const DeveloperAccessDialog: React.FC<DeveloperAccessDialogProps> = ({
             email: user.email,
             subscribed: true,
             subscription_tier: 'developer',
-            subscription_end: null // Acesso ilimitado
+            subscription_end: null
           });
 
         if (insertError) throw insertError;
       }
 
-      toast.success('Modo desenvolvedor ativado com sucesso! 🚀\nVocê agora tem acesso ilimitado a todas as funcionalidades.');
+      toast.success('🚀 Modo Desenvolvedor Ativado!', {
+        description: 'Acesso ilimitado concedido. Recarregando aplicação...',
+        duration: 3000
+      });
       
+      // Limpar o campo
+      setAccessKey('');
       onClose();
       
       // Recarregar a página após um pequeno delay
       setTimeout(() => {
         window.location.reload();
-      }, 2000);
+      }, 1500);
 
     } catch (error) {
-      console.error('Erro ao ativar modo desenvolvedor:', error);
-      toast.error('Erro ao ativar modo desenvolvedor. Tente novamente.');
+      console.error('Erro detalhado ao ativar modo desenvolvedor:', error);
+      toast.error('Erro interno do sistema. Contate o suporte técnico.', {
+        description: 'Código do erro salvo no console para análise.'
+      });
     } finally {
       setIsValidating(false);
     }
