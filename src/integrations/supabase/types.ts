@@ -779,7 +779,102 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      despesas_masked: {
+        Row: {
+          categoria: string | null
+          categoria_personalizada: string | null
+          created_at: string | null
+          dashboard_id: string | null
+          data: string | null
+          descricao: string | null
+          forma_pagamento: string | null
+          fornecedor: string | null
+          id: number | null
+          recorrente: boolean | null
+          status: string | null
+          user_id: string | null
+          valor: number | null
+        }
+        Insert: {
+          categoria?: string | null
+          categoria_personalizada?: string | null
+          created_at?: string | null
+          dashboard_id?: string | null
+          data?: string | null
+          descricao?: never
+          forma_pagamento?: string | null
+          fornecedor?: never
+          id?: number | null
+          recorrente?: boolean | null
+          status?: string | null
+          user_id?: string | null
+          valor?: never
+        }
+        Update: {
+          categoria?: string | null
+          categoria_personalizada?: string | null
+          created_at?: string | null
+          dashboard_id?: string | null
+          data?: string | null
+          descricao?: never
+          forma_pagamento?: string | null
+          fornecedor?: never
+          id?: number | null
+          recorrente?: boolean | null
+          status?: string | null
+          user_id?: string | null
+          valor?: never
+        }
+        Relationships: []
+      }
+      receitas_masked: {
+        Row: {
+          categoria: string | null
+          categoria_personalizada: string | null
+          cliente: string | null
+          created_at: string | null
+          dashboard_id: string | null
+          data: string | null
+          descricao: string | null
+          forma_pagamento: string | null
+          id: number | null
+          recorrente: boolean | null
+          status: string | null
+          user_id: string | null
+          valor: number | null
+        }
+        Insert: {
+          categoria?: string | null
+          categoria_personalizada?: string | null
+          cliente?: never
+          created_at?: string | null
+          dashboard_id?: string | null
+          data?: string | null
+          descricao?: never
+          forma_pagamento?: string | null
+          id?: number | null
+          recorrente?: boolean | null
+          status?: string | null
+          user_id?: string | null
+          valor?: never
+        }
+        Update: {
+          categoria?: string | null
+          categoria_personalizada?: string | null
+          cliente?: never
+          created_at?: string | null
+          dashboard_id?: string | null
+          data?: string | null
+          descricao?: never
+          forma_pagamento?: string | null
+          id?: number | null
+          recorrente?: boolean | null
+          status?: string | null
+          user_id?: string | null
+          valor?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calcular_proxima_data: {
@@ -793,6 +888,10 @@ export type Database = {
           p_max_attempts?: number
           p_window_minutes?: number
         }
+        Returns: boolean
+      }
+      check_financial_query_rate_limit: {
+        Args: { p_user_id: string }
         Returns: boolean
       }
       encrypt_sensitive_data: {
@@ -814,6 +913,16 @@ export type Database = {
           subscription_tier: string
           user_type: string
         }[]
+      }
+      log_financial_data_access: {
+        Args: {
+          p_action: string
+          p_record_id: string
+          p_sensitive_fields?: Json
+          p_table_name: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
       log_security_event: {
         Args: {
@@ -838,6 +947,10 @@ export type Database = {
       processar_receitas_recorrentes: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      user_has_dashboard_access: {
+        Args: { p_dashboard_id: string; p_user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
