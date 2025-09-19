@@ -801,14 +801,14 @@ export type Database = {
           created_at?: string | null
           dashboard_id?: string | null
           data?: string | null
-          descricao?: never
+          descricao?: string | null
           forma_pagamento?: string | null
-          fornecedor?: never
+          fornecedor?: string | null
           id?: number | null
           recorrente?: boolean | null
           status?: string | null
           user_id?: string | null
-          valor?: never
+          valor?: number | null
         }
         Update: {
           categoria?: string | null
@@ -816,14 +816,14 @@ export type Database = {
           created_at?: string | null
           dashboard_id?: string | null
           data?: string | null
-          descricao?: never
+          descricao?: string | null
           forma_pagamento?: string | null
-          fornecedor?: never
+          fornecedor?: string | null
           id?: number | null
           recorrente?: boolean | null
           status?: string | null
           user_id?: string | null
-          valor?: never
+          valor?: number | null
         }
         Relationships: []
       }
@@ -846,32 +846,32 @@ export type Database = {
         Insert: {
           categoria?: string | null
           categoria_personalizada?: string | null
-          cliente?: never
+          cliente?: string | null
           created_at?: string | null
           dashboard_id?: string | null
           data?: string | null
-          descricao?: never
+          descricao?: string | null
           forma_pagamento?: string | null
           id?: number | null
           recorrente?: boolean | null
           status?: string | null
           user_id?: string | null
-          valor?: never
+          valor?: number | null
         }
         Update: {
           categoria?: string | null
           categoria_personalizada?: string | null
-          cliente?: never
+          cliente?: string | null
           created_at?: string | null
           dashboard_id?: string | null
           data?: string | null
-          descricao?: never
+          descricao?: string | null
           forma_pagamento?: string | null
           id?: number | null
           recorrente?: boolean | null
           status?: string | null
           user_id?: string | null
-          valor?: never
+          valor?: number | null
         }
         Relationships: []
       }
@@ -913,6 +913,10 @@ export type Database = {
           subscription_tier: string
           user_type: string
         }[]
+      }
+      log_bulk_financial_query: {
+        Args: { p_query_type: string; p_table_name: string; p_user_id: string }
+        Returns: undefined
       }
       log_financial_data_access: {
         Args: {
