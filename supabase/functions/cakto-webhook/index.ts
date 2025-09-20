@@ -86,6 +86,30 @@ serve(safeHandler(async (req) => {
 
       console.log('Receita registrada com sucesso:', receita);
 
+      // Atualizar ou criar assinatura do usuário
+      const subscriptionEndDate = new Date();
+      subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30); // 30 dias a partir de hoje
+
+      const { error: subscriptionError } = await supabase
+        .from('subscribers')
+        .upsert({
+          user_id: profiles.id,
+          email: customer_email,
+          subscribed: true,
+          subscription_tier: 'premium',
+          subscription_end: subscriptionEndDate.toISOString(),
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'email'
+        });
+
+      if (subscriptionError) {
+        console.error('Erro ao atualizar assinatura:', subscriptionError);
+        // Não falhar o webhook por causa disso, só logar o erro
+      } else {
+        console.log('Assinatura atualizada com sucesso para:', customer_email);
+      }
+
       // Responder com sucesso
       return new Response(
         JSON.stringify({ 

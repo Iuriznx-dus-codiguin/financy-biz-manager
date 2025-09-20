@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -13,30 +13,56 @@ export const useSubscription = () => {
   const { user } = useAuth();
   const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
-  const previousSubscriptionStatus = useRef<boolean | null>(null);
 
   useEffect(() => {
     checkSubscriptionStatus();
   }, [user]);
 
-  // Verificar periodicamente o status da assinatura para detectar pagamentos processados
+  // Listener de realtime para mudanças na tabela subscribers
   useEffect(() => {
     if (!user) return;
 
-    const interval = setInterval(() => {
-      checkSubscriptionStatus();
-    }, 30000); // Verificar a cada 30 segundos
-
-    // Verificar quando a aba ganha foco (usuário retorna da página de pagamento)
-    const handleFocus = () => {
-      checkSubscriptionStatus();
-    };
-
-    window.addEventListener('focus', handleFocus);
+    const channel = supabase
+      .channel('subscription-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'subscribers',
+          filter: `email=eq.${user.email}`
+        },
+        (payload) => {
+          console.log('Mudança na assinatura detectada:', payload);
+          
+          const newData = payload.new as any;
+          const oldData = payload.old as any;
+          
+          // Se mudou de não assinado para assinado
+          if (!oldData.subscribed && newData.subscribed) {
+            // Verificar se já mostrou a notificação
+            const paymentNotificationKey = `payment_notification_shown_${user.email}`;
+            const notificationShown = localStorage.getItem(paymentNotificationKey);
+            
+            if (!notificationShown) {
+              alert("🎉 Pagamento confirmado com sucesso! Obrigado pela sua confiança, as funcionalidades de sua assinatura já estão disponíveis.");
+              localStorage.setItem(paymentNotificationKey, 'true');
+            }
+          }
+          
+          // Atualizar os dados da assinatura
+          setSubscriptionData({
+            subscribed: newData.subscribed,
+            subscription_tier: newData.subscription_tier,
+            subscription_end: newData.subscription_end,
+            stripe_customer_id: newData.stripe_customer_id
+          });
+        }
+      )
+      .subscribe();
 
     return () => {
-      clearInterval(interval);
-      window.removeEventListener('focus', handleFocus);
+      supabase.removeChannel(channel);
     };
   }, [user]);
 
@@ -56,11 +82,8 @@ export const useSubscription = () => {
         console.error('Erro ao verificar assinatura:', error);
         return;
       }
-
-      let currentSubscribed = false;
       
       if (subscriber) {
-        currentSubscribed = subscriber.subscribed;
         setSubscriptionData({
           subscribed: subscriber.subscribed,
           subscription_tier: subscriber.subscription_tier,
@@ -75,24 +98,6 @@ export const useSubscription = () => {
           stripe_customer_id: null
         });
       }
-
-      // Verificar se houve mudança de não assinado para assinado
-      const paymentNotificationKey = `payment_notification_shown_${user.email}`;
-      const notificationShown = localStorage.getItem(paymentNotificationKey);
-      
-      if (previousSubscriptionStatus.current === false && 
-          currentSubscribed === true && 
-          !notificationShown) {
-        
-        // Mostrar alert de confirmação de pagamento
-        alert("🎉 Pagamento confirmado com sucesso! Obrigado pela sua confiança, as funcionalidades de sua assinatura já estão disponíveis.");
-        
-        // Marcar como mostrado para não exibir novamente
-        localStorage.setItem(paymentNotificationKey, 'true');
-      }
-      
-      // Atualizar o status anterior
-      previousSubscriptionStatus.current = currentSubscribed;
       
     } catch (error) {
       console.error('Erro ao verificar status da assinatura:', error);
