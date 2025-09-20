@@ -825,9 +825,9 @@ export type Database = {
           created_at?: string | null
           dashboard_id?: string | null
           data?: string | null
-          descricao?: string | null
+          descricao?: never
           forma_pagamento?: string | null
-          fornecedor?: string | null
+          fornecedor?: never
           id?: number | null
           recorrente?: boolean | null
           status?: string | null
@@ -840,9 +840,9 @@ export type Database = {
           created_at?: string | null
           dashboard_id?: string | null
           data?: string | null
-          descricao?: string | null
+          descricao?: never
           forma_pagamento?: string | null
-          fornecedor?: string | null
+          fornecedor?: never
           id?: number | null
           recorrente?: boolean | null
           status?: string | null
@@ -870,11 +870,11 @@ export type Database = {
         Insert: {
           categoria?: string | null
           categoria_personalizada?: string | null
-          cliente?: string | null
+          cliente?: never
           created_at?: string | null
           dashboard_id?: string | null
           data?: string | null
-          descricao?: string | null
+          descricao?: never
           forma_pagamento?: string | null
           id?: number | null
           recorrente?: boolean | null
@@ -885,11 +885,11 @@ export type Database = {
         Update: {
           categoria?: string | null
           categoria_personalizada?: string | null
-          cliente?: string | null
+          cliente?: never
           created_at?: string | null
           dashboard_id?: string | null
           data?: string | null
-          descricao?: string | null
+          descricao?: never
           forma_pagamento?: string | null
           id?: number | null
           recorrente?: boolean | null
