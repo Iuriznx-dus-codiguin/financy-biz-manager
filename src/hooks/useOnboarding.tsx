@@ -13,6 +13,14 @@ interface OnboardingContextType {
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
+// Provide default values to prevent context errors
+const defaultContextValue: OnboardingContextType = {
+  isOnboardingComplete: false,
+  completeOnboarding: async () => {},
+  loading: true,
+  onboardingData: null
+};
+
 export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
@@ -156,8 +164,9 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
 export const useOnboarding = () => {
   const context = useContext(OnboardingContext);
-  if (context === undefined) {
-    throw new Error('useOnboarding must be used within an OnboardingProvider');
+  if (!context) {
+    console.error('useOnboarding called outside OnboardingProvider - returning default values');
+    return defaultContextValue;
   }
   return context;
 };
