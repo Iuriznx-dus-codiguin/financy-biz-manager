@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -95,6 +95,9 @@ const Metas = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Criar Nova Meta</DialogTitle>
+              <DialogDescription>
+                Defina uma nova meta financeira com valor, prazo e categoria para acompanhar seu progresso.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmitMeta} className="space-y-4">
               <div>

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-react';
@@ -151,6 +151,9 @@ const Despesas = () => {
           <DialogContent className="rounded-2xl max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Adicionar Nova Despesa</DialogTitle>
+              <DialogDescription>
+                Registre uma nova despesa com todos os detalhes necessários para controle financeiro.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddDespesa} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

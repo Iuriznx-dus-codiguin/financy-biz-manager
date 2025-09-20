@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -276,6 +276,9 @@ export const SectionTutorial = ({ section, isOpen, onClose }: SectionTutorialPro
               </div>
               <div>
                 <DialogTitle>{config.title}</DialogTitle>
+                <DialogDescription>
+                  Tutorial interativo para aprender a usar esta seção da plataforma.
+                </DialogDescription>
                 <Badge variant="secondary" className="mt-1">
                   Tutorial de Onboarding
                 </Badge>

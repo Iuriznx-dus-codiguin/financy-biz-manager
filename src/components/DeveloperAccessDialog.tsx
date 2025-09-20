@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -129,6 +129,9 @@ export const DeveloperAccessDialog: React.FC<DeveloperAccessDialogProps> = ({
             <Code2 className="h-5 w-5 text-primary" />
             Acesso de Desenvolvedor
           </DialogTitle>
+          <DialogDescription>
+            Digite a chave de acesso de desenvolvedor para ativar recursos avançados.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 pt-4">

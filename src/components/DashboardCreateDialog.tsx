@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Building, User, AlertTriangle } from 'lucide-react';
@@ -169,6 +169,9 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
             <Building className="h-5 w-5" />
             Criar Novo Dashboard
           </DialogTitle>
+          <DialogDescription>
+            Crie um novo dashboard para organizar suas informações financeiras de forma separada.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">

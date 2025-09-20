@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import { useCategoriasPersonalizadas } from '@/hooks/useCategoriasPersonalizadas';
 import * as Icons from 'lucide-react';
@@ -138,6 +138,9 @@ export function CategorySelector({ tipo, value, onChange, placeholder, className
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Nova Categoria de {tipo === 'receita' ? 'Receita' : 'Despesa'}</DialogTitle>
+              <DialogDescription>
+                Crie uma nova categoria personalizada para organizar suas {tipo === 'receita' ? 'receitas' : 'despesas'}.
+              </DialogDescription>
             </DialogHeader>
             
             <form onSubmit={handleCreateCategory} className="space-y-4">

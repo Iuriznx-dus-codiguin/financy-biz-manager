@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Users, UserPlus, Mail, Phone, Edit, Trash2, Shield, Eye, EyeOff } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { MembroEquipe } from '@/contexts/AppContext';
@@ -234,6 +234,9 @@ const Equipe = () => {
           <DialogContent className="sm:max-w-md rounded-2xl">
             <DialogHeader>
               <DialogTitle>Adicionar Novo Membro</DialogTitle>
+              <DialogDescription>
+                Adicione um novo membro à sua equipe com informações completas e configurações de acesso.
+              </DialogDescription>
             </DialogHeader>
             <FormFields />
             <div className="flex gap-2 pt-4">
@@ -390,6 +393,9 @@ const Equipe = () => {
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle>Editar Membro da Equipe</DialogTitle>
+            <DialogDescription>
+              Edite as informações do membro da equipe. Todos os dados serão atualizados no sistema.
+            </DialogDescription>
           </DialogHeader>
           <FormFields isEdit={true} />
           <div className="flex gap-2 pt-4">
