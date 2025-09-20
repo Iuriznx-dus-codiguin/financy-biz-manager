@@ -9,7 +9,6 @@ import { OnboardingProvider } from "@/hooks/useOnboarding";
 import { SectionTutorialsProvider } from "@/hooks/useSectionTutorials";
 import { AppProvider } from "@/contexts/AppContext";
 import { DashboardProvider } from "@/hooks/useDashboard";
-import { OptimizedDataProvider } from "@/components/OptimizedDataLoader";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { SettingsProvider } from "@/hooks/useSettings";
 import Index from "./pages/Index";
@@ -26,18 +25,16 @@ const App = () => (
             <OnboardingProvider>
               <SectionTutorialsProvider>
                 <DashboardProvider>
-                  <OptimizedDataProvider>
-                    <AppProvider>
-                    <Toaster />
-                    <Sonner />
-                    <BrowserRouter>
-                      <Routes>
-                        <Route path="/" element={<Index />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
-                    </AppProvider>
-                  </OptimizedDataProvider>
+                  <AppProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </BrowserRouter>
+                  </AppProvider>
                 </DashboardProvider>
               </SectionTutorialsProvider>
             </OnboardingProvider>

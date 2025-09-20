@@ -2,11 +2,12 @@ import React, { memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, AlertTriangle, Lightbulb, DollarSign } from 'lucide-react';
+import type { Receita, Despesa, Imposto } from '@/contexts/AppContext';
 
 interface InteligenciaFinanceiraBasicaProps {
-  receitas: any[];
-  despesas: any[];
-  impostos: any[];
+  receitas: Receita[];
+  despesas: Despesa[];
+  impostos: Imposto[];
 }
 
 export const InteligenciaFinanceiraBasica: React.FC<InteligenciaFinanceiraBasicaProps> = memo(({

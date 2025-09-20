@@ -1,12 +1,7 @@
 import { useMemo } from 'react';
 import { isDateInRange } from '@/utils/dateFilters';
-
-interface FinancialData {
-  receitas: any[];
-  despesas: any[];
-  impostos: any[];
-  membrosEquipe?: any[];
-}
+// Usar tipos compatíveis com o contexto existente
+import type { Receita, Despesa, Imposto, MembroEquipe } from '@/contexts/AppContext';
 
 interface FinancialCalculations {
   totalReceitas: number;
@@ -26,7 +21,12 @@ interface FinancialCalculations {
 }
 
 export const useFinancialCalculations = (
-  data: FinancialData,
+  data: {
+    receitas: Receita[];
+    despesas: Despesa[];
+    impostos: Imposto[];
+    membrosEquipe?: MembroEquipe[];
+  },
   timeFilter?: string
 ): FinancialCalculations => {
   return useMemo(() => {

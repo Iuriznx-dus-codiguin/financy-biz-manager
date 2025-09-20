@@ -5,11 +5,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAppContext } from '@/contexts/AppContext';
-import { useOptimizedFinancialData } from '@/hooks/useOptimizedFinancialData';
 import { InteligenciaFinanceiraAprimorada } from '@/components/InteligenciaFinanceiraAprimorada';
 import { InteligenciaFinanceiraBasica } from '@/components/InteligenciaFinanceiraBasica';
 import { UpgradeCard } from '@/components/UpgradeCard';
 import { OptimizedMetricCard } from '@/components/OptimizedMetricCard';
+import { useFinancialCalculations } from '@/hooks/useFinancialCalculations';
 
 import { TimeFilter } from '@/components/TimeFilter';
 import { TooltipInfo } from '@/components/TooltipInfo';
@@ -34,16 +34,35 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [periodo, setPeriodo] = useState('6meses');
   const [timeFilter, setTimeFilter] = useState('este-mes');
   const [isClosingCash, setIsClosingCash] = useState(false);
+  const { receitas, despesas, impostos } = useAppContext();
   const { onboardingData } = useOnboarding();
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('painel');
-  
-  // Usar dados otimizados
-  const { calculations, filteredData } = useOptimizedFinancialData(timeFilter);
   
   const { isFeatureAvailable } = useFeatureAccess();
   const hasBasicIntelligence = isFeatureAvailable('inteligencia_basica');
   const hasAdvancedIntelligence = isFeatureAvailable('inteligencia_avancada');
   const hasAdvancedDashboard = isFeatureAvailable('dashboard_avancado');
+  
+  // Usar cálculos otimizados
+  const financialData = useMemo(() => ({ receitas, despesas, impostos }), [receitas, despesas, impostos]);
+  const { 
+    totalReceitas, 
+    totalDespesas, 
+    totalImpostos, 
+    totalTaxas, 
+    saldo 
+  } = useFinancialCalculations(financialData, timeFilter);
+
+  // Dados filtrados para componentes
+  const filteredData = useMemo(() => {
+    return {
+      receitas: receitas.filter(r => isDateInRange(r.data, timeFilter)),
+      despesas: despesas.filter(d => isDateInRange(d.data, timeFilter)),
+      impostos: impostos.filter(i => isDateInRange(i.vencimento, timeFilter))
+    };
+  }, [receitas, despesas, impostos, timeFilter]);
+
+  const { receitas: filteredReceitas, despesas: filteredDespesas, impostos: filteredImpostos } = filteredData;
 
   const handleCloseCash = async () => {
     setIsClosingCash(true);
@@ -52,10 +71,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
       setIsDialogOpen(false);
     }, 2000);
   };
-
-  // Extrair valores calculados
-  const { totalReceitas, totalDespesas, totalImpostos, totalTaxas, saldo } = calculations;
-  const { receitas: filteredReceitas, despesas: filteredDespesas, impostos: filteredImpostos } = filteredData;
 
   // Dashboard avançado para planos premium
   if (hasAdvancedDashboard) {

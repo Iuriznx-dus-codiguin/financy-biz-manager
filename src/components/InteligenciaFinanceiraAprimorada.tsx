@@ -2,11 +2,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Target, BarChart3, PieChart, DollarSign } from 'lucide-react';
+import type { Receita, Despesa, Imposto } from '@/contexts/AppContext';
 
 interface InteligenciaFinanceiraAprimoradaProps {
-  receitas: any[];
-  despesas: any[];
-  impostos: any[];
+  receitas: Receita[];
+  despesas: Despesa[];
+  impostos: Imposto[];
 }
 
 export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAprimoradaProps> = ({
