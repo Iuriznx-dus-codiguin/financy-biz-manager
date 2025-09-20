@@ -68,7 +68,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           .from('profiles')
           .select('*, settings')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profile && (profile as any).settings) {
           const remoteSettings = JSON.parse((profile as any).settings);

@@ -21,20 +21,6 @@ export const DeveloperAccessDialog: React.FC<DeveloperAccessDialogProps> = ({
   const [isValidating, setIsValidating] = useState(false);
   const { user } = useAuth();
 
-  const VALID_DEVELOPER_KEYS = [
-    'DEV_2024_7K9mQ3xW8vN5',
-    'FINCY_DEV_3M8kL2pR9wY',
-    'ACCESS_2024_5P7nF4vX9k',
-    'MASTER_KEY_8Q2mL6vN3k',
-    'SUPER_DEV_9X5kP7mW2v',
-    'ULTRA_ACCESS_4K8mP3vX',
-    'ELITE_DEV_7M2kL9pW5v',
-    'PREMIUM_KEY_6N8kM3vP',
-    'ALPHA_DEV_2K9mL7pW4v',
-    'BETA_ACCESS_5M8kP6vN',
-    'GAMMA_KEY_3L9mP7kW2v',
-    'DELTA_DEV_8K5mL6pW9v'
-  ];
 
   const handleValidateAccess = async () => {
     if (!user) {
@@ -47,54 +33,28 @@ export const DeveloperAccessDialog: React.FC<DeveloperAccessDialogProps> = ({
       return;
     }
 
-    if (!VALID_DEVELOPER_KEYS.includes(accessKey.trim())) {
-      toast.error('Chave de acesso inválida. Verifique e tente novamente.');
-      setAccessKey(''); // Limpar campo após erro
-      return;
-    }
-
     setIsValidating(true);
     
     try {
-      // Log da tentativa de ativação
-      console.log('Ativando modo desenvolvedor para:', user.email);
-      
-      // Verificar se já existe um registro para este usuário
-      const { data: existingSubscriber, error: checkError } = await supabase
-        .from('subscribers')
-        .select('*')
-        .eq('email', user.email)
-        .single();
+      // Use secure server-side validation
+      const { data: validationResult, error: validationError } = await supabase.functions.invoke(
+        'validate-developer-key', 
+        {
+          body: { 
+            key: accessKey.trim(), 
+            userEmail: user.email 
+          }
+        }
+      );
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.warn('Erro ao verificar subscriber existente:', checkError);
+      if (validationError) {
+        throw new Error('Erro na validação: ' + validationError.message);
       }
 
-      // Atualizar ou criar na tabela subscribers
-      if (existingSubscriber) {
-        const { error: updateError } = await supabase
-          .from('subscribers')
-          .update({
-            subscribed: true,
-            subscription_tier: 'developer',
-            subscription_end: null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('email', user.email);
-
-        if (updateError) throw updateError;
-      } else {
-        const { error: insertError } = await supabase
-          .from('subscribers')
-          .insert({
-            user_id: user.id,
-            email: user.email,
-            subscribed: true,
-            subscription_tier: 'developer',
-            subscription_end: null
-          });
-
-        if (insertError) throw insertError;
+      if (!validationResult?.valid) {
+        toast.error('Chave de acesso inválida. Verifique e tente novamente.');
+        setAccessKey('');
+        return;
       }
 
       toast.success('🚀 Modo Desenvolvedor Ativado!', {

@@ -20,6 +20,9 @@ verify_jwt = true
 [functions.ai-tax-agent]
 verify_jwt = true
 
+[functions.validate-developer-key]
+verify_jwt = false
+
 [db]
 port = 54322
 shadow_port = 54320

@@ -33,7 +33,7 @@ export const SubscriptionNotification: React.FC<SubscriptionNotificationProps> =
         .from('subscribers')
         .select('*')
         .eq('email', user.email)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Erro ao verificar assinatura:', error);

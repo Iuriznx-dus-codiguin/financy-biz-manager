@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkEnv, safeHandler, constantTimeCompare, generateHmacSha256 } from '../_shared/utils.ts';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // TODO: Restringir para domínios confiáveis em produção
+  'Access-Control-Allow-Origin': 'https://app.financy.site', // Restrito ao domínio específico
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-signature',
 };
 

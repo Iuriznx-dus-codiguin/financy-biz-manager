@@ -27,7 +27,7 @@ export const FreeTrialNotification: React.FC<FreeTrialNotificationProps> = ({ se
         .from('subscribers')
         .select('*')
         .eq('email', user?.email)
-        .single();
+        .maybeSingle();
 
       if (!subscriber?.subscribed) {
         // Simular teste gratuito de 7 dias
