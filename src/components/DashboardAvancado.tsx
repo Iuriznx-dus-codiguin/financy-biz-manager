@@ -49,6 +49,7 @@ import { isDateInRange } from '@/utils/dateFilters';
 import { useAppContext } from '@/contexts/AppContext';
 import { TooltipInfo } from '@/components/TooltipInfo';
 import { useAuth } from '@/hooks/useAuth';
+import { useDashboard } from '@/hooks/useDashboard';
 
 interface DashboardAvancadoProps {
   timeFilter: string;
@@ -60,6 +61,7 @@ const COLORS = ['#6366f1', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#06b6d4'
 export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter, setTimeFilter }) => {
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const { user } = useAuth();
+  const { currentDashboard } = useDashboard();
 
   // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
@@ -95,6 +97,9 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   // Total de gastos com equipe (salários + despesas de equipe)
   const totalGastosEquipe = gastosComEquipe + gastosEquipeDespesas;
 
+  // Verificar se é dashboard pessoal
+  const isDashboardPessoal = currentDashboard?.type === 'personal';
+
   // Calcular métricas avançadas
   const totalReceitas = filteredReceitas.reduce((sum, r) => sum + r.valor, 0);
   const totalDespesas = filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
@@ -102,6 +107,27 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const totalTaxas = filteredImpostos.filter(i => i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
   const lucroLiquido = totalReceitas - totalDespesas - totalImpostos - totalTaxas;
   const margemLucro = totalReceitas > 0 ? ((lucroLiquido / totalReceitas) * 100) : 0;
+
+  // Métricas específicas para dashboard pessoal
+  const gastosAlimentacao = isDashboardPessoal 
+    ? filteredDespesas.filter(d => d.categoria === 'alimentacao' || d.categoria === 'alimentação').reduce((sum, d) => sum + d.valor, 0)
+    : 0;
+  
+  const gastosLazer = isDashboardPessoal 
+    ? filteredDespesas.filter(d => d.categoria === 'lazer' || d.categoria === 'entretenimento').reduce((sum, d) => sum + d.valor, 0)
+    : 0;
+  
+  const totalInvestido = isDashboardPessoal 
+    ? filteredDespesas.filter(d => d.categoria === 'investimentos' || d.categoria === 'poupanca' || d.categoria === 'poupança').reduce((sum, d) => sum + d.valor, 0)
+    : 0;
+  
+  const receitasTerceiros = isDashboardPessoal 
+    ? filteredReceitas.filter(r => r.categoria === 'terceiros' || r.categoria === 'freelance' || r.categoria === 'extras').reduce((sum, r) => sum + r.valor, 0)
+    : 0;
+
+  const salarioMensal = isDashboardPessoal 
+    ? filteredReceitas.filter(r => r.categoria === 'salario' || r.categoria === 'salário' || r.categoria === 'trabalho').reduce((sum, r) => sum + r.valor, 0)
+    : totalReceitas;
   
   // Total de despesas incluindo todos os gastos
   const totalTodasDespesas = totalDespesas + totalImpostos + totalTaxas + totalGastosEquipe + gastosComFornecedores;
@@ -338,11 +364,11 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   return (
     <div className="space-y-6">
 
-      {/* KPIs Principais - Top */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* KPIs Principais - Top (Centralizados) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-4xl mx-auto">
         <MetricCard
-          title="Total em Receitas"
-          value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          title={isDashboardPessoal ? "Salário Mensal" : "Total em Receitas"}
+          value={`R$ ${(isDashboardPessoal ? salarioMensal : totalReceitas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           change={Math.abs(crescimentoReceitas).toFixed(1)}
           changeType={crescimentoReceitas >= 0 ? 'positive' : 'negative'}
           icon={TrendingUp}
@@ -350,7 +376,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
          />
          <MetricCard
            title="Total em Despesas"
-           value={`R$ ${totalTodasDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+           value={`R$ ${(isDashboardPessoal ? totalDespesas : totalTodasDespesas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
            change={crescimentoDespesas}
            changeType={crescimentoDespesas <= 0 ? 'positive' : 'expense_increase'}
            icon={TrendingDown}
@@ -358,79 +384,128 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
          />
       </div>
 
-       {/* Demais KPIs */}
+        {/* Demais KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        <MetricCard
-          title="Lucro Líquido"
-          value={`R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          change={crescimentoLucro}
-          changeType={crescimentoLucro >= 0 ? 'positive' : 'negative'}
-          icon={DollarSign}
-          gradient="from-green-500 to-emerald-600"
-        />
-        <MetricCard
-          title={
-            <div className="flex items-center gap-1">
-              ROI
-              <TooltipInfo content="Retorno sobre Investimento - Mede o retorno obtido em relação ao investimento realizado" />
-            </div>
-          }
-          value={roi.toFixed(2)}
-          change={crescimentoROI}
-          changeType={crescimentoROI >= 0 ? 'positive' : 'negative'}
-          icon={Target}
-          gradient="from-purple-500 to-violet-600"
-        />
-        <MetricCard
-          title="Gastos com Equipe"
-          value={`R$ ${totalGastosEquipe.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          icon={Users}
-          gradient="from-blue-500 to-indigo-600"
-        />
-        <MetricCard
-          title="Gastos com Fornecedores"
-          value={`R$ ${gastosComFornecedores.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          icon={Briefcase}
-          gradient="from-orange-500 to-amber-600"
-        />
-        <MetricCard
-          title="Total de Impostos"
-          value={`R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          change={crescimentoImpostos}
-          changeType={crescimentoImpostos <= 0 ? 'positive' : 'negative'}
-          icon={Receipt}
-          gradient="from-blue-500 to-indigo-600"
-        />
-        <MetricCard
-          title="Total de Taxas"
-          value={`R$ ${totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          change={crescimentoTaxas}
-          changeType={crescimentoTaxas <= 0 ? 'positive' : 'negative'}
-          icon={DollarSign}
-          gradient="from-orange-500 to-red-600"
-        />
-        <MetricCard
-          title={
-            <div className="flex items-center gap-1">
-              Pró-labore Recomendado
-              <TooltipInfo content="Remuneração recomendada para o sócio (28% da receita)" />
-            </div>
-          }
-          value={`R$ ${proLaboreRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          icon={Crown}
-          gradient="from-yellow-500 to-orange-600"
-        />
-        <MetricCard
-          title={
-            <div className="flex items-center gap-1">
-              Capital de Giro Recomendado
-              <TooltipInfo content="Capital recomendado para manter as operações por 3 meses" />
-            </div>
-          }
-          value={`R$ ${capitalGiroRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          icon={Zap}
-          gradient="from-teal-500 to-cyan-600"
-        />
+        {isDashboardPessoal ? (
+          // KPIs para dashboard pessoal
+          <>
+            <MetricCard
+              title="Gastos em Alimentação"
+              value={`R$ ${gastosAlimentacao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={DollarSign}
+              gradient="from-green-500 to-emerald-600"
+            />
+            <MetricCard
+              title="Gastos em Lazer"
+              value={`R$ ${gastosLazer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={Activity}
+              gradient="from-purple-500 to-violet-600"
+            />
+            <MetricCard
+              title="Total Investido"
+              value={`R$ ${totalInvestido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={TrendingUp}
+              gradient="from-blue-500 to-indigo-600"
+            />
+            <MetricCard
+              title="Receitas de Terceiros"
+              value={`R$ ${receitasTerceiros.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={Users}
+              gradient="from-orange-500 to-amber-600"
+            />
+            <MetricCard
+              title="Total de Impostos"
+              value={`R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoImpostos}
+              changeType={crescimentoImpostos <= 0 ? 'positive' : 'negative'}
+              icon={Receipt}
+              gradient="from-blue-500 to-indigo-600"
+            />
+            <MetricCard
+              title="Total de Taxas"
+              value={`R$ ${totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoTaxas}
+              changeType={crescimentoTaxas <= 0 ? 'positive' : 'negative'}
+              icon={DollarSign}
+              gradient="from-orange-500 to-red-600"
+            />
+          </>
+        ) : (
+          // KPIs para dashboard empresarial
+          <>
+            <MetricCard
+              title="Lucro Líquido"
+              value={`R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoLucro}
+              changeType={crescimentoLucro >= 0 ? 'positive' : 'negative'}
+              icon={DollarSign}
+              gradient="from-green-500 to-emerald-600"
+            />
+            <MetricCard
+              title={
+                <div className="flex items-center gap-1">
+                  ROI
+                  <TooltipInfo content="Retorno sobre Investimento - Mede o retorno obtido em relação ao investimento realizado" />
+                </div>
+              }
+              value={roi.toFixed(2)}
+              change={crescimentoROI}
+              changeType={crescimentoROI >= 0 ? 'positive' : 'negative'}
+              icon={Target}
+              gradient="from-purple-500 to-violet-600"
+            />
+            <MetricCard
+              title="Gastos com Equipe"
+              value={`R$ ${totalGastosEquipe.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={Users}
+              gradient="from-blue-500 to-indigo-600"
+            />
+            <MetricCard
+              title="Gastos com Fornecedores"
+              value={`R$ ${gastosComFornecedores.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={Briefcase}
+              gradient="from-orange-500 to-amber-600"
+            />
+            <MetricCard
+              title="Total de Impostos"
+              value={`R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoImpostos}
+              changeType={crescimentoImpostos <= 0 ? 'positive' : 'negative'}
+              icon={Receipt}
+              gradient="from-blue-500 to-indigo-600"
+            />
+            <MetricCard
+              title="Total de Taxas"
+              value={`R$ ${totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoTaxas}
+              changeType={crescimentoTaxas <= 0 ? 'positive' : 'negative'}
+              icon={DollarSign}
+              gradient="from-orange-500 to-red-600"
+            />
+            <MetricCard
+              title={
+                <div className="flex items-center gap-1">
+                  Pró-labore Recomendado
+                  <TooltipInfo content="Remuneração recomendada para o sócio (28% da receita)" />
+                </div>
+              }
+              value={`R$ ${proLaboreRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={Crown}
+              gradient="from-yellow-500 to-orange-600"
+            />
+            <MetricCard
+              title={
+                <div className="flex items-center gap-1">
+                  Capital de Giro Recomendado
+                  <TooltipInfo content="Capital recomendado para manter as operações por 3 meses" />
+                </div>
+              }
+              value={`R$ ${capitalGiroRecomendado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={Zap}
+              gradient="from-teal-500 to-cyan-600"
+            />
+          </>
+        )}
       </div>
 
       {/* Gráficos Avançados */}
