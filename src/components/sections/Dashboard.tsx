@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAppContext } from '@/contexts/AppContext';
+import { useOptimizedFinancialData } from '@/hooks/useOptimizedFinancialData';
 import { InteligenciaFinanceiraAprimorada } from '@/components/InteligenciaFinanceiraAprimorada';
 import { InteligenciaFinanceiraBasica } from '@/components/InteligenciaFinanceiraBasica';
 import { UpgradeCard } from '@/components/UpgradeCard';
+import { OptimizedMetricCard } from '@/components/OptimizedMetricCard';
 
 import { TimeFilter } from '@/components/TimeFilter';
 import { TooltipInfo } from '@/components/TooltipInfo';
@@ -32,9 +34,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [periodo, setPeriodo] = useState('6meses');
   const [timeFilter, setTimeFilter] = useState('este-mes');
   const [isClosingCash, setIsClosingCash] = useState(false);
-  const { receitas, despesas, impostos } = useAppContext();
   const { onboardingData } = useOnboarding();
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('painel');
+  
+  // Usar dados otimizados
+  const { calculations, filteredData } = useOptimizedFinancialData(timeFilter);
   
   const { isFeatureAvailable } = useFeatureAccess();
   const hasBasicIntelligence = isFeatureAvailable('inteligencia_basica');
@@ -49,15 +53,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
     }, 2000);
   };
 
-  const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
-  const filteredDespesas = despesas.filter(d => isDateInRange(d.data, timeFilter));
-  const filteredImpostos = impostos.filter(i => isDateInRange(i.vencimento, timeFilter));
-
-  const totalReceitas = filteredReceitas.reduce((sum, r) => sum + r.valor, 0);
-  const totalDespesas = filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
-  const totalImpostos = filteredImpostos.filter(i => i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
-  const totalTaxas = filteredImpostos.filter(i => i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
-  const saldo = totalReceitas - totalDespesas;
+  // Extrair valores calculados
+  const { totalReceitas, totalDespesas, totalImpostos, totalTaxas, saldo } = calculations;
+  const { receitas: filteredReceitas, despesas: filteredDespesas, impostos: filteredImpostos } = filteredData;
 
   // Dashboard avançado para planos premium
   if (hasAdvancedDashboard) {
@@ -149,85 +147,40 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Receitas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredReceitas.length} transações
-            </p>
-          </CardContent>
-        </Card>
+        <OptimizedMetricCard
+          title="Total de Receitas"
+          value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          subtitle={`${filteredReceitas.length} transações`}
+          valueClassName="text-2xl font-bold text-green-600"
+        />
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Despesas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              R$ {totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredDespesas.length} transações
-            </p>
-          </CardContent>
-        </Card>
+        <OptimizedMetricCard
+          title="Total de Despesas"
+          value={`R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          subtitle={`${filteredDespesas.length} transações`}
+          valueClassName="text-2xl font-bold text-red-600"
+        />
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Saldo
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Receitas - Despesas
-            </p>
-          </CardContent>
-        </Card>
+        <OptimizedMetricCard
+          title="Saldo"
+          value={`R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          subtitle="Receitas - Despesas"
+          valueClassName={`text-2xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}
+        />
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Impostos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              R$ {totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredImpostos.filter(i => i.tipo === 'imposto').length} impostos
-            </p>
-          </CardContent>
-        </Card>
+        <OptimizedMetricCard
+          title="Total de Impostos"
+          value={`R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          subtitle={`${filteredImpostos.filter(i => i.tipo === 'imposto').length} impostos`}
+          valueClassName="text-2xl font-bold text-blue-600"
+        />
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Taxas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              R$ {totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredImpostos.filter(i => i.tipo === 'taxa').length} taxas
-            </p>
-          </CardContent>
-        </Card>
+        <OptimizedMetricCard
+          title="Total de Taxas"
+          value={`R$ ${totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          subtitle={`${filteredImpostos.filter(i => i.tipo === 'taxa').length} taxas`}
+          valueClassName="text-2xl font-bold text-orange-600"
+        />
       </div>
 
       {hasAdvancedIntelligence ? (

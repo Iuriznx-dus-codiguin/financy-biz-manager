@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, AlertTriangle, Lightbulb, DollarSign } from 'lucide-react';
@@ -9,17 +9,26 @@ interface InteligenciaFinanceiraBasicaProps {
   impostos: any[];
 }
 
-export const InteligenciaFinanceiraBasica: React.FC<InteligenciaFinanceiraBasicaProps> = ({
+export const InteligenciaFinanceiraBasica: React.FC<InteligenciaFinanceiraBasicaProps> = memo(({
   receitas,
   despesas,
   impostos
 }) => {
-  const totalReceitas = receitas.reduce((sum, r) => sum + r.valor, 0);
-  const totalDespesas = despesas.reduce((sum, d) => sum + d.valor, 0);
-  const saldoAtual = totalReceitas - totalDespesas;
-  const totalImpostosAberto = impostos.filter(i => !i.pago).reduce((sum, i) => sum + i.valor, 0);
+  const { totalReceitas, totalDespesas, saldoAtual, totalImpostosAberto } = useMemo(() => {
+    const total_receitas = receitas.reduce((sum, r) => sum + r.valor, 0);
+    const total_despesas = despesas.reduce((sum, d) => sum + d.valor, 0);
+    const saldo_atual = total_receitas - total_despesas;
+    const total_impostos_aberto = impostos.filter(i => !i.pago).reduce((sum, i) => sum + i.valor, 0);
+    
+    return {
+      totalReceitas: total_receitas,
+      totalDespesas: total_despesas,
+      saldoAtual: saldo_atual,
+      totalImpostosAberto: total_impostos_aberto
+    };
+  }, [receitas, despesas, impostos]);
   
-  const gerarDicasBasicas = () => {
+  const gerarDicasBasicas = useMemo(() => {
     const dicas = [];
 
     if (saldoAtual < 0) {
@@ -66,9 +75,9 @@ export const InteligenciaFinanceiraBasica: React.FC<InteligenciaFinanceiraBasica
     }
 
     return dicas.slice(0, 3); // Máximo 3 dicas para versão básica
-  };
+  }, [saldoAtual, totalImpostosAberto, totalDespesas, totalReceitas]);
 
-  const dicas = gerarDicasBasicas();
+  const dicas = gerarDicasBasicas;
 
   const getColorByTipo = (tipo: string) => {
     switch (tipo) {
@@ -132,4 +141,4 @@ export const InteligenciaFinanceiraBasica: React.FC<InteligenciaFinanceiraBasica
       </CardContent>
     </Card>
   );
-};
+});

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -18,7 +18,7 @@ export const OptimizedDataProvider: React.FC<{ children: React.ReactNode }> = ({
   const [cache, setCache] = useState<{ [key: string]: any }>({});
   const { user } = useAuth();
 
-  const loadDashboardData = async (dashboardId: string, forceRefresh = false) => {
+  const loadDashboardData = useCallback(async (dashboardId: string, forceRefresh = false) => {
     if (!user) return null;
 
     // Verificar cache primeiro
@@ -55,9 +55,9 @@ export const OptimizedDataProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
-  const getCachedStats = async (dashboardId: string) => {
+  const getCachedStats = useCallback(async (dashboardId: string) => {
     if (!user) return null;
 
     try {
@@ -86,9 +86,9 @@ export const OptimizedDataProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error('Erro ao carregar estatísticas:', error);
       return null;
     }
-  };
+  }, [user]);
 
-  const clearCache = (dashboardId?: string) => {
+  const clearCache = useCallback((dashboardId?: string) => {
     if (dashboardId) {
       setCache(prev => {
         const newCache = { ...prev };
@@ -98,11 +98,11 @@ export const OptimizedDataProvider: React.FC<{ children: React.ReactNode }> = ({
     } else {
       setCache({});
     }
-  };
+  }, []);
 
-  // Limpar cache expirado periodicamente
-  useEffect(() => {
-    const cleanupInterval = setInterval(() => {
+  // Limpar cache expirado periodicamente com useMemo para otimização
+  const cleanupInterval = useMemo(() => {
+    return setInterval(() => {
       const now = Date.now();
       setCache(prev => {
         const cleaned = Object.entries(prev).reduce((acc, [key, value]) => {
@@ -114,17 +114,22 @@ export const OptimizedDataProvider: React.FC<{ children: React.ReactNode }> = ({
         return cleaned;
       });
     }, 300000); // Executar a cada 5 minutos
-
-    return () => clearInterval(cleanupInterval);
   }, []);
 
+  useEffect(() => {
+    cleanupInterval;
+    return () => clearInterval(cleanupInterval);
+  }, [cleanupInterval]);
+
+  const contextValue = useMemo(() => ({
+    isLoading,
+    loadDashboardData,
+    clearCache,
+    getCachedStats
+  }), [isLoading, loadDashboardData, clearCache, getCachedStats]);
+
   return (
-    <OptimizedDataContext.Provider value={{
-      isLoading,
-      loadDashboardData,
-      clearCache,
-      getCachedStats
-    }}>
+    <OptimizedDataContext.Provider value={contextValue}>
       {children}
     </OptimizedDataContext.Provider>
   );
