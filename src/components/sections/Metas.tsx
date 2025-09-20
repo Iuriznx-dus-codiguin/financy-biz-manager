@@ -75,9 +75,9 @@ const Metas = () => {
   return (
     <div className="space-y-6">
       <SectionTutorial 
-        section="metas" 
-        isOpen={showTutorial} 
-        onClose={closeTutorial} 
+        section="metas"
+        isOpen={showTutorial}
+        onClose={(completed) => closeTutorial(completed)}
       />
 
       <div className="flex items-center justify-between">

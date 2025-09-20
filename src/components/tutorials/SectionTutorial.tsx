@@ -22,7 +22,7 @@ import {
 interface SectionTutorialProps {
   section: string;
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (completed?: boolean) => void;
 }
 
 const TUTORIAL_CONFIG = {
@@ -249,7 +249,8 @@ export const SectionTutorial = ({ section, isOpen, onClose }: SectionTutorialPro
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      onClose();
+      // Tutorial completado
+      onClose(true);
     }
   };
 
@@ -260,7 +261,8 @@ export const SectionTutorial = ({ section, isOpen, onClose }: SectionTutorialPro
   };
 
   const handleSkip = () => {
-    onClose();
+    // Tutorial pulado
+    onClose(false);
   };
 
   const progress = ((currentStep + 1) / totalSteps) * 100;

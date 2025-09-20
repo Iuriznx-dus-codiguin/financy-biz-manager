@@ -77,9 +77,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
     return (
       <section id="painel" className="space-y-6">
         <SectionTutorial 
-          section="painel" 
-          isOpen={showTutorial} 
-          onClose={closeTutorial} 
+          section="painel"
+          isOpen={showTutorial}
+          onClose={(completed) => closeTutorial(completed)}
         />
 
         {/* Saudação personalizada */}
@@ -129,12 +129,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   // Dashboard básico
   return (
     <section id="painel" className="space-y-6">
-      <SectionTutorial 
-        section="painel" 
-        isOpen={showTutorial} 
-        onClose={closeTutorial} 
-      />
-
       {/* Saudação personalizada */}
       {onboardingData?.nome_preferido && (
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">

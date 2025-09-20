@@ -11,9 +11,9 @@ export const useSectionTutorialTrigger = (section: string) => {
     }
   }, [section, shouldShowTutorial, loading]);
 
-  const closeTutorial = async () => {
+  const closeTutorial = async (completed: boolean = true) => {
     setShowTutorial(false);
-    await markTutorialAsViewed(section);
+    await markTutorialAsViewed(section, completed);
   };
 
   return {

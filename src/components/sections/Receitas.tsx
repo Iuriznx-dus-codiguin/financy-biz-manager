@@ -125,9 +125,9 @@ const Receitas = () => {
   return (
     <section className="space-y-8">
       <SectionTutorial 
-        section="receitas" 
-        isOpen={showTutorial} 
-        onClose={closeTutorial} 
+        section="receitas"
+        isOpen={showTutorial}
+        onClose={(completed) => closeTutorial(completed)}
       />
 
       <div className="flex justify-between items-center">

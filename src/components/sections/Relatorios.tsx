@@ -478,9 +478,9 @@ const Relatorios = () => {
   return (
     <section id="relatorios" className="space-y-8">
       <SectionTutorial 
-        section="relatorios" 
-        isOpen={showTutorial} 
-        onClose={closeTutorial} 
+        section="relatorios"
+        isOpen={showTutorial}
+        onClose={(completed) => closeTutorial(completed)}
       />
 
       <div className="flex justify-between items-center">

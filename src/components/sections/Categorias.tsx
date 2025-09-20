@@ -124,9 +124,9 @@ export function Categorias() {
   return (
     <div className="p-6 space-y-6">
       <SectionTutorial 
-        section="categorias" 
-        isOpen={showTutorial} 
-        onClose={closeTutorial} 
+        section="categorias"
+        isOpen={showTutorial}
+        onClose={(completed) => closeTutorial(completed)}
       />
 
       <div className="flex items-center justify-between">
