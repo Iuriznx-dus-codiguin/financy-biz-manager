@@ -2,6 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { useState } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -11,7 +13,10 @@ import {
   Users, 
   Target, 
   FileText, 
-  Lock 
+  Lock,
+  ChevronRight,
+  ChevronLeft,
+  X
 } from 'lucide-react';
 
 interface SectionTutorialProps {
@@ -26,10 +31,22 @@ const TUTORIAL_CONFIG = {
     icon: BarChart3,
     color: 'bg-primary',
     steps: [
-      'Visualize um resumo completo das suas finanças',
-      'Acompanhe receitas e despesas em tempo real',
-      'Use os gráficos para análises visuais',
-      'Personalize widgets conforme sua necessidade'
+      {
+        title: 'Visão Geral',
+        description: 'Visualize um resumo completo das suas finanças em um só lugar'
+      },
+      {
+        title: 'Acompanhamento Real',
+        description: 'Monitore receitas e despesas em tempo real com atualizações automáticas'
+      },
+      {
+        title: 'Análises Visuais',
+        description: 'Use gráficos interativos para análises detalhadas dos seus dados'
+      },
+      {
+        title: 'Personalização',
+        description: 'Personalize widgets e organize o painel conforme sua necessidade'
+      }
     ]
   },
   receitas: {
@@ -37,10 +54,22 @@ const TUTORIAL_CONFIG = {
     icon: TrendingUp,
     color: 'bg-green-500',
     steps: [
-      'Registre todas as suas fontes de renda',
-      'Categorize receitas por tipo ou cliente',
-      'Configure receitas recorrentes para automatizar',
-      'Acompanhe o crescimento mensal'
+      {
+        title: 'Registrar Receitas',
+        description: 'Registre todas as suas fontes de renda de forma simples e organizada'
+      },
+      {
+        title: 'Categorização',
+        description: 'Organize receitas por tipo, cliente ou projeto para melhor controle'
+      },
+      {
+        title: 'Receitas Recorrentes',
+        description: 'Configure receitas que se repetem automaticamente todo mês'
+      },
+      {
+        title: 'Análise de Crescimento',
+        description: 'Acompanhe a evolução das suas receitas com relatórios mensais'
+      }
     ]
   },
   despesas: {
@@ -48,10 +77,22 @@ const TUTORIAL_CONFIG = {
     icon: TrendingDown,
     color: 'bg-red-500',
     steps: [
-      'Registre gastos detalhadamente',
-      'Use categorias para organizar despesas',
-      'Defina limites por categoria',
-      'Monitore tendências de gastos'
+      {
+        title: 'Registrar Gastos',
+        description: 'Registre todas as suas despesas com detalhes completos'
+      },
+      {
+        title: 'Organização por Categorias',
+        description: 'Use categorias para organizar e entender melhor seus gastos'
+      },
+      {
+        title: 'Controle de Limites',
+        description: 'Defina limites de gastos por categoria e receba alertas'
+      },
+      {
+        title: 'Análise de Tendências',
+        description: 'Monitore padrões de gastos e identifique oportunidades de economia'
+      }
     ]
   },
   categorias: {
@@ -59,10 +100,22 @@ const TUTORIAL_CONFIG = {
     icon: FolderOpen,
     color: 'bg-blue-500',
     steps: [
-      'Crie categorias personalizadas',
-      'Organize receitas e despesas',
-      'Defina cores para identificação visual',
-      'Configure subcategorias para mais detalhes'
+      {
+        title: 'Criar Categorias',
+        description: 'Crie categorias personalizadas para organizar suas transações'
+      },
+      {
+        title: 'Organização Inteligente',
+        description: 'Organize receitas e despesas de forma lógica e eficiente'
+      },
+      {
+        title: 'Identificação Visual',
+        description: 'Defina cores únicas para cada categoria para identificação rápida'
+      },
+      {
+        title: 'Subcategorias',
+        description: 'Configure subcategorias para um controle ainda mais detalhado'
+      }
     ]
   },
   impostos: {
@@ -70,10 +123,22 @@ const TUTORIAL_CONFIG = {
     icon: Calculator,
     color: 'bg-orange-500',
     steps: [
-      'Configure impostos aplicáveis',
-      'Calcule automaticamente tributações',
-      'Gere relatórios para declarações',
-      'Acompanhe obrigações fiscais'
+      {
+        title: 'Configurar Impostos',
+        description: 'Configure todos os impostos aplicáveis ao seu negócio'
+      },
+      {
+        title: 'Cálculo Automático',
+        description: 'O sistema calcula automaticamente as tributações devidas'
+      },
+      {
+        title: 'Relatórios Fiscais',
+        description: 'Gere relatórios prontos para suas declarações e obrigações'
+      },
+      {
+        title: 'Controle de Obrigações',
+        description: 'Acompanhe prazos e valores de todas as obrigações fiscais'
+      }
     ]
   },
   equipe: {
@@ -81,10 +146,22 @@ const TUTORIAL_CONFIG = {
     icon: Users,
     color: 'bg-purple-500',
     steps: [
-      'Convide membros para sua organização',
-      'Defina permissões por usuário',
-      'Acompanhe atividades da equipe',
-      'Gerencie acessos e responsabilidades'
+      {
+        title: 'Convidar Membros',
+        description: 'Convide colaboradores para acessar sua organização financeira'
+      },
+      {
+        title: 'Definir Permissões',
+        description: 'Configure diferentes níveis de acesso para cada membro'
+      },
+      {
+        title: 'Monitorar Atividades',
+        description: 'Acompanhe todas as atividades realizadas pela equipe'
+      },
+      {
+        title: 'Gerenciar Acessos',
+        description: 'Controle responsabilidades e mantenha a segurança dos dados'
+      }
     ]
   },
   metas: {
@@ -92,10 +169,22 @@ const TUTORIAL_CONFIG = {
     icon: Target,
     color: 'bg-pink-500',
     steps: [
-      'Defina metas financeiras claras',
-      'Acompanhe progresso em tempo real',
-      'Receba alertas de marcos importantes',
-      'Ajuste objetivos conforme necessário'
+      {
+        title: 'Definir Metas',
+        description: 'Estabeleça objetivos financeiros claros e mensuráveis'
+      },
+      {
+        title: 'Acompanhar Progresso',
+        description: 'Monitore o progresso das suas metas em tempo real'
+      },
+      {
+        title: 'Alertas Importantes',
+        description: 'Receba notificações quando atingir marcos importantes'
+      },
+      {
+        title: 'Ajustar Objetivos',
+        description: 'Modifique suas metas conforme as mudanças dos seus planos'
+      }
     ]
   },
   relatorios: {
@@ -103,10 +192,22 @@ const TUTORIAL_CONFIG = {
     icon: FileText,
     color: 'bg-indigo-500',
     steps: [
-      'Gere relatórios personalizados',
-      'Exporte dados em diversos formatos',
-      'Configure relatórios automáticos',
-      'Analise tendências e insights'
+      {
+        title: 'Relatórios Personalizados',
+        description: 'Crie relatórios sob medida para suas necessidades específicas'
+      },
+      {
+        title: 'Exportar Dados',
+        description: 'Exporte informações em PDF, Excel e outros formatos'
+      },
+      {
+        title: 'Relatórios Automáticos',
+        description: 'Configure relatórios para serem gerados automaticamente'
+      },
+      {
+        title: 'Insights Avançados',
+        description: 'Analise tendências e obtenha insights valiosos dos seus dados'
+      }
     ]
   },
   fechamento: {
@@ -114,60 +215,132 @@ const TUTORIAL_CONFIG = {
     icon: Lock,
     color: 'bg-slate-600',
     steps: [
-      'Realize fechamentos mensais',
-      'Confira saldos e movimentações',
-      'Gere demonstrativos de resultados',
-      'Archive períodos finalizados'
+      {
+        title: 'Fechamento Mensal',
+        description: 'Realize fechamentos organizados ao final de cada período'
+      },
+      {
+        title: 'Conferir Saldos',
+        description: 'Verifique todos os saldos e movimentações do período'
+      },
+      {
+        title: 'Demonstrativos',
+        description: 'Gere demonstrativos de resultados profissionais'
+      },
+      {
+        title: 'Arquivo de Períodos',
+        description: 'Mantenha um histórico organizado de todos os fechamentos'
+      }
     ]
   }
 };
 
 export const SectionTutorial = ({ section, isOpen, onClose }: SectionTutorialProps) => {
   const config = TUTORIAL_CONFIG[section as keyof typeof TUTORIAL_CONFIG];
+  const [currentStep, setCurrentStep] = useState(0);
   
   if (!config) return null;
 
   const Icon = config.icon;
+  const totalSteps = config.steps.length;
+  const currentStepData = config.steps[currentStep];
+
+  const handleNext = () => {
+    if (currentStep < totalSteps - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      onClose();
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleSkip = () => {
+    onClose();
+  };
+
+  const progress = ((currentStep + 1) / totalSteps) * 100;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div className={`p-2 rounded-lg ${config.color} text-white`}>
-              <Icon size={24} />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${config.color} text-white`}>
+                <Icon size={24} />
+              </div>
+              <div>
+                <DialogTitle>{config.title}</DialogTitle>
+                <Badge variant="secondary" className="mt-1">
+                  Tutorial de Onboarding
+                </Badge>
+              </div>
             </div>
-            <div>
-              <DialogTitle>{config.title}</DialogTitle>
-              <Badge variant="secondary" className="mt-1">
-                Tutorial
-              </Badge>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSkip}
+              className="h-8 w-8"
+            >
+              <X size={16} />
+            </Button>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Etapa {currentStep + 1} de {totalSteps}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSkip}
+                className="h-auto p-0 text-muted-foreground hover:text-foreground"
+              >
+                Pular tutorial
+              </Button>
             </div>
+            <Progress value={progress} className="h-2" />
           </div>
         </DialogHeader>
         
         <Card>
           <CardContent className="pt-6">
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground mb-4">
-                Aqui estão as principais funcionalidades desta seção:
-              </p>
+            <div className="text-center space-y-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center text-lg font-bold mx-auto">
+                {currentStep + 1}
+              </div>
               
-              {config.steps.map((step, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">
-                    {index + 1}
-                  </div>
-                  <p className="text-sm">{step}</p>
-                </div>
-              ))}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-lg">{currentStepData.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {currentStepData.description}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button onClick={onClose}>
-            Entendi, vamos começar!
+        <div className="flex justify-between items-center pt-2">
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={currentStep === 0}
+            className="flex items-center gap-2"
+          >
+            <ChevronLeft size={16} />
+            Anterior
+          </Button>
+          
+          <Button
+            onClick={handleNext}
+            className="flex items-center gap-2"
+          >
+            {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
+            {currentStep !== totalSteps - 1 && <ChevronRight size={16} />}
           </Button>
         </div>
       </DialogContent>
