@@ -10,10 +10,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Target, Plus, TrendingUp, DollarSign, Calendar, Award } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
+import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
+import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
 const Metas = () => {
   const { metas, addMeta } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('metas');
   const [novaMetaForm, setNovaMetaForm] = useState({
     titulo: '',
     valorMeta: 0,
@@ -71,6 +74,12 @@ const Metas = () => {
 
   return (
     <div className="space-y-6">
+      <SectionTutorial 
+        section="metas" 
+        isOpen={showTutorial} 
+        onClose={closeTutorial} 
+      />
+
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Target className="h-6 w-6 text-primary" />

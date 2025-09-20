@@ -16,6 +16,8 @@ import { isDateInRange } from '@/utils/dateFilters';
 import { Crown, Sparkles } from 'lucide-react';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { FloatingDashboardInfo } from '@/components/FloatingDashboardInfo';
+import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
+import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
 interface DashboardProps {
   setActiveSection?: (section: string) => void;
@@ -32,6 +34,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [isClosingCash, setIsClosingCash] = useState(false);
   const { receitas, despesas, impostos } = useAppContext();
   const { onboardingData } = useOnboarding();
+  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('painel');
   
   const { isFeatureAvailable } = useFeatureAccess();
   const hasBasicIntelligence = isFeatureAvailable('inteligencia_basica');
@@ -60,6 +63,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   if (hasAdvancedDashboard) {
     return (
       <section id="painel" className="space-y-6">
+        <SectionTutorial 
+          section="painel" 
+          isOpen={showTutorial} 
+          onClose={closeTutorial} 
+        />
+
         {/* Saudação personalizada */}
         {onboardingData?.nome_preferido && (
           <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
@@ -107,6 +116,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   // Dashboard básico
   return (
     <section id="painel" className="space-y-6">
+      <SectionTutorial 
+        section="painel" 
+        isOpen={showTutorial} 
+        onClose={closeTutorial} 
+      />
+
       {/* Saudação personalizada */}
       {onboardingData?.nome_preferido && (
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">

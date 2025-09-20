@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
-import { supabase } from '@/integrations/supabase/client';
 
 interface SectionTutorialsContextType {
   shouldShowTutorial: (section: string) => boolean;
@@ -39,15 +38,12 @@ export const SectionTutorialsProvider: React.FC<{ children: React.ReactNode }> =
     }
 
     try {
-      const { data, error } = await supabase
-        .from('section_tutorials')
-        .select('section_name')
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Erro ao carregar tutoriais visualizados:', error);
-      } else {
-        setViewedTutorials(data?.map(item => item.section_name) || []);
+      // Usar localStorage como backup enquanto a migração não é aplicada
+      const storageKey = `section_tutorials_${user.id}`;
+      const storedTutorials = localStorage.getItem(storageKey);
+      
+      if (storedTutorials) {
+        setViewedTutorials(JSON.parse(storedTutorials));
       }
     } catch (error) {
       console.error('Erro ao carregar tutoriais:', error);
@@ -64,19 +60,12 @@ export const SectionTutorialsProvider: React.FC<{ children: React.ReactNode }> =
     if (!user || viewedTutorials.includes(section)) return;
 
     try {
-      const { error } = await supabase
-        .from('section_tutorials')
-        .insert({
-          user_id: user.id,
-          section_name: section,
-          viewed_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('Erro ao marcar tutorial como visualizado:', error);
-      } else {
-        setViewedTutorials(prev => [...prev, section]);
-      }
+      const storageKey = `section_tutorials_${user.id}`;
+      const newViewedTutorials = [...viewedTutorials, section];
+      
+      // Salvar no localStorage
+      localStorage.setItem(storageKey, JSON.stringify(newViewedTutorials));
+      setViewedTutorials(newViewedTutorials);
     } catch (error) {
       console.error('Erro ao salvar tutorial:', error);
     }
@@ -86,16 +75,9 @@ export const SectionTutorialsProvider: React.FC<{ children: React.ReactNode }> =
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from('section_tutorials')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Erro ao resetar tutoriais:', error);
-      } else {
-        setViewedTutorials([]);
-      }
+      const storageKey = `section_tutorials_${user.id}`;
+      localStorage.removeItem(storageKey);
+      setViewedTutorials([]);
     } catch (error) {
       console.error('Erro ao resetar tutoriais:', error);
     }

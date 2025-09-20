@@ -11,6 +11,8 @@ import * as Icons from 'lucide-react';
 import { useCategoriasPersonalizadas, CategoriaPersonalizada } from '@/hooks/useCategoriasPersonalizadas';
 import { useAppContext } from '@/contexts/AppContext';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
+import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
 const iconOptions = [
   'folder', 'utensils', 'car', 'home', 'heart', 'book-open', 'gamepad-2',
@@ -28,6 +30,7 @@ const coresDisponiveis = [
 export function Categorias() {
   const { categorias, loading, adicionarCategoria, atualizarCategoria, removerCategoria } = useCategoriasPersonalizadas();
   const { despesas, receitas } = useAppContext();
+  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('categorias');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState<CategoriaPersonalizada | null>(null);
   const [novaCategoria, setNovaCategoria] = useState({
@@ -120,6 +123,12 @@ export function Categorias() {
 
   return (
     <div className="p-6 space-y-6">
+      <SectionTutorial 
+        section="categorias" 
+        isOpen={showTutorial} 
+        onClose={closeTutorial} 
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Categorias</h1>

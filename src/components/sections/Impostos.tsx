@@ -8,10 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Filter, Search, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
+import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
+import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
 const Impostos = () => {
   const { impostos, addImposto, updateImposto, deleteImposto } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('impostos');
   const [novoImposto, setNovoImposto] = useState({
     tipo: '',
     descricao: '',
@@ -61,6 +64,12 @@ const Impostos = () => {
 
   return (
     <section className="space-y-8">
+      <SectionTutorial 
+        section="impostos" 
+        isOpen={showTutorial} 
+        onClose={closeTutorial} 
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Impostos e Taxas</h2>

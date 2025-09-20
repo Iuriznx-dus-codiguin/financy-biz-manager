@@ -11,12 +11,15 @@ import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 import { FileText, Download } from 'lucide-react';
+import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
+import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
 const Relatorios = () => {
   const [selectedReport, setSelectedReport] = useState('mensal');
   const [timeFilter, setTimeFilter] = useState('este-mes');
   const [isGenerating, setIsGenerating] = useState(false);
   const { receitas, despesas, impostos } = useAppContext();
+  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('relatorios');
 
   // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
@@ -474,6 +477,12 @@ const Relatorios = () => {
 
   return (
     <section id="relatorios" className="space-y-8">
+      <SectionTutorial 
+        section="relatorios" 
+        isOpen={showTutorial} 
+        onClose={closeTutorial} 
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Relatórios</h2>

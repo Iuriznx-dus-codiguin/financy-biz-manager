@@ -639,6 +639,30 @@ export type Database = {
         }
         Relationships: []
       }
+      section_tutorials: {
+        Row: {
+          created_at: string
+          id: string
+          section_name: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          section_name: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          section_name?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: []
+      }
       security_audit_logs: {
         Row: {
           action: string

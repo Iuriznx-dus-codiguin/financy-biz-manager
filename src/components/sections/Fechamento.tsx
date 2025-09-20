@@ -4,10 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, TrendingUp, TrendingDown, DollarSign, Check, Loader2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
+import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
+import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
 const Fechamento = () => {
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('fechamento');
 
   // Calcular valores reais baseados na data selecionada
   const calcularValoresDia = (data: string) => {
@@ -65,6 +68,12 @@ const Fechamento = () => {
 
   return (
     <section className="space-y-8">
+      <SectionTutorial 
+        section="fechamento" 
+        isOpen={showTutorial} 
+        onClose={closeTutorial} 
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Fechamento de Caixa</h2>

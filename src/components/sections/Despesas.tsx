@@ -11,12 +11,15 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { CategorySelector } from '@/components/CategorySelector';
+import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
+import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
 const Despesas = () => {
   const { despesas, addDespesa, deleteDespesa, updateDespesa } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todas');
+  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('despesas');
   const [novaDespesa, setNovaDespesa] = useState({
     data: '',
     descricao: '',
@@ -127,6 +130,12 @@ const Despesas = () => {
 
   return (
     <section className="space-y-8">
+      <SectionTutorial 
+        section="despesas" 
+        isOpen={showTutorial} 
+        onClose={closeTutorial} 
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Despesas</h2>
