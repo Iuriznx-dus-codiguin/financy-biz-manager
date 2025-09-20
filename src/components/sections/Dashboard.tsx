@@ -84,24 +84,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           onClose={(completed) => closeTutorial(completed)}
         />
 
-        {/* Saudação personalizada */}
-        {onboardingData?.nome_preferido && (
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
-            <h1 className="text-2xl font-bold text-primary">
-              {currentDashboard?.isDefault 
-                ? `${onboardingData.nome_preferido}` 
-                : `Olá, ${onboardingData.nome_preferido}! 👋`
-              }
-            </h1>
-            <p className="text-muted-foreground">
-              {currentDashboard?.isDefault 
-                ? 'Bem-vindo de volta ao seu painel financeiro.' 
-                : `Dashboard: ${currentDashboard?.name || 'Atual'}`
-              }
-            </p>
-          </div>
-        )}
-
         <FloatingDashboardInfo
           timeFilter={timeFilter} 
           setTimeFilter={setTimeFilter}
@@ -137,24 +119,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   // Dashboard básico
   return (
     <section id="painel" className="space-y-6">
-      {/* Saudação personalizada */}
-      {onboardingData?.nome_preferido && (
-        <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
-          <h1 className="text-2xl font-bold text-primary">
-            {currentDashboard?.isDefault 
-              ? `${onboardingData.nome_preferido}` 
-              : `Olá, ${onboardingData.nome_preferido}! 👋`
-            }
-          </h1>
-          <p className="text-muted-foreground">
-            {currentDashboard?.isDefault 
-              ? 'Bem-vindo de volta ao seu painel financeiro.' 
-              : `Dashboard: ${currentDashboard?.name || 'Atual'}`
-            }
-          </p>
-        </div>
-      )}
-
       <FloatingDashboardInfo
         timeFilter={timeFilter} 
         setTimeFilter={setTimeFilter}

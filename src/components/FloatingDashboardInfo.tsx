@@ -7,6 +7,7 @@ import { Crown, Zap, Star, Settings, Code, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 interface FloatingDashboardInfoProps {
   timeFilter: string;
@@ -22,8 +23,9 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
   const { user } = useAuth();
   const { subscriptionTier } = useSubscription();
   const { isFeatureAvailable } = useFeatureAccess();
+  const { onboardingData } = useOnboarding();
 
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
+  const userName = onboardingData?.nome_preferido || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
   
   // Configurações de cores e ícones baseadas no plano
   const getSubscriptionBadge = () => {
