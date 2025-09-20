@@ -29,6 +29,7 @@ import { useDashboard } from '@/hooks/useDashboard';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
 import { DashboardPersonalization } from '@/components/DashboardPersonalization';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
@@ -51,11 +52,14 @@ const Configuracoes = () => {
   const { dashboards, currentDashboard, createDashboard, deleteDashboard, updateDashboardName } = useDashboard();
   const { getLimits } = useFeatureAccess();
   const { toast } = useToast();
+  const { onboardingData } = useOnboarding();
   const [isCreatingDashboard, setIsCreatingDashboard] = useState(false);
   const [isDeletingData, setIsDeletingData] = useState(false);
   const [isCreateDashboardOpen, setIsCreateDashboardOpen] = useState(false);
   const [editingDashboard, setEditingDashboard] = useState<string | null>(null);
   const [newDashboardName, setNewDashboardName] = useState('');
+  const [isEditingNome, setIsEditingNome] = useState(false);
+  const [newNomePreferido, setNewNomePreferido] = useState(onboardingData?.nome_preferido || '');
 
   const limits = getLimits();
 
@@ -227,6 +231,44 @@ const Configuracoes = () => {
     }
   };
 
+  const handleUpdateNomePreferido = async () => {
+    if (!user || !newNomePreferido.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('onboarding_data')
+        .upsert({
+          user_id: user.id,
+          nome_preferido: newNomePreferido.trim(),
+          user_type: onboardingData?.user_type || 'pessoal',
+          how_did_you_know: onboardingData?.how_did_you_know || 'outro',
+          termos_aceitos: onboardingData?.termos_aceitos || true,
+          salary_range: onboardingData?.salary_range,
+          revenue_range: onboardingData?.revenue_range
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+
+      setIsEditingNome(false);
+      toast({
+        title: "Nome atualizado",
+        description: "Seu nome preferido foi atualizado com sucesso. A página será recarregada para aplicar as mudanças."
+      });
+
+      // Recarregar para atualizar o contexto
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      console.error('Erro ao atualizar nome:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar seu nome. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading || subscriptionLoading) {
     return (
       <div className="p-6">
@@ -302,6 +344,54 @@ const Configuracoes = () => {
                 <SelectItem value="EUR">Euro (€)</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Nome Preferido */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Nome Preferido
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Nome que aparece nos dashboards</Label>
+            {isEditingNome ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newNomePreferido}
+                  onChange={(e) => setNewNomePreferido(e.target.value)}
+                  placeholder="Digite seu nome preferido"
+                  className="flex-1"
+                />
+                <Button size="sm" onClick={handleUpdateNomePreferido}>
+                  <Save className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  setIsEditingNome(false);
+                  setNewNomePreferido(onboardingData?.nome_preferido || '');
+                }}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                <span className="font-medium">{onboardingData?.nome_preferido || 'Não definido'}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditingNome(true)}
+                >
+                  <Edit3 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground">
+              Este nome aparece nas saudações dos dashboards ("Olá, {onboardingData?.nome_preferido}!")
+            </p>
           </div>
         </CardContent>
       </Card>

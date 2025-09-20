@@ -54,10 +54,10 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!user) return;
 
     try {
-      // Salvar dados de onboarding
+      // Salvar dados de onboarding (usar upsert para evitar duplicatas)
       const { error: onboardingError } = await supabase
         .from('onboarding_data')
-        .insert({
+        .upsert({
           user_id: user.id,
           user_type: data.user_type,
           how_did_you_know: data.how_did_you_know,
@@ -65,6 +65,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           revenue_range: data.revenue_range,
           nome_preferido: data.nome_preferido,
           termos_aceitos: data.termos_aceitos
+        }, {
+          onConflict: 'user_id'
         });
 
       if (onboardingError) {

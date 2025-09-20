@@ -28,6 +28,7 @@ interface DashboardProps {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { useDashboard } from '@/hooks/useDashboard';
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -37,6 +38,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const { receitas, despesas, impostos } = useAppContext();
   const { onboardingData } = useOnboarding();
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('painel');
+  const { currentDashboard } = useDashboard();
   
   const { isFeatureAvailable } = useFeatureAccess();
   const hasBasicIntelligence = isFeatureAvailable('inteligencia_basica');
@@ -86,10 +88,16 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         {onboardingData?.nome_preferido && (
           <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
             <h1 className="text-2xl font-bold text-primary">
-              Olá, {onboardingData.nome_preferido}! 👋
+              {currentDashboard?.isDefault 
+                ? `${onboardingData.nome_preferido}` 
+                : `Olá, ${onboardingData.nome_preferido}! 👋`
+              }
             </h1>
             <p className="text-muted-foreground">
-              Bem-vindo de volta ao seu painel financeiro.
+              {currentDashboard?.isDefault 
+                ? 'Bem-vindo de volta ao seu painel financeiro.' 
+                : `Dashboard: ${currentDashboard?.name || 'Atual'}`
+              }
             </p>
           </div>
         )}
@@ -133,10 +141,16 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
       {onboardingData?.nome_preferido && (
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
           <h1 className="text-2xl font-bold text-primary">
-            Olá, {onboardingData.nome_preferido}! 👋
+            {currentDashboard?.isDefault 
+              ? `${onboardingData.nome_preferido}` 
+              : `Olá, ${onboardingData.nome_preferido}! 👋`
+            }
           </h1>
           <p className="text-muted-foreground">
-            Bem-vindo de volta ao seu painel financeiro.
+            {currentDashboard?.isDefault 
+              ? 'Bem-vindo de volta ao seu painel financeiro.' 
+              : `Dashboard: ${currentDashboard?.name || 'Atual'}`
+            }
           </p>
         </div>
       )}

@@ -261,8 +261,8 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
                       value={gasto.categoria}
                       onValueChange={(value) => atualizarGasto(gasto.id, 'categoria', value)}
                     >
-                      <SelectTrigger className="h-8">
-                        <SelectValue />
+                      <SelectTrigger className="h-8 w-full">
+                        <SelectValue placeholder="Selecione a categoria" />
                       </SelectTrigger>
                       <SelectContent>
                         {categorias.map(cat => (
@@ -293,8 +293,8 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
                       value={gasto.forma_pagamento}
                       onValueChange={(value) => atualizarGasto(gasto.id, 'forma_pagamento', value)}
                     >
-                      <SelectTrigger className="h-8">
-                        <SelectValue />
+                      <SelectTrigger className="h-8 w-full">
+                        <SelectValue placeholder="Selecione a forma de pagamento" />
                       </SelectTrigger>
                       <SelectContent>
                         {formasPagamento.map(forma => (
