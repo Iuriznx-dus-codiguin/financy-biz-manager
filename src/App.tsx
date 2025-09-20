@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { OnboardingProvider } from "@/hooks/useOnboarding";
+import { SectionTutorialsProvider } from "@/hooks/useSectionTutorials";
 import { AppProvider } from "@/contexts/AppContext";
 import { DashboardProvider } from "@/hooks/useDashboard";
 import { ThemeProvider } from "@/hooks/useTheme";
@@ -22,8 +23,9 @@ const App = () => (
         <AuthProvider>
           <SettingsProvider>
             <OnboardingProvider>
-              <DashboardProvider>
-                <AppProvider>
+              <SectionTutorialsProvider>
+                <DashboardProvider>
+                  <AppProvider>
                   <Toaster />
                   <Sonner />
                   <BrowserRouter>
@@ -32,8 +34,9 @@ const App = () => (
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </BrowserRouter>
-                </AppProvider>
-              </DashboardProvider>
+                  </AppProvider>
+                </DashboardProvider>
+              </SectionTutorialsProvider>
             </OnboardingProvider>
           </SettingsProvider>
         </AuthProvider>
