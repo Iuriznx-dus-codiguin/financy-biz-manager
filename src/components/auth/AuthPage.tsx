@@ -272,6 +272,12 @@ export const AuthPage = () => {
                     required
                   />
                 </div>
+                {isLogin && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <Mail className="h-3 w-3" />
+                    <span>Use seu email ou telefone para entrar</span>
+                  </p>
+                )}
               </div>
 
               {!isLogin && (
@@ -289,6 +295,10 @@ export const AuthPage = () => {
                       required={!isLogin}
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    <span>Será usado como opção alternativa de login</span>
+                  </p>
                 </div>
               )}
 
