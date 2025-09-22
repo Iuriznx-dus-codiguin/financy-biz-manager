@@ -36,11 +36,11 @@ const FlappyFinancyGame = () => {
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [velocity, setVelocity] = useState(0);
 
-  const GRAVITY = 0.6;
-  const JUMP_FORCE = -12;
-  const GAME_SPEED = 3;
+  const GRAVITY = 0.4;
+  const JUMP_FORCE = -10;
+  const GAME_SPEED = 2;
   const OBSTACLE_WIDTH = 60;
-  const GAP_SIZE = 150;
+  const GAP_SIZE = 200;
 
   // Initialize game
   const initGame = useCallback(() => {
@@ -113,7 +113,7 @@ const FlappyFinancyGame = () => {
 
   // Generate obstacles
   const generateObstacle = useCallback((x: number) => {
-    const gapY = Math.random() * (300 - GAP_SIZE) + 100;
+    const gapY = Math.random() * (250 - GAP_SIZE) + 75;
     
     return [
       {
@@ -159,7 +159,7 @@ const FlappyFinancyGame = () => {
       })).filter(obstacle => obstacle.x + obstacle.width > -50);
 
       // Add new obstacles
-      if (newObstacles.length === 0 || newObstacles[newObstacles.length - 1].x < 600) {
+      if (newObstacles.length === 0 || newObstacles[newObstacles.length - 1].x < 500) {
         newObstacles.push(...generateObstacle(800));
       }
 
@@ -279,9 +279,9 @@ const FlappyFinancyGame = () => {
       ctx.fillText('F', player.x + player.width / 2, player.y + player.height / 2);
       
       // Add glow effect to F
-      ctx.shadowColor = '#3b82f6';
+      ctx.shadowColor = '#16a34a';
       ctx.shadowBlur = 10;
-      ctx.fillStyle = '#3b82f6';
+      ctx.fillStyle = '#16a34a';
       ctx.fillText('F', player.x + player.width / 2, player.y + player.height / 2);
       ctx.shadowBlur = 0;
     }
@@ -305,9 +305,9 @@ const FlappyFinancyGame = () => {
       ctx.fillText(countdown.toString(), canvas.width / 2, canvas.height / 2);
       
       // Add glow effect
-      ctx.shadowColor = '#3b82f6';
+      ctx.shadowColor = '#16a34a';
       ctx.shadowBlur = 20;
-      ctx.fillStyle = '#3b82f6';
+      ctx.fillStyle = '#16a34a';
       ctx.fillText(countdown.toString(), canvas.width / 2, canvas.height / 2);
       ctx.shadowBlur = 0;
     }
@@ -315,7 +315,7 @@ const FlappyFinancyGame = () => {
 
   return (
     <>
-      <Card className="rounded-2xl shadow-sm border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+      <Card className="rounded-2xl shadow-sm border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
         <CardContent className="p-6 text-center">
           <div className="text-4xl mb-4">🎮</div>
           <h3 className="font-bold mb-2">Passar o Tempo</h3>
@@ -325,7 +325,7 @@ const FlappyFinancyGame = () => {
 
           <Button
             onClick={startGame}
-            className="w-full rounded-xl bg-purple-600 hover:bg-purple-700"
+            className="w-full rounded-xl bg-green-600 hover:bg-green-700"
           >
             <Play className="mr-2 h-4 w-4" />
             Jogar Flappy Financy
@@ -351,7 +351,7 @@ const FlappyFinancyGame = () => {
                 ref={canvasRef}
                 width={800}
                 height={400}
-                className="border-2 border-purple-200 dark:border-purple-600 rounded-lg bg-gradient-to-b from-blue-400 to-green-400 cursor-pointer"
+                className="border-2 border-green-200 dark:border-green-600 rounded-lg bg-gradient-to-b from-blue-400 to-green-400 cursor-pointer"
                 onClick={jump}
               />
               
