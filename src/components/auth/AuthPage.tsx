@@ -16,11 +16,22 @@ export const AuthPage = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
+    emailOrPhone: '',
     email: '',
     password: '',
     nomeCompleto: '',
     telefone: ''
   });
+
+  const isValidEmail = (text: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text);
+  };
+
+  const isValidPhone = (text: string) => {
+    // Remove caracteres não numéricos para validação
+    const numbers = text.replace(/\D/g, '');
+    return numbers.length >= 10 && numbers.length <= 11;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,14 +41,40 @@ export const AuthPage = () => {
 
     try {
       if (isLogin) {
+        // Determinar se é email ou telefone
+        const loginField = formData.emailOrPhone.trim();
+        let loginEmail = '';
+
+        if (isValidEmail(loginField)) {
+          // É um email, usar diretamente
+          loginEmail = loginField;
+        } else if (isValidPhone(loginField)) {
+          // É um telefone, buscar o email correspondente na tabela profiles
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('telefone', loginField)
+            .single();
+
+          if (profileError || !profileData?.email) {
+            setError('Telefone não encontrado no sistema');
+            return;
+          }
+          
+          loginEmail = profileData.email;
+        } else {
+          setError('Por favor, insira um email ou telefone válido');
+          return;
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
+          email: loginEmail,
           password: formData.password,
         });
 
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
-            setError('Email ou senha incorretos');
+            setError('Email/telefone ou senha incorretos');
           } else {
             setError(error.message);
           }
@@ -219,6 +256,24 @@ export const AuthPage = () => {
                 </div>
               )}
 
+              <div className="space-y-2">
+                <Label htmlFor={isLogin ? "emailOrPhone" : "email"} className="text-sm font-medium text-foreground">
+                  {isLogin ? 'Email ou Telefone' : 'Email'}
+                </Label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <Input
+                    id={isLogin ? "emailOrPhone" : "email"}
+                    type={isLogin ? "text" : "email"}
+                    placeholder={isLogin ? "seu@email.com ou (11) 99999-9999" : "seu@email.com"}
+                    value={isLogin ? formData.emailOrPhone : formData.email}
+                    onChange={(e) => handleInputChange(isLogin ? 'emailOrPhone' : 'email', e.target.value)}
+                    className="rounded-2xl h-14 pl-12 pr-4 border-2 focus:border-primary transition-all duration-300 bg-background/50 backdrop-blur-sm hover:bg-background/70 focus:bg-background text-base"
+                    required
+                  />
+                </div>
+              </div>
+
               {!isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="telefone" className="text-sm font-medium text-foreground">Telefone</Label>
@@ -231,26 +286,11 @@ export const AuthPage = () => {
                       value={formData.telefone}
                       onChange={(e) => handleInputChange('telefone', e.target.value)}
                       className="rounded-2xl h-14 pl-12 pr-4 border-2 focus:border-primary transition-all duration-300 bg-background/50 backdrop-blur-sm hover:bg-background/70 focus:bg-background text-base"
+                      required={!isLogin}
                     />
                   </div>
                 </div>
               )}
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-foreground">Email</Label>
-                <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="rounded-2xl h-14 pl-12 pr-4 border-2 focus:border-primary transition-all duration-300 bg-background/50 backdrop-blur-sm hover:bg-background/70 focus:bg-background text-base"
-                    required
-                  />
-                </div>
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-foreground">Senha</Label>
@@ -304,7 +344,7 @@ export const AuthPage = () => {
                   setIsLogin(!isLogin);
                   setError(null);
                   setMessage(null);
-                  setFormData({ email: '', password: '', nomeCompleto: '', telefone: '' });
+                  setFormData({ emailOrPhone: '', email: '', password: '', nomeCompleto: '', telefone: '' });
                 }}
                 className="text-primary font-medium hover:text-primary/80 transition-colors text-base"
                 disabled={loading || googleLoading}
