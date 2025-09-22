@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff, Phone } from 'lucide-react';
 import financyLogo from '@/assets/financy-logo.png';
 
 export const AuthPage = () => {
@@ -18,7 +18,8 @@ export const AuthPage = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    nomeCompleto: ''
+    nomeCompleto: '',
+    telefone: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,7 +54,8 @@ export const AuthPage = () => {
           options: {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
-              nome_completo: formData.nomeCompleto
+              nome_completo: formData.nomeCompleto,
+              telefone: formData.telefone
             }
           }
         });
@@ -217,6 +219,23 @@ export const AuthPage = () => {
                 </div>
               )}
 
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="telefone" className="text-sm font-medium text-foreground">Telefone</Label>
+                  <div className="relative group">
+                    <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <Input
+                      id="telefone"
+                      type="tel"
+                      placeholder="(11) 99999-9999"
+                      value={formData.telefone}
+                      onChange={(e) => handleInputChange('telefone', e.target.value)}
+                      className="rounded-2xl h-14 pl-12 pr-4 border-2 focus:border-primary transition-all duration-300 bg-background/50 backdrop-blur-sm hover:bg-background/70 focus:bg-background text-base"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-foreground">Email</Label>
                 <div className="relative group">
@@ -285,7 +304,7 @@ export const AuthPage = () => {
                   setIsLogin(!isLogin);
                   setError(null);
                   setMessage(null);
-                  setFormData({ email: '', password: '', nomeCompleto: '' });
+                  setFormData({ email: '', password: '', nomeCompleto: '', telefone: '' });
                 }}
                 className="text-primary font-medium hover:text-primary/80 transition-colors text-base"
                 disabled={loading || googleLoading}
