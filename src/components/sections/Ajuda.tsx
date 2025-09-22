@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Download } from 'lucide-react';
 import jsPDF from 'jspdf';
+import FlappyFinancyGame from '@/components/FlappyFinancyGame';
 
 const Ajuda = () => {
   const generatePDF = (guideType: string) => {
@@ -228,16 +229,7 @@ const Ajuda = () => {
           </CardContent>
         </Card>
         
-        <Card className="rounded-2xl shadow-sm border-purple-200 dark:border-purple-800">
-          <CardContent className="p-6 text-center">
-            <div className="text-4xl mb-4">🤖</div>
-            <h3 className="font-bold mb-2">Suporte IA</h3>
-            <p className="text-sm text-muted-foreground mb-4">Assistente inteligente 24/7</p>
-            <Button variant="outline" className="w-full rounded-xl" onClick={() => window.location.href = '#agentes-ia'}>
-              Conversar com IA
-            </Button>
-          </CardContent>
-        </Card>
+        <FlappyFinancyGame />
         
         <Card className="rounded-2xl shadow-sm border-red-200 dark:border-red-800">
           <CardContent className="p-6 text-center">
