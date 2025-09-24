@@ -98,13 +98,6 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
     }
   };
 
-  const handleSkip = () => {
-    toast({
-      title: "📱 Telefone pulado",
-      description: "Você pode adicionar seu telefone depois nas configurações para usar a IA no WhatsApp.",
-    });
-    onComplete();
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-500/10 via-background to-green-600/5 flex items-center justify-center p-4">
@@ -203,15 +196,6 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
                   )}
                 </Button>
 
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleSkip}
-                  disabled={loading}
-                  className="w-full rounded-xl h-12 text-muted-foreground hover:text-foreground"
-                >
-                  Pular por agora
-                </Button>
               </div>
             </form>
 
