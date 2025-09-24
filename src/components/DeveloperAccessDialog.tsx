@@ -66,9 +66,11 @@ export const DeveloperAccessDialog: React.FC<DeveloperAccessDialogProps> = ({
       setAccessKey('');
       onClose();
       
-      // Recarregar a página após um pequeno delay
+      // Recarregar usando método mais seguro
       setTimeout(() => {
-        window.location.reload();
+        if (typeof window !== 'undefined') {
+          window.location.replace(window.location.pathname);
+        }
       }, 1500);
 
     } catch (error) {

@@ -112,8 +112,10 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
           }
         }
 
-        // Recarregar dashboards e definir o novo como atual
-        window.location.reload();
+        // Recarregar dashboards usando método mais seguro
+        if (typeof window !== 'undefined') {
+          window.location.replace(window.location.pathname);
+        }
       }
 
       setShowOnboarding(false);
@@ -255,8 +257,12 @@ onClick={async () => {
                       title: "Dashboard criado!",
                       description: "Dashboard básico criado com sucesso.",
                     });
-                    // Recarregar para garantir que o novo dashboard seja ativado
-                    setTimeout(() => window.location.reload(), 1000);
+                    // Recarregar usando método mais seguro
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        window.location.replace(window.location.pathname);
+                      }
+                    }, 1000);
                   } catch (error) {
                     toast({
                       title: "Erro",

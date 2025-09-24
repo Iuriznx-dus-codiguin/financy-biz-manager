@@ -830,102 +830,7 @@ export type Database = {
       }
     }
     Views: {
-      despesas_masked: {
-        Row: {
-          categoria: string | null
-          categoria_personalizada: string | null
-          created_at: string | null
-          dashboard_id: string | null
-          data: string | null
-          descricao: string | null
-          forma_pagamento: string | null
-          fornecedor: string | null
-          id: number | null
-          recorrente: boolean | null
-          status: string | null
-          user_id: string | null
-          valor: number | null
-        }
-        Insert: {
-          categoria?: string | null
-          categoria_personalizada?: string | null
-          created_at?: string | null
-          dashboard_id?: string | null
-          data?: string | null
-          descricao?: never
-          forma_pagamento?: string | null
-          fornecedor?: never
-          id?: number | null
-          recorrente?: boolean | null
-          status?: string | null
-          user_id?: string | null
-          valor?: number | null
-        }
-        Update: {
-          categoria?: string | null
-          categoria_personalizada?: string | null
-          created_at?: string | null
-          dashboard_id?: string | null
-          data?: string | null
-          descricao?: never
-          forma_pagamento?: string | null
-          fornecedor?: never
-          id?: number | null
-          recorrente?: boolean | null
-          status?: string | null
-          user_id?: string | null
-          valor?: number | null
-        }
-        Relationships: []
-      }
-      receitas_masked: {
-        Row: {
-          categoria: string | null
-          categoria_personalizada: string | null
-          cliente: string | null
-          created_at: string | null
-          dashboard_id: string | null
-          data: string | null
-          descricao: string | null
-          forma_pagamento: string | null
-          id: number | null
-          recorrente: boolean | null
-          status: string | null
-          user_id: string | null
-          valor: number | null
-        }
-        Insert: {
-          categoria?: string | null
-          categoria_personalizada?: string | null
-          cliente?: never
-          created_at?: string | null
-          dashboard_id?: string | null
-          data?: string | null
-          descricao?: never
-          forma_pagamento?: string | null
-          id?: number | null
-          recorrente?: boolean | null
-          status?: string | null
-          user_id?: string | null
-          valor?: number | null
-        }
-        Update: {
-          categoria?: string | null
-          categoria_personalizada?: string | null
-          cliente?: never
-          created_at?: string | null
-          dashboard_id?: string | null
-          data?: string | null
-          descricao?: never
-          forma_pagamento?: string | null
-          id?: number | null
-          recorrente?: boolean | null
-          status?: string | null
-          user_id?: string | null
-          valor?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       calcular_proxima_data: {
@@ -945,6 +850,14 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      check_sensitive_data_rate_limit: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      check_user_exists: {
+        Args: { p_email: string; p_telefone?: string }
+        Returns: boolean
+      }
       encrypt_sensitive_data: {
         Args: { data: string; salt?: string }
         Returns: string
@@ -957,6 +870,32 @@ export type Database = {
         }
         Returns: Json
       }
+      get_despesas_masked: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          categoria: string
+          data: string
+          forma_pagamento: string
+          fornecedor_mascarado: string
+          id: number
+          status: string
+          user_id: string
+          valor_mascarado: string
+        }[]
+      }
+      get_receitas_masked: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          categoria: string
+          cliente_mascarado: string
+          data: string
+          forma_pagamento: string
+          id: number
+          status: string
+          user_id: string
+          valor_mascarado: string
+        }[]
+      }
       get_user_profile_data: {
         Args: { user_id: string }
         Returns: {
@@ -964,6 +903,10 @@ export type Database = {
           subscription_tier: string
           user_type: string
         }[]
+      }
+      get_user_role: {
+        Args: { p_user_id: string }
+        Returns: string
       }
       log_bulk_financial_query: {
         Args: { p_query_type: string; p_table_name: string; p_user_id: string }
@@ -991,6 +934,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mask_financial_data: {
+        Args: { input_value: number; mask_type?: string }
+        Returns: string
+      }
       mask_sensitive_data: {
         Args: { input_text: string; mask_type?: string }
         Returns: string
@@ -1004,6 +951,10 @@ export type Database = {
         Returns: undefined
       }
       user_has_dashboard_access: {
+        Args: { p_dashboard_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      user_has_dashboard_access_secure: {
         Args: { p_dashboard_id: string; p_user_id: string }
         Returns: boolean
       }

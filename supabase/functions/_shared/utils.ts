@@ -122,17 +122,23 @@ export function safeHandler(handler: (req: Request) => Promise<Response>) {
  * Obtém origem CORS baseada no ambiente
  */
 function getDevelopmentCorsOrigin(): string {
-  // TODO: Substituir por domínios de produção confiáveis
-  // Exemplo: 'https://app.financy.site, https://financy.site'
   const isProduction = Deno.env.get('DENO_DEPLOYMENT_ID');
   
   if (isProduction) {
-    // TODO: Definir domínios de produção
-    return 'https://app.financy.site';
+    // Domínios de produção confiáveis
+    const allowedOrigins = [
+      'https://app.financy.site',
+      'https://financy.site',
+      'https://www.financy.site'
+    ];
+    
+    // Verificar se o origin está na lista permitida
+    const origin = Deno.env.get('REQUEST_ORIGIN') || 'https://app.financy.site';
+    return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
   }
   
-  // Em desenvolvimento, permitir qualquer origem
-  return '*';
+  // Em desenvolvimento, permitir origins específicos
+  return 'http://localhost:3000, http://127.0.0.1:3000, https://localhost:3000';
 }
 
 /**

@@ -48,7 +48,10 @@ export const AuthPage = () => {
         }
 
         if (data.user) {
-          window.location.href = '/';
+          // Usar redirecionamento mais seguro
+          if (typeof window !== 'undefined') {
+            window.location.replace('/');
+          }
         }
       } else {
         const { data, error } = await supabase.auth.signUp({

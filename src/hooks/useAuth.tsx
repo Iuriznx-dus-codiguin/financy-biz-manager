@@ -41,7 +41,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      window.location.href = '/';
+      // Usar método mais seguro para redirecionamento
+      if (typeof window !== 'undefined') {
+        window.location.replace('/');
+      }
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }

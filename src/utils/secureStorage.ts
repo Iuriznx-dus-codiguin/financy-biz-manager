@@ -103,7 +103,9 @@ export const secureStorage = {
 export const cookieStorage = {
   // Placeholder para futura implementação com cookies HttpOnly
   setSecureCookie(name: string, value: string, options: { httpOnly?: boolean; secure?: boolean; sameSite?: string } = {}) {
-    console.log('TODO: Implementar cookies HttpOnly seguros', { name, options });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Desenvolvimento: Usando localStorage para armazenamento seguro', { name });
+    }
     // Por enquanto, usar localStorage como fallback
     secureStorage.setItem(name, value);
   }

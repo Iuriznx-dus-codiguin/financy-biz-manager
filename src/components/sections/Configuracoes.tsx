@@ -158,8 +158,10 @@ const Configuracoes = () => {
         description: "Todos os seus dados financeiros e configurações foram apagados com sucesso. Sua assinatura e data de expiração do teste foram mantidas.",
       });
 
-      // Recarregar a página para aplicar as mudanças
-      window.location.reload();
+      // Recarregar usando método mais seguro
+      if (typeof window !== 'undefined') {
+        window.location.replace(window.location.pathname);
+      }
       
     } catch (error) {
       console.error('Erro ao apagar dados:', error);
@@ -257,8 +259,12 @@ const Configuracoes = () => {
         description: "Seu nome preferido foi atualizado com sucesso. A página será recarregada para aplicar as mudanças."
       });
 
-      // Recarregar para atualizar o contexto
-      setTimeout(() => window.location.reload(), 1000);
+      // Recarregar usando método mais seguro
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.location.replace(window.location.pathname);
+        }
+      }, 1000);
     } catch (error) {
       console.error('Erro ao atualizar nome:', error);
       toast({

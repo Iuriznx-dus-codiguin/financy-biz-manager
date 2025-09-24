@@ -77,7 +77,9 @@ serve(safeHandler(async (req) => {
           cliente: customer_email,
           valor: valorFinal,
           forma_pagamento: 'Cartão de Crédito'
-        });
+        })
+        .select('id')
+        .single();
 
       if (receitaError) {
         console.error('Erro ao inserir receita:', receitaError);
@@ -115,7 +117,7 @@ serve(safeHandler(async (req) => {
         JSON.stringify({ 
           success: true, 
           message: 'Pagamento processado com sucesso',
-          receita_id: receita?.[0]?.id || 'criada'
+          receita_id: receita?.id || 'criada'
         }),
         { 
           status: 200,
