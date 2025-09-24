@@ -28,12 +28,15 @@ import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
 import { DashboardProvider } from '@/hooks/useDashboard';
 
+import { PhoneCollectionStep } from '@/components/PhoneCollectionStep';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { usePhoneCollection } from '@/hooks/usePhoneCollection';
 
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
+  const { hasPhone, loading: phoneLoading, markPhoneAsCollected } = usePhoneCollection();
   const [showLoading, setShowLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('painel');
 
@@ -53,7 +56,7 @@ export default function Index() {
     };
   }, []);
 
-  if (authLoading || onboardingLoading) {
+  if (authLoading || onboardingLoading || phoneLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -71,6 +74,11 @@ export default function Index() {
 
   if (!user) {
     return <AuthPage />;
+  }
+
+  // Mostrar coleta de telefone se ainda não tiver telefone cadastrado
+  if (hasPhone === false) {
+    return <PhoneCollectionStep onComplete={markPhoneAsCollected} />;
   }
 
   // Mostrar onboarding para novos usuários
