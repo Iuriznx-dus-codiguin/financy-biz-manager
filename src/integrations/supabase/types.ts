@@ -801,6 +801,33 @@ export type Database = {
         }
         Relationships: []
       }
+      usuarios_assinatura: {
+        Row: {
+          criado_em: string | null
+          data_assinatura: string
+          data_renovacao: string
+          id: number
+          nome_cliente: string
+          telefone_cliente: string
+        }
+        Insert: {
+          criado_em?: string | null
+          data_assinatura: string
+          data_renovacao: string
+          id?: number
+          nome_cliente: string
+          telefone_cliente: string
+        }
+        Update: {
+          criado_em?: string | null
+          data_assinatura?: string
+          data_renovacao?: string
+          id?: number
+          nome_cliente?: string
+          telefone_cliente?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       despesas_masked: {
