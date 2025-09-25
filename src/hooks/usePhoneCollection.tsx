@@ -26,7 +26,8 @@ export const usePhoneCollection = () => {
 
       if (error) {
         console.error('Erro ao verificar telefone:', error);
-        setHasPhone(true); // Em caso de erro, assume que tem telefone para não bloquear
+        // Se houve erro na consulta, assume que não tem telefone para mostrar a tela
+        setHasPhone(false);
         return;
       }
 
@@ -35,7 +36,8 @@ export const usePhoneCollection = () => {
       setHasPhone(phoneExists);
     } catch (error) {
       console.error('Erro inesperado ao verificar telefone:', error);
-      setHasPhone(true); // Em caso de erro, assume que tem telefone
+      // Se houve erro inesperado, assume que não tem telefone para mostrar a tela
+      setHasPhone(false);
     } finally {
       setLoading(false);
     }

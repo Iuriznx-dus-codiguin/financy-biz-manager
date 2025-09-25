@@ -77,7 +77,7 @@ export default function Index() {
   }
 
   // Mostrar coleta de telefone se ainda não tiver telefone cadastrado
-  if (hasPhone === false) {
+  if (user && hasPhone === false) {
     return <PhoneCollectionStep onComplete={markPhoneAsCollected} />;
   }
 
