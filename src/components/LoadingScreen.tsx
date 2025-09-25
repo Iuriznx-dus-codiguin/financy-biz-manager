@@ -217,22 +217,6 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           </AnimatePresence>
         </motion.div>
 
-        {/* Personalized Welcome */}
-        {onboardingData?.nome_preferido && progress > 60 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 backdrop-blur-sm rounded-xl p-4 border border-green-500/20"
-          >
-            <p className="text-green-600 dark:text-green-400 font-medium">
-              Olá, {onboardingData.nome_preferido}! 👋
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Preparando sua experiência personalizada...
-            </p>
-          </motion.div>
-        )}
       </div>
 
       <style>{`
