@@ -771,6 +771,78 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          amount: number | null
+          billing_period: string | null
+          cakto_customer_id: string | null
+          cakto_subscription_id: string | null
+          cancelled_at: string | null
+          created_at: string
+          currency: string | null
+          email: string
+          expires_at: string | null
+          features: Json | null
+          id: string
+          metadata: Json | null
+          payment_method: string | null
+          plan_id: string | null
+          plan_name: string
+          renewed_at: string | null
+          started_at: string
+          status: string
+          subscription_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          billing_period?: string | null
+          cakto_customer_id?: string | null
+          cakto_subscription_id?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string | null
+          email: string
+          expires_at?: string | null
+          features?: Json | null
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          plan_id?: string | null
+          plan_name?: string
+          renewed_at?: string | null
+          started_at?: string
+          status?: string
+          subscription_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          billing_period?: string | null
+          cakto_customer_id?: string | null
+          cakto_subscription_id?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string | null
+          email?: string
+          expires_at?: string | null
+          features?: Json | null
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          plan_id?: string | null
+          plan_name?: string
+          renewed_at?: string | null
+          started_at?: string
+          status?: string
+          subscription_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_tour_progress: {
         Row: {
           completed: boolean | null
@@ -908,6 +980,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      get_user_subscription_limits: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       log_bulk_financial_query: {
         Args: { p_query_type: string; p_table_name: string; p_user_id: string }
         Returns: undefined
@@ -950,12 +1026,24 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      renew_subscription: {
+        Args: {
+          p_amount?: number
+          p_new_expires_at?: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       user_has_dashboard_access: {
         Args: { p_dashboard_id: string; p_user_id: string }
         Returns: boolean
       }
       user_has_dashboard_access_secure: {
         Args: { p_dashboard_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      user_has_feature: {
+        Args: { p_feature: string; p_user_id: string }
         Returns: boolean
       }
     }
