@@ -59,9 +59,10 @@ const allMenuItems = [
 interface AppSidebarProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
+  disabled?: boolean;
 }
 
-export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActiveSection }) => {
+export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActiveSection, disabled = false }) => {
   const { state, setOpen, open } = useSidebar();
   const { theme, setTheme } = useTheme();
   const { currentDashboard } = useDashboard();
@@ -148,9 +149,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
-                      onClick={() => setActiveSection(item.id)}
+                      onClick={() => !disabled && setActiveSection(item.id)}
                       tooltip={isCollapsed && !shouldExpand ? item.label : undefined}
                       isActive={activeSection === item.id}
+                      disabled={disabled && item.id !== 'assinatura'}
+                      className={disabled && item.id !== 'assinatura' ? 'opacity-50 cursor-not-allowed' : ''}
                     >
                       <Icon className="h-4 w-4" />
                       <span>{item.label}</span>

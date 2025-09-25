@@ -25,9 +25,10 @@ const allMenuItems = [
 interface MobileSidebarProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
+  disabled?: boolean;
 }
 
-export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, setActiveSection }) => {
+export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, setActiveSection, disabled = false }) => {
   const { theme, setTheme } = useTheme();
   const { currentDashboard } = useDashboard();
   const [open, setOpen] = React.useState(false);
@@ -45,6 +46,9 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   };
 
   const handleMenuClick = (section: string) => {
+    if (disabled && section !== 'assinatura') {
+      return; // Não permite navegação se desabilitado, exceto para assinatura
+    }
     setActiveSection(section);
     setOpen(false);
   };
@@ -84,8 +88,11 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
                 <Button
                   key={item.id}
                   variant={activeSection === item.id ? "default" : "ghost"}
-                  className="w-full justify-start"
+                  className={`w-full justify-start ${
+                    disabled && item.id !== 'assinatura' ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                   onClick={() => handleMenuClick(item.id)}
+                  disabled={disabled && item.id !== 'assinatura'}
                 >
                   {item.label}
                 </Button>

@@ -421,8 +421,8 @@ const Assinatura: React.FC = () => {
               <span className="font-semibold text-blue-800 dark:text-blue-200">Período de Teste Gratuito</span>
             </div>
             <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
-              Você está explorando todas as funcionalidades do Financy gratuitamente. 
-              Assine um plano para continuar aproveitando nossa plataforma.
+              Você está em seu período de teste gratuito de 7 dias. 
+              Assine um plano para continuar aproveitando nossa plataforma após o teste.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div className="flex justify-between">

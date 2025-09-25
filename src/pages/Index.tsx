@@ -32,21 +32,47 @@ import { PhoneCollectionStep } from '@/components/PhoneCollectionStep';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { usePhoneCollection } from '@/hooks/usePhoneCollection';
+import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { SubscriptionExpiredBanner } from '@/components/SubscriptionExpiredBanner';
 
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
   const { hasPhone, loading: phoneLoading, markPhoneAsCollected } = usePhoneCollection();
+  const { subscription, isSubscriptionExpired, loading: subscriptionLoading } = useUserSubscription();
   const [showLoading, setShowLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('painel');
 
   // Hook para gerenciar redirecionamentos baseados na assinatura
   useSubscriptionRedirect({ setActiveSection, currentSection: activeSection });
 
+  // Verificar se assinatura expirou e forçar aba de assinatura
+  useEffect(() => {
+    if (user && subscription && isSubscriptionExpired()) {
+      setActiveSection('assinatura');
+    }
+  }, [user, subscription, isSubscriptionExpired]);
+
+  // Bloquear navegação se assinatura expirou
+  const handleSectionChange = (newSection: string) => {
+    if (user && subscription && isSubscriptionExpired() && newSection !== 'assinatura') {
+      // Não permite mudança de seção se assinatura expirou
+      return;
+    }
+    setActiveSection(newSection);
+  };
+
   // Adicionar listener para navegação customizada dos agentes
   useEffect(() => {
     const handleNavigateToSection = (event: any) => {
-      setActiveSection(event.detail);
+      const targetSection = event.detail;
+      
+      // Se assinatura expirou, só permite ir para assinatura
+      if (user && subscription && isSubscriptionExpired() && targetSection !== 'assinatura') {
+        return;
+      }
+      
+      setActiveSection(targetSection);
     };
 
     window.addEventListener('navigate-to-section', handleNavigateToSection);
@@ -54,9 +80,9 @@ export default function Index() {
     return () => {
       window.removeEventListener('navigate-to-section', handleNavigateToSection);
     };
-  }, []);
+  }, [user, subscription, isSubscriptionExpired]);
 
-  if (authLoading || onboardingLoading || phoneLoading) {
+  if (authLoading || onboardingLoading || phoneLoading || subscriptionLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -87,9 +113,14 @@ export default function Index() {
   }
 
   const renderActiveSection = () => {
+    // Se assinatura expirou, sempre mostrar aba de assinatura
+    if (user && subscription && isSubscriptionExpired()) {
+      return <Assinatura />;
+    }
+
     switch (activeSection) {
       case 'painel':
-        return <Dashboard setActiveSection={setActiveSection} />;
+        return <Dashboard setActiveSection={handleSectionChange} />;
       case 'receitas':
         return <Receitas />;
       case 'despesas':
@@ -115,21 +146,32 @@ export default function Index() {
       case 'ajuda':
         return <Ajuda />;
       default:
-        return <Dashboard setActiveSection={setActiveSection} />;
+        return <Dashboard setActiveSection={handleSectionChange} />;
     }
   };
+
+  const isSubscriptionExpiredState = user && subscription && isSubscriptionExpired();
 
   return (
     <div className="h-screen bg-background">
       <SidebarProvider defaultOpen={false}>
         <div className="flex h-full w-full">
-          <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+          <AppSidebar 
+            activeSection={isSubscriptionExpiredState ? 'assinatura' : activeSection} 
+            setActiveSection={handleSectionChange}
+            disabled={isSubscriptionExpiredState}
+          />
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="lg:hidden">
-              <MobileSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+              <MobileSidebar 
+                activeSection={isSubscriptionExpiredState ? 'assinatura' : activeSection} 
+                setActiveSection={handleSectionChange}
+                disabled={isSubscriptionExpiredState}
+              />
             </div>
-            <GlobalSubscriptionAlert setActiveSection={setActiveSection} />
-            <FreeTrialNotification setActiveSection={setActiveSection} />
+            <GlobalSubscriptionAlert setActiveSection={handleSectionChange} />
+            <FreeTrialNotification setActiveSection={handleSectionChange} />
+            {isSubscriptionExpiredState && <SubscriptionExpiredBanner />}
             <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
               {renderActiveSection()}
             </main>
