@@ -18,7 +18,11 @@ import {
   AlertTriangle,
   Edit3,
   Save,
-  X
+  X,
+  Lock,
+  Shield,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useSettings, useCurrency } from '@/hooks/useSettings';
 import { useTheme } from '@/hooks/useTheme';
@@ -60,6 +64,17 @@ const Configuracoes = () => {
   const [newDashboardName, setNewDashboardName] = useState('');
   const [isEditingNome, setIsEditingNome] = useState(false);
   const [newNomePreferido, setNewNomePreferido] = useState(onboardingData?.nome_preferido || '');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwords, setPasswords] = useState({
+    current: '',
+    new: '',
+    confirm: ''
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
 
   const limits = getLimits();
 
@@ -275,6 +290,63 @@ const Configuracoes = () => {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!passwords.new || !passwords.confirm) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (passwords.new !== passwords.confirm) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (passwords.new.length < 6) {
+      toast({
+        title: "Erro", 
+        description: "A nova senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: passwords.new
+      });
+
+      if (error) throw error;
+
+      setIsChangingPassword(false);
+      setPasswords({ current: '', new: '', confirm: '' });
+      toast({
+        title: "Senha alterada",
+        description: "Sua senha foi alterada com sucesso."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível alterar a senha. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
   if (loading || subscriptionLoading) {
     return (
       <div className="p-6">
@@ -397,6 +469,109 @@ const Configuracoes = () => {
             )}
             <p className="text-sm text-muted-foreground">
               Este nome aparece nas saudações dos dashboards ("Olá, {onboardingData?.nome_preferido}!")
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Segurança */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Segurança
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Alterar Senha</Label>
+            {isChangingPassword ? (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">Nova Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="new-password"
+                      type={showPasswords.new ? "text" : "password"}
+                      value={passwords.new}
+                      onChange={(e) => setPasswords(prev => ({ ...prev, new: e.target.value }))}
+                      placeholder="Digite sua nova senha"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => togglePasswordVisibility('new')}
+                    >
+                      {showPasswords.new ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirm-password"
+                      type={showPasswords.confirm ? "text" : "password"}
+                      value={passwords.confirm}
+                      onChange={(e) => setPasswords(prev => ({ ...prev, confirm: e.target.value }))}
+                      placeholder="Confirme sua nova senha"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => togglePasswordVisibility('confirm')}
+                    >
+                      {showPasswords.confirm ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button onClick={handleChangePassword}>
+                    <Lock className="h-4 w-4 mr-2" />
+                    Confirmar Alteração
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsChangingPassword(false);
+                      setPasswords({ current: '', new: '', confirm: '' });
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                <span className="text-sm text-muted-foreground">••••••••</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsChangingPassword(true)}
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Alterar Senha
+                </Button>
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground">
+              Altere sua senha para manter sua conta segura
             </p>
           </div>
         </CardContent>
