@@ -34,6 +34,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { usePhoneCollection } from '@/hooks/usePhoneCollection';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { SubscriptionExpiredBanner } from '@/components/SubscriptionExpiredBanner';
+import { FloatingWhatsAppButton } from '@/components/FloatingWhatsAppButton';
 
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
@@ -179,6 +180,7 @@ export default function Index() {
           </div>
         </div>
       </SidebarProvider>
+      <FloatingWhatsAppButton />
     </div>
   );
 }
