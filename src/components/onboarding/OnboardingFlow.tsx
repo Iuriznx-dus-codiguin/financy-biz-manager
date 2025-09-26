@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { InternationalPhoneInput } from '@/components/ui/international-phone-input';
 import { ChevronLeft, ChevronRight, User, Building, Star, PartyPopper, Sparkles, Target, TrendingUp, Phone, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingData } from '@/types/onboarding';
@@ -22,6 +23,8 @@ interface OnboardingFlowProps {
 export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [whatsappE164, setWhatsappE164] = useState('');
+  const [isPhoneValid, setIsPhoneValid] = useState(false);
   const [data, setData] = useState<OnboardingData>({
     whatsapp: '',
     user_type: '',
@@ -98,7 +101,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     } else {
       setLoading(true);
       try {
-        await onComplete(data);
+        // Usar o número no formato E.164 para salvar
+        const finalData = { ...data, whatsapp: whatsappE164 || data.whatsapp };
+        await onComplete(finalData);
         triggerConfetti();
         toast({
           title: "🎉 Bem-vindo ao Financy!",
@@ -154,13 +159,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   };
 
   const canProceed = () => {
-    const validatePhone = (phoneValue: string) => {
-      const numbers = phoneValue.replace(/\D/g, '');
-      return numbers.length === 11;
-    };
-
     switch (currentStep) {
-      case 1: return validatePhone(data.whatsapp);
+      case 1: 
+        // Usar a validação internacional
+        return isPhoneValid && whatsappE164.length > 0;
       case 2: return data.user_type !== '';
       case 3: return data.user_type === 'pessoal' ? data.salary_range !== '' : data.revenue_range !== '';
       case 4: return data.nome_preferido !== '';
@@ -204,19 +206,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     return <Icon className="w-6 h-6" />;
   };
 
-  const formatPhone = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 11) {
-      return numbers
-        .replace(/(\d{2})(\d)/, '($1) $2')
-        .replace(/(\d{5})(\d)/, '$1-$2');
-    }
-    return value;
-  };
-
-  const handlePhoneChange = (value: string) => {
-    const formatted = formatPhone(value);
+  const handlePhoneChange = (formatted: string, isValid: boolean, e164: string) => {
     setData({ ...data, whatsapp: formatted });
+    setIsPhoneValid(isValid);
+    setWhatsappE164(e164);
   };
 
   const renderStep1 = () => (
@@ -234,23 +227,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       </div>
 
       <div className="max-w-md mx-auto space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="whatsapp" className="text-sm font-medium">
-            Número do WhatsApp
-          </Label>
-          <div className="relative">
-            <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              id="whatsapp"
-              type="tel"
-              placeholder="(11) 99999-9999"
-              value={data.whatsapp}
-              onChange={(e) => handlePhoneChange(e.target.value)}
-              className="rounded-xl h-14 pl-12 pr-4 border-2 focus:border-green-500 transition-all"
-              maxLength={15}
-            />
-          </div>
-        </div>
+        <InternationalPhoneInput
+          label="Número do WhatsApp"
+          value={data.whatsapp}
+          onChange={handlePhoneChange}
+          placeholder="Digite seu número"
+        />
 
         <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
           <div className="space-y-2 text-xs text-muted-foreground">
