@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronLeft, ChevronRight, User, Building, Star, PartyPopper, Sparkles, Target, TrendingUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, Building, Star, PartyPopper, Sparkles, Target, TrendingUp, Phone, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingData } from '@/types/onboarding';
 import { FinancialDataStep } from './FinancialDataStep';
@@ -23,6 +23,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<OnboardingData>({
+    whatsapp: '',
     user_type: '',
     how_did_you_know: '',
     salary_range: '',
@@ -34,7 +35,6 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const { toast } = useToast();
 
   const triggerConfetti = () => {
-    // Efeito de confetti mais espetacular
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
@@ -93,7 +93,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   ];
 
   const handleNext = async () => {
-    if (currentStep < 8) {
+    if (currentStep < 9) {
       setCurrentStep(currentStep + 1);
     } else {
       setLoading(true);
@@ -127,6 +127,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     setLoading(true);
     try {
       const minimalData: OnboardingData = {
+        whatsapp: '(11) 99999-9999',
         user_type: 'pessoal',
         how_did_you_know: 'other',
         salary_range: '0-2000',
@@ -153,49 +154,125 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   };
 
   const canProceed = () => {
+    const validatePhone = (phoneValue: string) => {
+      const numbers = phoneValue.replace(/\D/g, '');
+      return numbers.length === 11;
+    };
+
     switch (currentStep) {
-      case 1: return data.user_type !== '';
-      case 2: return data.user_type === 'pessoal' ? data.salary_range !== '' : data.revenue_range !== '';
-      case 3: return data.nome_preferido !== '';
-      case 4: return data.how_did_you_know !== '';
-      case 5: return true;
+      case 1: return validatePhone(data.whatsapp);
+      case 2: return data.user_type !== '';
+      case 3: return data.user_type === 'pessoal' ? data.salary_range !== '' : data.revenue_range !== '';
+      case 4: return data.nome_preferido !== '';
+      case 5: return data.how_did_you_know !== '';
       case 6: return true;
       case 7: return true;
-      case 8: return data.termos_aceitos === true;
+      case 8: return true;
+      case 9: return data.termos_aceitos === true;
       default: return false;
     }
   };
 
   const getStepTitle = () => {
     const titles = {
-      1: 'Escolha seu perfil',
-      2: 'Situação financeira',
-      3: 'Como devemos te chamar?',
-      4: 'Como nos conheceu?',
-      5: 'Dados financeiros básicos',
-      6: 'Seus gastos principais',
-      7: 'Defina uma meta',
-      8: 'Termos e condições'
+      1: 'Cadastre seu WhatsApp',
+      2: 'Escolha seu perfil',
+      3: 'Situação financeira',
+      4: 'Como devemos te chamar?',
+      5: 'Como nos conheceu?',
+      6: 'Dados financeiros básicos',
+      7: 'Seus gastos principais',
+      8: 'Defina uma meta',
+      9: 'Termos e condições'
     };
     return titles[currentStep as keyof typeof titles];
   };
 
   const getStepIcon = () => {
     const icons = {
-      1: User,
-      2: TrendingUp,
-      3: Sparkles,
-      4: Star,
-      5: Target,
-      6: Building,
-      7: Target,
-      8: PartyPopper
+      1: MessageCircle,
+      2: User,
+      3: TrendingUp,
+      4: Sparkles,
+      5: Star,
+      6: Target,
+      7: Building,
+      8: Target,
+      9: PartyPopper
     };
     const Icon = icons[currentStep as keyof typeof icons];
     return <Icon className="w-6 h-6" />;
   };
 
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      return numbers
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{5})(\d)/, '$1-$2');
+    }
+    return value;
+  };
+
+  const handlePhoneChange = (value: string) => {
+    const formatted = formatPhone(value);
+    setData({ ...data, whatsapp: formatted });
+  };
+
   const renderStep1 = () => (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <div className="text-center space-y-2">
+        <div className="w-16 h-16 mx-auto bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-4">
+          <MessageCircle className="w-8 h-8 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold">Cadastre seu WhatsApp</h2>
+        <p className="text-muted-foreground">Para receber insights financeiros e suporte via IA</p>
+      </div>
+
+      <div className="max-w-md mx-auto space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="whatsapp" className="text-sm font-medium">
+            Número do WhatsApp
+          </Label>
+          <div className="relative">
+            <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              id="whatsapp"
+              type="tel"
+              placeholder="(11) 99999-9999"
+              value={data.whatsapp}
+              onChange={(e) => handlePhoneChange(e.target.value)}
+              className="rounded-xl h-14 pl-12 pr-4 border-2 focus:border-green-500 transition-all"
+              maxLength={15}
+            />
+          </div>
+        </div>
+
+        <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
+          <div className="space-y-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span className="text-green-600">✓</span>
+              <span>Receba insights financeiros automáticos</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-green-600">✓</span>
+              <span>Alertas de vencimentos e metas</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-green-600">✓</span>
+              <span>Suporte personalizado via IA</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  const renderStep2 = () => (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -270,7 +347,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     </motion.div>
   );
 
-  const renderStep2 = () => (
+  const renderStep3 = () => (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -333,7 +410,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     </motion.div>
   );
 
-  const renderStep3 = () => (
+  const renderStep4 = () => (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -375,7 +452,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     </motion.div>
   );
 
-  const renderStep4 = () => (
+  const renderStep5 = () => (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -420,7 +497,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     </motion.div>
   );
 
-  const renderStep8 = () => (
+  const renderStep9 = () => (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -494,7 +571,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               
               {/* Progress Dots */}
               <div className="flex items-center space-x-2">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((step) => (
                   <motion.div
                     key={step}
                     className={`w-3 h-3 rounded-full transition-all duration-300 ${
@@ -509,14 +586,14 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               
               <div className="text-center">
                 <h1 className="text-lg font-semibold">{getStepTitle()}</h1>
-                <p className="text-sm text-muted-foreground">Passo {currentStep} de 8</p>
+                <p className="text-sm text-muted-foreground">Passo {currentStep} de 9</p>
               </div>
             </div>
 
             {/* Progress Percentage */}
             <div className="text-right">
               <div className="text-2xl font-bold text-primary">
-                {Math.round((currentStep / 8) * 100)}%
+                {Math.round((currentStep / 9) * 100)}%
               </div>
               <div className="text-xs text-muted-foreground">concluído</div>
             </div>
@@ -536,10 +613,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               {currentStep === 2 && renderStep2()}
               {currentStep === 3 && renderStep3()}
               {currentStep === 4 && renderStep4()}
-              {currentStep === 5 && <FinancialDataStep data={data} setData={setData} />}
-              {currentStep === 6 && <ExpenseSheetStep data={data} setData={setData} />}
-              {currentStep === 7 && <FinancialGoalStep data={data} setData={setData} />}
-              {currentStep === 8 && renderStep8()}
+              {currentStep === 5 && renderStep5()}
+              {currentStep === 6 && <FinancialDataStep data={data} setData={setData} />}
+              {currentStep === 7 && <ExpenseSheetStep data={data} setData={setData} />}
+              {currentStep === 8 && <FinancialGoalStep data={data} setData={setData} />}
+              {currentStep === 9 && renderStep9()}
             </motion.div>
           </AnimatePresence>
 
@@ -566,9 +644,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
               size="lg"
             >
               <span>
-                {currentStep === 8 ? (loading ? 'Finalizando...' : '🎉 Finalizar') : 'Continuar'}
+                {currentStep === 9 ? (loading ? 'Finalizando...' : '🎉 Finalizar') : 'Continuar'}
               </span>
-              {currentStep < 8 && <ChevronRight className="w-4 h-4" />}
+              {currentStep < 9 && <ChevronRight className="w-4 h-4" />}
             </Button>
           </div>
         </CardContent>

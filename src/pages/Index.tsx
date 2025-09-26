@@ -28,10 +28,9 @@ import Footer from '@/components/Footer';
 import { AppProvider } from '@/contexts/AppContext';
 import { DashboardProvider } from '@/hooks/useDashboard';
 
-import { PhoneCollectionStep } from '@/components/PhoneCollectionStep';
+
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
-import { usePhoneCollection } from '@/hooks/usePhoneCollection';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { SubscriptionExpiredBanner } from '@/components/SubscriptionExpiredBanner';
 import { FloatingWhatsAppButton } from '@/components/FloatingWhatsAppButton';
@@ -39,7 +38,6 @@ import { FloatingWhatsAppButton } from '@/components/FloatingWhatsAppButton';
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
-  const { hasPhone, loading: phoneLoading, markPhoneAsCollected } = usePhoneCollection();
   const { subscription, isSubscriptionExpired, loading: subscriptionLoading } = useUserSubscription();
   const [showLoading, setShowLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('painel');
@@ -83,7 +81,7 @@ export default function Index() {
     };
   }, [user, subscription, isSubscriptionExpired]);
 
-  if (authLoading || onboardingLoading || phoneLoading || subscriptionLoading) {
+  if (authLoading || onboardingLoading || subscriptionLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -101,11 +99,6 @@ export default function Index() {
 
   if (!user) {
     return <AuthPage />;
-  }
-
-  // Mostrar coleta de telefone se ainda não tiver telefone cadastrado
-  if (user && hasPhone === false) {
-    return <PhoneCollectionStep onComplete={markPhoneAsCollected} />;
   }
 
   // Mostrar onboarding para novos usuários

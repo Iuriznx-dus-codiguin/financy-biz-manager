@@ -34,6 +34,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const checkOnboardingStatus = async () => {
     if (!user) {
       setLoading(false);
+      setIsOnboardingComplete(false); // Força onboarding se não tem usuário
       return;
     }
 
@@ -50,7 +51,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       // Se existe dados de onboarding, considera como completo
       setIsOnboardingComplete(!!data);
-      setOnboardingData(data);
+      setOnboardingData(data ? { ...data, whatsapp: '' } : null);
     } catch (error) {
       console.error('Erro ao verificar onboarding:', error);
     } finally {
@@ -62,6 +63,18 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!user) return;
 
     try {
+      // Atualizar o perfil com o telefone se fornecido
+      if (data.whatsapp) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ telefone: data.whatsapp })
+          .eq('id', user.id);
+
+        if (profileError) {
+          console.error('Erro ao salvar telefone no perfil:', profileError);
+        }
+      }
+
       // Salvar dados de onboarding (usar upsert para evitar duplicatas)
       const { error: onboardingError } = await supabase
         .from('onboarding_data')

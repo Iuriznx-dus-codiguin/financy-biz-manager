@@ -1,5 +1,6 @@
 
 export interface OnboardingData {
+  whatsapp: string;
   user_type: string;
   how_did_you_know: string;
   salary_range?: string;
