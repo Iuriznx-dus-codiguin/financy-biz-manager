@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { parsePhoneNumber, AsYouType } from 'libphonenumber-js';
 import { Input } from './input';
 import { Label } from './label';
-import { Button } from './button';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from './command';
-import { Check, ChevronsUpDown, Phone } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
+import { Phone, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Country {
@@ -57,7 +55,7 @@ export const InternationalPhoneInput: React.FC<InternationalPhoneInputProps> = (
 }) => {
   const [selectedCountry, setSelectedCountry] = useState<Country>(countries[0]); // Brasil como padrão
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [open, setOpen] = useState(false);
+  
   const [isValid, setIsValid] = useState(false);
 
   // Inicializar com o valor passado
@@ -106,13 +104,15 @@ export const InternationalPhoneInput: React.FC<InternationalPhoneInputProps> = (
     }
   };
 
-  const handleCountryChange = (country: Country) => {
-    setSelectedCountry(country);
-    setOpen(false);
-    
-    // Revalidar com o novo país
-    if (phoneNumber) {
-      handlePhoneChange(phoneNumber);
+  const handleCountryChange = (countryCode: string) => {
+    const country = countries.find(c => c.code === countryCode);
+    if (country) {
+      setSelectedCountry(country);
+      
+      // Revalidar com o novo país
+      if (phoneNumber) {
+        handlePhoneChange(phoneNumber);
+      }
     }
   };
 
@@ -139,49 +139,27 @@ export const InternationalPhoneInput: React.FC<InternationalPhoneInputProps> = (
       
       <div className="flex gap-2">
         {/* Seletor de País */}
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className="w-32 justify-between rounded-xl h-14 border-2 hover:border-green-500/50 transition-all"
-            >
+        <Select value={selectedCountry.code} onValueChange={handleCountryChange}>
+          <SelectTrigger className="w-32 rounded-xl h-14 border-2 hover:border-green-500/50 transition-all">
+            <SelectValue>
               <div className="flex items-center gap-2">
                 <span className="text-base">{selectedCountry.flag}</span>
                 <span className="text-sm font-mono">{selectedCountry.callingCode}</span>
               </div>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-0">
-            <Command>
-              <CommandInput placeholder="Buscar país..." />
-              <CommandEmpty>Nenhum país encontrado.</CommandEmpty>
-              <CommandGroup className="max-h-64 overflow-auto">
-                {countries.map((country) => (
-                  <CommandItem
-                    key={country.code}
-                    value={`${country.name} ${country.callingCode}`}
-                    onSelect={() => handleCountryChange(country)}
-                  >
-                    <div className="flex items-center gap-3 w-full">
-                      <span className="text-base">{country.flag}</span>
-                      <span className="flex-1">{country.name}</span>
-                      <span className="text-sm font-mono text-muted-foreground">{country.callingCode}</span>
-                      <Check
-                        className={cn(
-                          "ml-auto h-4 w-4",
-                          selectedCountry.code === country.code ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </Command>
-          </PopoverContent>
-        </Popover>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="max-h-64">
+            {countries.map((country) => (
+              <SelectItem key={country.code} value={country.code}>
+                <div className="flex items-center gap-3 w-full">
+                  <span className="text-base">{country.flag}</span>
+                  <span className="flex-1">{country.name}</span>
+                  <span className="text-sm font-mono text-muted-foreground">{country.callingCode}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Campo de Telefone */}
         <div className="flex-1 relative">
