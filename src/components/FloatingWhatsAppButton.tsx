@@ -3,9 +3,7 @@ import { Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const FloatingWhatsAppButton: React.FC = () => {
-  const phoneNumber = '+5587999083662';
-  const message = 'Olá! Gostaria de conversar sobre o Financy.';
-  const whatsappUrl = `https://wa.me/${phoneNumber.replace('+', '')}?text=${encodeURIComponent(message)}`;
+  const whatsappUrl = 'https://wa.me/5587999881336?text=Ol%C3%A1%20Financy';
 
   return (
     <Button
