@@ -1013,6 +1013,10 @@ export type Database = {
           valor_mascarado: string
         }[]
       }
+      get_user_main_dashboard: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       get_user_profile_data: {
         Args: { user_id: string }
         Returns: {
@@ -1062,6 +1066,10 @@ export type Database = {
       mask_sensitive_data: {
         Args: { input_text: string; mask_type?: string }
         Returns: string
+      }
+      migrate_orphan_transactions_to_main_dashboard: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       processar_despesas_recorrentes: {
         Args: Record<PropertyKey, never>

@@ -71,6 +71,28 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
     if (!user) return;
 
     try {
+      // First check if user already has a default dashboard
+      const { data: existingDefault } = await supabase
+        .from('user_dashboards')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_default', true)
+        .single();
+
+      if (existingDefault) {
+        // User already has a default dashboard, use it
+        const newDashboard = {
+          id: existingDefault.id,
+          name: 'Dashboard Principal',
+          type: 'business' as 'personal' | 'business',
+          isDefault: true
+        };
+        setDashboards([newDashboard]);
+        setCurrentDashboard(newDashboard);
+        return;
+      }
+
+      // No default dashboard exists, create one
       const { data, error } = await supabase
         .from('user_dashboards')
         .insert({
@@ -82,7 +104,30 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // If error might be due to duplicate, try to get existing default
+        if (error.code === '23505') { // Unique constraint violation
+          const { data: existing } = await supabase
+            .from('user_dashboards')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_default', true)
+            .single();
+          
+          if (existing) {
+            const dashboard = {
+              id: existing.id,
+              name: existing.name,
+              type: existing.type as 'personal' | 'business',
+              isDefault: existing.is_default
+            };
+            setDashboards([dashboard]);
+            setCurrentDashboard(dashboard);
+            return;
+          }
+        }
+        throw error;
+      }
 
       const newDashboard = {
         id: data.id,
