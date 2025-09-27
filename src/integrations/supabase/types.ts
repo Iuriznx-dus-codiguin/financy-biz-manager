@@ -876,27 +876,72 @@ export type Database = {
       usuarios_assinatura: {
         Row: {
           criado_em: string | null
-          data_assinatura: string
-          data_renovacao: string
+          data_assinatura: string | null
+          data_finalizacao_teste: string | null
+          data_renovacao: string | null
+          email: string | null
           id: number
-          nome_cliente: string
-          telefone_cliente: string
+          nome_cliente: string | null
+          telefone_cliente: string | null
         }
         Insert: {
           criado_em?: string | null
-          data_assinatura: string
-          data_renovacao: string
+          data_assinatura?: string | null
+          data_finalizacao_teste?: string | null
+          data_renovacao?: string | null
+          email?: string | null
           id?: number
-          nome_cliente: string
-          telefone_cliente: string
+          nome_cliente?: string | null
+          telefone_cliente?: string | null
         }
         Update: {
           criado_em?: string | null
-          data_assinatura?: string
-          data_renovacao?: string
+          data_assinatura?: string | null
+          data_finalizacao_teste?: string | null
+          data_renovacao?: string | null
+          email?: string | null
           id?: number
-          nome_cliente?: string
-          telefone_cliente?: string
+          nome_cliente?: string | null
+          telefone_cliente?: string | null
+        }
+        Relationships: []
+      }
+      validacao_n8n: {
+        Row: {
+          data_cadastro: string | null
+          data_finalizacao_teste: string | null
+          data_inicio_assinatura: string | null
+          email: string | null
+          id: string
+          nome_cliente: string | null
+          plano: string | null
+          proxima_cobranca: string | null
+          telefone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          data_cadastro?: string | null
+          data_finalizacao_teste?: string | null
+          data_inicio_assinatura?: string | null
+          email?: string | null
+          id?: string
+          nome_cliente?: string | null
+          plano?: string | null
+          proxima_cobranca?: string | null
+          telefone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          data_cadastro?: string | null
+          data_finalizacao_teste?: string | null
+          data_inicio_assinatura?: string | null
+          email?: string | null
+          id?: string
+          nome_cliente?: string | null
+          plano?: string | null
+          proxima_cobranca?: string | null
+          telefone?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
