@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -22,7 +22,9 @@ import {
   Lock,
   Shield,
   Eye,
-  EyeOff
+  EyeOff,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { useSettings, useCurrency } from '@/hooks/useSettings';
 import { useTheme } from '@/hooks/useTheme';
@@ -75,8 +77,41 @@ const Configuracoes = () => {
     new: false,
     confirm: false
   });
+  // Estados para edição de email e telefone
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [isEditingTelefone, setIsEditingTelefone] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newTelefone, setNewTelefone] = useState('');
+  const [userProfile, setUserProfile] = useState<{email?: string; telefone?: string} | null>(null);
 
   const limits = getLimits();
+
+  // Buscar dados do perfil do usuário
+  useEffect(() => {
+    if (user) {
+      loadUserProfile();
+    }
+  }, [user]);
+
+  const loadUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email, telefone')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) throw error;
+      
+      setUserProfile(data);
+      setNewEmail(data?.email || user.email || '');
+      setNewTelefone(data?.telefone || '');
+    } catch (error) {
+      console.error('Erro ao carregar perfil:', error);
+    }
+  };
 
   const formatSubscriptionEnd = (endDate: string | null) => {
     if (!endDate) return 'N/A';
@@ -345,6 +380,84 @@ const Configuracoes = () => {
       ...prev,
       [field]: !prev[field]
     }));
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!user || !newEmail.trim()) {
+      toast({
+        title: "Erro",
+        description: "Email não pode estar vazio.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira um email válido.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Atualizar no Supabase Auth
+      const { error: authError } = await supabase.auth.updateUser({
+        email: newEmail.trim()
+      });
+
+      if (authError) throw authError;
+
+      // Atualizar na tabela profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ email: newEmail.trim() })
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
+
+      setIsEditingEmail(false);
+      await loadUserProfile();
+      toast({
+        title: "Email atualizado",
+        description: "Seu email foi atualizado com sucesso. Verifique sua caixa de entrada para confirmar o novo email."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível atualizar o email. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUpdateTelefone = async () => {
+    if (!user) return;
+
+    try {
+      // Atualizar na tabela profiles
+      const { error } = await supabase
+        .from('profiles')
+        .update({ telefone: newTelefone.trim() || null })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setIsEditingTelefone(false);
+      await loadUserProfile();
+      toast({
+        title: "Telefone atualizado",
+        description: "Seu telefone foi atualizado com sucesso."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível atualizar o telefone. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   if (loading || subscriptionLoading) {
@@ -702,9 +815,84 @@ const Configuracoes = () => {
               </div>
             )}
 
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Email:</span>
-              <span className="text-sm text-muted-foreground">{user?.email}</span>
+            <Separator />
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </Label>
+              {isEditingEmail ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="Digite seu novo email"
+                    className="flex-1"
+                  />
+                  <Button size="sm" onClick={handleUpdateEmail}>
+                    <Save className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setIsEditingEmail(false);
+                    setNewEmail(userProfile?.email || user?.email || '');
+                  }}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                  <span className="text-sm">{userProfile?.email || user?.email || 'Não informado'}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditingEmail(true)}
+                  >
+                    <Edit3 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Telefone */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Telefone
+              </Label>
+              {isEditingTelefone ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="tel"
+                    value={newTelefone}
+                    onChange={(e) => setNewTelefone(e.target.value)}
+                    placeholder="Digite seu telefone (ex: +55 11 99999-9999)"
+                    className="flex-1"
+                  />
+                  <Button size="sm" onClick={handleUpdateTelefone}>
+                    <Save className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setIsEditingTelefone(false);
+                    setNewTelefone(userProfile?.telefone || '');
+                  }}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                  <span className="text-sm">{userProfile?.telefone || 'Não informado'}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditingTelefone(true)}
+                  >
+                    <Edit3 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             <Separator />
