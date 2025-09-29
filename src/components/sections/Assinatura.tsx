@@ -256,6 +256,29 @@ const Assinatura: React.FC = () => {
           Gestão financeira inteligente para pessoas físicas e empresas. 
           Transforme sua relação com o dinheiro com nossa plataforma completa.
         </p>
+
+        {/* Banner de Desconto Anual - Destaque */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 rounded-2xl p-6 shadow-2xl animate-pulse max-w-4xl mx-auto">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-4">
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-10 w-10 text-white animate-bounce" />
+              <div className="text-left">
+                <div className="text-3xl md:text-4xl font-black text-white leading-tight">
+                  4 MESES GRÁTIS
+                </div>
+                <div className="text-sm md:text-base text-white/90 font-medium">
+                  em todos os planos anuais
+                </div>
+              </div>
+            </div>
+            <div className="hidden md:block w-px h-12 bg-white/30"></div>
+            <div className="text-white/95 text-center md:text-left">
+              <div className="text-lg font-semibold">Economize até 33%</div>
+              <div className="text-sm text-white/80">Escolha o plano anual</div>
+            </div>
+          </div>
+        </div>
         
         {/* Toggle Planos Pessoais/Empresariais */}
         <div className="flex items-center justify-center space-x-2">
