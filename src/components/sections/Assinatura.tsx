@@ -40,7 +40,7 @@ const Assinatura: React.FC = () => {
     // Planos Pessoais - Mensal
     'personal-basic-monthly': 'https://pay.cakto.com.br/32twvdb_506799',
     'personal-plus-monthly': 'https://pay.cakto.com.br/gbmkspq_506803',
-    'personal-pro-monthly': 'https://pay.cakto.com.br/f7d9hvg_506809',
+    'personal-pro-monthly': 'https://pay.cakto.com.br/rtfgu9x_511525',
     'personal-enterprise-monthly': 'https://pay.cakto.com.br/6m4eyqf_506810',
     
     // Planos Pessoais - Anual
