@@ -75,24 +75,20 @@ const Assinatura: React.FC = () => {
     }
   };
 
-  const getPrice = (monthlyPrice: number, annualDiscount: number) => {
+  const getPrice = (monthlyPrice: number, annualPrice: number) => {
     if (isAnnual) {
-      const annualPrice = monthlyPrice * 12;
-      const discountedPrice = annualPrice * (1 - annualDiscount / 100);
       return {
-        price: discountedPrice,
-        monthlyEquivalent: discountedPrice / 12,
+        price: annualPrice,
+        monthlyEquivalent: annualPrice / 12,
         period: '/ano',
-        discount: annualDiscount,
-        originalPrice: annualPrice
+        originalMonthly: monthlyPrice
       };
     }
     return {
       price: monthlyPrice,
       monthlyEquivalent: monthlyPrice,
       period: '/mês',
-      discount: 0,
-      originalPrice: monthlyPrice
+      originalMonthly: monthlyPrice
     };
   };
 
@@ -101,7 +97,7 @@ const Assinatura: React.FC = () => {
       id: 'personal-basic',
       name: 'Básico',
       monthlyPrice: 24.90,
-      annualDiscount: 33.33,
+      annualPrice: 197.00,
       icon: <User className="h-6 w-6" />,
       description: 'Para controle financeiro pessoal simples',
       features: [
@@ -117,7 +113,7 @@ const Assinatura: React.FC = () => {
       id: 'personal-plus',
       name: 'Plus',
       monthlyPrice: 34.90,
-      annualDiscount: 33.33,
+      annualPrice: 280.00,
       icon: <TrendingUp className="h-6 w-6" />,
       description: 'Gestão financeira pessoal avançada',
       badge: 'Recomendado',
@@ -135,7 +131,7 @@ const Assinatura: React.FC = () => {
       id: 'personal-pro',
       name: 'PRO',
       monthlyPrice: 44.90,
-      annualDiscount: 33.33,
+      annualPrice: 360.00,
       icon: <Flame className="h-6 w-6" />,
       description: 'Ideal para casais',
       badge: 'Popular',
@@ -153,7 +149,7 @@ const Assinatura: React.FC = () => {
       id: 'personal-enterprise',
       name: 'Família',
       monthlyPrice: 97.00,
-      annualDiscount: 33.33,
+      annualPrice: 770.00,
       icon: <Users className="h-6 w-6" />,
       description: 'Máximo controle familiar',
       features: [
@@ -172,7 +168,7 @@ const Assinatura: React.FC = () => {
       id: 'business-plus',
       name: 'Básico',
       monthlyPrice: 34.90,
-      annualDiscount: 33.33,
+      annualPrice: 280.00,
       icon: <Building2 className="h-6 w-6" />,
       description: 'Gestão empresarial essencial',
       features: [
@@ -189,7 +185,7 @@ const Assinatura: React.FC = () => {
       id: 'business-premium',
       name: 'Plus',
       monthlyPrice: 44.90,
-      annualDiscount: 33.33,
+      annualPrice: 360.00,
       icon: <Sparkles className="h-6 w-6" />,
       description: 'Gestão empresarial completa',
       badge: 'Recomendado',
@@ -208,9 +204,9 @@ const Assinatura: React.FC = () => {
       id: 'business-pro',
       name: 'PRO',
       monthlyPrice: 97.00,
-      annualDiscount: 33.33,
+      annualPrice: 770.00,
       icon: <Flame className="h-6 w-6" />,
-      description: 'Ideal para finanças pessoais e empresariais',
+      description: 'Ideal para administrar as finanças pessoais e empresariais',
       badge: 'Popular',
       popular: true,
       features: [
@@ -218,7 +214,7 @@ const Assinatura: React.FC = () => {
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Multi-Dashboard', value: '2 dashboards (empresariais/pessoais)' },
+        { name: 'Multi-Dashboard', value: '2 dashboards (Empresariais/pessoais)' },
         { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
         { name: 'Teste gratuito', value: '7 dias' }
       ]
@@ -227,7 +223,7 @@ const Assinatura: React.FC = () => {
       id: 'business-enterprise',
       name: 'Super Company',
       monthlyPrice: 147.00,
-      annualDiscount: 33.33,
+      annualPrice: 1170.00,
       icon: <Shield className="h-6 w-6" />,
       description: 'Solução empresarial premium',
       features: [
@@ -235,7 +231,7 @@ const Assinatura: React.FC = () => {
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Multi-Dashboard', value: '10 dashboards (empresariais/pessoais)' },
+        { name: 'Multi-Dashboard', value: '10 dashboards (Empresariais/Pessoais)' },
         { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
         { name: 'Teste gratuito', value: '7 dias' }
       ]
@@ -325,7 +321,7 @@ const Assinatura: React.FC = () => {
       {/* Cards dos Planos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {currentPlans.map((plan) => {
-          const pricing = getPrice(plan.monthlyPrice, plan.annualDiscount);
+          const pricing = getPrice(plan.monthlyPrice, plan.annualPrice);
           
           return (
             <Card 
@@ -356,7 +352,7 @@ const Assinatura: React.FC = () => {
                 
                 {/* Preço */}
                 <div className="space-y-2 pt-4">
-                  {isAnnual && pricing.discount > 0 && (
+                  {isAnnual && (
                     <div className="text-sm text-muted-foreground line-through">
                       R$ {plan.monthlyPrice.toFixed(2)}/mês
                     </div>
