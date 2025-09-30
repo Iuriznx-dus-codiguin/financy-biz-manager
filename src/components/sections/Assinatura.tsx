@@ -49,15 +49,17 @@ const Assinatura: React.FC = () => {
     'personal-pro-annual': 'https://pay.cakto.com.br/jtvtbzy',
     'personal-enterprise-annual': 'https://pay.cakto.com.br/d73estf',
     
-    // URLs dos planos empresariais serão configuradas posteriormente
-    'business-plus-monthly': '#',
-    'business-premium-monthly': '#',
-    'business-pro-monthly': '#',
-    'business-enterprise-monthly': '#',
-    'business-plus-annual': '#',
-    'business-premium-annual': '#',
-    'business-pro-annual': '#',
-    'business-enterprise-annual': '#'
+    // Planos Empresariais - Mensal
+    'business-plus-monthly': 'https://pay.cakto.com.br/izhudpq_590408',
+    'business-premium-monthly': 'https://pay.cakto.com.br/34ngzrg_511510',
+    'business-pro-monthly': 'https://pay.cakto.com.br/f7d9hvg_506809',
+    'business-enterprise-monthly': 'https://pay.cakto.com.br/3ei5eox_590705',
+    
+    // Planos Empresariais - Anual
+    'business-plus-annual': 'https://pay.cakto.com.br/cx7b7r6_590691',
+    'business-premium-annual': 'https://pay.cakto.com.br/5bz2sy4_590696',
+    'business-pro-annual': 'https://pay.cakto.com.br/36ffsgo_590699',
+    'business-enterprise-annual': 'https://pay.cakto.com.br/t2cpi2a_590702'
   };
 
   const handlePayment = (planId: string, period: string) => {
