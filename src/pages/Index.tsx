@@ -92,13 +92,13 @@ export default function Index() {
     );
   }
 
-  // Mostrar loading screen primeiro
-  if (showLoading) {
-    return <LoadingScreen onComplete={() => setShowLoading(false)} />;
-  }
-
   if (!user) {
     return <AuthPage />;
+  }
+
+  // Mostrar loading screen apenas para usuários autenticados
+  if (showLoading) {
+    return <LoadingScreen onComplete={() => setShowLoading(false)} />;
   }
 
   // Mostrar onboarding para novos usuários
