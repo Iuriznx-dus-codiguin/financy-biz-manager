@@ -284,21 +284,6 @@ export const AuthPage = () => {
                     )}
                   </Button>
                 </form>
-
-                {/* Banner de destaque para novos usuários */}
-                <div className="mt-6 p-6 bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl border-2 border-primary/20">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-primary/20 rounded-xl p-2 flex-shrink-0">
-                      <Sparkles className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <h3 className="font-semibold text-foreground">Novo por aqui?</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Crie sua conta gratuitamente e comece a organizar suas finanças em minutos!
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </TabsContent>
 
               <TabsContent value="signup" className="mt-6">
@@ -382,25 +367,6 @@ export const AuthPage = () => {
                     )}
                   </Button>
                 </form>
-
-                {/* Benefícios do cadastro */}
-                <div className="mt-6 space-y-3">
-                  <p className="text-sm font-medium text-muted-foreground text-center">O que você ganha:</p>
-                  <div className="grid gap-2">
-                    <div className="flex items-center gap-2 text-sm text-foreground bg-muted/50 rounded-xl p-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                      <span>Gestão completa de receitas e despesas</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-foreground bg-muted/50 rounded-xl p-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                      <span>Dashboards personalizáveis</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-foreground bg-muted/50 rounded-xl p-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                      <span>Relatórios inteligentes e automáticos</span>
-                    </div>
-                  </div>
-                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
