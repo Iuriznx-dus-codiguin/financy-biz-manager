@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff, Sparkles } from 'lucide-react';
-import financyLogo from '@/assets/financy-logo.png';
+import financyLogo from '@/assets/financy-logo-new.png';
 
 export const AuthPage = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
@@ -114,34 +114,55 @@ export const AuthPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 dark:from-primary/10 dark:via-background dark:to-primary/5 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Elementos decorativos de background */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
-      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-primary/3 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2"></div>
+      {/* Grid pattern background */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--primary)/0.03)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--primary)/0.03)_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
+      
+      {/* Elementos decorativos de background com animação */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 animate-pulse" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-primary/5 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+      
+      {/* Floating particles */}
+      <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary/30 rounded-full animate-ping"></div>
+      <div className="absolute top-3/4 right-1/4 w-2 h-2 bg-primary/30 rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
+      <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-primary/30 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
       
       {/* Container principal */}
       <div className="relative z-10 w-full max-w-lg">
         {/* Logo e título no topo */}
-        <div className="text-center mb-6 space-y-4">
-          <div className="w-20 h-20 mx-auto bg-primary rounded-3xl flex items-center justify-center shadow-xl ring-4 ring-primary/20">
-            <img 
-              src={financyLogo}
-              alt="Financy" 
-              className="w-12 h-12 object-contain filter brightness-0 invert"
-            />
+        <div className="text-center mb-8 space-y-6">
+          {/* Logo com efeito glassmorphism */}
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+            <div className="relative w-24 h-24 mx-auto bg-gradient-to-br from-primary/10 to-primary/5 backdrop-blur-md rounded-3xl flex items-center justify-center shadow-2xl ring-1 ring-primary/20 group-hover:scale-105 transition-transform duration-500">
+              <img 
+                src={financyLogo}
+                alt="Financy" 
+                className="w-16 h-16 object-contain drop-shadow-2xl"
+              />
+            </div>
           </div>
-          <div className="space-y-1">
-            <h1 className="text-4xl font-bold text-foreground font-inter">
+          
+          {/* Título com gradiente */}
+          <div className="space-y-2">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent font-inter tracking-tight">
               Financy
             </h1>
-            <p className="text-muted-foreground text-lg">
-              Gestão financeira inteligente
-            </p>
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-px w-8 bg-gradient-to-r from-transparent to-primary/50"></div>
+              <p className="text-muted-foreground text-base font-medium">
+                Gestão Financeira Inteligente
+              </p>
+              <div className="h-px w-8 bg-gradient-to-l from-transparent to-primary/50"></div>
+            </div>
           </div>
         </div>
 
-        <Card className="rounded-3xl shadow-2xl backdrop-blur-md bg-card/95 border border-border/50 overflow-hidden">
-          <CardContent className="p-8 space-y-6">
+        <Card className="rounded-3xl shadow-2xl backdrop-blur-xl bg-card/90 border border-primary/10 overflow-hidden relative">
+          {/* Animated gradient border effect */}
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-primary/0 via-primary/20 to-primary/0 opacity-50 blur-xl"></div>
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-primary/5 to-transparent"></div>
+          <CardContent className="relative z-10 p-8 space-y-6">
             {error && (
               <Alert className="border-destructive/20 bg-destructive/5 text-destructive rounded-xl">
                 <AlertDescription className="font-medium">{error}</AlertDescription>
@@ -159,7 +180,7 @@ export const AuthPage = () => {
               onClick={handleGoogleLogin}
               disabled={googleLoading || loading}
               variant="outline"
-              className="w-full rounded-2xl h-14 text-base font-semibold border-2 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 group"
+              className="w-full rounded-2xl h-14 text-base font-semibold border-2 border-border/50 hover:border-primary/30 bg-background/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:bg-background/70 group"
             >
               {googleLoading ? (
                 <>
@@ -209,16 +230,16 @@ export const AuthPage = () => {
               setMessage(null);
               setFormData({ email: '', password: '', nomeCompleto: '' });
             }} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 h-14 rounded-2xl bg-muted/50 p-1">
+              <TabsList className="grid w-full grid-cols-2 h-14 rounded-2xl bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 backdrop-blur-sm p-1 border border-border/50">
                 <TabsTrigger 
                   value="login" 
-                  className="rounded-xl text-base font-semibold data-[state=active]:bg-background data-[state=active]:shadow-md"
+                  className="rounded-xl text-base font-semibold data-[state=active]:bg-background/90 data-[state=active]:shadow-lg data-[state=active]:shadow-primary/5 transition-all duration-300"
                 >
                   Entrar
                 </TabsTrigger>
                 <TabsTrigger 
                   value="signup" 
-                  className="rounded-xl text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+                  className="rounded-xl text-base font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 transition-all duration-300"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Criar Conta
@@ -271,9 +292,11 @@ export const AuthPage = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full rounded-2xl h-16 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/25 transform hover:-translate-y-0.5 active:translate-y-0"
+                    className="w-full rounded-2xl h-16 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/30 transform hover:-translate-y-1 active:translate-y-0 relative overflow-hidden group"
                     disabled={loading || googleLoading}
                   >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    <span className="relative z-10">
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -282,6 +305,7 @@ export const AuthPage = () => {
                     ) : (
                       'Entrar na minha conta'
                     )}
+                    </span>
                   </Button>
                 </form>
               </TabsContent>
@@ -351,9 +375,11 @@ export const AuthPage = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full rounded-2xl h-16 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/25 transform hover:-translate-y-0.5 active:translate-y-0"
+                    className="w-full rounded-2xl h-16 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/30 transform hover:-translate-y-1 active:translate-y-0 relative overflow-hidden group"
                     disabled={loading || googleLoading}
                   >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    <span className="relative z-10">
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -365,6 +391,7 @@ export const AuthPage = () => {
                         Criar minha conta grátis
                       </>
                     )}
+                    </span>
                   </Button>
                 </form>
               </TabsContent>
@@ -372,13 +399,21 @@ export const AuthPage = () => {
           </CardContent>
         </Card>
 
-        {/* Rodapé informativo */}
-        <div className="mt-8 text-center">
-          <p className="text-muted-foreground text-sm">
+        {/* Rodapé informativo com efeito tech */}
+        <div className="mt-8 text-center space-y-4">
+          <div className="flex items-center justify-center gap-2">
+            <div className="h-px w-12 bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 backdrop-blur-sm">
+              <div className="w-2 h-2 rounded-full bg-primary/50 animate-pulse"></div>
+              <span className="text-xs text-muted-foreground font-medium">Seguro & Criptografado</span>
+            </div>
+            <div className="h-px w-12 bg-gradient-to-l from-transparent via-primary/30 to-transparent"></div>
+          </div>
+          <p className="text-muted-foreground text-xs">
             Ao continuar, você concorda com nossos{' '}
-            <a href="#" className="text-primary hover:text-primary/80 font-medium">Termos de Uso</a>{' '}
+            <a href="#" className="text-primary hover:text-primary/80 font-medium transition-colors">Termos de Uso</a>{' '}
             e{' '}
-            <a href="#" className="text-primary hover:text-primary/80 font-medium">Política de Privacidade</a>
+            <a href="#" className="text-primary hover:text-primary/80 font-medium transition-colors">Política de Privacidade</a>
           </p>
         </div>
       </div>
