@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -27,30 +28,34 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
   const { subscriptionTier } = useSubscription();
   const { isFeatureAvailable } = useFeatureAccess();
   const { onboardingData } = useOnboarding();
+  const { carregarDados } = useAppContext();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const userName = onboardingData?.nome_preferido || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
 
   const handleRefreshData = async () => {
     setIsRefreshing(true);
+    
     try {
-      // Chamar a edge function para processar transações recorrentes
-      const { error } = await supabase.functions.invoke('process-recurring-transactions');
+      // Tentar processar transações recorrentes (opcional)
+      try {
+        await supabase.functions.invoke('process-recurring-transactions');
+      } catch (funcError) {
+        // Ignorar erro da edge function - não é crítico
+        console.log('Edge function não disponível, atualizando dados localmente');
+      }
       
-      if (error) throw error;
+      // Sempre recarregar dados do banco
+      await carregarDados();
       
-      toast.success('Dados atualizados com sucesso!', {
-        description: 'Transações recorrentes processadas'
+      toast.success('Dados atualizados!', {
+        description: 'Suas transações foram atualizadas com sucesso'
       });
       
-      // Recarregar a página para atualizar os dados
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     } catch (error) {
       console.error('Erro ao atualizar dados:', error);
       toast.error('Erro ao atualizar dados', {
-        description: 'Tente novamente mais tarde'
+        description: 'Verifique sua conexão e tente novamente'
       });
     } finally {
       setIsRefreshing(false);

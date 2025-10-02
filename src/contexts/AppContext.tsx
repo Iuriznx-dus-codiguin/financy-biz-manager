@@ -119,6 +119,7 @@ interface AppContextType {
   updateImposto: (id: number, imposto: Partial<Imposto>) => Promise<void>;
   updateConfiguracoes: (novasConfiguracoes: Partial<Configuracoes>) => void;
   clearCacheForDashboard: (dashboardId: string) => void;
+  carregarDados: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -633,7 +634,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       deleteMembroEquipe,
       updateImposto,
       updateConfiguracoes,
-      clearCacheForDashboard
+      clearCacheForDashboard,
+      carregarDados
     }}>
       {children}
     </AppContext.Provider>
