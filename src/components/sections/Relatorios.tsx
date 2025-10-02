@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,10 +14,11 @@ import { FileText, Download } from 'lucide-react';
 import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
 import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
-const Relatorios = () => {
+  const Relatorios = () => {
   const [selectedReport, setSelectedReport] = useState('mensal');
   const [timeFilter, setTimeFilter] = useState('este-mes');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [reportKey, setReportKey] = useState(0); // Para forçar atualização
   const { receitas, despesas, impostos } = useAppContext();
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('relatorios');
 
@@ -297,10 +298,27 @@ const Relatorios = () => {
   const handleGerarRelatorio = async () => {
     setIsGenerating(true);
     try {
-      // Simular geração do relatório
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success(`Relatório ${selectedReport} gerado com sucesso!`);
+      // Forçar re-cálculo dos dados do relatório
+      setReportKey(prev => prev + 1);
+      
+      // Pequeno delay para feedback visual
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const reportNames: Record<string, string> = {
+        'mensal': 'Evolução no Tempo',
+        'categoria-receitas': 'Receitas por Categoria',
+        'categoria-despesas': 'Despesas por Categoria',
+        'comparativo': 'Análise Comparativa',
+        'analise-impostos': 'Impostos e Taxas',
+        'fluxo-caixa': 'Fluxo de Caixa',
+        'economia': 'Análise de Economia'
+      };
+      
+      toast.success(`Relatório atualizado!`, {
+        description: `${reportNames[selectedReport] || selectedReport} - ${getTimeFilterLabel(timeFilter)}`
+      });
     } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
       toast.error('Erro ao gerar relatório');
     } finally {
       setIsGenerating(false);
@@ -378,7 +396,11 @@ const Relatorios = () => {
     }
   };
 
-  const dadosRelatorio = gerarDadosRelatorio();
+  // Usar useMemo para recalcular dados quando filtros mudam
+  const dadosRelatorio = useMemo(() => {
+    console.log('Gerando dados do relatório:', selectedReport, timeFilter);
+    return gerarDadosRelatorio();
+  }, [selectedReport, timeFilter, reportKey, receitas, despesas, impostos]);
 
   const gerarInsights = () => {
     const insights = [];
@@ -624,7 +646,14 @@ const Relatorios = () => {
               onClick={handleGerarRelatorio}
               disabled={isGenerating}
             >
-              {isGenerating ? '⏳ Gerando...' : '✨ Gerar Relatório'}
+              {isGenerating ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  Atualizando...
+                </>
+              ) : (
+                '✨ Atualizar Relatório'
+              )}
             </Button>
             
             <Button variant="outline" className="rounded-xl" onClick={() => {
