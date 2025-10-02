@@ -150,18 +150,12 @@ export default function Index() {
     <div className="h-screen bg-background">
       <SidebarProvider defaultOpen={false}>
         <div className="flex h-full w-full">
-          {/* Header com SidebarTrigger sempre visível */}
-          <header className="fixed top-0 left-0 right-0 h-12 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50 w-full lg:px-4">
-            <SidebarTrigger className="ml-2 hidden lg:flex" />
-            <div className="flex-1" />
-          </header>
-
-          <AppSidebar 
+          <AppSidebar
             activeSection={isSubscriptionExpiredState ? 'assinatura' : activeSection} 
             setActiveSection={handleSectionChange}
             disabled={isSubscriptionExpiredState}
           />
-          <div className="flex-1 flex flex-col overflow-hidden pt-12">
+          <div className="flex-1 flex flex-col overflow-hidden">
             <div className="lg:hidden">
               <MobileSidebar 
                 activeSection={isSubscriptionExpiredState ? 'assinatura' : activeSection} 
