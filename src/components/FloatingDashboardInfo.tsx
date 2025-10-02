@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { TimeFilter } from '@/components/TimeFilter';
 import { CompactDashboardSelector } from '@/components/CompactDashboardSelector';
-import { Crown, Zap, Star, Settings, Code, Sparkles } from 'lucide-react';
+import { Crown, Zap, Star, Settings, Code, Sparkles, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface FloatingDashboardInfoProps {
   timeFilter: string;
@@ -24,8 +27,35 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
   const { subscriptionTier } = useSubscription();
   const { isFeatureAvailable } = useFeatureAccess();
   const { onboardingData } = useOnboarding();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const userName = onboardingData?.nome_preferido || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
+
+  const handleRefreshData = async () => {
+    setIsRefreshing(true);
+    try {
+      // Chamar a edge function para processar transações recorrentes
+      const { error } = await supabase.functions.invoke('process-recurring-transactions');
+      
+      if (error) throw error;
+      
+      toast.success('Dados atualizados com sucesso!', {
+        description: 'Transações recorrentes processadas'
+      });
+      
+      // Recarregar a página para atualizar os dados
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error('Erro ao atualizar dados:', error);
+      toast.error('Erro ao atualizar dados', {
+        description: 'Tente novamente mais tarde'
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   
   // Configurações de cores e ícones baseadas no plano
   const getSubscriptionBadge = () => {
@@ -133,6 +163,16 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
 
           {/* Controles */}
           <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleRefreshData}
+              disabled={isRefreshing}
+              className="rounded-xl"
+              title="Atualizar e processar transações recorrentes"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
             <CompactDashboardSelector />
             <TimeFilter value={timeFilter} onChange={setTimeFilter} />
           </div>

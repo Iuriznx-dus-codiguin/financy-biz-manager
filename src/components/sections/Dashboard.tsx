@@ -29,6 +29,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useDashboard } from '@/hooks/useDashboard';
+import { RecurringTransactions } from '@/components/RecurringTransactions';
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -112,6 +113,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
             onUpgrade={() => setActiveSection?.('assinatura')}
           />
         )}
+
+        <RecurringTransactions />
       </section>
     );
   }
@@ -190,6 +193,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           onUpgrade={() => setActiveSection?.('assinatura')}
         />
       )}
+
+      <RecurringTransactions />
     </section>
   );
 };

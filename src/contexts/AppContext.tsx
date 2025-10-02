@@ -14,6 +14,11 @@ export interface Receita {
   formaPagamento: string;
   dashboard_id?: string;
   status: 'paga' | 'pendente';
+  recorrente?: boolean;
+  tipo_recorrencia?: string;
+  proxima_data?: string;
+  configuracao_recorrencia?: any;
+  categoria_personalizada?: string;
 }
 
 export interface Despesa {
@@ -26,6 +31,11 @@ export interface Despesa {
   formaPagamento: string;
   dashboard_id?: string;
   status: 'paga' | 'pendente';
+  recorrente?: boolean;
+  tipo_recorrencia?: string;
+  proxima_data?: string;
+  configuracao_recorrencia?: any;
+  categoria_personalizada?: string;
 }
 
 export interface Imposto {
