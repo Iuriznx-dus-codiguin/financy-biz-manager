@@ -33,21 +33,27 @@ const Relatorios = () => {
   const lucroLiquido = totalReceitas - totalDespesas - totalImpostosPagos;
   const margemLucro = totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
 
-  // Dados para gráfico de rosca dos principais gastos
+  // Dados para gráfico de rosca dos principais gastos - Adaptado para usuários pessoais
   const gerarDadosPrincipaisGastos = () => {
-    const gastosCategorizados = {
-      'Despesas Operacionais': filteredDespesas.reduce((sum, d) => sum + d.valor, 0),
-      'Impostos': filteredImpostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0),
-      'Equipe': filteredDespesas.filter(d => d.categoria === 'equipe').reduce((sum, d) => sum + d.valor, 0),
-      'Fornecedores': filteredDespesas.filter(d => d.categoria === 'fornecedores').reduce((sum, d) => sum + d.valor, 0),
-      'Marketing': filteredDespesas.filter(d => d.categoria === 'marketing').reduce((sum, d) => sum + d.valor, 0),
-      'Tecnologia': filteredDespesas.filter(d => d.categoria === 'tecnologia').reduce((sum, d) => sum + d.valor, 0),
-    };
+    const gastosCategorizados: Record<string, number> = {};
+    
+    // Agrupar despesas por categoria
+    filteredDespesas.forEach(d => {
+      const categoria = d.categoria || 'Outros';
+      gastosCategorizados[categoria] = (gastosCategorizados[categoria] || 0) + d.valor;
+    });
+    
+    // Adicionar impostos pagos como uma categoria
+    const totalImpostosPagos = filteredImpostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);
+    if (totalImpostosPagos > 0) {
+      gastosCategorizados['Impostos e Taxas'] = totalImpostosPagos;
+    }
 
     return Object.entries(gastosCategorizados)
       .map(([name, value]) => ({ name, value }))
       .filter(item => item.value > 0)
-      .sort((a, b) => b.value - a.value);
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8); // Top 8 categorias
   };
 
   const dadosPrincipaisGastos = gerarDadosPrincipaisGastos();
@@ -87,58 +93,60 @@ const Relatorios = () => {
     switch (selectedReport) {
       case 'mensal':
         return gerarDadosMensais();
-      case 'categoria':
+      case 'categoria-receitas':
         return gerarDadosPorCategoria();
-      case 'cliente':
-        return gerarDadosPorCliente();
+      case 'categoria-despesas':
+        return gerarDadosPorCategoriaDespesas();
       case 'comparativo':
         return gerarDadosComparativos();
-      case 'gastos-equipe':
-        return gerarDadosGastosEquipe();
-      case 'gastos-fornecedor':
-        return gerarDadosGastosFornecedor();
       case 'analise-impostos':
         return gerarDadosAnaliseImpostos();
       case 'fluxo-caixa':
         return gerarDadosFluxoCaixa();
-      case 'rentabilidade':
-        return gerarDadosRentabilidade();
-      case 'benchmark':
-        return gerarDadosBenchmark();
+      case 'economia':
+        return gerarDadosEconomia();
       default:
         return gerarDadosMensais();
     }
   };
 
-  const gerarDadosGastosEquipe = () => {
-    // Aqui assumindo que existe um array membrosEquipe no contexto
-    const gastosEquipe = filteredDespesas
-      .filter(d => d.categoria === 'equipe')
-      .reduce((acc, despesa) => {
-        const fornecedor = despesa.fornecedor || 'Membro não especificado';
-        acc[fornecedor] = (acc[fornecedor] || 0) + despesa.valor;
-        return acc;
-      }, {} as Record<string, number>);
+  const gerarDadosPorCategoriaDespesas = () => {
+    const categorias = filteredDespesas.reduce((acc, despesa) => {
+      const categoria = despesa.categoria || 'Outros';
+      acc[categoria] = (acc[categoria] || 0) + despesa.valor;
+      return acc;
+    }, {} as Record<string, number>);
 
-    return Object.entries(gastosEquipe).map(([membro, valor]) => ({
-      membro,
-      valor
-    }));
+    return Object.entries(categorias)
+      .map(([categoria, valor]) => ({ categoria, valor }))
+      .sort((a, b) => b.valor - a.valor);
   };
 
-  const gerarDadosGastosFornecedor = () => {
-    const gastosFornecedor = filteredDespesas
-      .filter(d => d.categoria === 'fornecedores')
-      .reduce((acc, despesa) => {
-        const fornecedor = despesa.fornecedor || 'Fornecedor não especificado';
-        acc[fornecedor] = (acc[fornecedor] || 0) + despesa.valor;
-        return acc;
-      }, {} as Record<string, number>);
-
-    return Object.entries(gastosFornecedor).map(([fornecedor, valor]) => ({
-      fornecedor,
-      valor
-    }));
+  const gerarDadosEconomia = () => {
+    // Calcular quanto foi economizado comparado ao mês anterior
+    const mesAtual = new Date();
+    const mesAnterior = new Date(mesAtual.getFullYear(), mesAtual.getMonth() - 1, 1);
+    
+    const despesasMesAtual = despesas.filter(d => {
+      const data = new Date(d.data);
+      return data.getMonth() === mesAtual.getMonth() && data.getFullYear() === mesAtual.getFullYear();
+    }).reduce((sum, d) => sum + d.valor, 0);
+    
+    const despesasMesAnterior = despesas.filter(d => {
+      const data = new Date(d.data);
+      return data.getMonth() === mesAnterior.getMonth() && data.getFullYear() === mesAnterior.getFullYear();
+    }).reduce((sum, d) => sum + d.valor, 0);
+    
+    const economia = despesasMesAnterior - despesasMesAtual;
+    const percentualEconomia = despesasMesAnterior > 0 ? (economia / despesasMesAnterior) * 100 : 0;
+    
+    return [{
+      periodo: 'Mês Anterior',
+      despesas: despesasMesAnterior
+    }, {
+      periodo: 'Mês Atual',
+      despesas: despesasMesAtual
+    }];
   };
 
   const gerarDadosAnaliseImpostos = () => {
@@ -193,31 +201,6 @@ const Relatorios = () => {
     }));
   };
 
-  const gerarDadosBenchmark = () => {
-    const ticketMedio = filteredReceitas.length > 0 ? totalReceitas / filteredReceitas.length : 0;
-    const custoPorReceita = totalReceitas > 0 ? (totalDespesas / totalReceitas) * 100 : 0;
-    
-    return [
-      { 
-        metrica: 'Ticket Médio',
-        valor: `R$ ${ticketMedio.toFixed(2)}`,
-        benchmark: 'R$ 500,00',
-        performance: ticketMedio >= 500 ? 'Bom' : 'Melhorar'
-      },
-      {
-        metrica: 'Custo por Receita',
-        valor: `${custoPorReceita.toFixed(1)}%`,
-        benchmark: '< 70%',
-        performance: custoPorReceita < 70 ? 'Bom' : 'Atenção'
-      },
-      {
-        metrica: 'Margem de Lucro',
-        valor: `${margemLucro.toFixed(1)}%`,
-        benchmark: '> 20%',
-        performance: margemLucro > 20 ? 'Excelente' : margemLucro > 10 ? 'Bom' : 'Melhorar'
-      }
-    ];
-  };
 
   const gerarDadosMensais = () => {
     const dados = [];
@@ -281,18 +264,6 @@ const Relatorios = () => {
     }));
   };
 
-  const gerarDadosPorCliente = () => {
-    const clientes = filteredReceitas.reduce((acc, receita) => {
-      const cliente = receita.cliente || 'Cliente não informado';
-      acc[cliente] = (acc[cliente] || 0) + receita.valor;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return Object.entries(clientes)
-      .map(([cliente, valor]) => ({ cliente, valor }))
-      .sort((a, b) => b.valor - a.valor)
-      .slice(0, 10);
-  };
 
   const gerarDadosComparativos = () => {
     // Comparar com período anterior
@@ -447,9 +418,29 @@ const Relatorios = () => {
       
       const percentual = totalReceitas > 0 ? (maiorCategoria[1] / totalReceitas * 100).toFixed(1) : '0';
       insights.push({
-        title: 'Principal Fonte de Receita',
-        description: `${maiorCategoria[0]} representa ${percentual}% da receita no período`,
+        title: 'Principal Fonte de Renda',
+        description: `${maiorCategoria[0]} representa ${percentual}% da sua renda no período`,
         type: 'info'
+      });
+    }
+
+    // Insight sobre maior categoria de despesa
+    if (filteredDespesas.length > 0) {
+      const categoriasDespesas = filteredDespesas.reduce((acc, d) => {
+        const cat = d.categoria || 'Outros';
+        acc[cat] = (acc[cat] || 0) + d.valor;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const maiorDespesa = Object.entries(categoriasDespesas).reduce(([prevCat, prevVal], [cat, val]) => 
+        val > prevVal ? [cat, val] : [prevCat, prevVal]
+      );
+      
+      const percentualDespesa = totalDespesas > 0 ? (maiorDespesa[1] / totalDespesas * 100).toFixed(1) : '0';
+      insights.push({
+        title: 'Maior Gasto',
+        description: `${percentualDespesa}% dos seus gastos estão em ${maiorDespesa[0]}`,
+        type: 'warning'
       });
     }
 
@@ -483,27 +474,68 @@ const Relatorios = () => {
         onClose={(completed) => closeTutorial(completed)}
       />
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Relatórios</h2>
-          <p className="text-muted-foreground">Análises detalhadas do período selecionado</p>
+          <h2 className="text-3xl font-bold text-foreground">📊 Relatórios Financeiros</h2>
+          <p className="text-muted-foreground mt-1">Visualize e analise suas finanças pessoais</p>
         </div>
-        <div className="flex space-x-4">
+        <div className="flex flex-wrap gap-3">
           <Button variant="outline" className="rounded-xl flex items-center gap-2" onClick={handleExportPDF}>
             <FileText className="h-4 w-4" />
-            Baixar PDF ({getTimeFilterLabel(timeFilter)})
+            <span className="hidden sm:inline">Exportar PDF</span>
           </Button>
           <Button variant="outline" className="rounded-xl flex items-center gap-2" onClick={handleExportExcel}>
             <Download className="h-4 w-4" />
-            Baixar Excel ({getTimeFilterLabel(timeFilter)})
+            <span className="hidden sm:inline">Exportar Excel</span>
           </Button>
         </div>
       </div>
 
+      {/* Resumo Executivo - Movido para o topo */}
+      <Card className="rounded-2xl shadow-sm border-primary/20">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            💰 Resumo do Período
+            <span className="text-sm font-normal text-muted-foreground">({getTimeFilterLabel(timeFilter)})</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
+              <p className="text-xs text-muted-foreground mb-1">💵 Total de Receitas</p>
+              <p className="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400">
+                R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-xl border border-red-200/50 dark:border-red-800/50">
+              <p className="text-xs text-muted-foreground mb-1">💸 Total de Despesas</p>
+              <p className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400">
+                R$ {totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200/50 dark:border-green-800/50">
+              <p className="text-xs text-muted-foreground mb-1">💰 Saldo do Período</p>
+              <p className={`text-xl md:text-2xl font-bold ${lucroLiquido >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                R$ {lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border border-purple-200/50 dark:border-purple-800/50">
+              <p className="text-xs text-muted-foreground mb-1">📊 Taxa de Economia</p>
+              <p className={`text-xl md:text-2xl font-bold ${margemLucro >= 0 ? 'text-purple-600 dark:text-purple-400' : 'text-red-600 dark:text-red-400'}`}>
+                {margemLucro.toFixed(1)}%
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Gráfico Principal - Principais Gastos */}
       <Card className="rounded-2xl shadow-sm">
-        <CardHeader>
-          <CardTitle>📊 Principais Gastos - {getTimeFilterLabel(timeFilter)}</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            🎯 Distribuição de Gastos por Categoria
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">Veja onde seu dinheiro está sendo gasto</p>
         </CardHeader>
         <CardContent>
           {dadosPrincipaisGastos.length > 0 ? (
@@ -562,26 +594,26 @@ const Relatorios = () => {
 
       {/* Controles de Relatório */}
       <Card className="rounded-2xl shadow-sm">
-        <CardHeader>
-          <CardTitle>⚙️ Configurar Relatórios Alternativos</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            📈 Análises Detalhadas
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">Escolha o tipo de análise e período</p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Select value={selectedReport} onValueChange={setSelectedReport}>
               <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder="Tipo de Relatório" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="mensal">Evolução Temporal</SelectItem>
-                <SelectItem value="categoria">Por Categoria</SelectItem>
-                <SelectItem value="cliente">Por Cliente</SelectItem>
-                <SelectItem value="comparativo">Comparativo</SelectItem>
-                <SelectItem value="gastos-equipe">Gastos com Equipe</SelectItem>
-                <SelectItem value="gastos-fornecedor">Gastos com Fornecedores</SelectItem>
-                <SelectItem value="analise-impostos">Análise de Impostos</SelectItem>
-                <SelectItem value="fluxo-caixa">Fluxo de Caixa</SelectItem>
-                <SelectItem value="rentabilidade">Análise de Rentabilidade</SelectItem>
-                <SelectItem value="benchmark">Benchmark de Performance</SelectItem>
+                <SelectItem value="mensal">📅 Evolução no Tempo</SelectItem>
+                <SelectItem value="categoria-receitas">💵 Receitas por Categoria</SelectItem>
+                <SelectItem value="categoria-despesas">💸 Despesas por Categoria</SelectItem>
+                <SelectItem value="comparativo">⚖️ Comparativo de Períodos</SelectItem>
+                <SelectItem value="analise-impostos">🏛️ Impostos e Taxas</SelectItem>
+                <SelectItem value="fluxo-caixa">💰 Fluxo de Caixa</SelectItem>
+                <SelectItem value="economia">🎯 Análise de Economia</SelectItem>
               </SelectContent>
             </Select>
             
@@ -592,33 +624,36 @@ const Relatorios = () => {
               onClick={handleGerarRelatorio}
               disabled={isGenerating}
             >
-              {isGenerating ? 'Gerando...' : 'Gerar Relatório'}
+              {isGenerating ? '⏳ Gerando...' : '✨ Gerar Relatório'}
             </Button>
             
             <Button variant="outline" className="rounded-xl" onClick={() => {
               setSelectedReport('mensal');
               setTimeFilter('este-mes');
             }}>
-              Limpar Filtros
+              🔄 Limpar Filtros
             </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Insights do Período */}
-      <Card className="rounded-2xl shadow-sm">
-        <CardHeader>
-          <CardTitle>💡 Insights - {getTimeFilterLabel(timeFilter)}</CardTitle>
+      <Card className="rounded-2xl shadow-sm border-amber-200/50 dark:border-amber-800/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            💡 Insights Personalizados
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">Análises inteligentes das suas finanças</p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {insights.map((insight, index) => (
               <div 
                 key={index} 
-                className={`p-4 rounded-xl border ${getInsightColor(insight.type)}`}
+                className={`p-5 rounded-xl border-2 ${getInsightColor(insight.type)} transition-all hover:shadow-md`}
               >
-                <h4 className="font-semibold mb-2">{insight.title}</h4>
-                <p className="text-sm text-muted-foreground">{insight.description}</p>
+                <h4 className="font-bold mb-2 text-base">{insight.title}</h4>
+                <p className="text-sm leading-relaxed">{insight.description}</p>
               </div>
             ))}
           </div>
@@ -627,80 +662,75 @@ const Relatorios = () => {
 
       {/* Relatório Alternativo Selecionado */}
       <Card className="rounded-2xl shadow-sm">
-        <CardHeader>
-          <CardTitle>
-            📈 {selectedReport === 'mensal' && 'Evolução Temporal'}
-            {selectedReport === 'categoria' && 'Receitas por Categoria'}
-            {selectedReport === 'cliente' && 'Receitas por Cliente'}
-            {selectedReport === 'comparativo' && 'Análise Comparativa'}
-            {selectedReport === 'gastos-equipe' && 'Gastos com Equipe'}
-            {selectedReport === 'gastos-fornecedor' && 'Gastos com Fornecedores'}
-            {selectedReport === 'analise-impostos' && 'Análise de Impostos'}
-            {selectedReport === 'fluxo-caixa' && 'Fluxo de Caixa'}
-            {selectedReport === 'rentabilidade' && 'Análise de Rentabilidade'}
-            {selectedReport === 'benchmark' && 'Benchmark de Performance'}
-            {' - '}
-            {getTimeFilterLabel(timeFilter)}
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            {selectedReport === 'mensal' && '📅 Evolução no Tempo'}
+            {selectedReport === 'categoria-receitas' && '💵 Receitas por Categoria'}
+            {selectedReport === 'categoria-despesas' && '💸 Despesas por Categoria'}
+            {selectedReport === 'comparativo' && '⚖️ Análise Comparativa'}
+            {selectedReport === 'analise-impostos' && '🏛️ Impostos e Taxas'}
+            {selectedReport === 'fluxo-caixa' && '💰 Fluxo de Caixa'}
+            {selectedReport === 'economia' && '🎯 Análise de Economia'}
           </CardTitle>
+          <p className="text-sm text-muted-foreground">{getTimeFilterLabel(timeFilter)}</p>
         </CardHeader>
         <CardContent>
           {dadosRelatorio.length > 0 ? (
             <ResponsiveContainer width="100%" height={400}>
-              {selectedReport === 'categoria' || selectedReport === 'cliente' || 
-               selectedReport === 'gastos-equipe' || selectedReport === 'gastos-fornecedor' ? (
+              {selectedReport === 'categoria-receitas' || selectedReport === 'categoria-despesas' ? (
                 <BarChart data={dadosRelatorio}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey={
-                    selectedReport === 'categoria' ? 'categoria' : 
-                    selectedReport === 'cliente' ? 'cliente' :
-                    selectedReport === 'gastos-equipe' ? 'membro' : 'fornecedor'
-                  } />
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis 
+                    dataKey="categoria"
+                    tick={{ fontSize: 12 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip 
+                    formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                    contentStyle={{ borderRadius: '8px' }}
+                  />
+                  <Bar 
+                    dataKey="valor" 
+                    fill={selectedReport === 'categoria-receitas' ? '#22C55E' : '#EF4444'} 
+                    radius={[8, 8, 0, 0]} 
+                  />
+                </BarChart>
+              ) : selectedReport === 'economia' ? (
+                <BarChart data={dadosRelatorio}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis dataKey="periodo" />
                   <YAxis />
                   <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
-                  <Bar dataKey="valor" fill="#22C55E" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="despesas" fill="#EF4444" radius={[8, 8, 0, 0]} name="Despesas" />
                 </BarChart>
               ) : selectedReport === 'fluxo-caixa' ? (
                 <LineChart data={dadosRelatorio}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
-                  <Line type="monotone" dataKey="entradas" stroke="#22C55E" strokeWidth={3} name="Entradas" />
-                  <Line type="monotone" dataKey="saidas" stroke="#EF4444" strokeWidth={3} name="Saídas" />
-                  <Line type="monotone" dataKey="liquido" stroke="#3B82F6" strokeWidth={3} name="Líquido" />
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip 
+                    formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                    contentStyle={{ borderRadius: '8px' }}
+                  />
+                  <Line type="monotone" dataKey="entradas" stroke="#22C55E" strokeWidth={3} name="Entradas" dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="saidas" stroke="#EF4444" strokeWidth={3} name="Saídas" dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="liquido" stroke="#3B82F6" strokeWidth={3} name="Saldo" dot={{ r: 4 }} />
                 </LineChart>
-              ) : selectedReport === 'benchmark' ? (
-                <div className="space-y-4">
-                  {dadosRelatorio.map((item: any, index: number) => (
-                    <div key={index} className="flex justify-between items-center p-4 bg-muted/20 rounded-lg">
-                      <div>
-                        <p className="font-medium">{item.metrica}</p>
-                        <p className="text-sm text-muted-foreground">Benchmark: {item.benchmark}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">{item.valor}</p>
-                        <p className={`text-sm ${
-                          item.performance === 'Excelente' ? 'text-green-600' :
-                          item.performance === 'Bom' ? 'text-blue-600' : 'text-orange-600'
-                        }`}>
-                          {item.performance}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               ) : selectedReport === 'analise-impostos' ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {dadosRelatorio.map((imposto: any, index: number) => (
-                    <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{imposto.tipo}</p>
-                        <p className="text-sm text-muted-foreground">Venc: {imposto.vencimento}</p>
+                    <div key={index} className="flex justify-between items-center p-4 border-2 rounded-xl hover:shadow-md transition-all">
+                      <div className="flex-1">
+                        <p className="font-bold text-base">{imposto.tipo}</p>
+                        <p className="text-sm text-muted-foreground mt-1">📅 Vencimento: {new Date(imposto.vencimento).toLocaleDateString('pt-BR')}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">R$ {imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                        <p className={`text-sm ${imposto.status === 'Pago' ? 'text-green-600' : 'text-red-600'}`}>
-                          {imposto.status}
+                        <p className="font-bold text-lg">R$ {imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        <p className={`text-sm font-semibold mt-1 ${imposto.status === 'Pago' ? 'text-green-600' : 'text-orange-600'}`}>
+                          {imposto.status === 'Pago' ? '✅ Pago' : '⏰ Pendente'}
                         </p>
                       </div>
                     </div>
@@ -708,54 +738,27 @@ const Relatorios = () => {
                 </div>
               ) : (
                 <LineChart data={dadosRelatorio}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="period" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
-                  <Line type="monotone" dataKey="receitas" stroke="#22C55E" strokeWidth={3} name="Receitas" />
-                  <Line type="monotone" dataKey="despesas" stroke="#EF4444" strokeWidth={3} name="Despesas" />
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis dataKey="period" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip 
+                    formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                    contentStyle={{ borderRadius: '8px' }}
+                  />
+                  <Line type="monotone" dataKey="receitas" stroke="#22C55E" strokeWidth={3} name="Receitas" dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="despesas" stroke="#EF4444" strokeWidth={3} name="Despesas" dot={{ r: 4 }} />
                   {dadosRelatorio[0]?.lucro !== undefined && (
-                    <Line type="monotone" dataKey="lucro" stroke="#3B82F6" strokeWidth={3} name="Lucro" />
+                    <Line type="monotone" dataKey="lucro" stroke="#3B82F6" strokeWidth={3} name="Saldo" dot={{ r: 4 }} />
                   )}
                 </LineChart>
               )}
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-[400px]">
-              <p className="text-muted-foreground">Nenhum dado disponível para o período selecionado</p>
+            <div className="flex flex-col items-center justify-center h-[400px] text-center">
+              <p className="text-muted-foreground text-lg">📊 Nenhum dado disponível</p>
+              <p className="text-muted-foreground text-sm mt-2">Adicione transações para visualizar os relatórios</p>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Resumo Executivo */}
-      <Card className="rounded-2xl shadow-sm">
-        <CardHeader>
-          <CardTitle>📋 Resumo Executivo - {getTimeFilterLabel(timeFilter)}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-              <p className="text-sm text-muted-foreground">Receita Total</p>
-              <p className="text-2xl font-bold text-blue-600">R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-            </div>
-            <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
-              <p className="text-sm text-muted-foreground">Despesas Total</p>
-              <p className="text-2xl font-bold text-red-600">R$ {totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-            </div>
-            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-              <p className="text-sm text-muted-foreground">Lucro Líquido</p>
-              <p className={`text-2xl font-bold ${lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                R$ {lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-              <p className="text-sm text-muted-foreground">Margem de Lucro</p>
-              <p className={`text-2xl font-bold ${margemLucro >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
-                {margemLucro.toFixed(1)}%
-              </p>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </section>
