@@ -254,6 +254,92 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     ? ((roi - roiPeriodoAnterior) / Math.abs(roiPeriodoAnterior)) * 100 
     : roi > 0 ? 100 : roi < 0 ? -100 : 0;
 
+  // Calcular variações para dashboard pessoal
+  const gastosAlimentacaoPeriodoAnterior = isDashboardPessoal 
+    ? despesas.filter(d => {
+        const data = new Date(d.data);
+        return (d.categoria === 'alimentacao' || d.categoria === 'alimentação') && 
+               data >= startAnterior && data <= endAnterior;
+      }).reduce((sum, d) => sum + d.valor, 0)
+    : 0;
+
+  const gastosLazerPeriodoAnterior = isDashboardPessoal 
+    ? despesas.filter(d => {
+        const data = new Date(d.data);
+        return (d.categoria === 'lazer' || d.categoria === 'entretenimento') && 
+               data >= startAnterior && data <= endAnterior;
+      }).reduce((sum, d) => sum + d.valor, 0)
+    : 0;
+
+  const totalInvestidoPeriodoAnterior = isDashboardPessoal 
+    ? despesas.filter(d => {
+        const data = new Date(d.data);
+        return (d.categoria === 'investimentos' || d.categoria === 'poupanca' || d.categoria === 'poupança') && 
+               data >= startAnterior && data <= endAnterior;
+      }).reduce((sum, d) => sum + d.valor, 0)
+    : 0;
+
+  const receitasTerceirosPeriodoAnterior = isDashboardPessoal 
+    ? receitas.filter(r => {
+        const data = new Date(r.data);
+        return (r.categoria === 'terceiros' || r.categoria === 'freelance' || r.categoria === 'extras') && 
+               data >= startAnterior && data <= endAnterior;
+      }).reduce((sum, r) => sum + r.valor, 0)
+    : 0;
+
+  // Calcular variações para dashboard empresarial
+  const gastosEquipePeriodoAnterior = membrosEquipe
+    .filter(m => m.status === 'ativo')
+    .reduce((total, membro) => {
+      switch (membro.periodicidade) {
+        case 'mensal':
+          return total + membro.salario;
+        case 'semanal':
+          return total + (membro.salario * 4);
+        case 'quinzenal':
+          return total + (membro.salario * 2);
+        default:
+          return total;
+      }
+    }, 0);
+
+  const gastosEquipeDespesasPeriodoAnterior = despesas.filter(d => {
+    const data = new Date(d.data);
+    return d.categoria === 'equipe' && data >= startAnterior && data <= endAnterior;
+  }).reduce((sum, d) => sum + d.valor, 0);
+
+  const totalGastosEquipePeriodoAnterior = gastosEquipePeriodoAnterior + gastosEquipeDespesasPeriodoAnterior;
+
+  const gastosComFornecedoresPeriodoAnterior = despesas.filter(d => {
+    const data = new Date(d.data);
+    return d.categoria === 'fornecedores' && data >= startAnterior && data <= endAnterior;
+  }).reduce((sum, d) => sum + d.valor, 0);
+
+  // Calcular crescimentos
+  const crescimentoAlimentacao = gastosAlimentacaoPeriodoAnterior > 0 
+    ? ((gastosAlimentacao - gastosAlimentacaoPeriodoAnterior) / gastosAlimentacaoPeriodoAnterior) * 100 
+    : gastosAlimentacao > 0 ? 100 : 0;
+
+  const crescimentoLazer = gastosLazerPeriodoAnterior > 0 
+    ? ((gastosLazer - gastosLazerPeriodoAnterior) / gastosLazerPeriodoAnterior) * 100 
+    : gastosLazer > 0 ? 100 : 0;
+
+  const crescimentoInvestido = totalInvestidoPeriodoAnterior > 0 
+    ? ((totalInvestido - totalInvestidoPeriodoAnterior) / totalInvestidoPeriodoAnterior) * 100 
+    : totalInvestido > 0 ? 100 : 0;
+
+  const crescimentoReceitasTerceiros = receitasTerceirosPeriodoAnterior > 0 
+    ? ((receitasTerceiros - receitasTerceirosPeriodoAnterior) / receitasTerceirosPeriodoAnterior) * 100 
+    : receitasTerceiros > 0 ? 100 : 0;
+
+  const crescimentoGastosEquipe = totalGastosEquipePeriodoAnterior > 0 
+    ? ((totalGastosEquipe - totalGastosEquipePeriodoAnterior) / totalGastosEquipePeriodoAnterior) * 100 
+    : totalGastosEquipe > 0 ? 100 : 0;
+
+  const crescimentoGastosFornecedores = gastosComFornecedoresPeriodoAnterior > 0 
+    ? ((gastosComFornecedores - gastosComFornecedoresPeriodoAnterior) / gastosComFornecedoresPeriodoAnterior) * 100 
+    : gastosComFornecedores > 0 ? 100 : 0;
+
   // Dados para gráficos avançados
   const gerarDadosEvolutivos = () => {
     const ultimos6Meses = [];
@@ -322,41 +408,39 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
             <Icon className="h-5 w-5 text-primary" />
           </div>
         </div>
-        {change !== undefined && (
-          <div className="flex items-center gap-1 mt-2">
-            {change === 0 ? (
-              <Minus className="h-4 w-4 text-muted-foreground" />
-            ) : changeType === 'positive' ? (
-              <ArrowUpRight className="h-4 w-4 text-green-600" />
-            ) : changeType === 'negative' ? (
-              <ArrowDownRight className="h-4 w-4 text-red-600" />
-            ) : (
-              <ArrowUpRight className="h-4 w-4 text-red-600" />
-            )}
-            <span className={`text-sm font-medium ${
-              change === 0 ? 'text-muted-foreground' : 
-              changeType === 'positive' ? 'text-green-600' : 
-              changeType === 'negative' ? 'text-red-600' : 'text-red-600'
-            }`}>
-              {change === 0 ? '0' : `${Math.abs(change).toFixed(1)}`}%
-            </span>
-            <span className="text-xs text-muted-foreground">
-              vs {
-                timeFilter === 'hoje' ? 'ontem' :
-                timeFilter === 'ontem' ? 'anteontem' :
-                timeFilter === 'esta-semana' ? 'semana anterior' :
-                timeFilter === 'semana-passada' ? 'duas semanas atrás' :
-                timeFilter === 'este-mes' ? 'mês anterior' :
-                timeFilter === 'mes-passado' ? 'dois meses atrás' :
-                timeFilter === 'ultimos-30-dias' ? '30 dias anteriores' :
-                timeFilter === 'ultimos-90-dias' ? '90 dias anteriores' :
-                timeFilter === 'este-ano' ? 'ano anterior' :
-                timeFilter === 'ano-passado' ? 'dois anos atrás' :
-                'período anterior'
-              }
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-1 mt-2">
+          {change === 0 ? (
+            <Minus className="h-4 w-4 text-muted-foreground" />
+          ) : changeType === 'positive' ? (
+            <ArrowUpRight className="h-4 w-4 text-green-600" />
+          ) : changeType === 'negative' ? (
+            <ArrowDownRight className="h-4 w-4 text-red-600" />
+          ) : (
+            <ArrowUpRight className="h-4 w-4 text-red-600" />
+          )}
+          <span className={`text-sm font-medium ${
+            change === 0 ? 'text-muted-foreground' : 
+            changeType === 'positive' ? 'text-green-600' : 
+            changeType === 'negative' ? 'text-red-600' : 'text-red-600'
+          }`}>
+            {change === 0 ? '0.0' : `${Math.abs(change).toFixed(1)}`}%
+          </span>
+          <span className="text-xs text-muted-foreground">
+            vs {
+              timeFilter === 'hoje' ? 'ontem' :
+              timeFilter === 'ontem' ? 'anteontem' :
+              timeFilter === 'esta-semana' ? 'semana anterior' :
+              timeFilter === 'semana-passada' ? 'duas semanas atrás' :
+              timeFilter === 'este-mes' ? 'mês anterior' :
+              timeFilter === 'mes-passado' ? 'dois meses atrás' :
+              timeFilter === 'ultimos-30-dias' ? '30 dias anteriores' :
+              timeFilter === 'ultimos-90-dias' ? '90 dias anteriores' :
+              timeFilter === 'este-ano' ? 'ano anterior' :
+              timeFilter === 'ano-passado' ? 'dois anos atrás' :
+              'período anterior'
+            }
+          </span>
+        </div>
       </CardHeader>
     </Card>
   );
@@ -392,24 +476,32 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
             <MetricCard
               title="Gastos em Alimentação"
               value={`R$ ${gastosAlimentacao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoAlimentacao}
+              changeType={crescimentoAlimentacao <= 0 ? 'positive' : 'expense_increase'}
               icon={DollarSign}
               gradient="from-green-500 to-emerald-600"
             />
             <MetricCard
               title="Gastos em Lazer"
               value={`R$ ${gastosLazer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoLazer}
+              changeType={crescimentoLazer <= 0 ? 'positive' : 'expense_increase'}
               icon={Activity}
               gradient="from-purple-500 to-violet-600"
             />
             <MetricCard
               title="Total Investido"
               value={`R$ ${totalInvestido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoInvestido}
+              changeType={crescimentoInvestido >= 0 ? 'positive' : 'negative'}
               icon={TrendingUp}
               gradient="from-blue-500 to-indigo-600"
             />
             <MetricCard
               title="Receitas de Terceiros"
               value={`R$ ${receitasTerceiros.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoReceitasTerceiros}
+              changeType={crescimentoReceitasTerceiros >= 0 ? 'positive' : 'negative'}
               icon={Users}
               gradient="from-orange-500 to-amber-600"
             />
@@ -457,12 +549,16 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
             <MetricCard
               title="Gastos com Equipe"
               value={`R$ ${totalGastosEquipe.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoGastosEquipe}
+              changeType={crescimentoGastosEquipe <= 0 ? 'positive' : 'expense_increase'}
               icon={Users}
               gradient="from-blue-500 to-indigo-600"
             />
             <MetricCard
               title="Gastos com Fornecedores"
               value={`R$ ${gastosComFornecedores.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoGastosFornecedores}
+              changeType={crescimentoGastosFornecedores <= 0 ? 'positive' : 'expense_increase'}
               icon={Briefcase}
               gradient="from-orange-500 to-amber-600"
             />
