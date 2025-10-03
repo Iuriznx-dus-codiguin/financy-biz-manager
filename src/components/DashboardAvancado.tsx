@@ -365,7 +365,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     <div className="space-y-6">
 
       {/* KPIs Principais - Top (Centralizados) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <MetricCard
           title={isDashboardPessoal ? "Salário Mensal" : "Total em Receitas"}
           value={`R$ ${(isDashboardPessoal ? salarioMensal : totalReceitas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
