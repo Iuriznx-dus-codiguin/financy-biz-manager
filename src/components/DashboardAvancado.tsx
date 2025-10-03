@@ -364,93 +364,24 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   return (
     <div className="space-y-6">
 
-      {/* KPIs Principais - Receitas e Despesas em Destaque */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Card className="relative overflow-hidden group hover:shadow-xl transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-600 opacity-5 group-hover:opacity-10 transition-opacity" />
-          <CardHeader className="pb-4 relative">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-14 h-14 rounded-2xl bg-green-500/10 backdrop-blur-sm flex items-center justify-center">
-                <TrendingUp className="h-7 w-7 text-green-600" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-base font-medium text-muted-foreground">
-                {isDashboardPessoal ? "Salário Mensal" : "Total em Receitas"}
-              </div>
-              <p className="text-4xl font-bold text-foreground">
-                R$ {(isDashboardPessoal ? salarioMensal : totalReceitas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 mt-4">
-              {crescimentoReceitas >= 0 ? (
-                <ArrowUpRight className="h-5 w-5 text-green-600" />
-              ) : (
-                <ArrowDownRight className="h-5 w-5 text-red-600" />
-              )}
-              <span className={`text-base font-semibold ${crescimentoReceitas >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {Math.abs(crescimentoReceitas).toFixed(1)}%
-              </span>
-              <span className="text-sm text-muted-foreground">
-                vs {
-                  timeFilter === 'hoje' ? 'ontem' :
-                  timeFilter === 'ontem' ? 'anteontem' :
-                  timeFilter === 'esta-semana' ? 'semana anterior' :
-                  timeFilter === 'semana-passada' ? 'duas semanas atrás' :
-                  timeFilter === 'este-mes' ? 'mês anterior' :
-                  timeFilter === 'mes-passado' ? 'dois meses atrás' :
-                  timeFilter === 'ultimos-30-dias' ? '30 dias anteriores' :
-                  timeFilter === 'ultimos-90-dias' ? '90 dias anteriores' :
-                  timeFilter === 'este-ano' ? 'ano anterior' :
-                  timeFilter === 'ano-passado' ? 'dois anos atrás' :
-                  'período anterior'
-                }
-              </span>
-            </div>
-          </CardHeader>
-        </Card>
-
-        <Card className="relative overflow-hidden group hover:shadow-xl transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-rose-600 opacity-5 group-hover:opacity-10 transition-opacity" />
-          <CardHeader className="pb-4 relative">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-14 h-14 rounded-2xl bg-red-500/10 backdrop-blur-sm flex items-center justify-center">
-                <TrendingDown className="h-7 w-7 text-red-600" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-base font-medium text-muted-foreground">Total em Despesas</div>
-              <p className="text-4xl font-bold text-foreground">
-                R$ {(isDashboardPessoal ? totalDespesas : totalTodasDespesas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 mt-4">
-              {crescimentoDespesas <= 0 ? (
-                <ArrowDownRight className="h-5 w-5 text-green-600" />
-              ) : (
-                <ArrowUpRight className="h-5 w-5 text-red-600" />
-              )}
-              <span className={`text-base font-semibold ${crescimentoDespesas <= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {Math.abs(crescimentoDespesas).toFixed(1)}%
-              </span>
-              <span className="text-sm text-muted-foreground">
-                vs {
-                  timeFilter === 'hoje' ? 'ontem' :
-                  timeFilter === 'ontem' ? 'anteontem' :
-                  timeFilter === 'esta-semana' ? 'semana anterior' :
-                  timeFilter === 'semana-passada' ? 'duas semanas atrás' :
-                  timeFilter === 'este-mes' ? 'mês anterior' :
-                  timeFilter === 'mes-passado' ? 'dois meses atrás' :
-                  timeFilter === 'ultimos-30-dias' ? '30 dias anteriores' :
-                  timeFilter === 'ultimos-90-dias' ? '90 dias anteriores' :
-                  timeFilter === 'este-ano' ? 'ano anterior' :
-                  timeFilter === 'ano-passado' ? 'dois anos atrás' :
-                  'período anterior'
-                }
-              </span>
-            </div>
-          </CardHeader>
-        </Card>
+      {/* KPIs Principais - Top (Centralizados) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-4xl mx-auto">
+        <MetricCard
+          title={isDashboardPessoal ? "Salário Mensal" : "Total em Receitas"}
+          value={`R$ ${(isDashboardPessoal ? salarioMensal : totalReceitas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          change={Math.abs(crescimentoReceitas).toFixed(1)}
+          changeType={crescimentoReceitas >= 0 ? 'positive' : 'negative'}
+          icon={TrendingUp}
+          gradient="from-green-500 to-emerald-600"
+         />
+         <MetricCard
+           title="Total em Despesas"
+           value={`R$ ${(isDashboardPessoal ? totalDespesas : totalTodasDespesas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+           change={crescimentoDespesas}
+           changeType={crescimentoDespesas <= 0 ? 'positive' : 'expense_increase'}
+           icon={TrendingDown}
+           gradient="from-red-500 to-rose-600"
+         />
       </div>
 
         {/* Demais KPIs */}
