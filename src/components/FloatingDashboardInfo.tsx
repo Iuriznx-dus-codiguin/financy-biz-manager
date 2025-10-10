@@ -126,11 +126,11 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
   return (
     <Card className="shadow-lg border-0 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
       <div className="p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="space-y-3">
             {/* Saudação personalizada */}
             <div>
-              <h2 className="text-2xl font-bold text-foreground">
+              <h2 className="text-xl lg:text-2xl font-bold text-foreground">
                 Olá, {userName}
               </h2>
             </div>
@@ -150,30 +150,30 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
               )}
             </div>
 
-            {/* Tipo de dashboard */}
-            <div className="text-sm text-muted-foreground">
-              {dashboardType === 'advanced' ? 'Dashboard Avançado' : 'Dashboard Principal'}
-            </div>
-
-            {/* Filtro de tempo atual */}
-            <div className="text-xs text-muted-foreground">
-              {timeFilter === 'este-mes' && 'Este Mês'}
-              {timeFilter === 'ultimo-mes' && 'Último Mês'}
-              {timeFilter === 'ultimos-3-meses' && 'Últimos 3 Meses'}
-              {timeFilter === 'este-ano' && 'Este Ano'}
-              {timeFilter === 'ultimo-ano' && 'Último Ano'}
-              {timeFilter === 'todos' && 'Todos os Períodos'}
+            {/* Tipo de dashboard e filtro - oculto em mobile, visível no desktop */}
+            <div className="hidden lg:block space-y-1">
+              <div className="text-sm text-muted-foreground">
+                {dashboardType === 'advanced' ? 'Dashboard Avançado' : 'Dashboard Principal'}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {timeFilter === 'este-mes' && 'Este Mês'}
+                {timeFilter === 'ultimo-mes' && 'Último Mês'}
+                {timeFilter === 'ultimos-3-meses' && 'Últimos 3 Meses'}
+                {timeFilter === 'este-ano' && 'Este Ano'}
+                {timeFilter === 'ultimo-ano' && 'Último Ano'}
+                {timeFilter === 'todos' && 'Todos os Períodos'}
+              </div>
             </div>
           </div>
 
-          {/* Controles */}
-          <div className="flex items-center gap-3">
+          {/* Controles - Layout responsivo */}
+          <div className="flex items-center gap-2 lg:gap-3 flex-wrap lg:flex-nowrap">
             <Button
               variant="outline"
               size="icon"
               onClick={handleRefreshData}
               disabled={isRefreshing}
-              className="rounded-xl"
+              className="rounded-xl shrink-0"
               title="Atualizar e processar transações recorrentes"
             >
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />

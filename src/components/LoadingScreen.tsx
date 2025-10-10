@@ -16,7 +16,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   const [loadingText, setLoadingText] = useState('Inicializando sua experiência...');
   const [currentFeature, setCurrentFeature] = useState(0);
   const { user } = useAuth();
-  const { onboardingData } = useOnboarding();
+  const { onboardingData, loading: onboardingLoading } = useOnboarding();
 
   const features = [
     { icon: Zap, title: 'Inteligência Artificial', desc: 'Reconhecimento automático de transações' },
@@ -26,30 +26,40 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   ];
 
   const loadingSteps = [
-    { text: '🔐 Autenticando usuário...', duration: 800 },
-    { text: '⚡ Carregando configurações...', duration: 600 },
-    { text: '📊 Sincronizando dados...', duration: 900 },
-    { text: '🎯 Preparando dashboard...', duration: 700 },
-    { text: '✨ Aplicando personalizações...', duration: 500 },
-    { text: '🚀 Quase pronto...', duration: 400 }
+    { text: '🔐 Verificando autenticação...', duration: 300, waitForAuth: true },
+    { text: '👤 Carregando perfil do usuário...', duration: 400, waitForOnboarding: true },
+    { text: '⚙️ Sincronizando configurações...', duration: 500 },
+    { text: '📊 Carregando dados financeiros...', duration: 600 },
+    { text: '🎯 Preparando dashboard...', duration: 400 },
+    { text: '✨ Aplicando personalizações...', duration: 300 },
+    { text: '🚀 Finalizando...', duration: 200 }
   ];
 
   useEffect(() => {
-    const simulateLoading = async () => {
+    const performRealLoading = async () => {
       let currentProgress = 0;
       
       for (let i = 0; i < loadingSteps.length; i++) {
         const step = loadingSteps[i];
         setLoadingText(step.text);
         
+        // Esperar por dados reais se necessário
+        if (step.waitForAuth && !user) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        if (step.waitForOnboarding && onboardingLoading) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
         // Animar progresso gradualmente
         const targetProgress = ((i + 1) / loadingSteps.length) * 100;
-        const progressIncrement = (targetProgress - currentProgress) / 10;
+        const progressIncrement = (targetProgress - currentProgress) / 15;
         
-        for (let j = 0; j < 10; j++) {
+        for (let j = 0; j < 15; j++) {
           currentProgress += progressIncrement;
           setProgress(Math.min(currentProgress, targetProgress));
-          await new Promise(resolve => setTimeout(resolve, step.duration / 10));
+          await new Promise(resolve => setTimeout(resolve, step.duration / 15));
         }
         
         // Rotacionar features durante o carregamento
@@ -58,15 +68,16 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         }
       }
 
-      // Finalização com animação especial
-      setLoadingText('🎉 Bem-vindo ao futuro das finanças!');
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Garantir que o progresso chegue a 100%
+      setProgress(100);
+      setLoadingText('✅ Tudo pronto!');
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       onComplete();
     };
 
-    simulateLoading();
-  }, [onComplete]);
+    performRealLoading();
+  }, [onComplete, user, onboardingLoading]);
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-green-900 dark:to-emerald-900 flex items-center justify-center z-50 overflow-hidden">
