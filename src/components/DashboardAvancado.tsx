@@ -399,54 +399,62 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     ? ((dadosEvolutivos[5].receitas - dadosEvolutivos[4].receitas) / dadosEvolutivos[4].receitas) * 100 
     : 0;
 
-  const MetricCard = ({ title, value, change, changeType, icon: Icon, gradient }: any) => (
-    <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300">
-      <div className={`absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity ${gradient}`} />
-      <CardHeader className="pb-3 relative">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1 flex-1">
-            <div className="text-sm font-medium text-muted-foreground">{title}</div>
-            <p className="text-xl font-bold text-foreground">{value}</p>
+  const MetricCard = ({ title, value, change, changeType, icon: Icon, gradient, isExpense = false }: any) => {
+    // Para despesas: aumento = ruim (vermelho), diminuição = bom (verde)
+    // Para receitas/lucros: aumento = bom (verde), diminuição = ruim (vermelho)
+    const isPositiveChange = isExpense ? change < 0 : change > 0;
+    const isNegativeChange = isExpense ? change > 0 : change < 0;
+    
+    return (
+      <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+        <div className={`absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity ${gradient}`} />
+        <CardHeader className="pb-3 relative">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1 flex-1">
+              <div className="text-sm font-medium text-muted-foreground">{title}</div>
+              <p className="text-xl font-bold text-foreground">{value}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-background/50 backdrop-blur-sm flex items-center justify-center">
+              <Icon className="h-5 w-5 text-primary" />
+            </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-background/50 backdrop-blur-sm flex items-center justify-center">
-            <Icon className="h-5 w-5 text-primary" />
-          </div>
-        </div>
-        {change !== undefined && (
-          <div className="flex items-center gap-1 mt-2">
-            {change === 0 ? (
-              <Minus className="h-4 w-4 text-muted-foreground" />
-            ) : change > 0 ? (
-              <ArrowUpRight className="h-4 w-4 text-green-600" />
-            ) : (
-              <ArrowDownRight className="h-4 w-4 text-red-600" />
-            )}
-            <span className={`text-sm font-medium ${
-              change === 0 ? 'text-muted-foreground' : 
-              change > 0 ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {change === 0 ? '0.0' : `${Math.abs(change).toFixed(1)}`}%
-            </span>
-            <span className="text-xs text-muted-foreground">
-              vs {
-                timeFilter === 'hoje' ? 'ontem' :
-                timeFilter === 'ontem' ? 'anteontem' :
-                timeFilter === 'esta-semana' ? 'semana anterior' :
-                timeFilter === 'semana-passada' ? 'duas semanas atrás' :
-                timeFilter === 'este-mes' ? 'mês anterior' :
-                timeFilter === 'mes-passado' ? 'dois meses atrás' :
-                timeFilter === 'ultimos-30-dias' ? '30 dias anteriores' :
-                timeFilter === 'ultimos-90-dias' ? '90 dias anteriores' :
-                timeFilter === 'este-ano' ? 'ano anterior' :
-                timeFilter === 'ano-passado' ? 'dois anos atrás' :
-                'período anterior'
-              }
-            </span>
-          </div>
-        )}
-      </CardHeader>
-    </Card>
-  );
+          {change !== undefined && (
+            <div className="flex items-center gap-1 mt-2">
+              {change === 0 ? (
+                <Minus className="h-4 w-4 text-muted-foreground" />
+              ) : change > 0 ? (
+                <ArrowUpRight className={`h-4 w-4 ${isExpense ? 'text-red-600' : 'text-green-600'}`} />
+              ) : (
+                <ArrowDownRight className={`h-4 w-4 ${isExpense ? 'text-green-600' : 'text-red-600'}`} />
+              )}
+              <span className={`text-sm font-medium ${
+                change === 0 ? 'text-muted-foreground' : 
+                isPositiveChange ? (isExpense ? 'text-green-600' : 'text-green-600') : 
+                (isExpense ? 'text-red-600' : 'text-red-600')
+              }`}>
+                {change === 0 ? '0.0' : `${Math.abs(change).toFixed(1)}`}%
+              </span>
+              <span className="text-xs text-muted-foreground">
+                vs {
+                  timeFilter === 'hoje' ? 'ontem' :
+                  timeFilter === 'ontem' ? 'anteontem' :
+                  timeFilter === 'esta-semana' ? 'semana anterior' :
+                  timeFilter === 'semana-passada' ? 'duas semanas atrás' :
+                  timeFilter === 'este-mes' ? 'mês anterior' :
+                  timeFilter === 'mes-passado' ? 'dois meses atrás' :
+                  timeFilter === 'ultimos-30-dias' ? '30 dias anteriores' :
+                  timeFilter === 'ultimos-90-dias' ? '90 dias anteriores' :
+                  timeFilter === 'este-ano' ? 'ano anterior' :
+                  timeFilter === 'ano-passado' ? 'dois anos atrás' :
+                  'período anterior'
+                }
+              </span>
+            </div>
+          )}
+        </CardHeader>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -466,6 +474,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
             change={crescimentoDespesas}
             icon={TrendingDown}
             gradient="from-red-500 to-rose-600"
+            isExpense={true}
           />
       </div>
 
@@ -480,6 +489,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               change={crescimentoAlimentacao}
               icon={DollarSign}
               gradient="from-green-500 to-emerald-600"
+              isExpense={true}
             />
             <MetricCard
               title="Gastos em Lazer"
@@ -487,6 +497,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               change={crescimentoLazer}
               icon={Activity}
               gradient="from-purple-500 to-violet-600"
+              isExpense={true}
             />
             <MetricCard
               title="Total Investido"
@@ -508,6 +519,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               change={crescimentoImpostos}
               icon={Receipt}
               gradient="from-blue-500 to-indigo-600"
+              isExpense={true}
             />
             <MetricCard
               title="Total de Taxas"
@@ -515,6 +527,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               change={crescimentoTaxas}
               icon={DollarSign}
               gradient="from-orange-500 to-red-600"
+              isExpense={true}
             />
           </>
         ) : (
@@ -545,6 +558,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               change={crescimentoGastosEquipe}
               icon={Users}
               gradient="from-blue-500 to-indigo-600"
+              isExpense={true}
             />
             <MetricCard
               title="Gastos com Fornecedores"
@@ -552,6 +566,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               change={crescimentoGastosFornecedores}
               icon={Briefcase}
               gradient="from-orange-500 to-amber-600"
+              isExpense={true}
             />
             <MetricCard
               title="Total de Impostos"
@@ -559,6 +574,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               change={crescimentoImpostos}
               icon={Receipt}
               gradient="from-blue-500 to-indigo-600"
+              isExpense={true}
             />
             <MetricCard
               title="Total de Taxas"
@@ -566,6 +582,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               change={crescimentoTaxas}
               icon={DollarSign}
               gradient="from-orange-500 to-red-600"
+              isExpense={true}
             />
             <MetricCard
               title={
