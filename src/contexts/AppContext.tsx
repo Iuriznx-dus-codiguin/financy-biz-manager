@@ -64,7 +64,7 @@ export interface Meta {
 }
 
 export interface MembroEquipe {
-  id: number;
+  id: string;
   nome: string;
   email: string;
   telefone: string;
@@ -73,6 +73,7 @@ export interface MembroEquipe {
   status: 'ativo' | 'inativo';
   periodicidade: 'mensal' | 'semanal' | 'quinzenal';
   dataAdmissao: string;
+  dashboard_id?: string;
 }
 
 export interface Configuracoes {
@@ -107,7 +108,7 @@ interface AppContextType {
   addImposto: (imposto: Omit<Imposto, 'id'>) => Promise<void>;
   addMeta: (meta: Omit<Meta, 'id'>) => Promise<void>;
   addMembroEquipe: (membro: Omit<MembroEquipe, 'id'>) => Promise<void>;
-  updateMembroEquipe: (id: number, membro: Partial<MembroEquipe>) => Promise<void>;
+  updateMembroEquipe: (id: string, membro: Partial<MembroEquipe>) => Promise<void>;
   updateMeta: (id: string, meta: Partial<Meta>) => Promise<void>;
   updateReceita: (id: number, receita: Partial<Receita>) => Promise<void>;
   updateDespesa: (id: number, despesa: Partial<Despesa>) => Promise<void>;
@@ -115,7 +116,7 @@ interface AppContextType {
   deleteDespesa: (id: number) => Promise<void>;
   deleteImposto: (id: number) => Promise<void>;
   deleteMeta: (id: string) => Promise<void>;
-  deleteMembroEquipe: (id: number) => Promise<void>;
+  deleteMembroEquipe: (id: string) => Promise<void>;
   updateImposto: (id: number, imposto: Partial<Imposto>) => Promise<void>;
   updateConfiguracoes: (novasConfiguracoes: Partial<Configuracoes>) => void;
   clearCacheForDashboard: (dashboardId: string) => void;
@@ -240,13 +241,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         dashboard_id: m.dashboard_id
       })) || [];
 
+      // Carregar membros da equipe filtrados por dashboard
+      const { data: membrosData } = await supabase
+        .from('equipe_membros')
+        .select('*')
+        .eq('dashboard_id', currentDashboard?.id)
+        .order('created_at', { ascending: false });
+
+      const membrosFormatados = membrosData?.map(m => ({
+        id: m.id,
+        nome: m.nome,
+        email: m.email,
+        telefone: m.telefone || '',
+        cargo: m.cargo,
+        salario: m.salario,
+        status: m.status as 'ativo' | 'inativo',
+        periodicidade: m.periodicidade as 'mensal' | 'semanal' | 'quinzenal',
+        dataAdmissao: m.data_admissao,
+        dashboard_id: m.dashboard_id
+      })) || [];
+
       // Atualizar estados
       setReceitas(receitasFormatadas);
       setDespesas(despesasFormatadas);
       setImpostos(impostosFormatados);
       setMetas(metasFormatadas);
+      setMembrosEquipe(membrosFormatados);
 
-      // Atualizar cache
+      // Atualizar cache (incluindo membros da equipe)
       setDashboardCache(prev => ({
         ...prev,
         [currentDashboard.id]: {
@@ -425,14 +447,67 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const addMembroEquipe = async (membro: Omit<MembroEquipe, 'id'>) => {
-    const novoMembro = {
-      ...membro,
-      id: Date.now()
-    };
-    setMembrosEquipe(prev => [...prev, novoMembro]);
+    if (!user || !currentDashboard) return;
+
+    const { data, error } = await supabase
+      .from('equipe_membros')
+      .insert({
+        user_id: user.id,
+        dashboard_id: currentDashboard.id,
+        nome: membro.nome,
+        email: membro.email,
+        telefone: membro.telefone || '',
+        cargo: membro.cargo,
+        salario: membro.salario,
+        status: membro.status || 'ativo',
+        periodicidade: membro.periodicidade,
+        data_admissao: membro.dataAdmissao
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao adicionar membro da equipe:', error);
+      return;
+    }
+
+    if (data) {
+      const novoMembro = {
+        id: data.id,
+        nome: data.nome,
+        email: data.email,
+        telefone: data.telefone || '',
+        cargo: data.cargo,
+        salario: data.salario,
+        status: data.status as 'ativo' | 'inativo',
+        periodicidade: data.periodicidade as 'mensal' | 'semanal' | 'quinzenal',
+        dataAdmissao: data.data_admissao,
+        dashboard_id: data.dashboard_id
+      };
+      setMembrosEquipe(prev => [novoMembro, ...prev]);
+    }
   };
 
-  const updateMembroEquipe = async (id: number, membro: Partial<MembroEquipe>) => {
+  const updateMembroEquipe = async (id: string, membro: Partial<MembroEquipe>) => {
+    const { error } = await supabase
+      .from('equipe_membros')
+      .update({
+        nome: membro.nome,
+        email: membro.email,
+        telefone: membro.telefone,
+        cargo: membro.cargo,
+        salario: membro.salario,
+        status: membro.status,
+        periodicidade: membro.periodicidade,
+        data_admissao: membro.dataAdmissao
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao atualizar membro da equipe:', error);
+      return;
+    }
+
     setMembrosEquipe(prev => 
       prev.map(m => m.id === id ? { ...m, ...membro } : m)
     );
@@ -567,7 +642,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setMetas(prev => prev.filter(m => m.id !== id));
   };
 
-  const deleteMembroEquipe = async (id: number) => {
+  const deleteMembroEquipe = async (id: string) => {
+    const { error } = await supabase
+      .from('equipe_membros')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao deletar membro da equipe:', error);
+      return;
+    }
+
     setMembrosEquipe(prev => prev.filter(m => m.id !== id));
   };
 

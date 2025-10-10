@@ -16,7 +16,7 @@ const Equipe = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<MembroEquipe | null>(null);
-  const [showSensitiveData, setShowSensitiveData] = useState<{[key: number]: boolean}>({});
+  const [showSensitiveData, setShowSensitiveData] = useState<{[key: string]: boolean}>({});
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -37,7 +37,7 @@ const Equipe = () => {
     return phone ? '***-***-' + phone.slice(-4) : '';
   };
 
-  const toggleSensitiveData = (memberId: number) => {
+  const toggleSensitiveData = (memberId: string) => {
     setShowSensitiveData(prev => ({
       ...prev,
       [memberId]: !prev[memberId]
@@ -104,7 +104,7 @@ const Equipe = () => {
     setIsEditDialogOpen(false);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja remover este membro da equipe?')) {
       await deleteMembroEquipe(id);
       toast.success('Membro removido com sucesso!');
