@@ -100,12 +100,15 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   // Verificar se é dashboard pessoal
   const isDashboardPessoal = currentDashboard?.type === 'personal';
 
-  // Calcular métricas avançadas
+  // Calcular métricas avançadas incluindo TODOS os gastos
   const totalReceitas = filteredReceitas.reduce((sum, r) => sum + r.valor, 0);
   const totalDespesas = filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
   const totalImpostos = filteredImpostos.filter(i => i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
   const totalTaxas = filteredImpostos.filter(i => i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
-  const lucroLiquido = totalReceitas - totalDespesas - totalImpostos - totalTaxas;
+  
+  // Calcular lucro líquido considerando TODOS os gastos (despesas + impostos + taxas + equipe + fornecedores)
+  const totalGastosOperacionais = totalDespesas + totalImpostos + totalTaxas + totalGastosEquipe + gastosComFornecedores;
+  const lucroLiquido = totalReceitas - totalGastosOperacionais;
   const margemLucro = totalReceitas > 0 ? ((lucroLiquido / totalReceitas) * 100) : 0;
 
   // Métricas específicas para dashboard pessoal

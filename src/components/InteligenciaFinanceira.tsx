@@ -17,11 +17,15 @@ export const InteligenciaFinanceira: React.FC<InteligenciaFinanceiraProps> = ({
 }) => {
   const totalReceitas = receitas.reduce((sum, r) => sum + r.valor, 0);
   const totalDespesas = despesas.reduce((sum, d) => sum + d.valor, 0);
-  const totalImpostosPagos = impostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);
-  const totalImpostosAberto = impostos.filter(i => !i.pago).reduce((sum, i) => sum + i.valor, 0);
+  const totalImpostosPagos = impostos.filter(i => i.pago && i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
+  const totalTaxasPagas = impostos.filter(i => i.pago && i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
+  const totalImpostosAberto = impostos.filter(i => !i.pago && i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
+  const totalTaxasAberto = impostos.filter(i => !i.pago && i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
   
-  const margemLiquida = totalReceitas > 0 ? ((totalReceitas - totalDespesas - totalImpostosPagos) / totalReceitas) * 100 : 0;
-  const taxaQueima = totalDespesas / (totalReceitas || 1);
+  // Calcular totais considerando TODOS os gastos
+  const totalGastos = totalDespesas + totalImpostosPagos + totalTaxasPagas;
+  const margemLiquida = totalReceitas > 0 ? ((totalReceitas - totalGastos) / totalReceitas) * 100 : 0;
+  const taxaQueima = totalGastos / (totalReceitas || 1);
   
   // Cálculo básico de valuation (múltiplo de receita)
   const receitaAnualizada = totalReceitas * 12;
@@ -48,12 +52,13 @@ export const InteligenciaFinanceira: React.FC<InteligenciaFinanceiraProps> = ({
       });
     }
 
-    if (totalImpostosAberto > totalReceitas * 0.1) {
+    const totalPendente = totalImpostosAberto + totalTaxasAberto;
+    if (totalPendente > totalReceitas * 0.1) {
       dicas.push({
         tipo: 'aviso',
         icon: AlertTriangle,
-        titulo: 'Impostos Pendentes',
-        descricao: 'Você tem impostos em aberto que representam mais de 10% da receita.'
+        titulo: 'Impostos e Taxas Pendentes',
+        descricao: `Você tem R$ ${totalPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em impostos e taxas pendentes (>${(totalPendente/totalReceitas*100).toFixed(0)}% da receita).`
       });
     }
 
@@ -148,9 +153,9 @@ export const InteligenciaFinanceira: React.FC<InteligenciaFinanceiraProps> = ({
               <span className="font-medium">R$ {receitaAnualizada.toLocaleString('pt-BR')}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm">Impostos Pendentes</span>
-              <Badge variant={totalImpostosAberto > 0 ? "destructive" : "secondary"}>
-                R$ {totalImpostosAberto.toLocaleString('pt-BR')}
+              <span className="text-sm">Impostos e Taxas Pendentes</span>
+              <Badge variant={(totalImpostosAberto + totalTaxasAberto) > 0 ? "destructive" : "secondary"}>
+                R$ {(totalImpostosAberto + totalTaxasAberto).toLocaleString('pt-BR')}
               </Badge>
             </div>
           </div>

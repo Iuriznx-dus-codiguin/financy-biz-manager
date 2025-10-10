@@ -27,11 +27,15 @@ import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
   const filteredDespesas = despesas.filter(d => isDateInRange(d.data, timeFilter));
   const filteredImpostos = impostos.filter(i => isDateInRange(i.vencimento, timeFilter));
 
-  // Calcular dados reais baseados no filtro
+  // Calcular dados reais baseados no filtro, incluindo TODOS os gastos
   const totalReceitas = filteredReceitas.reduce((sum, r) => sum + r.valor, 0);
   const totalDespesas = filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
   const totalImpostosPagos = filteredImpostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);
-  const lucroLiquido = totalReceitas - totalDespesas - totalImpostosPagos;
+  const totalTaxasPagas = filteredImpostos.filter(i => i.pago && i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
+  
+  // Calcular gastos operacionais totais
+  const totalGastosOperacionais = totalDespesas + totalImpostosPagos + totalTaxasPagas;
+  const lucroLiquido = totalReceitas - totalGastosOperacionais;
   const margemLucro = totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
 
   // Dados para gráfico de rosca dos principais gastos - Adaptado para usuários pessoais
@@ -44,10 +48,15 @@ import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
       gastosCategorizados[categoria] = (gastosCategorizados[categoria] || 0) + d.valor;
     });
     
-    // Adicionar impostos pagos como uma categoria
-    const totalImpostosPagos = filteredImpostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);
-    if (totalImpostosPagos > 0) {
-      gastosCategorizados['Impostos e Taxas'] = totalImpostosPagos;
+    // Adicionar impostos E taxas pagos como categorias separadas
+    const totalImpostosPagosCalc = filteredImpostos.filter(i => i.pago && i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
+    const totalTaxasPagasCalc = filteredImpostos.filter(i => i.pago && i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
+    
+    if (totalImpostosPagosCalc > 0) {
+      gastosCategorizados['Impostos'] = totalImpostosPagosCalc;
+    }
+    if (totalTaxasPagasCalc > 0) {
+      gastosCategorizados['Taxas'] = totalTaxasPagasCalc;
     }
 
     return Object.entries(gastosCategorizados)

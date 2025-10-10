@@ -70,9 +70,9 @@ export const useFinancialCalculations = (
     const lucroLiquido = totalReceitas - totalDespesas - totalImpostos - totalTaxas;
     const margemLiquida = totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
 
-    // Status das receitas
-    const receitasPagas = receitas.filter(r => r.status === 'paga').length;
-    const receitasPendentes = receitas.filter(r => r.status === 'pendente').length;
+    // Status das receitas (usando dados filtrados)
+    const receitasPagas = filteredReceitas.filter(r => r.status === 'paga').length;
+    const receitasPendentes = filteredReceitas.filter(r => r.status === 'pendente').length;
 
     // Despesas por categoria
     const despesasPorCategoria = filteredDespesas.reduce((acc, despesa) => {
