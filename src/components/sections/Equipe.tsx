@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,117 @@ import { useAppContext } from '@/contexts/AppContext';
 import { MembroEquipe } from '@/contexts/AppContext';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+
+// Componente de formulário separado para evitar re-renders
+interface FormFieldsProps {
+  formData: {
+    nome: string;
+    email: string;
+    telefone: string;
+    cargo: string;
+    salario: number;
+    periodicidade: 'mensal' | 'semanal' | 'quinzenal';
+    dataAdmissao: string;
+  };
+  onFormChange: (data: any) => void;
+  isEdit?: boolean;
+}
+
+const FormFields = React.memo(({ formData, onFormChange, isEdit = false }: FormFieldsProps) => {
+  const handleChange = useCallback((field: string, value: any) => {
+    onFormChange({ ...formData, [field]: value });
+  }, [formData, onFormChange]);
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor={isEdit ? 'edit-nome' : 'nome'}>Nome Completo *</Label>
+        <Input
+          id={isEdit ? 'edit-nome' : 'nome'}
+          value={formData.nome}
+          onChange={(e) => handleChange('nome', e.target.value)}
+          placeholder="Nome do funcionário"
+          required
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor={isEdit ? 'edit-email' : 'email'}>Email *</Label>
+        <Input
+          id={isEdit ? 'edit-email' : 'email'}
+          type="email"
+          value={formData.email}
+          onChange={(e) => handleChange('email', e.target.value)}
+          placeholder="email@exemplo.com"
+          required
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor={isEdit ? 'edit-telefone' : 'telefone'}>Telefone</Label>
+        <Input
+          id={isEdit ? 'edit-telefone' : 'telefone'}
+          value={formData.telefone}
+          onChange={(e) => handleChange('telefone', e.target.value)}
+          placeholder="(11) 99999-9999"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor={isEdit ? 'edit-cargo' : 'cargo'}>Cargo *</Label>
+        <Input
+          id={isEdit ? 'edit-cargo' : 'cargo'}
+          value={formData.cargo}
+          onChange={(e) => handleChange('cargo', e.target.value)}
+          placeholder="Ex: Assistente Contábil"
+          required
+        />
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor={isEdit ? 'edit-salario' : 'salario'}>Salário *</Label>
+          <Input
+            id={isEdit ? 'edit-salario' : 'salario'}
+            type="number"
+            value={formData.salario}
+            onChange={(e) => handleChange('salario', Number(e.target.value))}
+            placeholder="0.00"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={isEdit ? 'edit-periodicidade' : 'periodicidade'}>Periodicidade</Label>
+          <Select 
+            value={formData.periodicidade} 
+            onValueChange={(value: 'mensal' | 'semanal' | 'quinzenal') => handleChange('periodicidade', value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mensal">Mensal</SelectItem>
+              <SelectItem value="semanal">Semanal</SelectItem>
+              <SelectItem value="quinzenal">Quinzenal</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor={isEdit ? 'edit-dataAdmissao' : 'dataAdmissao'}>Data de Admissão</Label>
+        <Input
+          id={isEdit ? 'edit-dataAdmissao' : 'dataAdmissao'}
+          type="date"
+          value={formData.dataAdmissao}
+          onChange={(e) => handleChange('dataAdmissao', e.target.value)}
+        />
+      </div>
+    </div>
+  );
+});
+
+FormFields.displayName = 'FormFields';
 
 const Equipe = () => {
   const { membrosEquipe, addMembroEquipe, updateMembroEquipe, deleteMembroEquipe } = useAppContext();
@@ -129,93 +240,9 @@ const Equipe = () => {
     }, 0);
   };
 
-  const FormFields = ({ isEdit = false }: { isEdit?: boolean }) => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor={isEdit ? 'edit-nome' : 'nome'}>Nome Completo *</Label>
-        <Input
-          id={isEdit ? 'edit-nome' : 'nome'}
-          value={formData.nome}
-          onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-          placeholder="Nome do funcionário"
-          required
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor={isEdit ? 'edit-email' : 'email'}>Email *</Label>
-        <Input
-          id={isEdit ? 'edit-email' : 'email'}
-          type="email"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          placeholder="email@exemplo.com"
-          required
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor={isEdit ? 'edit-telefone' : 'telefone'}>Telefone</Label>
-        <Input
-          id={isEdit ? 'edit-telefone' : 'telefone'}
-          value={formData.telefone}
-          onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-          placeholder="(11) 99999-9999"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor={isEdit ? 'edit-cargo' : 'cargo'}>Cargo *</Label>
-        <Input
-          id={isEdit ? 'edit-cargo' : 'cargo'}
-          value={formData.cargo}
-          onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
-          placeholder="Ex: Assistente Contábil"
-          required
-        />
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor={isEdit ? 'edit-salario' : 'salario'}>Salário *</Label>
-          <Input
-            id={isEdit ? 'edit-salario' : 'salario'}
-            type="number"
-            value={formData.salario}
-            onChange={(e) => setFormData({ ...formData, salario: Number(e.target.value) })}
-            placeholder="0.00"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={isEdit ? 'edit-periodicidade' : 'periodicidade'}>Periodicidade</Label>
-          <Select 
-            value={formData.periodicidade} 
-            onValueChange={(value: 'mensal' | 'semanal' | 'quinzenal') => setFormData({ ...formData, periodicidade: value })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="mensal">Mensal</SelectItem>
-              <SelectItem value="semanal">Semanal</SelectItem>
-              <SelectItem value="quinzenal">Quinzenal</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor={isEdit ? 'edit-dataAdmissao' : 'dataAdmissao'}>Data de Admissão</Label>
-        <Input
-          id={isEdit ? 'edit-dataAdmissao' : 'dataAdmissao'}
-          type="date"
-          value={formData.dataAdmissao}
-          onChange={(e) => setFormData({ ...formData, dataAdmissao: e.target.value })}
-        />
-      </div>
-    </div>
-  );
+  const handleFormChange = useCallback((newData: any) => {
+    setFormData(newData);
+  }, []);
 
   return (
     <section className="space-y-8">
@@ -238,7 +265,7 @@ const Equipe = () => {
                 Adicione um novo membro à sua equipe com informações completas e configurações de acesso.
               </DialogDescription>
             </DialogHeader>
-            <FormFields />
+            <FormFields formData={formData} onFormChange={handleFormChange} />
             <div className="flex gap-2 pt-4">
               <Button onClick={handleSubmit} className="flex-1">
                 Adicionar
@@ -397,7 +424,7 @@ const Equipe = () => {
               Edite as informações do membro da equipe. Todos os dados serão atualizados no sistema.
             </DialogDescription>
           </DialogHeader>
-          <FormFields isEdit={true} />
+          <FormFields formData={formData} onFormChange={handleFormChange} isEdit={true} />
           <div className="flex gap-2 pt-4">
             <Button onClick={handleUpdate} className="flex-1">
               Salvar Alterações
