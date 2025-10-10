@@ -908,6 +908,7 @@ export type Database = {
       }
       validacao_n8n: {
         Row: {
+          ativo: boolean | null
           data_cadastro: string | null
           data_finalizacao_teste: string | null
           data_inicio_assinatura: string | null
@@ -920,6 +921,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          ativo?: boolean | null
           data_cadastro?: string | null
           data_finalizacao_teste?: string | null
           data_inicio_assinatura?: string | null
@@ -932,6 +934,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          ativo?: boolean | null
           data_cadastro?: string | null
           data_finalizacao_teste?: string | null
           data_inicio_assinatura?: string | null
