@@ -48,6 +48,9 @@ export interface Imposto {
   pago: boolean;
   tipoRecorrencia: 'unico' | 'recorrente';
   dashboard_id?: string;
+  recorrente?: boolean;
+  tipo_recorrencia?: string;
+  proxima_data?: string;
 }
 
 export interface Meta {

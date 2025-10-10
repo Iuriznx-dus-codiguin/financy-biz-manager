@@ -103,8 +103,25 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   // Calcular métricas avançadas incluindo TODOS os gastos
   const totalReceitas = filteredReceitas.reduce((sum, r) => sum + r.valor, 0);
   const totalDespesas = filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
-  const totalImpostos = filteredImpostos.filter(i => i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
-  const totalTaxas = filteredImpostos.filter(i => i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
+  
+  // Calcular total de impostos considerando porcentagem sobre o total de receitas
+  const totalImpostos = filteredImpostos
+    .filter(i => i.tipo === 'imposto')
+    .reduce((sum, i) => {
+      if (i.valorTipo === 'porcentagem') {
+        return sum + (totalReceitas * (i.valor / 100));
+      }
+      return sum + i.valor;
+    }, 0);
+    
+  const totalTaxas = filteredImpostos
+    .filter(i => i.tipo === 'taxa')
+    .reduce((sum, i) => {
+      if (i.valorTipo === 'porcentagem') {
+        return sum + (totalReceitas * (i.valor / 100));
+      }
+      return sum + i.valor;
+    }, 0);
   
   // Total de TODAS as despesas incluindo salários da equipe (membros cadastrados)
   // Não duplicar despesas que já foram registradas manualmente (fornecedores e equipe já estão em totalDespesas)
@@ -226,8 +243,26 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     return data >= startAnterior && data <= endAnterior;
   });
 
-  const totalImpostosPeriodoAnterior = impostosPeriodoAnterior.filter(i => i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
-  const totalTaxasPeriodoAnterior = impostosPeriodoAnterior.filter(i => i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
+  // Calcular total de receitas do período anterior para impostos em porcentagem
+  const totalReceitasPeriodoAnterior = receitasPeriodoAnterior;
+
+  const totalImpostosPeriodoAnterior = impostosPeriodoAnterior
+    .filter(i => i.tipo === 'imposto')
+    .reduce((sum, i) => {
+      if (i.valorTipo === 'porcentagem') {
+        return sum + (totalReceitasPeriodoAnterior * (i.valor / 100));
+      }
+      return sum + i.valor;
+    }, 0);
+    
+  const totalTaxasPeriodoAnterior = impostosPeriodoAnterior
+    .filter(i => i.tipo === 'taxa')
+    .reduce((sum, i) => {
+      if (i.valorTipo === 'porcentagem') {
+        return sum + (totalReceitasPeriodoAnterior * (i.valor / 100));
+      }
+      return sum + i.valor;
+    }, 0);
   const lucroPeriodoAnterior = receitasPeriodoAnterior - despesasPeriodoAnterior - totalImpostosPeriodoAnterior - totalTaxasPeriodoAnterior;
   const roiPeriodoAnterior = (despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior) > 0 
     ? ((receitasPeriodoAnterior - (despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior)) / (despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior)) 
