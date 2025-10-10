@@ -536,7 +536,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               gradient="from-purple-500 to-violet-600"
             />
             <MetricCard
-              title="Gastos com Equipe"
+              title="Gastos Operacionais"
               value={`R$ ${totalGastosEquipe.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
               change={crescimentoGastosEquipe}
               icon={Users}
