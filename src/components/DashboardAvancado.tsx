@@ -106,8 +106,12 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const totalImpostos = filteredImpostos.filter(i => i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
   const totalTaxas = filteredImpostos.filter(i => i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
   
-  // Calcular lucro líquido considerando TODOS os gastos (despesas + impostos + taxas + equipe + fornecedores)
-  const totalGastosOperacionais = totalDespesas + totalImpostos + totalTaxas + totalGastosEquipe + gastosComFornecedores;
+  // Total de TODAS as despesas incluindo salários da equipe (membros cadastrados)
+  // Não duplicar despesas que já foram registradas manualmente (fornecedores e equipe já estão em totalDespesas)
+  const totalTodasDespesas = totalDespesas + totalImpostos + totalTaxas + gastosComEquipe;
+  
+  // Calcular lucro líquido considerando TODOS os gastos
+  const totalGastosOperacionais = totalTodasDespesas;
   const lucroLiquido = totalReceitas - totalGastosOperacionais;
   const margemLucro = totalReceitas > 0 ? ((lucroLiquido / totalReceitas) * 100) : 0;
 
@@ -131,9 +135,6 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const salarioMensal = isDashboardPessoal 
     ? filteredReceitas.filter(r => r.categoria === 'salario' || r.categoria === 'salário' || r.categoria === 'trabalho').reduce((sum, r) => sum + r.valor, 0)
     : totalReceitas;
-  
-  // Total de despesas incluindo todos os gastos
-  const totalTodasDespesas = totalDespesas + totalImpostos + totalTaxas + totalGastosEquipe + gastosComFornecedores;
   
   // Métricas adicionais
   const totalGastos = totalDespesas + totalImpostos + totalTaxas;
