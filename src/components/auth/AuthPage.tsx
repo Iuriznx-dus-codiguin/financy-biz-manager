@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff, Sparkles } from 'lucide-react';
 import financyLogo from '@/assets/financy-logo-new.png';
+import { trackCompleteRegistration } from '@/utils/metaPixel';
 
 export const AuthPage = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
@@ -75,6 +76,8 @@ export const AuthPage = () => {
         }
 
         if (data.user) {
+          // Disparar evento do Meta Pixel para conversão de cadastro
+          trackCompleteRegistration();
           setMessage('Conta criada com sucesso! Verifique seu email para confirmar.');
         }
       }

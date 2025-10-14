@@ -15,6 +15,7 @@ import { ExpenseSheetStep } from './ExpenseSheetStep';
 import { FinancialGoalStep } from './FinancialGoalStep';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
+import { trackLead } from '@/utils/metaPixel';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>;
@@ -104,6 +105,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         // Usar o número no formato E.164 para salvar
         const finalData = { ...data, whatsapp: whatsappE164 || data.whatsapp };
         await onComplete(finalData);
+        
+        // Disparar evento do Meta Pixel para lead qualificado
+        trackLead();
+        
         triggerConfetti();
         toast({
           title: "🎉 Bem-vindo ao Financy!",
