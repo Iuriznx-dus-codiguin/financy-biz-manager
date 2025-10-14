@@ -89,23 +89,45 @@ serve(safeHandler(async (req) => {
     if (isValid) {
       console.log('💾 [Database] Updating subscriber status for:', userEmail);
       
-      // First check if subscriber exists
-      const { data: existingSubscriber, error: selectError } = await supabase
-        .from('subscribers')
-        .select('*')
+      // ✅ CRITICAL: Fetch user_id from profiles table first
+      console.log('🔍 [User Lookup] Searching for user with email:', userEmail);
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
         .eq('email', userEmail)
-        .single();
+        .maybeSingle();
 
-      if (selectError && selectError.code !== 'PGRST116') {
-        console.error('❌ [Database] Error checking existing subscriber:', selectError);
-      } else {
-        console.log('📊 [Database] Existing subscriber data:', existingSubscriber);
+      if (profileError) {
+        console.error('❌ [Database] Error fetching user profile:', profileError);
+        return new Response(JSON.stringify({ 
+          valid: false, 
+          error: 'Erro ao buscar usuário no sistema' 
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
-      // Update subscriber status
+      if (!profileData) {
+        console.error('❌ [Validation] User not found for email:', userEmail);
+        return new Response(JSON.stringify({ 
+          valid: false, 
+          error: 'Usuário não encontrado. Faça login primeiro.' 
+        }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const userId = profileData.id;
+      console.log('✅ [User Found] ID:', userId, 'Email:', userEmail);
+      
+      // ✅ CRITICAL: Include user_id in the upsert to prevent trigger error
+      console.log('💾 [Database] Upserting subscriber with user_id:', userId);
       const { data: updateData, error: updateError } = await supabase
         .from('subscribers')
         .upsert({
+          user_id: userId,  // ✅ CRITICAL FIX: Add user_id
           email: userEmail,
           subscribed: true,
           subscription_tier: 'developer',
@@ -124,10 +146,19 @@ serve(safeHandler(async (req) => {
           details: updateError.details,
           hint: updateError.hint
         });
-        throw updateError;
+        
+        return new Response(JSON.stringify({ 
+          valid: false, 
+          error: 'Erro ao atualizar status de assinatura',
+          details: updateError.message
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       console.log('✅ [Database] Subscriber updated successfully:', updateData);
+      console.log('✅ [Trigger] sync_developer_access will be executed automatically');
     }
 
     const response = { 
