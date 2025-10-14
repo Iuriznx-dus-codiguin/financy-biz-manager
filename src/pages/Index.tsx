@@ -163,8 +163,6 @@ export default function Index() {
                 disabled={isSubscriptionExpiredState}
               />
             </div>
-            <GlobalSubscriptionAlert setActiveSection={handleSectionChange} />
-            <FreeTrialNotification setActiveSection={handleSectionChange} />
             {isSubscriptionExpiredState && <SubscriptionExpiredBanner />}
             <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
               {renderActiveSection()}

@@ -72,7 +72,25 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
         return;
       }
 
-      // Atualizar o perfil com o telefone
+      // ✅ VALIDAÇÃO: Verificar se telefone já existe
+      const { data: existingPhone, error: checkError } = await supabase
+        .from('profiles')
+        .select('id, telefone')
+        .eq('telefone', phone)
+        .neq('id', user.id)
+        .maybeSingle();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Erro ao verificar telefone:', checkError);
+        setError('Erro ao verificar telefone. Tente novamente.');
+        return;
+      }
+
+      if (existingPhone) {
+        setError('⚠️ Este número de telefone já está cadastrado em outra conta.');
+        return;
+      }
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ telefone: phone })
@@ -80,6 +98,13 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
 
       if (updateError) {
         console.error('Erro ao salvar telefone:', updateError);
+        
+        // Verificar se é erro de constraint de unicidade
+        if (updateError.code === '23505') {
+          setError('⚠️ Este número de telefone já está cadastrado.');
+          return;
+        }
+        
         setError('Erro ao salvar telefone. Tente novamente.');
         return;
       }

@@ -366,6 +366,33 @@ export type Database = {
         }
         Relationships: []
       }
+      free_trial_history: {
+        Row: {
+          created_at: string | null
+          email: string
+          granted_at: string | null
+          id: string
+          telefone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          granted_at?: string | null
+          id?: string
+          telefone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          granted_at?: string | null
+          id?: string
+          telefone?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       impostos: {
         Row: {
           created_at: string | null
