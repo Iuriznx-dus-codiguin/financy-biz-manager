@@ -61,9 +61,22 @@ serve(safeHandler(async (req) => {
 
     // Secure server-side key validation
     const validKeys = [
+      // Chaves originais
       'DEV_2024_7K9mQ3xW8vN5',
       'FINCY_DEV_3M8kL2pR9wY', 
-      'ACCESS_2024_5P7nF4vX9k'
+      'ACCESS_2024_5P7nF4vX9k',
+      
+      // Novas chaves geradas - 2025
+      'DEV_2025_9Rx4Tp8Wm2Qs',
+      'DEV_2025_5Nj7Vk3Yx6Lm',
+      'FINCY_DEV_7Hg9Pz2Qw4Rt',
+      'FINCY_DEV_3Kx8Mn5Tb1Yv',
+      'ACCESS_2025_6Fq4Wj9Lp3Zn',
+      'ACCESS_2025_8Bc2Vh7Rm5Gk',
+      'DEV_2025_4Yt6Ns9Mq2Xp',
+      'FINCY_DEV_2Dw5Jk8Fg3Ln',
+      'ACCESS_2025_9Pv7Hm4Qs6Tz',
+      'DEV_2025_3Zr8Kx5Nt2Wj'
     ];
 
     const isValid = validKeys.includes(key);
