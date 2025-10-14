@@ -65,7 +65,36 @@ export const useUserSubscription = () => {
         return;
       }
 
-      setSubscription(data as UserSubscription | null);
+      // Se não encontrou assinatura, criar automaticamente (fallback)
+      if (!data) {
+        console.warn('⚠️ Assinatura não encontrada para o usuário. Criando teste gratuito automaticamente...');
+        
+        // Chamar função do banco que cria assinatura de teste gratuito
+        const { error: ensureError } = await supabase.rpc('ensure_user_has_subscription', {
+          p_user_id: user!.id
+        });
+
+        if (ensureError) {
+          console.error('Erro ao criar assinatura automática:', ensureError);
+        }
+
+        // Buscar novamente após criar
+        const { data: newData, error: refetchError } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', user!.id)
+          .maybeSingle();
+
+        if (refetchError) {
+          console.error('Erro ao buscar assinatura após criação:', refetchError);
+          setError('Erro ao carregar dados da assinatura');
+          return;
+        }
+
+        setSubscription(newData as UserSubscription | null);
+      } else {
+        setSubscription(data as UserSubscription | null);
+      }
     } catch (err) {
       console.error('Erro inesperado:', err);
       setError('Erro inesperado ao carregar assinatura');
@@ -98,10 +127,39 @@ export const useUserSubscription = () => {
   };
 
   const isSubscriptionExpired = (): boolean => {
-    if (!subscription) return true;
+    // Se não tem assinatura, verificar se o teste gratuito de 7 dias expirou
+    if (!subscription) {
+      if (!user?.created_at) return true;
+      
+      const userCreatedAt = new Date(user.created_at);
+      const trialEndDate = new Date(userCreatedAt.getTime() + (7 * 24 * 60 * 60 * 1000));
+      const isExpired = trialEndDate < new Date();
+      
+      if (isExpired) {
+        console.warn('🔒 Teste gratuito expirado para usuário sem assinatura', {
+          userId: user.id,
+          createdAt: user.created_at,
+          trialEndDate
+        });
+      }
+      
+      return isExpired;
+    }
+    
+    // Se tem assinatura, verificar data de expiração
     if (!subscription.expires_at) return false;
     
-    return new Date(subscription.expires_at) < new Date();
+    const isExpired = new Date(subscription.expires_at) < new Date();
+    
+    if (isExpired) {
+      console.warn('🔒 Assinatura expirada', {
+        userId: user?.id,
+        subscriptionId: subscription.id,
+        expiresAt: subscription.expires_at
+      });
+    }
+    
+    return isExpired;
   };
 
   const isFreeTrial = (): boolean => {

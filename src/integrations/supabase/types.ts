@@ -982,6 +982,10 @@ export type Database = {
         Args: { data: string; salt?: string }
         Returns: string
       }
+      ensure_user_has_subscription: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       get_dashboard_data: {
         Args: {
           p_dashboard_id: string
