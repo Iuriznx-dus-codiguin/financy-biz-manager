@@ -57,7 +57,7 @@ export const useUserSubscription = () => {
         .from('user_subscriptions')
         .select('*')
         .eq('user_id', user!.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Erro ao buscar assinatura:', error);
@@ -65,7 +65,7 @@ export const useUserSubscription = () => {
         return;
       }
 
-      setSubscription(data as UserSubscription);
+      setSubscription(data as UserSubscription | null);
     } catch (err) {
       console.error('Erro inesperado:', err);
       setError('Erro inesperado ao carregar assinatura');
