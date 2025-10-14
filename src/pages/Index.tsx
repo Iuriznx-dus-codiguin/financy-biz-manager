@@ -32,7 +32,7 @@ import { DashboardProvider } from '@/hooks/useDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
-import { SubscriptionExpiredBanner } from '@/components/SubscriptionExpiredBanner';
+import { SubscriptionBanners } from '@/components/SubscriptionBanners';
 import { FloatingWhatsAppButton } from '@/components/FloatingWhatsAppButton';
 
 export default function Index() {
@@ -163,7 +163,7 @@ export default function Index() {
                 disabled={isSubscriptionExpiredState}
               />
             </div>
-            {isSubscriptionExpiredState && <SubscriptionExpiredBanner />}
+            {isSubscriptionExpiredState && <SubscriptionBanners />}
             <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
               {renderActiveSection()}
             </main>
