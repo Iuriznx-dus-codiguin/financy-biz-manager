@@ -21,16 +21,19 @@
       fbq('init', 'YOUR_PIXEL_ID'); // SUBSTITUIR pelo ID do pixel fornecido pelo Meta Ads Manager
       fbq('track', 'PageView');
     </script>
-    <noscript>
-      <img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1" />
-    </noscript>
     <!-- End Meta Pixel Code -->
     
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/W7OmH6SJi9ePFZuFQcWC0EWeiU02/social-images/social-1758739880437-Design sem nome.png">
 
   <body>
+    <!-- Meta Pixel Code - noscript fallback -->
+    <noscript>
+      <img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1" />
+    </noscript>
+    <!-- End Meta Pixel Code -->
+    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
