@@ -53,6 +53,30 @@ export const useUserSubscription = () => {
       setLoading(true);
       setError(null);
 
+      // PRIMEIRO: Verificar se é desenvolvedor na tabela subscribers
+      const { data: subscriberData } = await supabase
+        .from('subscribers')
+        .select('subscription_tier, subscribed, subscription_end')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+
+      // Se é desenvolvedor, retornar acesso ilimitado
+      if (subscriberData?.subscription_tier === 'developer' && subscriberData.subscribed) {
+        console.log('✅ Acesso de desenvolvedor detectado - acesso ilimitado concedido');
+        
+        // Buscar subscription completa (já foi sincronizada pela migration)
+        const { data } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', user!.id)
+          .maybeSingle();
+        
+        if (data) {
+          setSubscription(data as UserSubscription);
+        }
+        return;
+      }
+
       const { data, error } = await supabase
         .from('user_subscriptions')
         .select('*')
@@ -127,6 +151,11 @@ export const useUserSubscription = () => {
   };
 
   const isSubscriptionExpired = (): boolean => {
+    // IMPORTANTE: Desenvolvedores NUNCA expiram
+    if (subscription?.subscription_type === 'developer') {
+      return false;
+    }
+
     // Se não tem assinatura, verificar se o teste gratuito de 7 dias expirou
     if (!subscription) {
       if (!user?.created_at) return true;
@@ -167,6 +196,10 @@ export const useUserSubscription = () => {
   };
 
   const isPremium = (): boolean => {
+    // Desenvolvedores sempre têm acesso premium
+    if (subscription?.subscription_type === 'developer') {
+      return true;
+    }
     return subscription?.subscription_type === 'premium' || subscription?.subscription_type === 'enterprise';
   };
 

@@ -28,7 +28,27 @@ export const useSubscription = () => {
     try {
       setLoading(true);
       
-      // Primeiro, tentar buscar na nova tabela user_subscriptions
+      // PRIMEIRO: Verificar se é desenvolvedor na tabela subscribers
+      const { data: subscriberData } = await supabase
+        .from('subscribers')
+        .select('subscription_tier, subscribed, subscription_end')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+
+      // Se é desenvolvedor, retornar acesso ilimitado
+      if (subscriberData?.subscription_tier === 'developer' && subscriberData.subscribed) {
+        console.log('✅ Acesso de desenvolvedor detectado em useSubscription');
+        setSubscription({
+          id: 'developer',
+          email: user!.email || '',
+          subscribed: true,
+          subscription_tier: 'developer',
+          subscription_end: undefined
+        });
+        return;
+      }
+      
+      // Tentar buscar na nova tabela user_subscriptions
       const { data: userSubData } = await supabase
         .from('user_subscriptions')
         .select('*')
@@ -107,6 +127,11 @@ export const useSubscription = () => {
   };
 
   const isPremium = () => {
+    // Desenvolvedores sempre têm acesso premium
+    if (subscription?.subscription_tier === 'developer') {
+      return true;
+    }
+    
     return subscription?.subscribed && 
            subscription?.subscription_tier && 
            subscription.subscription_tier !== 'free' &&
