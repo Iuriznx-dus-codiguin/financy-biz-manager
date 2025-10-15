@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import { useCategoriasPersonalizadas } from '@/hooks/useCategoriasPersonalizadas';
+import { useDashboard } from '@/hooks/useDashboard';
+import { getPredefinedCategories } from '@/constants/categories';
 import * as Icons from 'lucide-react';
 
 interface CategorySelectorProps {
@@ -16,26 +18,6 @@ interface CategorySelectorProps {
   className?: string;
 }
 
-const categoriasPadrao = {
-  receita: [
-    { nome: 'Vendas', valor: 'vendas' },
-    { nome: 'Serviços', valor: 'servicos' },
-    { nome: 'Consultoria', valor: 'consultoria' },
-    { nome: 'Salário', valor: 'salario' },
-    { nome: 'Freelance', valor: 'freelance' },
-    { nome: 'Investimentos', valor: 'investimentos' },
-    { nome: 'Outros', valor: 'outros' }
-  ],
-  despesa: [
-    { nome: 'Moradia', valor: 'moradia' },
-    { nome: 'Alimentação', valor: 'alimentacao' },
-    { nome: 'Transporte', valor: 'transporte' },
-    { nome: 'Saúde', valor: 'saude' },
-    { nome: 'Educação', valor: 'educacao' },
-    { nome: 'Lazer', valor: 'lazer' },
-    { nome: 'Outros', valor: 'outros' }
-  ]
-};
 
 const coresDisponiveis = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', 
@@ -49,6 +31,7 @@ const iconOptions = [
 
 export function CategorySelector({ tipo, value, onChange, placeholder, className }: CategorySelectorProps) {
   const { categorias, adicionarCategoria, getCategoriasParaTipo } = useCategoriasPersonalizadas();
+  const { currentDashboard } = useDashboard();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [novaCategoria, setNovaCategoria] = useState({
     nome: '',
@@ -57,7 +40,10 @@ export function CategorySelector({ tipo, value, onChange, placeholder, className
   });
 
   const categoriasPersonalizadas = getCategoriasParaTipo(tipo);
-  const categoriasParaExibir = categoriasPadrao[tipo];
+  
+  // Obter categorias predefinidas baseadas no tipo de dashboard
+  const dashboardType = currentDashboard?.type as 'pessoal' | 'empresarial' | null;
+  const categoriasParaExibir = getPredefinedCategories(dashboardType, tipo);
 
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,14 +79,14 @@ export function CategorySelector({ tipo, value, onChange, placeholder, className
       <Label htmlFor="categoria">Categoria</Label>
       <div className="flex gap-2">
         <Select value={value} onValueChange={onChange}>
-          <SelectTrigger className="rounded-xl flex-1">
+          <SelectTrigger className="rounded-xl flex-1 bg-background">
             <SelectValue placeholder={placeholder || "Selecione uma categoria"} />
           </SelectTrigger>
-          <SelectContent>
-            {/* Categorias padrão */}
+          <SelectContent className="bg-background z-50">
+            {/* Categorias predefinidas */}
             {categoriasParaExibir.map(categoria => (
-              <SelectItem key={categoria.valor} value={categoria.valor}>
-                {categoria.nome}
+              <SelectItem key={categoria.value} value={categoria.value}>
+                {categoria.label}
               </SelectItem>
             ))}
             
@@ -131,11 +117,11 @@ export function CategorySelector({ tipo, value, onChange, placeholder, className
         {/* Botão para criar nova categoria */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button type="button" variant="outline" size="icon" className="rounded-xl">
+            <Button type="button" variant="outline" size="icon" className="rounded-xl shrink-0">
               <Plus className="h-4 w-4" />
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="bg-background">
             <DialogHeader>
               <DialogTitle>Nova Categoria de {tipo === 'receita' ? 'Receita' : 'Despesa'}</DialogTitle>
               <DialogDescription>
@@ -178,10 +164,10 @@ export function CategorySelector({ tipo, value, onChange, placeholder, className
                   value={novaCategoria.icone}
                   onValueChange={(value) => setNovaCategoria(prev => ({ ...prev, icone: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background z-50">
                     {iconOptions.map(icon => {
                       const IconComponent = getIcon(icon);
                       return (
