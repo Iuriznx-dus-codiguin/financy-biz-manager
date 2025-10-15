@@ -154,9 +154,9 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     ? filteredReceitas.filter(r => r.categoria === 'salario' || r.categoria === 'salário' || r.categoria === 'trabalho').reduce((sum, r) => sum + r.valor, 0)
     : totalReceitas;
   
-  // Métricas adicionais
+  // Métricas adicionais - ROI calculado com TODOS os gastos
   const totalGastos = totalDespesas + totalImpostos + totalTaxas;
-  const roi = totalGastos > 0 ? (totalReceitas / totalGastos) : 0;
+  const roi = totalTodasDespesas > 0 ? (totalReceitas / totalTodasDespesas) : 0;
   const proLaboreRecomendado = totalReceitas * 0.28; // 28% da receita como pró-labore
   const capitalGiroRecomendado = totalGastos * 3; // 3 meses de gastos recomendados
 
@@ -265,10 +265,6 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
       return sum + i.valor;
     }, 0);
   const lucroPeriodoAnterior = receitasPeriodoAnterior - despesasPeriodoAnterior - totalImpostosPeriodoAnterior - totalTaxasPeriodoAnterior;
-  const totalGastosPeriodoAnterior = despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior;
-  const roiPeriodoAnterior = totalGastosPeriodoAnterior > 0 
-    ? (receitasPeriodoAnterior / totalGastosPeriodoAnterior) 
-    : 0;
 
   // Calcular crescimento percentual
   const crescimentoReceitas = receitasPeriodoAnterior > 0 
@@ -290,10 +286,6 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const crescimentoLucro = lucroPeriodoAnterior !== 0 
     ? ((lucroLiquido - lucroPeriodoAnterior) / Math.abs(lucroPeriodoAnterior)) * 100 
     : lucroLiquido > 0 ? 100 : lucroLiquido < 0 ? -100 : 0;
-
-  const crescimentoROI = roiPeriodoAnterior !== 0 
-    ? ((roi - roiPeriodoAnterior) / Math.abs(roiPeriodoAnterior)) * 100 
-    : roi > 0 ? 100 : roi < 0 ? -100 : 0;
 
   // Calcular variações para dashboard pessoal
   const gastosAlimentacaoPeriodoAnterior = isDashboardPessoal 
@@ -351,13 +343,24 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
 
   const totalGastosEquipePeriodoAnterior = gastosEquipePeriodoAnterior + gastosEquipeDespesasPeriodoAnterior;
 
+  // Calcular ROI do período anterior com TODOS os gastos
+  const totalTodasDespesasPeriodoAnterior = despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior + gastosEquipePeriodoAnterior;
+  const roiPeriodoAnterior = totalTodasDespesasPeriodoAnterior > 0 
+    ? (receitasPeriodoAnterior / totalTodasDespesasPeriodoAnterior) 
+    : 0;
+
   const gastosComFornecedoresPeriodoAnterior = despesas.filter(d => {
     const data = new Date(d.data);
     return d.fornecedor && d.fornecedor.trim() !== '' && !categorias_operacionais.includes(d.categoria.toLowerCase()) && data >= startAnterior && data <= endAnterior;
   }).reduce((sum, d) => sum + d.valor, 0);
 
+  // Calcular crescimento do ROI
+  const crescimentoROI = roiPeriodoAnterior !== 0 
+    ? ((roi - roiPeriodoAnterior) / Math.abs(roiPeriodoAnterior)) * 100 
+    : roi > 0 ? 100 : roi < 0 ? -100 : 0;
+
   // Calcular crescimentos
-  const crescimentoAlimentacao = gastosAlimentacaoPeriodoAnterior > 0 
+  const crescimentoAlimentacao = gastosAlimentacaoPeriodoAnterior > 0
     ? ((gastosAlimentacao - gastosAlimentacaoPeriodoAnterior) / gastosAlimentacaoPeriodoAnterior) * 100 
     : gastosAlimentacao > 0 ? 100 : 0;
 
@@ -584,7 +587,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
                   <TooltipInfo content="Retorno sobre Investimento - Mostra quantas vezes você multiplicou seu investimento. Ex: ROI de 2.0x significa que para cada R$ 1 gasto, você ganhou R$ 2" />
                 </div>
               }
-              value={`${roi.toFixed(2)}x`}
+              value={roi.toFixed(2)}
               change={crescimentoROI}
               icon={Target}
               gradient="from-purple-500 to-violet-600"
