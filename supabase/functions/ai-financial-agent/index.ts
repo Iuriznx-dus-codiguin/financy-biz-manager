@@ -50,26 +50,34 @@ serve(safeHandler(async (req) => {
       .single();
 
     if (transaction) {
+      // Buscar dashboard principal do usuário
+      const { data: mainDashboardId } = await supabase
+        .rpc('get_user_main_dashboard', { p_user_id: user.id });
+
       // Salvar na tabela apropriada (despesas ou receitas)
       if (transaction.type === 'expense') {
         await supabase.from('despesas').insert({
           user_id: user.id,
+          dashboard_id: mainDashboardId,
           descricao: transaction.description,
           valor: transaction.amount,
           categoria: transaction.category,
           data: transaction.date,
           forma_pagamento: 'Dinheiro',
-          fornecedor: 'Via IA'
+          fornecedor: 'Via IA',
+          status: 'paga'
         });
       } else {
         await supabase.from('receitas').insert({
           user_id: user.id,
+          dashboard_id: mainDashboardId,
           descricao: transaction.description,
           valor: transaction.amount,
           categoria: transaction.category,
           data: transaction.date,
           forma_pagamento: 'Dinheiro',
-          cliente: 'Via IA'
+          cliente: 'Via IA',
+          status: 'paga'
         });
       }
 

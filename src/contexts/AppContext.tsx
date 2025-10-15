@@ -153,6 +153,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [user, currentDashboard]);
 
+  // Listener de realtime para invalidar cache quando houver mudanças
+  useEffect(() => {
+    if (!currentDashboard) return;
+
+    const channel = supabase
+      .channel('financial-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'despesas', filter: `dashboard_id=eq.${currentDashboard.id}` },
+        () => {
+          console.log('Despesa alterada, recarregando dados...');
+          clearCacheForDashboard(currentDashboard.id);
+          carregarDados();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'receitas', filter: `dashboard_id=eq.${currentDashboard.id}` },
+        () => {
+          console.log('Receita alterada, recarregando dados...');
+          clearCacheForDashboard(currentDashboard.id);
+          carregarDados();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentDashboard]);
+
   const carregarDados = async () => {
     if (!currentDashboard) return;
 
@@ -325,6 +356,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         status: (data.status || 'paga') as 'paga' | 'pendente'
       };
       setReceitas(prev => [novaReceita, ...prev]);
+      
+      // Limpar cache após inserção
+      clearCacheForDashboard(currentDashboard.id);
     }
   };
 
@@ -365,6 +399,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         status: (data.status || 'paga') as 'paga' | 'pendente'
       };
       setDespesas(prev => [novaDespesa, ...prev]);
+      
+      // Limpar cache após inserção
+      clearCacheForDashboard(currentDashboard.id);
     }
   };
 
