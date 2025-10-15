@@ -1107,11 +1107,11 @@ export type Database = {
       }
       processar_despesas_recorrentes: {
         Args: Record<PropertyKey, never>
-        Returns: undefined
+        Returns: number
       }
       processar_receitas_recorrentes: {
         Args: Record<PropertyKey, never>
-        Returns: undefined
+        Returns: number
       }
       renew_subscription: {
         Args: {
