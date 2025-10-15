@@ -155,7 +155,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   
   // Métricas adicionais
   const totalGastos = totalDespesas + totalImpostos + totalTaxas;
-  const roi = totalGastos > 0 ? ((totalReceitas - totalGastos) / totalGastos) : 0;
+  const roi = totalGastos > 0 ? (totalReceitas / totalGastos) : 0;
   const proLaboreRecomendado = totalReceitas * 0.28; // 28% da receita como pró-labore
   const capitalGiroRecomendado = totalGastos * 3; // 3 meses de gastos recomendados
 
@@ -264,8 +264,9 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
       return sum + i.valor;
     }, 0);
   const lucroPeriodoAnterior = receitasPeriodoAnterior - despesasPeriodoAnterior - totalImpostosPeriodoAnterior - totalTaxasPeriodoAnterior;
-  const roiPeriodoAnterior = (despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior) > 0 
-    ? ((receitasPeriodoAnterior - (despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior)) / (despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior)) 
+  const totalGastosPeriodoAnterior = despesasPeriodoAnterior + totalImpostosPeriodoAnterior + totalTaxasPeriodoAnterior;
+  const roiPeriodoAnterior = totalGastosPeriodoAnterior > 0 
+    ? (receitasPeriodoAnterior / totalGastosPeriodoAnterior) 
     : 0;
 
   // Calcular crescimento percentual
@@ -579,10 +580,10 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               title={
                 <div className="flex items-center gap-1">
                   ROI
-                  <TooltipInfo content="Retorno sobre Investimento - Mede o retorno obtido em relação ao investimento realizado" />
+                  <TooltipInfo content="Retorno sobre Investimento - Mostra quantas vezes você multiplicou seu investimento. Ex: ROI de 2.0x significa que para cada R$ 1 gasto, você ganhou R$ 2" />
                 </div>
               }
-              value={roi.toFixed(2)}
+              value={`${roi.toFixed(2)}x`}
               change={crescimentoROI}
               icon={Target}
               gradient="from-purple-500 to-violet-600"

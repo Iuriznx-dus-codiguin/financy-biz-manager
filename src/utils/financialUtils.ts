@@ -36,9 +36,19 @@ export const calculateMargin = (revenue: number, costs: number) => {
   return ((revenue - costs) / revenue) * 100;
 };
 
-export const calculateROI = (gains: number, investments: number) => {
-  if (investments === 0) return gains > 0 ? 100 : 0;
-  return ((gains - investments) / investments) * 100;
+export const calculateROI = (revenue: number, totalCosts: number) => {
+  if (totalCosts === 0) return revenue > 0 ? Infinity : 0;
+  return revenue / totalCosts;
+};
+
+export const interpretROI = (roi: number): string => {
+  if (roi < 0.5) return 'Prejuízo Severo';
+  if (roi < 1.0) return 'Prejuízo';
+  if (roi === 1.0) return 'Ponto de Equilíbrio';
+  if (roi < 1.5) return 'Lucro Baixo';
+  if (roi < 2.0) return 'Lucro Moderado';
+  if (roi < 3.0) return 'Lucro Bom';
+  return 'Lucro Excelente';
 };
 
 // Cache para cálculos pesados
