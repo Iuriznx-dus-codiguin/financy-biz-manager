@@ -84,9 +84,10 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
       }
     }, 0);
 
-  // Calcular gastos com fornecedores (despesas da categoria fornecedores)
+  // Calcular gastos com fornecedores (todas despesas com fornecedor, exceto gastos operacionais)
+  const categorias_operacionais = ['equipe', 'salarios', 'salários', 'folha'];
   const gastosComFornecedores = filteredDespesas
-    .filter(d => d.categoria === 'fornecedores')
+    .filter(d => d.fornecedor && d.fornecedor.trim() !== '' && !categorias_operacionais.includes(d.categoria.toLowerCase()))
     .reduce((sum, d) => sum + d.valor, 0);
 
   // Gastos com equipe das despesas cadastradas (categoria equipe)
@@ -352,7 +353,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
 
   const gastosComFornecedoresPeriodoAnterior = despesas.filter(d => {
     const data = new Date(d.data);
-    return d.categoria === 'fornecedores' && data >= startAnterior && data <= endAnterior;
+    return d.fornecedor && d.fornecedor.trim() !== '' && !categorias_operacionais.includes(d.categoria.toLowerCase()) && data >= startAnterior && data <= endAnterior;
   }).reduce((sum, d) => sum + d.valor, 0);
 
   // Calcular crescimentos
