@@ -158,7 +158,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const totalGastos = totalDespesas + totalImpostos + totalTaxas;
   const roi = totalTodasDespesas > 0 ? (totalReceitas / totalTodasDespesas) : 0;
   const proLaboreRecomendado = totalReceitas * 0.28; // 28% da receita como pró-labore
-  const capitalGiroRecomendado = totalGastos * 3; // 3 meses de gastos recomendados
+  const capitalGiroRecomendado = totalTodasDespesas * 3; // 3 meses de TODAS as despesas
 
   // Calcular períodos anteriores baseado no filtro atual
   const getPeriodoAnterior = (filter: string) => {

@@ -2,18 +2,20 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Target, BarChart3, PieChart, DollarSign } from 'lucide-react';
-import type { Receita, Despesa, Imposto } from '@/contexts/AppContext';
+import type { Receita, Despesa, Imposto, MembroEquipe } from '@/contexts/AppContext';
 
 interface InteligenciaFinanceiraAprimoradaProps {
   receitas: Receita[];
   despesas: Despesa[];
   impostos: Imposto[];
+  membrosEquipe?: MembroEquipe[];
 }
 
 export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAprimoradaProps> = ({
   receitas,
   despesas,
-  impostos
+  impostos,
+  membrosEquipe = []
 }) => {
   // Verificar se há dados suficientes
   const hasData = receitas.length > 0 || despesas.length > 0 || impostos.length > 0;
@@ -47,14 +49,35 @@ export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAp
   const totalImpostosAberto = impostos.filter(i => !i.pago && i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
   const totalTaxasAberto = impostos.filter(i => !i.pago && i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
   
-  const margemLiquida = totalReceitas > 0 ? ((totalReceitas - totalDespesas - totalImpostosPagos - totalTaxasPagas) / totalReceitas) * 100 : 0;
-  const taxaQueima = totalDespesas / (totalReceitas || 1);
-  const roe = totalReceitas > 0 ? ((totalReceitas - totalDespesas) / totalReceitas) * 100 : 0;
+  // Calcular gastos com equipe
+  const gastosComEquipe = membrosEquipe
+    .filter(m => m.status === 'ativo')
+    .reduce((total, membro) => {
+      switch (membro.periodicidade) {
+        case 'mensal':
+          return total + membro.salario;
+        case 'semanal':
+          return total + (membro.salario * 4);
+        case 'quinzenal':
+          return total + (membro.salario * 2);
+        default:
+          return total;
+      }
+    }, 0);
+  
+  const margemLiquida = totalReceitas > 0 ? ((totalReceitas - totalDespesas - totalImpostosPagos - totalTaxasPagas - gastosComEquipe) / totalReceitas) * 100 : 0;
+  const taxaQueima = (totalDespesas + gastosComEquipe) / (totalReceitas || 1);
+  const margemBruta = totalReceitas > 0 ? ((totalReceitas - totalDespesas) / totalReceitas) * 100 : 0;
   
   // Análises avançadas
   const receitaAnualizada = totalReceitas * 12;
   const valuationEstimado = receitaAnualizada * 4.5; // Múltiplo mais otimista para planos premium
-  const breakEvenPoint = totalDespesas / (totalReceitas / 30); // Ponto de equilíbrio em dias
+  
+  // Runway - quantos dias a empresa sobrevive com o saldo atual
+  const saldoAtual = totalReceitas - totalDespesas - totalImpostosPagos - totalTaxasPagas - gastosComEquipe;
+  const despesasDiarias = (totalDespesas + gastosComEquipe) / 30;
+  const runway = despesasDiarias > 0 ? saldoAtual / despesasDiarias : 0;
+  
   // Análise de liquidez
   const liquidezImediata = (totalReceitas - totalDespesas) / (totalImpostosAberto + totalTaxasAberto || 1);
   
@@ -157,8 +180,8 @@ export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAp
         <Card className="rounded-xl">
           <CardContent className="p-4 text-center">
             <Target className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">ROE</p>
-            <p className="text-xl font-bold text-blue-600">{roe.toFixed(1)}%</p>
+            <p className="text-sm text-muted-foreground">Margem Bruta</p>
+            <p className="text-xl font-bold text-blue-600">{margemBruta.toFixed(1)}%</p>
           </CardContent>
         </Card>
         
@@ -227,12 +250,12 @@ export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAp
             </div>
             
             <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl">
-              <h4 className="font-semibold mb-2">Break-even Point</h4>
+              <h4 className="font-semibold mb-2">Runway (Sobrevivência)</h4>
               <p className="text-2xl font-bold text-purple-600">
-                {breakEvenPoint.toFixed(0)} dias
+                {runway.toFixed(0)} dias
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Tempo para cobrir custos fixos
+                Com saldo atual, sem novas receitas
               </p>
             </div>
           </div>

@@ -51,6 +51,30 @@ export const interpretROI = (roi: number): string => {
   return 'Lucro Excelente';
 };
 
+export const calculateNetProfit = (
+  revenue: number, 
+  expenses: number, 
+  taxes: number, 
+  teamCosts: number
+) => {
+  return revenue - expenses - taxes - teamCosts;
+};
+
+export const calculateNetMargin = (netProfit: number, revenue: number) => {
+  if (revenue === 0) return 0;
+  return (netProfit / revenue) * 100;
+};
+
+export const calculateBurnRate = (
+  expenses: number, 
+  teamCosts: number, 
+  revenue: number
+) => {
+  const totalCosts = expenses + teamCosts;
+  if (revenue === 0) return totalCosts;
+  return totalCosts - revenue;
+};
+
 // Cache para cálculos pesados
 const calculationCache = new Map<string, { result: any; timestamp: number }>();
 

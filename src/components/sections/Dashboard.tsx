@@ -36,7 +36,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [periodo, setPeriodo] = useState('6meses');
   const [timeFilter, setTimeFilter] = useState('este-mes');
   const [isClosingCash, setIsClosingCash] = useState(false);
-  const { receitas, despesas, impostos } = useAppContext();
+  const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const { onboardingData } = useOnboarding();
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('painel');
   const { currentDashboard } = useDashboard();
@@ -98,6 +98,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
             receitas={filteredReceitas}
             despesas={filteredDespesas}
             impostos={filteredImpostos}
+            membrosEquipe={membrosEquipe}
           />
         ) : hasBasicIntelligence ? (
           <InteligenciaFinanceiraBasica
@@ -178,6 +179,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           receitas={filteredReceitas}
           despesas={filteredDespesas}
           impostos={filteredImpostos}
+          membrosEquipe={membrosEquipe}
         />
       ) : hasBasicIntelligence ? (
         <InteligenciaFinanceiraBasica

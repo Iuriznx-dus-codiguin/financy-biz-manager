@@ -18,7 +18,8 @@ export const InteligenciaFinanceiraBasica: React.FC<InteligenciaFinanceiraBasica
   const { totalReceitas, totalDespesas, saldoAtual, totalImpostosAberto } = useMemo(() => {
     const total_receitas = receitas.reduce((sum, r) => sum + r.valor, 0);
     const total_despesas = despesas.reduce((sum, d) => sum + d.valor, 0);
-    const saldo_atual = total_receitas - total_despesas;
+    const total_impostos = impostos.reduce((sum, i) => sum + i.valor, 0);
+    const saldo_atual = total_receitas - total_despesas - total_impostos;
     const total_impostos_aberto = impostos.filter(i => !i.pago).reduce((sum, i) => sum + i.valor, 0);
     
     return {

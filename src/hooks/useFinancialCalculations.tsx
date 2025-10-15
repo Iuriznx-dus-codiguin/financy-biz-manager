@@ -18,6 +18,7 @@ interface FinancialCalculations {
   despesasPorCategoria: Record<string, number>;
   gastosComEquipe: number;
   gastosComFornecedores: number;
+  totalTodasDespesas: number;
 }
 
 export const useFinancialCalculations = (
@@ -51,11 +52,21 @@ export const useFinancialCalculations = (
     
     const totalImpostos = filteredImpostos
       .filter(i => i.tipo === 'imposto')
-      .reduce((sum, i) => sum + i.valor, 0);
+      .reduce((sum, i) => {
+        if (i.valorTipo === 'porcentagem') {
+          return sum + (totalReceitas * (i.valor / 100));
+        }
+        return sum + i.valor;
+      }, 0);
     
     const totalTaxas = filteredImpostos
       .filter(i => i.tipo === 'taxa')
-      .reduce((sum, i) => sum + i.valor, 0);
+      .reduce((sum, i) => {
+        if (i.valorTipo === 'porcentagem') {
+          return sum + (totalReceitas * (i.valor / 100));
+        }
+        return sum + i.valor;
+      }, 0);
 
     const totalImpostosAberto = filteredImpostos
       .filter(i => !i.pago && i.tipo === 'imposto')
@@ -64,21 +75,6 @@ export const useFinancialCalculations = (
     const totalTaxasAberto = filteredImpostos
       .filter(i => !i.pago && i.tipo === 'taxa')
       .reduce((sum, i) => sum + i.valor, 0);
-
-    // Cálculos derivados
-    const saldo = totalReceitas - totalDespesas;
-    const lucroLiquido = totalReceitas - totalDespesas - totalImpostos - totalTaxas;
-    const margemLiquida = totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
-
-    // Status das receitas (usando dados filtrados)
-    const receitasPagas = filteredReceitas.filter(r => r.status === 'paga').length;
-    const receitasPendentes = filteredReceitas.filter(r => r.status === 'pendente').length;
-
-    // Despesas por categoria
-    const despesasPorCategoria = filteredDespesas.reduce((acc, despesa) => {
-      acc[despesa.categoria] = (acc[despesa.categoria] || 0) + despesa.valor;
-      return acc;
-    }, {} as Record<string, number>);
 
     // Gastos com equipe
     const gastosComEquipe = membrosEquipe
@@ -96,10 +92,30 @@ export const useFinancialCalculations = (
         }
       }, 0);
 
-    // Gastos com fornecedores
+    // Cálculos derivados
+    const saldo = totalReceitas - totalDespesas;
+    const lucroLiquido = totalReceitas - totalDespesas - totalImpostos - totalTaxas - gastosComEquipe;
+    const margemLiquida = totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
+
+    // Status das receitas (usando dados filtrados)
+    const receitasPagas = filteredReceitas.filter(r => r.status === 'paga').length;
+    const receitasPendentes = filteredReceitas.filter(r => r.status === 'pendente').length;
+
+    // Despesas por categoria
+    const despesasPorCategoria = filteredDespesas.reduce((acc, despesa) => {
+      acc[despesa.categoria] = (acc[despesa.categoria] || 0) + despesa.valor;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Gastos com fornecedores - excluir categorias operacionais
+    const categorias_operacionais = ['equipe', 'salarios', 'salários', 'folha'];
     const gastosComFornecedores = filteredDespesas
-      .filter(d => d.categoria === 'fornecedores')
+      .filter(d => d.fornecedor && d.fornecedor.trim() !== '' && 
+                  !categorias_operacionais.includes(d.categoria.toLowerCase()))
       .reduce((sum, d) => sum + d.valor, 0);
+
+    // Total de todas as despesas (incluindo impostos, taxas e equipe)
+    const totalTodasDespesas = totalDespesas + totalImpostos + totalTaxas + gastosComEquipe;
 
     return {
       totalReceitas,
@@ -116,6 +132,7 @@ export const useFinancialCalculations = (
       despesasPorCategoria,
       gastosComEquipe,
       gastosComFornecedores,
+      totalTodasDespesas,
     };
   }, [data, timeFilter]);
 };
