@@ -23,18 +23,24 @@ import {
   TrendingUp,
   Shield,
   Zap,
-  Code2
+  Code2,
+  ArrowRight,
+  CheckCircle2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { DeveloperAccessDialog } from '@/components/DeveloperAccessDialog';
+import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const Assinatura: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [planType, setPlanType] = useState<'personal' | 'business'>('personal');
   const [isDeveloperDialogOpen, setIsDeveloperDialogOpen] = useState(false);
   const { user } = useAuth();
+  const { subscription, loading, isFreeTrial, isPremium } = useUserSubscription();
 
   const paymentUrls = {
     // Planos Pessoais - Mensal
@@ -246,6 +252,250 @@ const Assinatura: React.FC = () => {
     setIsDeveloperDialogOpen(true);
   };
 
+  // Verificar se o plano atual é pessoal ou empresarial
+  const isPersonalPlan = subscription?.plan_name?.toLowerCase().includes('pessoal') || 
+                         subscription?.plan_name?.toLowerCase().includes('básico') ||
+                         subscription?.plan_name?.toLowerCase().includes('plus') ||
+                         subscription?.plan_name?.toLowerCase().includes('pro') ||
+                         subscription?.plan_name?.toLowerCase().includes('família');
+
+  const isBusinessPlan = subscription?.plan_name?.toLowerCase().includes('empresarial') ||
+                         subscription?.plan_name?.toLowerCase().includes('premium') ||
+                         subscription?.plan_name?.toLowerCase().includes('company');
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Se usuário tem plano ativo (não está em teste gratuito)
+  if (isPremium() && subscription && !isFreeTrial()) {
+    return (
+      <div className="space-y-8">
+        {/* Card de Assinatura Atual */}
+        <Card className="border-2 border-primary/20 bg-gradient-to-br from-background via-primary/5 to-background">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-primary/10 rounded-xl">
+                  <Crown className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl">Sua Assinatura Atual</CardTitle>
+                  <CardDescription>Plano ativo e recursos disponíveis</CardDescription>
+                </div>
+              </div>
+              <Badge className="bg-green-500 text-white px-4 py-2 text-sm">
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Ativo
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Informações do Plano */}
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Plano Atual</p>
+                <p className="text-2xl font-bold text-foreground">{subscription.plan_name}</p>
+                <Badge variant="outline" className="mt-2">
+                  {subscription.subscription_type === 'yearly' ? 'Anual' : 'Mensal'}
+                </Badge>
+              </div>
+              
+              {subscription.expires_at && (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Próxima Renovação</p>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    <p className="text-lg font-semibold text-foreground">
+                      {format(new Date(subscription.expires_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Renovação automática
+                  </p>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Valor</p>
+                <p className="text-2xl font-bold text-foreground">
+                  R$ {subscription.amount ? subscription.amount.toFixed(2) : '0,00'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  /{subscription.billing_period === 'yearly' ? 'ano' : 'mês'}
+                </p>
+              </div>
+            </div>
+
+            {/* Recursos Disponíveis */}
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Recursos do Seu Plano
+              </h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {subscription.features && (
+                  <>
+                    {subscription.features.max_dashboards && (
+                      <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                        <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium">Dashboards</p>
+                          <p className="text-sm text-muted-foreground">
+                            {subscription.features.max_dashboards === -1 ? 'Ilimitados' : `Até ${subscription.features.max_dashboards}`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {subscription.features.ai_requests_per_month && (
+                      <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                        <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium">Solicitações IA</p>
+                          <p className="text-sm text-muted-foreground">
+                            {subscription.features.ai_requests_per_month === -1 ? 'Ilimitadas' : `${subscription.features.ai_requests_per_month}/mês`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {subscription.features.team_members && (
+                      <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                        <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium">Membros da Equipe</p>
+                          <p className="text-sm text-muted-foreground">
+                            {subscription.features.team_members === -1 ? 'Ilimitados' : `Até ${subscription.features.team_members}`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {subscription.features.whatsapp_integration && (
+                      <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                        <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium">WhatsApp IA</p>
+                          <p className="text-sm text-muted-foreground">Integração completa</p>
+                        </div>
+                      </div>
+                    )}
+                    {subscription.features.advanced_analytics && (
+                      <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                        <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium">Análises Avançadas</p>
+                          <p className="text-sm text-muted-foreground">Relatórios completos</p>
+                        </div>
+                      </div>
+                    )}
+                    {subscription.features.export_data && (
+                      <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                        <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium">Exportação de Dados</p>
+                          <p className="text-sm text-muted-foreground">Excel, PDF, CSV</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Upgrade para Empresarial (apenas para planos pessoais) */}
+        {isPersonalPlan && (
+          <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-50/50 via-purple-50/50 to-blue-50/50 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-blue-950/20">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-500/10 rounded-xl">
+                  <Building2 className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-blue-900 dark:text-blue-100">
+                    Faça Upgrade para Plano Empresarial
+                  </CardTitle>
+                  <CardDescription className="text-blue-700 dark:text-blue-300">
+                    Gerencie suas finanças pessoais E empresariais em um único plano
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-white/50 dark:bg-black/20 rounded-xl p-6 space-y-4">
+                <p className="text-foreground leading-relaxed">
+                  <strong className="text-blue-700 dark:text-blue-300">Planos empresariais</strong> suportam múltiplos dashboards que podem ser configurados como:
+                </p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <Building2 className="h-6 w-6 text-green-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-green-900 dark:text-green-100">Dashboards Empresariais</p>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        Gestão completa do seu negócio com ferramentas profissionais
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                    <User className="h-6 w-6 text-purple-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-purple-900 dark:text-purple-100">Dashboards Pessoais</p>
+                      <p className="text-sm text-purple-700 dark:text-purple-300">
+                        Controle suas finanças pessoais separadamente
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-blue-100 dark:bg-blue-900/30 rounded-lg p-4 border-l-4 border-blue-500">
+                  <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
+                    💡 Ideal para empreendedores que querem administrar as finanças pessoais e empresariais em apenas um plano, de forma profissional e organizada.
+                  </p>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={() => setPlanType('business')}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg py-6"
+              >
+                Ver Planos Empresariais
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Dúvidas ou Suporte */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Precisa de Ajuda?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              Entre em contato com nosso suporte para dúvidas sobre sua assinatura, alterações de plano ou cancelamento.
+            </p>
+            <Button variant="outline" className="w-full" onClick={() => window.open('https://wa.me/5511999999999', '_blank')}>
+              <MessageCircle className="mr-2 h-4 w-4" />
+              Falar com Suporte
+            </Button>
+          </CardContent>
+        </Card>
+
+        <DeveloperAccessDialog 
+          isOpen={isDeveloperDialogOpen}
+          onClose={() => setIsDeveloperDialogOpen(false)}
+        />
+      </div>
+    );
+  }
+
+  // Tela de seleção de planos (para teste gratuito ou sem assinatura)
   return (
     <div className="space-y-8">
       <div className="text-center space-y-6">
