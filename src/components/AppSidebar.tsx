@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/hooks/useTheme';
+import { useUserContext } from '@/hooks/useUserContext';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -66,16 +67,25 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   const { state, setOpen } = useSidebar();
   const { theme, setTheme } = useTheme();
   const { currentDashboard } = useDashboard();
+  const { userType } = useUserContext();
   const [isHovered, setIsHovered] = useState(false);
   
   const isCollapsed = state === 'collapsed';
   const shouldShowExpanded = isCollapsed && isHovered;
   const currentLogo = shouldShowExpanded ? financyLogo : (isCollapsed ? iconLogo : financyLogo);
 
-  // Filter menu items based on dashboard type
+  // Filtrar menu baseado no tipo de usuário E tipo de dashboard
   const menuItems = allMenuItems.filter(item => {
     if (!currentDashboard) return true;
-    if (item.businessOnly && currentDashboard.type === 'personal') return false;
+    
+    // Seções apenas para empresarial
+    if (item.businessOnly) {
+      // Ocultar se usuário é pessoal OU dashboard atual é personal
+      if (userType === 'pessoal' || currentDashboard.type === 'personal') {
+        return false;
+      }
+    }
+    
     return true;
   });
 

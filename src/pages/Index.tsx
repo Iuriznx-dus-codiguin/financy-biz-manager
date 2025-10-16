@@ -32,6 +32,7 @@ import { DashboardProvider } from '@/hooks/useDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { useUserContext } from '@/hooks/useUserContext';
 import { SubscriptionBanners } from '@/components/SubscriptionBanners';
 import { FloatingWhatsAppButton } from '@/components/FloatingWhatsAppButton';
 
@@ -39,6 +40,7 @@ export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
   const { subscription, isSubscriptionExpired, loading: subscriptionLoading } = useUserSubscription();
+  const { userType } = useUserContext();
   const [showLoading, setShowLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('painel');
 
@@ -58,6 +60,14 @@ export default function Index() {
       // Não permite mudança de seção se assinatura expirou
       return;
     }
+    
+    // Bloquear navegação para seções empresariais se usuário é pessoal
+    if (userType === 'pessoal' && ['equipe', 'fechamento'].includes(newSection)) {
+      // Redirecionar para painel
+      setActiveSection('painel');
+      return;
+    }
+    
     setActiveSection(newSection);
   };
 

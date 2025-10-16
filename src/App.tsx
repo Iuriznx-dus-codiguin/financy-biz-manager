@@ -11,6 +11,7 @@ import { AppProvider } from "@/contexts/AppContext";
 import { DashboardProvider } from "@/hooks/useDashboard";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { SettingsProvider } from "@/hooks/useSettings";
+import { UserContextProvider } from "@/hooks/useUserContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -27,16 +28,18 @@ const App = () => (
               <OnboardingProvider>
                 <SectionTutorialsProvider>
                   <DashboardProvider>
-                    <AppProvider>
-                    <Toaster />
-                    <Sonner />
-                    <BrowserRouter>
-                      <Routes>
-                        <Route path="/" element={<Index />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
-                    </AppProvider>
+                    <UserContextProvider>
+                      <AppProvider>
+                      <Toaster />
+                      <Sonner />
+                      <BrowserRouter>
+                        <Routes>
+                          <Route path="/" element={<Index />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </BrowserRouter>
+                      </AppProvider>
+                    </UserContextProvider>
                   </DashboardProvider>
                 </SectionTutorialsProvider>
               </OnboardingProvider>
