@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
+import { logger } from '@/utils/logger';
 
 export interface Receita {
   id: number;
@@ -153,33 +154,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [user, currentDashboard]);
 
-  // Listener de realtime para invalidar cache quando houver mudanças
+  // Listener de realtime para invalidar cache quando houver mudanças (com debounce)
   useEffect(() => {
     if (!currentDashboard) return;
+
+    let reloadTimeout: NodeJS.Timeout | null = null;
+    
+    const debouncedReload = () => {
+      if (reloadTimeout) clearTimeout(reloadTimeout);
+      reloadTimeout = setTimeout(() => {
+        logger.info('Dados financeiros alterados, recarregando...');
+        clearCacheForDashboard(currentDashboard.id);
+        carregarDados();
+      }, 500);
+    };
 
     const channel = supabase
       .channel('financial-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'despesas', filter: `dashboard_id=eq.${currentDashboard.id}` },
-        () => {
-          console.log('Despesa alterada, recarregando dados...');
-          clearCacheForDashboard(currentDashboard.id);
-          carregarDados();
-        }
+        debouncedReload
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'receitas', filter: `dashboard_id=eq.${currentDashboard.id}` },
-        () => {
-          console.log('Receita alterada, recarregando dados...');
-          clearCacheForDashboard(currentDashboard.id);
-          carregarDados();
-        }
+        debouncedReload
       )
       .subscribe();
 
     return () => {
+      if (reloadTimeout) clearTimeout(reloadTimeout);
       supabase.removeChannel(channel);
     };
   }, [currentDashboard]);
@@ -198,12 +203,57 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
 
     try {
-      // Carregar receitas
-      const { data: receitasData } = await supabase
-        .from('receitas')
-        .select('*')
-        .eq('dashboard_id', currentDashboard?.id)
-        .order('data', { ascending: false });
+      if (!user || !currentDashboard) return;
+
+      // Parallelize all queries for better performance
+      const [
+        { data: receitasData, error: receitasError },
+        { data: despesasData, error: despesasError },
+        { data: impostosData, error: impostosError },
+        { data: metasData, error: metasError },
+        { data: membrosData, error: membrosError }
+      ] = await Promise.all([
+        supabase
+          .from('receitas')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('dashboard_id', currentDashboard.id)
+          .order('data', { ascending: false }),
+        
+        supabase
+          .from('despesas')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('dashboard_id', currentDashboard.id)
+          .order('data', { ascending: false }),
+        
+        supabase
+          .from('impostos')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('dashboard_id', currentDashboard.id)
+          .order('vencimento', { ascending: true }),
+        
+        supabase
+          .from('metas')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('dashboard_id', currentDashboard.id)
+          .order('created_at', { ascending: false }),
+        
+        supabase
+          .from('equipe_membros')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('dashboard_id', currentDashboard.id)
+          .order('created_at', { ascending: false })
+      ]);
+
+      if (receitasError) throw receitasError;
+      if (despesasError) throw despesasError;
+      if (impostosError) throw impostosError;
+      if (metasError) throw metasError;
+      if (membrosError) throw membrosError;
 
       const receitasFormatadas = receitasData?.map(r => ({
         id: r.id,
@@ -217,13 +267,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         status: (r.status || 'paga') as 'paga' | 'pendente'
       })) || [];
 
-      // Carregar despesas
-      const { data: despesasData } = await supabase
-        .from('despesas')
-        .select('*')
-        .eq('dashboard_id', currentDashboard?.id)
-        .order('data', { ascending: false });
-
       const despesasFormatadas = despesasData?.map(d => ({
         id: d.id,
         data: d.data,
@@ -235,13 +278,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         dashboard_id: d.dashboard_id,
         status: (d.status || 'paga') as 'paga' | 'pendente'
       })) || [];
-
-      // Carregar impostos
-      const { data: impostosData } = await supabase
-        .from('impostos')
-        .select('*')
-        .eq('dashboard_id', currentDashboard?.id)
-        .order('vencimento', { ascending: false });
 
       const impostosFormatados = impostosData?.map(i => ({
         id: i.id,
@@ -255,13 +291,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         dashboard_id: i.dashboard_id
       })) || [];
 
-      // Carregar metas
-      const { data: metasData } = await supabase
-        .from('metas')
-        .select('*')
-        .eq('dashboard_id', currentDashboard?.id)
-        .order('created_at', { ascending: false });
-
       const metasFormatadas = metasData?.map(m => ({
         id: m.id,
         titulo: m.titulo,
@@ -274,13 +303,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         cor: m.cor,
         dashboard_id: m.dashboard_id
       })) || [];
-
-      // Carregar membros da equipe filtrados por dashboard
-      const { data: membrosData } = await supabase
-        .from('equipe_membros')
-        .select('*')
-        .eq('dashboard_id', currentDashboard?.id)
-        .order('created_at', { ascending: false });
 
       const membrosFormatados = membrosData?.map(m => ({
         id: m.id,
@@ -315,7 +337,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }));
 
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      logger.error('Erro ao carregar dados financeiros:', error);
     }
   };
 
@@ -339,7 +361,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       .single();
 
     if (error) {
-      console.error('Erro ao adicionar receita:', error);
+      logger.error('Erro ao adicionar receita:', error);
       return;
     }
 
@@ -382,7 +404,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       .single();
 
     if (error) {
-      console.error('Erro ao adicionar despesa:', error);
+      logger.error('Erro ao adicionar despesa:', error);
       return;
     }
 

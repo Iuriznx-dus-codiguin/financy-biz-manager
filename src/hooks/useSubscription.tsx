@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { logger } from '@/utils/logger';
+import { isDeveloperTier } from '@/utils/subscriptionHelpers';
 
 interface Subscription {
   id: string;
@@ -36,8 +38,8 @@ export const useSubscription = () => {
         .maybeSingle();
 
       // Se é desenvolvedor, retornar acesso ilimitado
-      if (subscriberData?.subscription_tier === 'developer' && subscriberData.subscribed) {
-        console.log('✅ Acesso de desenvolvedor detectado em useSubscription');
+      if (isDeveloperTier(subscriberData)) {
+        logger.success('Acesso de desenvolvedor detectado em useSubscription');
         setSubscription({
           id: 'developer',
           email: user!.email || '',
@@ -114,7 +116,7 @@ export const useSubscription = () => {
       });
 
     } catch (error) {
-      console.error('Erro ao buscar assinatura:', error);
+      logger.error('Erro ao buscar assinatura:', error);
       setSubscription({
         id: 'free',
         email: user!.email || '',
@@ -128,7 +130,7 @@ export const useSubscription = () => {
 
   const isPremium = () => {
     // Desenvolvedores sempre têm acesso premium
-    if (subscription?.subscription_tier === 'developer') {
+    if (isDeveloperTier(subscription)) {
       return true;
     }
     

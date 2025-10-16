@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { logger } from '@/utils/logger';
+import { isDeveloperTier } from '@/utils/subscriptionHelpers';
 
 export interface UserSubscription {
   id: string;
@@ -61,8 +63,8 @@ export const useUserSubscription = () => {
         .maybeSingle();
 
       // Se é desenvolvedor, retornar acesso ilimitado
-      if (subscriberData?.subscription_tier === 'developer' && subscriberData.subscribed) {
-        console.log('✅ Acesso de desenvolvedor detectado - acesso ilimitado concedido');
+      if (isDeveloperTier(subscriberData)) {
+        logger.success('Acesso de desenvolvedor detectado - acesso ilimitado concedido');
         
         // Buscar subscription completa (já foi sincronizada pela migration)
         const { data } = await supabase
@@ -84,14 +86,14 @@ export const useUserSubscription = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('Erro ao buscar assinatura:', error);
+        logger.error('Erro ao buscar assinatura:', error);
         setError('Erro ao carregar dados da assinatura');
         return;
       }
 
       // Se não encontrou assinatura, criar automaticamente (fallback)
       if (!data) {
-        console.warn('⚠️ Assinatura não encontrada para o usuário. Criando teste gratuito automaticamente...');
+        logger.warn('Assinatura não encontrada para o usuário. Criando teste gratuito automaticamente...');
         
         // Chamar função do banco que cria assinatura de teste gratuito
         const { error: ensureError } = await supabase.rpc('ensure_user_has_subscription', {
@@ -99,7 +101,7 @@ export const useUserSubscription = () => {
         });
 
         if (ensureError) {
-          console.error('Erro ao criar assinatura automática:', ensureError);
+          logger.error('Erro ao criar assinatura automática:', ensureError);
         }
 
         // Buscar novamente após criar
@@ -110,7 +112,7 @@ export const useUserSubscription = () => {
           .maybeSingle();
 
         if (refetchError) {
-          console.error('Erro ao buscar assinatura após criação:', refetchError);
+          logger.error('Erro ao buscar assinatura após criação:', refetchError);
           setError('Erro ao carregar dados da assinatura');
           return;
         }
@@ -120,7 +122,7 @@ export const useUserSubscription = () => {
         setSubscription(data as UserSubscription | null);
       }
     } catch (err) {
-      console.error('Erro inesperado:', err);
+      logger.error('Erro inesperado ao carregar assinatura:', err);
       setError('Erro inesperado ao carregar assinatura');
     } finally {
       setLoading(false);
@@ -152,7 +154,7 @@ export const useUserSubscription = () => {
 
   const isSubscriptionExpired = (): boolean => {
     // IMPORTANTE: Desenvolvedores NUNCA expiram
-    if (subscription?.subscription_type === 'developer') {
+    if (isDeveloperTier(subscription)) {
       return false;
     }
 
@@ -165,11 +167,7 @@ export const useUserSubscription = () => {
       const isExpired = trialEndDate < new Date();
       
       if (isExpired) {
-        console.warn('🔒 Teste gratuito expirado para usuário sem assinatura', {
-          userId: user.id,
-          createdAt: user.created_at,
-          trialEndDate
-        });
+        logger.warn('Teste gratuito expirado para usuário sem assinatura');
       }
       
       return isExpired;
@@ -181,11 +179,7 @@ export const useUserSubscription = () => {
     const isExpired = new Date(subscription.expires_at) < new Date();
     
     if (isExpired) {
-      console.warn('🔒 Assinatura expirada', {
-        userId: user?.id,
-        subscriptionId: subscription.id,
-        expiresAt: subscription.expires_at
-      });
+      logger.warn('Assinatura expirada');
     }
     
     return isExpired;
@@ -197,7 +191,7 @@ export const useUserSubscription = () => {
 
   const isPremium = (): boolean => {
     // Desenvolvedores sempre têm acesso premium
-    if (subscription?.subscription_type === 'developer') {
+    if (isDeveloperTier(subscription)) {
       return true;
     }
     return subscription?.subscription_type === 'premium' || subscription?.subscription_type === 'enterprise';
@@ -225,14 +219,14 @@ export const useUserSubscription = () => {
       });
 
       if (error) {
-        console.error('Erro ao renovar assinatura:', error);
+        logger.error('Erro ao renovar assinatura:', error);
         return false;
       }
 
       await fetchSubscription(); // Recarregar dados
       return true;
     } catch (err) {
-      console.error('Erro inesperado ao renovar:', err);
+      logger.error('Erro inesperado ao renovar:', err);
       return false;
     }
   };
@@ -250,14 +244,14 @@ export const useUserSubscription = () => {
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('Erro ao atualizar assinatura:', error);
+        logger.error('Erro ao atualizar assinatura:', error);
         return false;
       }
 
       await fetchSubscription(); // Recarregar dados
       return true;
     } catch (err) {
-      console.error('Erro inesperado ao atualizar:', err);
+      logger.error('Erro inesperado ao atualizar:', err);
       return false;
     }
   };
