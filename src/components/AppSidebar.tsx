@@ -63,15 +63,14 @@ interface AppSidebarProps {
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActiveSection, disabled = false }) => {
-  const { state, setOpen, open } = useSidebar();
+  const { state, setOpen } = useSidebar();
   const { theme, setTheme } = useTheme();
   const { currentDashboard } = useDashboard();
-  const [isPinned, setIsPinned] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   
   const isCollapsed = state === 'collapsed';
-  const shouldExpand = isCollapsed && isHovered && !isPinned;
-  const currentLogo = isCollapsed && !shouldExpand ? iconLogo : financyLogo;
+  const shouldShowExpanded = isCollapsed && isHovered;
+  const currentLogo = shouldShowExpanded ? financyLogo : (isCollapsed ? iconLogo : financyLogo);
 
   // Filter menu items based on dashboard type
   const menuItems = allMenuItems.filter(item => {
@@ -85,28 +84,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
     setTheme(newTheme);
   };
 
-  const handlePinToggle = () => {
-    if (isPinned) {
-      setIsPinned(false);
-      setOpen(false);
-    } else {
-      setIsPinned(true);
-      setOpen(true);
-    }
-  };
-
   const handleMouseEnter = () => {
     setIsHovered(true);
-    if (isCollapsed && !isPinned) {
-      setOpen(true);
-    }
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
-    if (isCollapsed && !isPinned) {
-      setOpen(false);
-    }
   };
 
   return (
@@ -114,27 +97,20 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
       collapsible="icon"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="lg:flex hidden"
+      className="lg:flex hidden transition-all duration-300 ease-in-out"
+      style={{
+        width: shouldShowExpanded ? 'var(--sidebar-width)' : isCollapsed ? 'var(--sidebar-width-icon)' : 'var(--sidebar-width)'
+      }}
     >
       <SidebarHeader>
-        <div className="flex items-center justify-center p-4">
-          {isCollapsed && !shouldExpand ? (
-            <div className="w-10 h-10 flex items-center justify-center">
-              <img 
-                src={currentLogo}
-                alt="Financy" 
-                className="w-8 h-8 object-contain"
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center w-full h-14 px-2">
-              <img 
-                src={currentLogo}
-                alt="Financy" 
-                className="h-10 w-full object-contain"
-              />
-            </div>
-          )}
+        <div className="flex items-center justify-center p-4 transition-all duration-300">
+          <div className={`flex items-center justify-center ${shouldShowExpanded || !isCollapsed ? 'w-full h-14 px-2' : 'w-10 h-10'}`}>
+            <img 
+              src={currentLogo}
+              alt="Financy" 
+              className={`object-contain transition-all duration-300 ${shouldShowExpanded || !isCollapsed ? 'h-10 w-full' : 'w-8 h-8'}`}
+            />
+          </div>
         </div>
       </SidebarHeader>
 
@@ -150,13 +126,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       onClick={() => !disabled && setActiveSection(item.id)}
-                      tooltip={isCollapsed && !shouldExpand ? item.label : undefined}
+                      tooltip={isCollapsed && !shouldShowExpanded ? item.label : undefined}
                       isActive={activeSection === item.id}
                       disabled={disabled && item.id !== 'assinatura'}
                       className={disabled && item.id !== 'assinatura' ? 'opacity-50 cursor-not-allowed' : ''}
                     >
                       <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
+                      <span className="transition-opacity duration-300">{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -170,11 +146,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
         <Button
           variant="outline"
           onClick={handleThemeToggle}
-          className="w-full"
+          className="w-full transition-all duration-300"
         >
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          {(!isCollapsed || shouldExpand) && (
-            <span className="ml-2">
+          {(shouldShowExpanded || !isCollapsed) && (
+            <span className="ml-2 transition-opacity duration-300">
               {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
             </span>
           )}
