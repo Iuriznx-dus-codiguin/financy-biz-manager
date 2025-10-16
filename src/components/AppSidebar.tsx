@@ -86,16 +86,15 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
 
   const handleMouseEnter = () => {
     setIsHovered(true);
-    if (isCollapsed) {
-      setOpen(true);
-    }
+    setOpen(true);
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
-    if (isCollapsed) {
+    // Pequeno delay para garantir transição suave
+    setTimeout(() => {
       setOpen(false);
-    }
+    }, 100);
   };
 
   return (
