@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkEnv, safeHandler, checkRateLimit } from '../_shared/utils.ts';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // TODO: Restringir para domínios confiáveis em produção
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -12,6 +12,12 @@ serve(safeHandler(async (req) => {
   // Validar variáveis de ambiente obrigatórias
   const envVars = checkEnv(['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
   const supabase = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_SERVICE_ROLE_KEY);
+
+  // Rate limit por IP ANTES da autenticação (prevenir ataques de força bruta)
+  const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  if (!checkRateLimit(`ip:${clientIp}`, 20, 60000)) {
+    throw new Error('Too many requests from this IP');
+  }
 
   // Autenticar usuário
   const authHeader = req.headers.get('Authorization');
@@ -26,9 +32,9 @@ serve(safeHandler(async (req) => {
     throw new Error('Unauthorized');
   }
 
-  // Verificar rate limit
-  if (!checkRateLimit(user.id, 10, 60000)) {
-    throw new Error('Rate limit exceeded - Limite de requisições atingido');
+  // Rate limit por usuário APÓS autenticação (5 requests/min para IA)
+  if (!checkRateLimit(`user:${user.id}`, 5, 60000)) {
+    throw new Error('Rate limit exceeded - Limite de 5 requisições por minuto atingido');
   }
 
   const body = await req.json();

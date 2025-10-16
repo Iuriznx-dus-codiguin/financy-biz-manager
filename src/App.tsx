@@ -11,38 +11,41 @@ import { AppProvider } from "@/contexts/AppContext";
 import { DashboardProvider } from "@/hooks/useDashboard";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { SettingsProvider } from "@/hooks/useSettings";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <TooltipProvider>
-        <AuthProvider>
-          <SettingsProvider>
-            <OnboardingProvider>
-              <SectionTutorialsProvider>
-                <DashboardProvider>
-                  <AppProvider>
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </BrowserRouter>
-                  </AppProvider>
-                </DashboardProvider>
-              </SectionTutorialsProvider>
-            </OnboardingProvider>
-          </SettingsProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <TooltipProvider>
+          <AuthProvider>
+            <SettingsProvider>
+              <OnboardingProvider>
+                <SectionTutorialsProvider>
+                  <DashboardProvider>
+                    <AppProvider>
+                    <Toaster />
+                    <Sonner />
+                    <BrowserRouter>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </BrowserRouter>
+                    </AppProvider>
+                  </DashboardProvider>
+                </SectionTutorialsProvider>
+              </OnboardingProvider>
+            </SettingsProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

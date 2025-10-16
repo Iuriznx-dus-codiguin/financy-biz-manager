@@ -1,16 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAppContext } from '@/contexts/AppContext';
 import { InteligenciaFinanceiraAprimorada } from '@/components/InteligenciaFinanceiraAprimorada';
 import { InteligenciaFinanceiraBasica } from '@/components/InteligenciaFinanceiraBasica';
 import { UpgradeCard } from '@/components/UpgradeCard';
 import { OptimizedMetricCard } from '@/components/OptimizedMetricCard';
 import { useFinancialCalculations } from '@/hooks/useFinancialCalculations';
-
 import { TimeFilter } from '@/components/TimeFilter';
 import { TooltipInfo } from '@/components/TooltipInfo';
 import { DashboardAvancado } from '@/components/DashboardAvancado';
@@ -20,22 +16,16 @@ import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { FloatingDashboardInfo } from '@/components/FloatingDashboardInfo';
 import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
 import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
+import { useOnboarding } from '@/hooks/useOnboarding';
+import { useDashboard } from '@/hooks/useDashboard';
+import { RecurringTransactions } from '@/components/RecurringTransactions';
 
 interface DashboardProps {
   setActiveSection?: (section: string) => void;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
-import { useOnboarding } from '@/hooks/useOnboarding';
-import { useDashboard } from '@/hooks/useDashboard';
-import { RecurringTransactions } from '@/components/RecurringTransactions';
-
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [periodo, setPeriodo] = useState('6meses');
-  const [timeFilter, setTimeFilter] = useState('este-mes');
-  const [isClosingCash, setIsClosingCash] = useState(false);
+  const [timeFilter, setTimeFilter] = React.useState('este-mes');
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const { onboardingData } = useOnboarding();
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('painel');
@@ -66,14 +56,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   }, [receitas, despesas, impostos, timeFilter]);
 
   const { receitas: filteredReceitas, despesas: filteredDespesas, impostos: filteredImpostos } = filteredData;
-
-  const handleCloseCash = async () => {
-    setIsClosingCash(true);
-    setTimeout(() => {
-      setIsClosingCash(false);
-      setIsDialogOpen(false);
-    }, 2000);
-  };
 
   // Dashboard avançado para planos premium
   if (hasAdvancedDashboard) {
