@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, TrendingUp, TrendingDown, DollarSign, Search, Filter } from 'lucide-react';
+import { CalendarDays, TrendingUp, TrendingDown, DollarSign, Search, Filter, ArrowUpCircle, ArrowDownCircle, FileText, Users, Calendar } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
 import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
@@ -10,6 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface TransacaoFluxoCaixa {
   id: string;
@@ -32,6 +35,7 @@ const Fechamento = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todas' | 'paga' | 'pendente' | 'recorrente'>('todas');
   const [tipoFilter, setTipoFilter] = useState<'todas' | 'entradas' | 'saidas'>('todas');
+  const [transacaoSelecionada, setTransacaoSelecionada] = useState<TransacaoFluxoCaixa | null>(null);
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('fechamento');
 
   // Calcular valores reais baseados na data selecionada
@@ -496,7 +500,11 @@ const Fechamento = () => {
                     </TableRow>
                   ) : (
                     transacoesFiltradas.map((transacao) => (
-                      <TableRow key={transacao.id}>
+                      <TableRow 
+                        key={transacao.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => setTransacaoSelecionada(transacao)}
+                      >
                         <TableCell className="font-medium">
                           {new Date(transacao.data).toLocaleDateString('pt-BR')}
                         </TableCell>
@@ -563,6 +571,128 @@ const Fechamento = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialog de Detalhes da Transação */}
+      <Dialog open={!!transacaoSelecionada} onOpenChange={() => setTransacaoSelecionada(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {transacaoSelecionada?.tipo === 'receita' && (
+                <ArrowUpCircle className="h-5 w-5 text-green-500" />
+              )}
+              {transacaoSelecionada?.tipo === 'despesa' && (
+                <ArrowDownCircle className="h-5 w-5 text-red-500" />
+              )}
+              {transacaoSelecionada?.tipo === 'imposto' && (
+                <FileText className="h-5 w-5 text-orange-500" />
+              )}
+              {transacaoSelecionada?.tipo === 'equipe' && (
+                <Users className="h-5 w-5 text-blue-500" />
+              )}
+              Detalhes da Transação
+            </DialogTitle>
+            <DialogDescription>
+              Informações completas sobre esta transação
+            </DialogDescription>
+          </DialogHeader>
+
+          {transacaoSelecionada && (
+            <div className="space-y-4">
+              {/* Descrição */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Descrição</label>
+                <p className="text-base font-semibold">{transacaoSelecionada.descricao}</p>
+              </div>
+
+              {/* Tipo */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Tipo</label>
+                <p className="text-base capitalize">
+                  {transacaoSelecionada.tipo === 'receita' && '💰 Receita'}
+                  {transacaoSelecionada.tipo === 'despesa' && '💸 Despesa'}
+                  {transacaoSelecionada.tipo === 'imposto' && '📄 Imposto'}
+                  {transacaoSelecionada.tipo === 'equipe' && '👥 Custo de Equipe'}
+                </p>
+              </div>
+
+              {/* Valor */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Valor</label>
+                <p className={`text-2xl font-bold ${
+                  transacaoSelecionada.tipo === 'receita' ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {transacaoSelecionada.tipo === 'receita' ? '+' : '-'} R$ {Number(transacaoSelecionada.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+
+              {/* Categoria */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Categoria</label>
+                <p className="text-base">{transacaoSelecionada.categoria}</p>
+              </div>
+
+              {/* Data */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Data</label>
+                <p className="text-base">
+                  {format(new Date(transacaoSelecionada.data), "dd/MM/yyyy", { locale: ptBR })}
+                </p>
+              </div>
+
+              {/* Status */}
+              {transacaoSelecionada.status && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <div className="mt-1">
+                    <Badge 
+                      variant={
+                        transacaoSelecionada.status === 'paga' ? 'default' :
+                        transacaoSelecionada.status === 'pendente' ? 'secondary' :
+                        'outline'
+                      }
+                    >
+                      {transacaoSelecionada.status === 'paga' && '✅ Pago'}
+                      {transacaoSelecionada.status === 'pendente' && '⏳ Pendente'}
+                      {transacaoSelecionada.status === 'recorrente' && '🔄 Recorrente'}
+                      {transacaoSelecionada.status === 'automático' && '🤖 Automático'}
+                    </Badge>
+                  </div>
+                </div>
+              )}
+
+              {/* Origem (Cliente/Fornecedor/Membro) */}
+              {transacaoSelecionada.origem && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    {transacaoSelecionada.tipo === 'receita' ? 'Cliente' : 
+                     transacaoSelecionada.tipo === 'despesa' ? 'Fornecedor' :
+                     transacaoSelecionada.tipo === 'equipe' ? 'Membro' : 'Origem'}
+                  </label>
+                  <p className="text-base">{transacaoSelecionada.origem}</p>
+                </div>
+              )}
+
+              {/* Forma de Pagamento */}
+              {transacaoSelecionada.formaPagamento && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Forma de Pagamento</label>
+                  <p className="text-base">{transacaoSelecionada.formaPagamento}</p>
+                </div>
+              )}
+
+              {/* Indicador de Recorrência */}
+              {transacaoSelecionada.isRecorrente && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm text-blue-700 dark:text-blue-400">
+                    Esta é uma transação recorrente
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };
