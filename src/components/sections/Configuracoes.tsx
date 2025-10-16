@@ -177,47 +177,87 @@ const Configuracoes = () => {
     try {
       setIsDeletingData(true);
       
-      // Deletar todos os dados financeiros do usuário
+      // ============================================
+      // APAGAR TODOS OS DADOS DO USUÁRIO
+      // ============================================
+      // MANTIDOS (não apagar):
+      // - free_trial_history (histórico de teste gratuito)
+      // - security_audit_logs (logs de auditoria)
+      // - profiles (perfil básico do usuário)
+      // - user_subscriptions (assinatura atual)
+      // - subscribers (dados de assinatura)
+      // - customer_subscriptions (dados Cakto)
+      // - auth_rate_limits (segurança)
+      // ============================================
+      
       await Promise.all([
+        // Dados financeiros
         supabase.from('receitas').delete().eq('user_id', user.id),
         supabase.from('despesas').delete().eq('user_id', user.id),
         supabase.from('impostos').delete().eq('user_id', user.id),
         supabase.from('metas').delete().eq('user_id', user.id),
+        
+        // IA e conversas
         supabase.from('ai_recognized_transactions').delete().eq('user_id', user.id),
         supabase.from('ai_conversations').delete().eq('user_id', user.id),
+        
+        // Dashboards (TODOS, incluindo o padrão)
+        supabase.from('user_dashboards').delete().eq('user_id', user.id),
+        
+        // Categorias personalizadas
+        supabase.from('categorias_personalizadas').delete().eq('user_id', user.id),
+        
+        // Equipe
+        supabase.from('equipe_membros').delete().eq('user_id', user.id),
+        supabase.from('equipe_membros_audit').delete().eq('user_id', user.id),
+        
+        // Notificações e tutoriais
+        supabase.from('notificacoes').delete().eq('user_id', user.id),
+        supabase.from('section_tutorials').delete().eq('user_id', user.id),
+        supabase.from('user_tour_progress').delete().eq('user_id', user.id),
+        
+        // Onboarding
+        supabase.from('onboarding_data').delete().eq('user_id', user.id),
+        
+        // Cache
+        supabase.from('query_cache').delete().eq('user_id', user.id),
+        
+        // Validação N8N (pode ser recriado)
+        supabase.from('validacao_n8n').delete().eq('user_id', user.id),
       ]);
 
-      // Deletar dashboards (exceto o padrão se existir)
-      await supabase
-        .from('user_dashboards')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('is_default', false);
-
-      // Resetar configurações (mas manter settings como null para não afetar a estrutura)
+      // Resetar configurações do perfil (mas manter o registro)
       await supabase
         .from('profiles')
-        .update({ settings: null } as any)
+        .update({ 
+          settings: null,
+          telefone: null,
+          nome_completo: null 
+        } as any)
         .eq('id', user.id);
 
-      // Limpar localStorage das configurações - TODO: Também limpar cookies quando migrar
+      // Limpar localStorage
       localStorage.removeItem('financy-settings');
+      localStorage.removeItem('financy-dashboards');
+      localStorage.removeItem('financy-categories');
       
       toast({
-        title: "Dados apagados",
-        description: "Todos os seus dados financeiros e configurações foram apagados com sucesso. Sua assinatura e data de expiração do teste foram mantidas.",
+        title: "Dados apagados com sucesso",
+        description: "Todos os seus dados foram permanentemente apagados. Sua assinatura e histórico de teste gratuito foram preservados.",
       });
 
-      // Recarregar usando método mais seguro
+      // Recarregar página
       if (typeof window !== 'undefined') {
-        window.location.replace(window.location.pathname);
+        setTimeout(() => {
+          window.location.replace(window.location.pathname);
+        }, 1500);
       }
       
     } catch (error) {
       console.error('Erro ao apagar dados:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível apagar todos os dados. Tente novamente.",
+        title: "Erro ao apagar dados",
+        description: "Não foi possível apagar todos os dados. Tente novamente ou contate o suporte.",
         variant: "destructive",
       });
     } finally {
@@ -925,12 +965,23 @@ const Configuracoes = () => {
               <div className="space-y-2">
                 <h4 className="font-medium text-destructive">Apagar Todos os Dados</h4>
                 <p className="text-sm text-muted-foreground">
-                  Esta ação irá apagar permanentemente todos os seus dados financeiros, 
-                  configurações e dashboards. Sua assinatura e data de expiração do teste 
-                  gratuito serão mantidas.
+                  Esta ação irá apagar <strong>PERMANENTEMENTE</strong> todos os seus dados:
                 </p>
-                <p className="text-xs text-muted-foreground font-medium">
-                  ⚠️ Esta ação não pode ser desfeita!
+                <ul className="text-xs text-muted-foreground space-y-1 ml-4 list-disc">
+                  <li>Receitas, despesas, impostos e metas</li>
+                  <li>Todos os dashboards (pessoais e empresariais)</li>
+                  <li>Categorias personalizadas e membros da equipe</li>
+                  <li>Histórico de conversas com IA</li>
+                  <li>Configurações e preferências</li>
+                  <li>Notificações e tutoriais</li>
+                </ul>
+                <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded p-2 mt-2">
+                  <p className="text-xs text-green-800 dark:text-green-200 font-medium">
+                    ✅ Serão mantidos: assinatura ativa e histórico de teste gratuito (para prevenção de fraude)
+                  </p>
+                </div>
+                <p className="text-xs text-destructive font-bold mt-2">
+                  ⚠️ Esta ação NÃO pode ser desfeita!
                 </p>
               </div>
             </div>
@@ -943,20 +994,47 @@ const Configuracoes = () => {
                 Apagar Todos os Dados
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="max-w-lg">
               <AlertDialogHeader>
-                <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta ação irá apagar permanentemente:
-                  <br />• Todas as receitas, despesas e impostos
-                  <br />• Todas as metas financeiras
-                  <br />• Todos os dashboards personalizados
-                  <br />• Todas as configurações personalizadas
-                  <br />• Histórico de conversas com IA
-                  <br /><br />
-                  <strong>Suas credenciais de conta e status de assinatura serão mantidos.</strong>
-                  <br /><br />
-                  Digite "APAGAR" para confirmar esta ação irreversível.
+                <AlertDialogTitle className="text-destructive flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Você tem certeza absoluta?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="space-y-3">
+                  <p className="font-semibold text-foreground">
+                    Esta ação irá apagar PERMANENTEMENTE:
+                  </p>
+                  <ul className="text-sm space-y-1 ml-4 list-disc">
+                    <li>Todas as receitas, despesas e impostos</li>
+                    <li>Todas as metas financeiras</li>
+                    <li>Todos os dashboards (incluindo personalizados)</li>
+                    <li>Todas as categorias personalizadas</li>
+                    <li>Todos os membros da equipe e auditoria</li>
+                    <li>Todo o histórico de conversas com IA</li>
+                    <li>Todas as notificações e progresso de tutoriais</li>
+                    <li>Todas as configurações personalizadas</li>
+                  </ul>
+                  
+                  <div className="bg-green-50 dark:bg-green-950/20 border-2 border-green-500 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-green-900 dark:text-green-100 font-semibold">
+                      ✅ O QUE SERÁ MANTIDO:
+                    </p>
+                    <ul className="text-xs text-green-800 dark:text-green-200 space-y-1 mt-2 ml-4 list-disc">
+                      <li>Suas credenciais de login (email/senha)</li>
+                      <li>Status da sua assinatura atual</li>
+                      <li><strong>Histórico de teste gratuito</strong> (prevenção de fraude)</li>
+                      <li>Logs de segurança e auditoria</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-destructive/10 border border-destructive rounded-lg p-3 mt-3">
+                    <p className="text-sm text-destructive font-bold">
+                      ⚠️ ESTA AÇÃO NÃO PODE SER DESFEITA!
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Todos os dados apagados serão perdidos permanentemente.
+                    </p>
+                  </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -965,7 +1043,8 @@ const Configuracoes = () => {
                   onClick={handleDeleteAllData}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  Confirmar Exclusão
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Sim, Apagar Tudo
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
