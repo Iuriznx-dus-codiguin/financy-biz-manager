@@ -7,9 +7,9 @@ import { useDashboard } from '@/hooks/useDashboard';
 import { useUserContext } from '@/hooks/useUserContext';
 
 // Logos for light theme
-import financyLogoLight from '@/assets/financy-logo-light-cropped.png';
+import financyLogoLight from '@/assets/financy-logo-light.png';
 // Logos for dark theme
-import financyLogoDark from '@/assets/financy-logo-dark-cropped.png';
+import financyLogoDark from '@/assets/financy-logo-dark.png';
 
 const allMenuItems = [
   { id: 'painel', label: 'Painel', businessOnly: false },
@@ -71,12 +71,12 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   };
 
   return (
-    <div className="lg:hidden flex items-center justify-between py-3 px-2 bg-background border-b">
-      <div className="flex items-center justify-start w-full max-w-[320px]">
+    <div className="lg:hidden flex items-center justify-between py-4 px-2 bg-background border-b">
+      <div className="flex items-center w-full max-w-[280px]">
         <img 
           src={financyLogo}
           alt="Financy" 
-          className="h-20 w-full object-contain object-left"
+          className="h-16 w-full object-contain object-left"
         />
       </div>
       
