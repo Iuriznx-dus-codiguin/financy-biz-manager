@@ -190,39 +190,32 @@ const Configuracoes = () => {
       // - auth_rate_limits (segurança)
       // ============================================
       
+      // Deletar na ordem correta para evitar problemas com RLS e foreign keys
+      // 1. Primeiro: dados financeiros (ANTES de deletar dashboards ou membros)
       await Promise.all([
-        // Dados financeiros
         supabase.from('receitas').delete().eq('user_id', user.id),
         supabase.from('despesas').delete().eq('user_id', user.id),
         supabase.from('impostos').delete().eq('user_id', user.id),
         supabase.from('metas').delete().eq('user_id', user.id),
-        
-        // IA e conversas
-        supabase.from('ai_recognized_transactions').delete().eq('user_id', user.id),
-        supabase.from('ai_conversations').delete().eq('user_id', user.id),
-        
-        // Dashboards (TODOS, incluindo o padrão)
-        supabase.from('user_dashboards').delete().eq('user_id', user.id),
-        
-        // Categorias personalizadas
-        supabase.from('categorias_personalizadas').delete().eq('user_id', user.id),
-        
-        // Equipe
+      ]);
+      
+      // 2. Segundo: equipe e audit (depois de despesas, antes de dashboards)
+      await Promise.all([
         supabase.from('equipe_membros').delete().eq('user_id', user.id),
         supabase.from('equipe_membros_audit').delete().eq('user_id', user.id),
-        
-        // Notificações e tutoriais
+      ]);
+      
+      // 3. Terceiro: dashboards e outros dados
+      await Promise.all([
+        supabase.from('user_dashboards').delete().eq('user_id', user.id),
+        supabase.from('categorias_personalizadas').delete().eq('user_id', user.id),
+        supabase.from('ai_recognized_transactions').delete().eq('user_id', user.id),
+        supabase.from('ai_conversations').delete().eq('user_id', user.id),
         supabase.from('notificacoes').delete().eq('user_id', user.id),
         supabase.from('section_tutorials').delete().eq('user_id', user.id),
         supabase.from('user_tour_progress').delete().eq('user_id', user.id),
-        
-        // Onboarding
         supabase.from('onboarding_data').delete().eq('user_id', user.id),
-        
-        // Cache
         supabase.from('query_cache').delete().eq('user_id', user.id),
-        
-        // Validação N8N (pode ser recriado)
         supabase.from('validacao_n8n').delete().eq('user_id', user.id),
       ]);
 
