@@ -71,7 +71,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   };
 
   return (
-    <div className="lg:hidden flex items-center justify-between py-2 px-2 bg-background border-b">
+    <div className="lg:hidden flex items-center justify-between py-1 px-2 bg-background border-b">
       <div className="flex items-center w-full max-w-[320px]">
         <img 
           src={financyLogo}
