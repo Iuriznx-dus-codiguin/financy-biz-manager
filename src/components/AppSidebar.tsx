@@ -1,9 +1,11 @@
-
 import React, { useState } from 'react';
-// Using uploaded logos
-const financyLogo = '/lovable-uploads/11a67f5c-242f-4740-b1f7-1ed6c6895f51.png';
-const iconLogo = '/lovable-uploads/29534308-8b72-41b6-ae6e-ab319484e584.png';
-import { 
+// Logos for light theme
+const financyLogoLight = '/lovable-uploads/11a67f5c-242f-4740-b1f7-1ed6c6895f51.png';
+const iconLogoLight = '/lovable-uploads/29534308-8b72-41b6-ae6e-ab319484e584.png';
+// Logos for dark theme
+import financyLogoDark from '@/assets/financy-logo-dark.png';
+import iconLogoDark from '@/assets/financy-icon-dark.png';
+import {
   Layout, 
   TrendingUp, 
   TrendingDown, 
@@ -72,6 +74,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   
   const isCollapsed = state === 'collapsed';
   const shouldShowExpanded = isCollapsed && isHovered;
+  
+  // Selecionar logos baseado no tema
+  const isDarkTheme = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const financyLogo = isDarkTheme ? financyLogoDark : financyLogoLight;
+  const iconLogo = isDarkTheme ? iconLogoDark : iconLogoLight;
+  
   const currentLogo = shouldShowExpanded ? financyLogo : (isCollapsed ? iconLogo : financyLogo);
 
   // Filtrar menu baseado no tipo de usuário E tipo de dashboard
