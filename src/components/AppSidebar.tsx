@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 // Logos for light theme
-import financyLogoLight from '@/assets/financy-logo-light.png';
-import iconLogoLight from '@/assets/financy-icon-light.png';
+import financyLogoLight from '@/assets/financy-logo-light-cropped.png';
+import iconLogoLight from '@/assets/financy-icon-light-cropped.png';
 // Logos for dark theme
-import financyLogoDark from '@/assets/financy-logo-dark.png';
-import iconLogoDark from '@/assets/financy-icon-dark.png';
+import financyLogoDark from '@/assets/financy-logo-dark-cropped.png';
+import iconLogoDark from '@/assets/financy-icon-dark-cropped.png';
 import {
   Layout, 
   TrendingUp, 
@@ -131,7 +131,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
             <img 
               src={currentLogo}
               alt="Financy" 
-              className={`object-contain transition-all duration-300 ${shouldShowExpanded || !isCollapsed ? 'h-24 w-full px-2' : 'h-14 w-14'}`}
+              className={`object-contain transition-all duration-300 ${shouldShowExpanded || !isCollapsed ? 'h-28 w-full px-1' : 'h-16 w-16'}`}
             />
           </div>
         </div>
