@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 // Logos for light theme
-const financyLogoLight = '/lovable-uploads/11a67f5c-242f-4740-b1f7-1ed6c6895f51.png';
-const iconLogoLight = '/lovable-uploads/29534308-8b72-41b6-ae6e-ab319484e584.png';
+import financyLogoLight from '@/assets/financy-logo-light.png';
+import iconLogoLight from '@/assets/financy-icon-light.png';
 // Logos for dark theme
 import financyLogoDark from '@/assets/financy-logo-dark.png';
 import iconLogoDark from '@/assets/financy-icon-dark.png';

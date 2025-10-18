@@ -7,7 +7,7 @@ import { useDashboard } from '@/hooks/useDashboard';
 import { useUserContext } from '@/hooks/useUserContext';
 
 // Logos for light theme
-const financyLogoLight = '/lovable-uploads/11a67f5c-242f-4740-b1f7-1ed6c6895f51.png';
+import financyLogoLight from '@/assets/financy-logo-light.png';
 // Logos for dark theme
 import financyLogoDark from '@/assets/financy-logo-dark.png';
 
@@ -72,11 +72,11 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
 
   return (
     <div className="lg:hidden flex items-center justify-between p-4 bg-background border-b">
-      <div className="flex items-center">
+      <div className="flex items-center w-full max-w-[200px]">
         <img 
           src={financyLogo}
           alt="Financy" 
-          className="h-8 w-auto object-contain"
+          className="h-12 w-full object-contain"
         />
       </div>
       
