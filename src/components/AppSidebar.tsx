@@ -126,12 +126,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
       }}
     >
       <SidebarHeader>
-        <div className="flex items-center justify-center py-3 transition-all duration-300">
+        <div className="flex items-center justify-center py-2 transition-all duration-300">
           <div className="flex items-center justify-center w-full">
             <img 
               src={currentLogo}
               alt="Financy" 
-              className={`object-contain transition-all duration-300 ${shouldShowExpanded || !isCollapsed ? 'h-20 w-full px-3' : 'h-12 w-12'}`}
+              className={`object-contain transition-all duration-300 ${shouldShowExpanded || !isCollapsed ? 'h-24 w-full px-2' : 'h-14 w-14'}`}
             />
           </div>
         </div>
