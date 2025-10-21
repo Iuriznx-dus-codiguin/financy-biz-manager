@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Phone, MessageCircle, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { MessageCircle, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import { validatePhoneNumber, checkPhoneDuplicate } from '@/utils/phoneValidation';
+import { validateAndNormalizePhone, savePhoneCorrection, checkPhoneDuplicate, type CorrectionType } from '@/utils/phoneValidation';
+import { BrazilianPhoneInput } from '@/components/ui/BrazilianPhoneInput';
 
 interface PhoneCollectionStepProps {
   onComplete: () => void;
@@ -16,57 +15,54 @@ interface PhoneCollectionStepProps {
 
 export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComplete }) => {
   const [phone, setPhone] = useState('');
-  const [confirmPhone, setConfirmPhone] = useState('');
+  const [phoneNormalized, setPhoneNormalized] = useState('');
+  const [phoneCorrections, setPhoneCorrections] = useState<CorrectionType[]>([]);
+  const [isPhoneValid, setIsPhoneValid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const formatPhone = (value: string) => {
-    // Remove tudo que não for número
-    const numbers = value.replace(/\D/g, '');
-    
-    // Aplica a máscara (11) 99999-9999
-    if (numbers.length <= 11) {
-      return numbers
-        .replace(/(\d{2})(\d)/, '($1) $2')
-        .replace(/(\d{5})(\d)/, '$1-$2');
-    }
-    return value;
-  };
-
-  const validatePhone = (phoneValue: string) => {
-    const numbers = phoneValue.replace(/\D/g, '');
-    return numbers.length === 11;
-  };
-
-  const handlePhoneChange = (value: string, isConfirm = false) => {
-    const formatted = formatPhone(value);
-    if (isConfirm) {
-      setConfirmPhone(formatted);
-    } else {
-      setPhone(formatted);
-    }
+  const handlePhoneChange = (formatted: string, isValid: boolean, normalized: string) => {
+    setPhone(formatted);
+    setPhoneNormalized(normalized);
+    setIsPhoneValid(isValid);
     setError(null);
+    setWarning(null);
+
+    // Executar validação Evolution API
+    if (formatted && formatted.length > 5) {
+      const result = validateAndNormalizePhone(formatted);
+      
+      if (!result.isValid) {
+        setIsPhoneValid(false);
+        setPhoneCorrections([]);
+      } else {
+        setIsPhoneValid(true);
+        setPhoneNormalized(result.normalized!);
+        setPhoneCorrections(result.corrections);
+        
+        // Exibir warnings
+        if (result.warning) {
+          setWarning(result.warning);
+        }
+        
+        // Exibir mensagens de correção
+        if (result.corrections.length > 0) {
+          const correctionMsg = result.corrections.map(c => c.message).join('\n');
+          setWarning(correctionMsg);
+        }
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!validatePhone(phone)) {
-      setError('Por favor, insira um telefone válido com 11 dígitos');
-      return;
-    }
-
-    if (phone !== confirmPhone) {
-      setError('Os números de telefone não coincidem');
-      return;
-    }
-
-    // Validação robusta com libphonenumber-js
-    const validation = validatePhoneNumber(phone, 'BR');
-    if (!validation.isValid) {
-      setError(validation.error || 'Número de telefone inválido');
+    const result = validateAndNormalizePhone(phone);
+    if (!result.isValid) {
+      setError(result.error || 'Número de telefone inválido');
       return;
     }
 
@@ -77,57 +73,64 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
       
       if (!user) {
         setError('Usuário não encontrado');
+        setLoading(false);
         return;
       }
 
-      // Usar o formato E.164 para verificação e salvamento
-      const phoneE164 = validation.e164!;
-
-      // Verificar duplicata usando utilitário
-      const { isDuplicate, error: dupError } = await checkPhoneDuplicate(phoneE164, user.id);
+      // Verificar duplicata usando formato normalizado
+      const { isDuplicate, error: dupError } = await checkPhoneDuplicate(result.normalized!, user.id);
 
       if (dupError) {
         setError(dupError);
+        setLoading(false);
         return;
       }
 
       if (isDuplicate) {
         setError('⚠️ Este número de telefone já está cadastrado em outra conta.');
+        setLoading(false);
         return;
       }
 
+      // Salvar número normalizado
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ telefone: phoneE164 })
+        .update({ telefone: result.normalized })
         .eq('id', user.id);
 
       if (updateError) {
         console.error('Erro ao salvar telefone:', updateError);
-        
-        // Verificar se é erro de constraint de unicidade
-        if (updateError.code === '23505') {
-          setError('⚠️ Este número de telefone já está cadastrado.');
-          return;
-        }
-        
         setError('Erro ao salvar telefone. Tente novamente.');
+        setLoading(false);
         return;
+      }
+
+      // Salvar auditoria se houver correções
+      if (result.corrections.length > 0) {
+        await savePhoneCorrection(
+          user.id,
+          phone,
+          result.normalized!,
+          result.corrections,
+          'phone_collection'
+        );
       }
 
       toast({
         title: "✅ Telefone cadastrado!",
-        description: "Agora você poderá usar nossos serviços de IA no WhatsApp.",
+        description: result.corrections.length > 0 
+          ? `Número salvo como: ${result.normalized}\n\nCorreções aplicadas: ${result.corrections.map(c => c.message).join(', ')}`
+          : `Número salvo como: ${result.normalized}`,
       });
 
       onComplete();
-    } catch (err) {
-      console.error('Erro inesperado:', err);
+    } catch (error) {
+      console.error('Erro ao cadastrar telefone:', error);
       setError('Erro inesperado. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-500/10 via-background to-green-600/5 flex items-center justify-center p-4">
@@ -166,52 +169,35 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
 
             {error && (
               <Alert className="border-destructive/20 bg-destructive/5 text-destructive">
+                <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium">
-                  Número do WhatsApp
-                </Label>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="(11) 99999-9999"
-                    value={phone}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
-                    className="rounded-xl h-14 pl-12 pr-4 border-2 focus:border-green-500 transition-all bg-background/50"
-                    maxLength={15}
-                  />
-                </div>
-              </div>
+            {warning && isPhoneValid && (
+              <Alert className="border-warning/20 bg-warning/10">
+                <AlertCircle className="h-4 w-4 text-warning" />
+                <AlertDescription className="text-warning whitespace-pre-line">
+                  <strong>Correção aplicada:</strong><br />
+                  {warning}
+                </AlertDescription>
+              </Alert>
+            )}
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPhone" className="text-sm font-medium">
-                  Confirme o número
-                </Label>
-                <div className="relative">
-                  <CheckCircle2 className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="confirmPhone"
-                    type="tel"
-                    placeholder="(11) 99999-9999"
-                    value={confirmPhone}
-                    onChange={(e) => handlePhoneChange(e.target.value, true)}
-                    className="rounded-xl h-14 pl-12 pr-4 border-2 focus:border-green-500 transition-all bg-background/50"
-                    maxLength={15}
-                  />
-                </div>
-              </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <BrazilianPhoneInput
+                label="Número do WhatsApp"
+                value={phone}
+                onChange={handlePhoneChange}
+                placeholder="Digite seu número"
+                showValidationFeedback={true}
+              />
 
               <div className="space-y-3">
                 <Button
                   type="submit"
-                  disabled={loading || !phone || !confirmPhone}
-                  className="w-full rounded-xl h-14 text-base font-semibold bg-green-600 hover:bg-green-700 text-white transition-all duration-300 shadow-lg hover:shadow-xl"
+                  disabled={loading || !isPhoneValid}
+                  className="w-full rounded-xl h-14 text-base font-semibold bg-green-600 hover:bg-green-700 text-white transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -225,7 +211,6 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
                     </>
                   )}
                 </Button>
-
               </div>
             </form>
 

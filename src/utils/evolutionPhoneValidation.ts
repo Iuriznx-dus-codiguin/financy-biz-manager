@@ -424,7 +424,8 @@ export async function savePhoneCorrection(
   source: 'onboarding' | 'phone_collection' | 'settings'
 ): Promise<void> {
   try {
-    const { error } = await supabase
+    // Usar type assertion para contornar problema temporário dos types não atualizados
+    const { error } = await (supabase as any)
       .from('phone_corrections_audit')
       .insert({
         user_id: userId,
@@ -447,7 +448,8 @@ export async function savePhoneCorrection(
  */
 export async function getPhoneCorrectionsHistory(userId: string): Promise<any[]> {
   try {
-    const { data, error } = await supabase
+    // Usar type assertion para contornar problema temporário dos types não atualizados
+    const { data, error } = await (supabase as any)
       .from('phone_corrections_audit')
       .select('*')
       .eq('user_id', userId)

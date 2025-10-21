@@ -552,6 +552,36 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_corrections_audit: {
+        Row: {
+          corrections_applied: Json | null
+          created_at: string | null
+          id: string
+          normalized_output: string
+          original_input: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          corrections_applied?: Json | null
+          created_at?: string | null
+          id?: string
+          normalized_output: string
+          original_input: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          corrections_applied?: Json | null
+          created_at?: string | null
+          id?: string
+          normalized_output?: string
+          original_input?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

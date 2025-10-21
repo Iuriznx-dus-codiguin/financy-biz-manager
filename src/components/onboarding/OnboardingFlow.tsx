@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { InternationalPhoneInput } from '@/components/ui/international-phone-input';
+import { BrazilianPhoneInput } from '@/components/ui/BrazilianPhoneInput';
 import { ChevronLeft, ChevronRight, User, Building, Star, PartyPopper, Sparkles, Target, TrendingUp, Phone, MessageCircle, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingData } from '@/types/onboarding';
@@ -16,7 +16,9 @@ import { FinancialGoalStep } from './FinancialGoalStep';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackLead } from '@/utils/metaPixel';
-import { validatePhoneNumber, checkPhoneDuplicate } from '@/utils/phoneValidation';
+import { validateAndNormalizePhone, savePhoneCorrection, type CorrectionType } from '@/utils/evolutionPhoneValidation';
+import { checkPhoneDuplicate } from '@/utils/phoneValidation';
+import { useAuth } from '@/hooks/useAuth';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>;
@@ -28,6 +30,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const [whatsappE164, setWhatsappE164] = useState('');
   const [isPhoneValid, setIsPhoneValid] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [phoneCorrections, setPhoneCorrections] = useState<CorrectionType[]>([]);
+  const [phoneWarning, setPhoneWarning] = useState<string | null>(null);
   const [data, setData] = useState<OnboardingData>({
     whatsapp: '',
     user_type: '',
@@ -39,6 +43,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     gastos_iniciais: []
   });
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const triggerConfetti = () => {
     const duration = 3 * 1000;
@@ -145,9 +150,20 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     } else {
       setLoading(true);
       try {
-        // Usar o número no formato E.164 para salvar
+        // Usar o número no formato Evolution API (+55DDDNÚMERO)
         const finalData = { ...data, whatsapp: whatsappE164 || data.whatsapp };
         await onComplete(finalData);
+        
+        // Salvar auditoria de correção se houver
+        if (user && phoneCorrections.length > 0) {
+          await savePhoneCorrection(
+            user.id,
+            data.whatsapp,
+            whatsappE164,
+            phoneCorrections,
+            'onboarding'
+          );
+        }
         
         // Disparar evento do Meta Pixel para lead qualificado
         trackLead();
@@ -260,20 +276,36 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     return <Icon className="w-6 h-6" />;
   };
 
-  const handlePhoneChange = (formatted: string, isValid: boolean, e164: string) => {
+  const handlePhoneChange = (formatted: string, isValid: boolean, normalized: string) => {
     setData({ ...data, whatsapp: formatted });
     setIsPhoneValid(isValid);
-    setWhatsappE164(e164);
+    setWhatsappE164(normalized);
     setPhoneError(null);
+    setPhoneWarning(null);
 
-    // Validação adicional com libphonenumber-js
+    // Executar validação Evolution API
     if (formatted && formatted.length > 5) {
-      const validation = validatePhoneNumber(formatted);
-      if (!validation.isValid) {
+      const result = validateAndNormalizePhone(formatted);
+      
+      if (!result.isValid) {
         setIsPhoneValid(false);
-        setPhoneError(validation.error || 'Número inválido');
+        setPhoneError(result.error || 'Número inválido');
+        setPhoneCorrections([]);
       } else {
-        setWhatsappE164(validation.e164 || e164);
+        setIsPhoneValid(true);
+        setWhatsappE164(result.normalized!);
+        setPhoneCorrections(result.corrections);
+        
+        // Exibir warnings se houver
+        if (result.warning) {
+          setPhoneWarning(result.warning);
+        }
+        
+        // Exibir mensagens de correção
+        if (result.corrections.length > 0) {
+          const correctionMsg = result.corrections.map(c => c.message).join('\n');
+          setPhoneWarning(correctionMsg);
+        }
       }
     }
   };
@@ -293,27 +325,25 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       </div>
 
       <div className="max-w-md mx-auto space-y-6">
-        <InternationalPhoneInput
+        <BrazilianPhoneInput
           label="Número do WhatsApp"
           value={data.whatsapp}
           onChange={handlePhoneChange}
           placeholder="Digite seu número"
+          error={phoneError || undefined}
+          showValidationFeedback={true}
         />
 
-        {/* Feedback visual de validação */}
-        {data.whatsapp && (
-          <div className={`flex items-center gap-2 text-sm ${isPhoneValid ? 'text-green-600' : 'text-red-600'}`}>
-            {isPhoneValid ? (
-              <>
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Número válido ✓</span>
-              </>
-            ) : phoneError ? (
-              <>
-                <AlertCircle className="w-4 h-4" />
-                <span>{phoneError}</span>
-              </>
-            ) : null}
+        {/* Warning de correções aplicadas */}
+        {phoneWarning && isPhoneValid && (
+          <div className="bg-warning/10 border border-warning/20 rounded-lg p-3">
+            <div className="flex items-start gap-2 text-sm text-warning">
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-medium mb-1">Correção aplicada</p>
+                <p className="text-xs whitespace-pre-line">{phoneWarning}</p>
+              </div>
+            </div>
           </div>
         )}
 
