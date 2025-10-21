@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { InternationalPhoneInput } from '@/components/ui/international-phone-input';
-import { ChevronLeft, ChevronRight, User, Building, Star, PartyPopper, Sparkles, Target, TrendingUp, Phone, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, Building, Star, PartyPopper, Sparkles, Target, TrendingUp, Phone, MessageCircle, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingData } from '@/types/onboarding';
 import { FinancialDataStep } from './FinancialDataStep';
@@ -16,6 +16,7 @@ import { FinancialGoalStep } from './FinancialGoalStep';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackLead } from '@/utils/metaPixel';
+import { validatePhoneNumber, checkPhoneDuplicate } from '@/utils/phoneValidation';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>;
@@ -26,6 +27,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   const [loading, setLoading] = useState(false);
   const [whatsappE164, setWhatsappE164] = useState('');
   const [isPhoneValid, setIsPhoneValid] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [data, setData] = useState<OnboardingData>({
     whatsapp: '',
     user_type: '',
@@ -98,6 +100,47 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
   const handleNext = async () => {
     if (currentStep < 9) {
+      // Validação especial para step 1 (telefone)
+      if (currentStep === 1 && whatsappE164) {
+        setLoading(true);
+        try {
+          // Verificar duplicata antes de avançar
+          const { isDuplicate, error } = await checkPhoneDuplicate(whatsappE164);
+          
+          if (error) {
+            toast({
+              title: "⚠️ Erro",
+              description: error,
+              variant: "destructive"
+            });
+            setLoading(false);
+            return;
+          }
+          
+          if (isDuplicate) {
+            setPhoneError('Este número já está cadastrado em outra conta');
+            toast({
+              title: "⚠️ Número já cadastrado",
+              description: "Este número de telefone já está sendo usado em outra conta",
+              variant: "destructive"
+            });
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error('Erro ao validar telefone:', error);
+          toast({
+            title: "⚠️ Erro",
+            description: "Erro ao validar telefone. Tente novamente.",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        } finally {
+          setLoading(false);
+        }
+      }
+      
       setCurrentStep(currentStep + 1);
     } else {
       setLoading(true);
@@ -114,11 +157,17 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           title: "🎉 Bem-vindo ao Financy!",
           description: `Olá ${data.nome_preferido}! Sua plataforma foi personalizada com sucesso.`,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erro ao completar onboarding:', error);
+        
+        // Mensagem de erro específica para telefone duplicado
+        const errorMessage = error?.message?.includes('telefone') 
+          ? error.message
+          : "Houve um erro ao salvar suas preferências. Tente novamente.";
+        
         toast({
           title: "❌ Erro",
-          description: "Houve um erro ao salvar suas preferências. Tente novamente.",
+          description: errorMessage,
           variant: "destructive"
         });
       } finally {
@@ -215,6 +264,18 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     setData({ ...data, whatsapp: formatted });
     setIsPhoneValid(isValid);
     setWhatsappE164(e164);
+    setPhoneError(null);
+
+    // Validação adicional com libphonenumber-js
+    if (formatted && formatted.length > 5) {
+      const validation = validatePhoneNumber(formatted);
+      if (!validation.isValid) {
+        setIsPhoneValid(false);
+        setPhoneError(validation.error || 'Número inválido');
+      } else {
+        setWhatsappE164(validation.e164 || e164);
+      }
+    }
   };
 
   const renderStep1 = () => (
@@ -238,6 +299,23 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
           onChange={handlePhoneChange}
           placeholder="Digite seu número"
         />
+
+        {/* Feedback visual de validação */}
+        {data.whatsapp && (
+          <div className={`flex items-center gap-2 text-sm ${isPhoneValid ? 'text-green-600' : 'text-red-600'}`}>
+            {isPhoneValid ? (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Número válido ✓</span>
+              </>
+            ) : phoneError ? (
+              <>
+                <AlertCircle className="w-4 h-4" />
+                <span>{phoneError}</span>
+              </>
+            ) : null}
+          </div>
+        )}
 
         <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
           <div className="space-y-2 text-xs text-muted-foreground">

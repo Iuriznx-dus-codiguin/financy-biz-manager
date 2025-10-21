@@ -23,6 +23,7 @@ import {
   RadialBar,
   Legend
 } from 'recharts';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -62,6 +63,26 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const { user } = useAuth();
   const { currentDashboard } = useDashboard();
+  const [onboardingData, setOnboardingData] = useState<any>(null);
+
+  // Buscar dados de onboarding para personalização
+  useEffect(() => {
+    const fetchOnboardingData = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('onboarding_data')
+        .select('nome_preferido')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (data) {
+        setOnboardingData(data);
+      }
+    };
+    
+    fetchOnboardingData();
+  }, [user]);
 
   // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
@@ -498,6 +519,24 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
 
   return (
     <div className="space-y-6">
+      {/* Saudação Personalizada */}
+      {onboardingData?.nome_preferido && (
+        <Card className="border-2 bg-gradient-to-br from-primary/5 via-background to-blue-500/5">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">👋</div>
+              <div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                  Olá, {onboardingData.nome_preferido}!
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Bem-vindo ao seu painel financeiro avançado
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPIs Principais - Top (Centralizados) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

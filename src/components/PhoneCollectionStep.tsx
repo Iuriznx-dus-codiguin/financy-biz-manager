@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Phone, MessageCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Phone, MessageCircle, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { validatePhoneNumber, checkPhoneDuplicate } from '@/utils/phoneValidation';
 
 interface PhoneCollectionStepProps {
   onComplete: () => void;
@@ -62,6 +63,13 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
       return;
     }
 
+    // Validação robusta com libphonenumber-js
+    const validation = validatePhoneNumber(phone, 'BR');
+    if (!validation.isValid) {
+      setError(validation.error || 'Número de telefone inválido');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -72,28 +80,25 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
         return;
       }
 
-      // ✅ VALIDAÇÃO: Verificar se telefone já existe
-      const { data: existingPhone, error: checkError } = await supabase
-        .from('profiles')
-        .select('id, telefone')
-        .eq('telefone', phone)
-        .neq('id', user.id)
-        .maybeSingle();
+      // Usar o formato E.164 para verificação e salvamento
+      const phoneE164 = validation.e164!;
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Erro ao verificar telefone:', checkError);
-        setError('Erro ao verificar telefone. Tente novamente.');
+      // Verificar duplicata usando utilitário
+      const { isDuplicate, error: dupError } = await checkPhoneDuplicate(phoneE164, user.id);
+
+      if (dupError) {
+        setError(dupError);
         return;
       }
 
-      if (existingPhone) {
+      if (isDuplicate) {
         setError('⚠️ Este número de telefone já está cadastrado em outra conta.');
         return;
       }
 
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ telefone: phone })
+        .update({ telefone: phoneE164 })
         .eq('id', user.id);
 
       if (updateError) {

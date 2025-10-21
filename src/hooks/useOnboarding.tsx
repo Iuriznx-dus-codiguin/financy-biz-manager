@@ -65,6 +65,23 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       // Atualizar o perfil com o telefone se fornecido
       if (data.whatsapp) {
+        // Verificar se o telefone já está cadastrado em outra conta
+        const { data: existingPhone, error: checkError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('telefone', data.whatsapp)
+          .neq('id', user.id)
+          .maybeSingle();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Erro ao verificar telefone:', checkError);
+          throw new Error('Erro ao verificar telefone');
+        }
+
+        if (existingPhone) {
+          throw new Error('Este número de telefone já está cadastrado em outra conta');
+        }
+
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ telefone: data.whatsapp })
@@ -72,6 +89,13 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         if (profileError) {
           console.error('Erro ao salvar telefone no perfil:', profileError);
+          
+          // Verificar se é erro de constraint de unicidade
+          if (profileError.code === '23505') {
+            throw new Error('Este número de telefone já está cadastrado');
+          }
+          
+          throw new Error('Erro ao salvar telefone');
         }
       }
 
