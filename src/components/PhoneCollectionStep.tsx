@@ -6,7 +6,8 @@ import { MessageCircle, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import { validateAndNormalizePhone, savePhoneCorrection, checkPhoneDuplicate, type CorrectionType } from '@/utils/phoneValidation';
+import { validateAndNormalizePhone, savePhoneCorrection, type CorrectionType } from '@/utils/evolutionPhoneValidation';
+import { checkPhoneDuplicate } from '@/utils/phoneValidation';
 import { BrazilianPhoneInput } from '@/components/ui/BrazilianPhoneInput';
 
 interface PhoneCollectionStepProps {
