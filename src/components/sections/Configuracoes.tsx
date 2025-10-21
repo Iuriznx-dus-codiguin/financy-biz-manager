@@ -58,7 +58,7 @@ const Configuracoes = () => {
   const { dashboards, currentDashboard, createDashboard, deleteDashboard, updateDashboardName } = useDashboard();
   const { getLimits } = useFeatureAccess();
   const { toast } = useToast();
-  const { onboardingData } = useOnboarding();
+  const { onboardingData, refetchOnboardingData } = useOnboarding();
   const [isCreatingDashboard, setIsCreatingDashboard] = useState(false);
   const [isDeletingData, setIsDeletingData] = useState(false);
   const [isCreateDashboardOpen, setIsCreateDashboardOpen] = useState(false);
@@ -336,18 +336,14 @@ const Configuracoes = () => {
 
       if (error) throw error;
 
+      // Recarregar dados de onboarding sem recarregar a página inteira
+      await refetchOnboardingData();
+      
       setIsEditingNome(false);
       toast({
-        title: "Nome atualizado",
-        description: "Seu nome preferido foi atualizado com sucesso. A página será recarregada para aplicar as mudanças."
+        title: "✅ Nome atualizado",
+        description: "Seu nome preferido foi atualizado com sucesso!"
       });
-
-      // Recarregar usando método mais seguro
-      setTimeout(() => {
-        if (typeof window !== 'undefined') {
-          window.location.replace(window.location.pathname);
-        }
-      }, 1000);
     } catch (error) {
       console.error('Erro ao atualizar nome:', error);
       toast({

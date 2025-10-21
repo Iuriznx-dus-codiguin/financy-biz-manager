@@ -9,6 +9,7 @@ interface OnboardingContextType {
   completeOnboarding: (data: OnboardingData) => Promise<void>;
   loading: boolean;
   onboardingData: OnboardingData | null;
+  refetchOnboardingData: () => Promise<void>;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -18,7 +19,8 @@ const defaultContextValue: OnboardingContextType = {
   isOnboardingComplete: false,
   completeOnboarding: async () => {},
   loading: true,
-  onboardingData: null
+  onboardingData: null,
+  refetchOnboardingData: async () => {}
 };
 
 export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -181,6 +183,9 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       setIsOnboardingComplete(true);
+      
+      // Recarregar dados de onboarding após completar
+      await checkOnboardingStatus();
     } catch (error) {
       console.error('Erro ao completar onboarding:', error);
       throw error;
@@ -192,7 +197,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       isOnboardingComplete, 
       completeOnboarding, 
       loading,
-      onboardingData
+      onboardingData,
+      refetchOnboardingData: checkOnboardingStatus
     }}>
       {children}
     </OnboardingContext.Provider>
