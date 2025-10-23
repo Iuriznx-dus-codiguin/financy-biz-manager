@@ -724,7 +724,7 @@ export type Database = {
         Row: {
           action: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           new_values: Json | null
           old_values: Json | null
           record_id: string | null
@@ -737,7 +737,7 @@ export type Database = {
         Insert: {
           action: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           record_id?: string | null
@@ -750,7 +750,7 @@ export type Database = {
         Update: {
           action?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           record_id?: string | null
@@ -1052,7 +1052,7 @@ export type Database = {
         Returns: Json
       }
       get_despesas_masked: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           categoria: string
           data: string
@@ -1065,7 +1065,7 @@ export type Database = {
         }[]
       }
       get_receitas_masked: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           categoria: string
           cliente_mascarado: string
@@ -1077,10 +1077,7 @@ export type Database = {
           valor_mascarado: string
         }[]
       }
-      get_user_main_dashboard: {
-        Args: { p_user_id: string }
-        Returns: string
-      }
+      get_user_main_dashboard: { Args: { p_user_id: string }; Returns: string }
       get_user_profile_data: {
         Args: { user_id: string }
         Returns: {
@@ -1089,10 +1086,7 @@ export type Database = {
           user_type: string
         }[]
       }
-      get_user_role: {
-        Args: { p_user_id: string }
-        Returns: string
-      }
+      get_user_role: { Args: { p_user_id: string }; Returns: string }
       get_user_subscription_limits: {
         Args: { p_user_id: string }
         Returns: Json
@@ -1135,14 +1129,8 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
-      processar_despesas_recorrentes: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      processar_receitas_recorrentes: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      processar_despesas_recorrentes: { Args: never; Returns: number }
+      processar_receitas_recorrentes: { Args: never; Returns: number }
       renew_subscription: {
         Args: {
           p_amount?: number

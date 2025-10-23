@@ -132,7 +132,16 @@ const nomenclatureMap: NomenclatureMap = {
   'configuracoes': {
     personal: 'Ajustes',
     business: 'Configurações'
-  }
+  },
+  
+  // Dashboard/Perfil/Empresa
+  'dashboard': { personal: 'Perfil', business: 'Empresa' },
+  'dashboards': { personal: 'Perfis', business: 'Empresas' },
+  'novo_dashboard': { personal: 'Novo Perfil', business: 'Nova Empresa' },
+  'criar_dashboard': { personal: 'Criar Perfil', business: 'Criar Empresa' },
+  'dashboard_principal': { personal: 'Perfil Principal', business: 'Empresa Principal' },
+  'multi_dashboard': { personal: 'Múltiplos Perfis', business: 'Múltiplas Empresas' },
+  'selecionar_dashboard': { personal: 'Selecionar Perfil', business: 'Selecionar Empresa' }
 };
 
 /**

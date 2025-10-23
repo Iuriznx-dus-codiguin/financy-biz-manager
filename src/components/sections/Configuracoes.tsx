@@ -727,17 +727,17 @@ const Configuracoes = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <LayoutDashboard className="h-5 w-5" />
-            Dashboards
+            Perfis/Empresas
             <Badge variant="outline">
-              {dashboards.length}/{limits.maxDashboards === -1 ? '∞' : limits.maxDashboards}
+              {dashboards.length}/{limits.maxProfiles === -1 ? '∞' : limits.maxProfiles}
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Dashboards Criados</Label>
+            <Label>Perfis/Empresas Criados</Label>
             {dashboards.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum dashboard criado ainda.</p>
+              <p className="text-sm text-muted-foreground">Nenhum perfil/empresa criado ainda.</p>
             ) : (
               <div className="space-y-2">
                 {dashboards.map((dashboard) => (
@@ -929,7 +929,7 @@ const Configuracoes = () => {
             <div className="space-y-2">
               <span className="font-medium">Limites do Plano:</span>
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>Dashboards: {limits.maxDashboards === -1 ? 'Ilimitado' : limits.maxDashboards}</div>
+                <div>Perfis/Empresas: {limits.maxProfiles === -1 ? 'Ilimitado' : limits.maxProfiles}</div>
                 <div>Receitas: {limits.maxReceitas === -1 ? 'Ilimitado' : limits.maxReceitas}</div>
                 <div>Despesas: {limits.maxDespesas === -1 ? 'Ilimitado' : limits.maxDespesas}</div>
                 <div>Metas: {limits.maxMetas === -1 ? 'Ilimitado' : limits.maxMetas}</div>

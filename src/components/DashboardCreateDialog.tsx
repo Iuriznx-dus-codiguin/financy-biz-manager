@@ -26,8 +26,8 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const limits = getLimits();
-  const dashboardsRestantes = limits.maxDashboards === -1 ? 999 : limits.maxDashboards - dashboards.length;
-  const isAtLimit = limits.maxDashboards !== -1 && dashboards.length >= limits.maxDashboards;
+  const dashboardsRestantes = limits.maxProfiles === -1 ? 999 : limits.maxProfiles - dashboards.length;
+  const isAtLimit = limits.maxProfiles !== -1 && dashboards.length >= limits.maxProfiles;
 
   const handleOnboardingComplete = async (data: OnboardingData) => {
     if (!user) return;
@@ -202,10 +202,10 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
                 <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
                   <AlertTriangle className="h-5 w-5" />
                   <div>
-                    <p className="text-sm font-medium">Limite de dashboards atingido</p>
+                    <p className="text-sm font-medium">Limite de perfis/empresas atingido</p>
                     <p className="text-xs">
-                      Você atingiu o limite de {limits.maxDashboards} dashboard(s) para seu plano {subscriptionTier}. 
-                      Faça upgrade para criar mais dashboards.
+                      Você atingiu o limite de {limits.maxProfiles} perfil/empresa para seu plano {subscriptionTier}. 
+                      Faça upgrade para criar mais perfis/empresas.
                     </p>
                   </div>
                 </div>

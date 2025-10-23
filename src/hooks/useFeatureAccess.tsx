@@ -67,7 +67,7 @@ export const useFeatureAccess = () => {
       'relatorios_basic': 'Relatórios avançados disponíveis no plano Plus ou superior.',
       'inteligencia_basica': 'Inteligência financeira disponível no plano Plus ou superior.',
       'inteligencia_avancada': 'Inteligência financeira avançada disponível no plano Premium ou superior.',
-      'multi_dashboard': 'Multi-dashboard disponível apenas no plano Premium.',
+      'multi_dashboard': 'Múltiplos perfis/empresas disponíveis apenas no plano Premium.',
       'fechamento_automatico': 'Fechamento automático disponível no plano Premium ou superior.',
       'export_data': 'Exportação de dados disponível no plano Plus ou superior.'
     };
@@ -77,14 +77,14 @@ export const useFeatureAccess = () => {
 
   // Limites específicos para plano gratuito
   const getLimits = () => {
-    // Desenvolvedor tem acesso ilimitado a tudo, exceto dashboards (limite de 10)
+    // Desenvolvedor tem acesso ilimitado a tudo, exceto perfis/empresas (limite de 10)
     if (subscriptionTier === 'developer') {
       return {
         maxReceitas: -1,
         maxDespesas: -1,
         maxImpostos: -1,
         maxMetas: -1,
-        maxDashboards: 10
+        maxProfiles: 10 // Renomeado de maxDashboards
       };
     }
 
@@ -95,7 +95,7 @@ export const useFeatureAccess = () => {
           maxDespesas: 50,
           maxImpostos: 20,
           maxMetas: 5,
-          maxDashboards: 1
+          maxProfiles: 1 // Renomeado de maxDashboards
         };
       case 'plus':
         return {
@@ -103,7 +103,7 @@ export const useFeatureAccess = () => {
           maxDespesas: -1,
           maxImpostos: -1,
           maxMetas: -1,
-          maxDashboards: 1
+          maxProfiles: 1 // Renomeado de maxDashboards
         };
       case 'premium':
       case 'enterprise':
@@ -112,7 +112,7 @@ export const useFeatureAccess = () => {
           maxDespesas: -1,
           maxImpostos: -1,
           maxMetas: -1,
-          maxDashboards: 5
+          maxProfiles: 5 // Renomeado de maxDashboards
         };
       default:
         return {
@@ -120,7 +120,7 @@ export const useFeatureAccess = () => {
           maxDespesas: 50,
           maxImpostos: 20,
           maxMetas: 5,
-          maxDashboards: 1
+          maxProfiles: 1 // Renomeado de maxDashboards
         };
     }
   };

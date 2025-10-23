@@ -109,9 +109,9 @@ const Assinatura: React.FC = () => {
       icon: <User className="h-6 w-6" />,
       description: 'Para controle financeiro pessoal simples',
       features: [
-        { name: 'Dashboard pessoal', value: 'Simples' },
+        { name: 'Perfil pessoal', value: 'Simples' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'Multi-Dashboard', value: '1 dashboard' },
+        { name: 'Múltiplos Perfis', value: '1 perfil' },
         { name: 'IA no WhatsApp', value: false },
         { name: 'Suporte', value: 'Email' },
         { name: 'Teste gratuito', value: '7 dias' }
@@ -127,10 +127,10 @@ const Assinatura: React.FC = () => {
       badge: 'Recomendado',
       recommended: true,
       features: [
-        { name: 'Dashboard pessoal', value: 'Avançado' },
+        { name: 'Perfil pessoal', value: 'Avançado' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
-        { name: 'Multi-Dashboard', value: '1 dashboard' },
+        { name: 'Múltiplos Perfis', value: '1 perfil' },
         { name: 'Suporte', value: 'Email/WhatsApp' },
         { name: 'Teste gratuito', value: '7 dias' }
       ]
@@ -145,10 +145,10 @@ const Assinatura: React.FC = () => {
       badge: 'Popular',
       popular: true,
       features: [
-        { name: 'Dashboard pessoal', value: 'Avançado' },
+        { name: 'Perfil pessoal', value: 'Avançado' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
-        { name: 'Multi-Dashboard', value: '2 dashboards' },
+        { name: 'Múltiplos Perfis', value: '2 perfis' },
         { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
         { name: 'Teste gratuito', value: '7 dias' }
       ]
@@ -161,10 +161,10 @@ const Assinatura: React.FC = () => {
       icon: <Users className="h-6 w-6" />,
       description: 'Máximo controle familiar',
       features: [
-        { name: 'Dashboard pessoal', value: 'Avançado' },
+        { name: 'Perfil pessoal', value: 'Avançado' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
-        { name: 'Multi-Dashboard', value: '10 dashboards' },
+        { name: 'Múltiplos Perfis', value: '10 perfis' },
         { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
         { name: 'Teste gratuito', value: '7 dias' }
       ]
@@ -180,10 +180,10 @@ const Assinatura: React.FC = () => {
       icon: <Building2 className="h-6 w-6" />,
       description: 'Gestão empresarial essencial',
       features: [
-        { name: 'Dashboard empresarial', value: 'Simples' },
+        { name: 'Empresa', value: 'Simples' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Multi-Dashboard', value: '1 dashboard empresarial' },
+        { name: 'Múltiplas Empresas', value: '1 empresa' },
         { name: 'IA no WhatsApp', value: false },
         { name: 'Suporte', value: 'Email/WhatsApp' },
         { name: 'Teste gratuito', value: '7 dias' }
@@ -199,11 +199,11 @@ const Assinatura: React.FC = () => {
       badge: 'Recomendado',
       recommended: true,
       features: [
-        { name: 'Dashboard empresarial', value: 'Avançado' },
+        { name: 'Empresa', value: 'Avançado' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Multi-Dashboard', value: '1 dashboard empresarial' },
+        { name: 'Múltiplas Empresas', value: '1 empresa' },
         { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
         { name: 'Teste gratuito', value: '7 dias' }
       ]
@@ -218,11 +218,11 @@ const Assinatura: React.FC = () => {
       badge: 'Popular',
       popular: true,
       features: [
-        { name: 'Dashboard empresarial', value: 'Avançado' },
+        { name: 'Empresa', value: 'Avançado' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Multi-Dashboard', value: '2 dashboards (Empresariais/pessoais)' },
+        { name: 'Múltiplas Empresas/Perfis', value: '2 empresas/perfis' },
         { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
         { name: 'Teste gratuito', value: '7 dias' }
       ]
@@ -235,11 +235,11 @@ const Assinatura: React.FC = () => {
       icon: <Shield className="h-6 w-6" />,
       description: 'Solução empresarial premium',
       features: [
-        { name: 'Dashboard empresarial', value: 'Avançado' },
+        { name: 'Empresa', value: 'Avançado' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Multi-Dashboard', value: '10 dashboards (Empresariais/Pessoais)' },
+        { name: 'Múltiplas Empresas/Perfis', value: '10 empresas/perfis' },
         { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
         { name: 'Teste gratuito', value: '7 dias' }
       ]
@@ -344,7 +344,7 @@ const Assinatura: React.FC = () => {
                       <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                         <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-medium">Dashboards</p>
+                          <p className="font-medium">Perfis/Empresas</p>
                           <p className="text-sm text-muted-foreground">
                             {subscription.features.max_dashboards === -1 ? 'Ilimitados' : `Até ${subscription.features.max_dashboards}`}
                           </p>

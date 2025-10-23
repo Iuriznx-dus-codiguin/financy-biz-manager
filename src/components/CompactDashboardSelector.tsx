@@ -6,17 +6,25 @@ import { Building, User, Plus, ChevronDown, Briefcase } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
+import { useUserContext } from '@/hooks/useUserContext';
+import { getLabel } from '@/utils/nomenclature';
 
 export const CompactDashboardSelector = () => {
   const { currentDashboard, dashboards, setCurrentDashboard } = useDashboard();
-  const { isFeatureAvailable, getLimits } = useFeatureAccess();
+  const { getLimits } = useFeatureAccess();
+  const { currentDashboardType } = useUserContext();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-
+  
   const limits = getLimits();
-  const { subscriptionTier } = useFeatureAccess();
-
   const personalDashboards = dashboards.filter(d => d.type === 'personal');
   const businessDashboards = dashboards.filter(d => d.type === 'business');
+  
+  // Labels adaptativos
+  const labelPerfil = getLabel('dashboard', 'personal');
+  const labelEmpresa = getLabel('dashboard', 'business');
+  const labelPerfis = getLabel('dashboards', 'personal');
+  const labelEmpresas = getLabel('dashboards', 'business');
+  const labelCriar = getLabel('criar_dashboard', currentDashboardType);
 
   if (!currentDashboard) return null;
 
@@ -35,7 +43,7 @@ export const CompactDashboardSelector = () => {
           {personalDashboards.length > 0 && (
             <div className="mb-2">
               <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                PESSOAL
+                {labelPerfis}
               </div>
               {personalDashboards.map((dashboard) => (
                 <button
@@ -60,7 +68,7 @@ export const CompactDashboardSelector = () => {
           {businessDashboards.length > 0 && (
             <div className="mb-2">
               <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                EMPRESARIAL
+                {labelEmpresas}
               </div>
               {businessDashboards.map((dashboard) => (
                 <button
@@ -89,7 +97,7 @@ export const CompactDashboardSelector = () => {
               className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors text-primary"
             >
               <Plus className="h-4 w-4" />
-              <span>Criar Dashboard</span>
+              <span>{labelCriar}</span>
             </button>
           </>
         </DropdownMenuContent>
