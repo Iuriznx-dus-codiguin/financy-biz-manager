@@ -197,6 +197,24 @@ export const useUserSubscription = () => {
     return subscription?.subscription_type === 'premium' || subscription?.subscription_type === 'enterprise';
   };
 
+  const isBusinessPlan = (): boolean => {
+    if (!subscription) return false;
+    
+    // Verificar pelo plan_name se é plano empresarial
+    const planName = subscription.plan_name?.toLowerCase() || '';
+    return planName.includes('empresarial') ||
+           planName.includes('company') ||
+           planName.includes('business') ||
+           planName.includes('premium');
+  };
+
+  const isPersonalPlan = (): boolean => {
+    if (!subscription) return true; // Default para pessoal
+    
+    // Se não é empresarial, é pessoal
+    return !isBusinessPlan();
+  };
+
   const getDaysUntilExpiration = (): number | null => {
     if (!subscription || !subscription.expires_at) return null;
     
@@ -265,6 +283,8 @@ export const useUserSubscription = () => {
     isSubscriptionExpired,
     isFreeTrial,
     isPremium,
+    isBusinessPlan,
+    isPersonalPlan,
     getDaysUntilExpiration,
     renewSubscription,
     updateSubscription,

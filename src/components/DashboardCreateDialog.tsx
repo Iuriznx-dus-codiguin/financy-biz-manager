@@ -11,6 +11,7 @@ import { OnboardingData } from '@/types/onboarding';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserSubscription } from '@/hooks/useUserSubscription';
 
 interface DashboardCreateDialogProps {
   open: boolean;
@@ -23,22 +24,27 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
   const { getLimits, subscriptionTier } = useFeatureAccess();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isBusinessPlan } = useUserSubscription();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [selectedType, setSelectedType] = useState<'personal' | 'business'>('personal');
 
   const limits = getLimits();
   const dashboardsRestantes = limits.maxProfiles === -1 ? 999 : limits.maxProfiles - dashboards.length;
   const isAtLimit = limits.maxProfiles !== -1 && dashboards.length >= limits.maxProfiles;
+  
+  // Planos empresariais podem criar perfis e empresas
+  // Planos pessoais só podem criar perfis
+  const canCreateBusiness = isBusinessPlan();
 
   const handleOnboardingComplete = async (data: OnboardingData) => {
     if (!user) return;
 
     try {
-      // Criar novo dashboard baseado no tipo escolhido no onboarding
-      const dashboardType = data.user_type === 'pessoal' ? 'personal' : 'business';
-      const dashboardName = data.nome_preferido || `${data.user_type === 'pessoal' ? 'Pessoal' : 'Empresa'} ${dashboards.length + 1}`;
+      // Usar o tipo selecionado no diálogo, não do onboarding
+      const dashboardName = data.nome_preferido || `${selectedType === 'personal' ? 'Perfil' : 'Empresa'} ${dashboards.length + 1}`;
       
-      // Criar o dashboard
-      await createDashboard(dashboardName, dashboardType);
+      // Criar o dashboard com o tipo selecionado
+      await createDashboard(dashboardName, selectedType);
       
       // Buscar o dashboard recém-criado
       const { data: newDashboardData } = await supabase
@@ -212,73 +218,102 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-20 flex-col gap-2"
-                onClick={() => {
-                  if (subscriptionTier === 'free' && dashboardType === 'business') {
-                    toast({
-                      title: "Recurso não disponível",
-                      description: "Dashboards empresariais não estão disponíveis no plano gratuito. Faça upgrade para acessar este recurso.",
-                      variant: "destructive"
-                    });
-                    return;
-                  }
-                  setShowOnboarding(true);
-                }}
-              >
-                <User className="h-6 w-6" />
-                <div className="text-center">
-                  <div className="text-sm font-medium">Configuração Completa</div>
-                  <div className="text-xs text-muted-foreground">Com onboarding</div>
-                </div>
-              </Button>
+            <>
+              {/* Seleção de tipo */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Tipo de {canCreateBusiness ? 'Perfil/Empresa' : 'Perfil'}</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant={selectedType === 'personal' ? 'default' : 'outline'}
+                    size="lg"
+                    className="h-16 flex-col gap-1"
+                    onClick={() => setSelectedType('personal')}
+                  >
+                    <User className="h-5 w-5" />
+                    <span className="text-sm">Perfil</span>
+                  </Button>
 
-              <Button
-                size="lg"
-                className="h-20 flex-col gap-2"
-onClick={async () => {
-                  const type = dashboardType || 'business';
-                  if (subscriptionTier === 'free' && type === 'business') {
-                    toast({
-                      title: "Recurso não disponível",
-                      description: "Dashboards empresariais não estão disponíveis no plano gratuito. Faça upgrade para acessar este recurso.",
-                      variant: "destructive"
-                    });
-                    return;
-                  }
-                  
-                  try {
-                    await createDashboard(`Dashboard ${dashboards.length + 1}`, type);
-                    onOpenChange(false);
-                    toast({
-                      title: "Dashboard criado!",
-                      description: "Dashboard básico criado com sucesso.",
-                    });
-                    // Recarregar usando método mais seguro
-                    setTimeout(() => {
-                      if (typeof window !== 'undefined') {
-                        window.location.replace(window.location.pathname);
-                      }
-                    }, 1000);
-                  } catch (error) {
-                    toast({
-                      title: "Erro",
-                      description: "Erro ao criar dashboard. Tente novamente.",
-                      variant: "destructive"
-                    });
-                  }
-                }}
-              >
-                <Building className="h-6 w-6" />
-                <div className="text-center">
-                  <div className="text-sm font-medium">Criação Simples</div>
-                  <div className="text-xs opacity-90">Dashboard vazio</div>
+                  {canCreateBusiness ? (
+                    <Button
+                      variant={selectedType === 'business' ? 'default' : 'outline'}
+                      size="lg"
+                      className="h-16 flex-col gap-1"
+                      onClick={() => setSelectedType('business')}
+                    >
+                      <Building className="h-5 w-5" />
+                      <span className="text-sm">Empresa</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="h-16 flex-col gap-1 opacity-50 cursor-not-allowed"
+                      disabled
+                      title="Disponível apenas em planos empresariais"
+                    >
+                      <Building className="h-5 w-5" />
+                      <span className="text-sm">Empresa</span>
+                      <span className="text-xs text-muted-foreground">Plano Empresarial</span>
+                    </Button>
+                  )}
                 </div>
-              </Button>
-            </div>
+                
+                {!canCreateBusiness && (
+                  <p className="text-xs text-muted-foreground">
+                    💡 Empresas estão disponíveis apenas em planos empresariais. Faça upgrade para desbloquear!
+                  </p>
+                )}
+              </div>
+
+              {/* Opções de criação */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="h-20 flex-col gap-2"
+                  onClick={() => {
+                    setShowOnboarding(true);
+                  }}
+                >
+                  <User className="h-6 w-6" />
+                  <div className="text-center">
+                    <div className="text-sm font-medium">Configuração Completa</div>
+                    <div className="text-xs text-muted-foreground">Com onboarding</div>
+                  </div>
+                </Button>
+
+                <Button
+                  size="lg"
+                  className="h-20 flex-col gap-2"
+                  onClick={async () => {
+                    try {
+                      const defaultName = selectedType === 'personal' 
+                        ? `Perfil ${dashboards.length + 1}` 
+                        : `Empresa ${dashboards.length + 1}`;
+                      
+                      await createDashboard(defaultName, selectedType);
+                      onOpenChange(false);
+                      toast({
+                        title: "Sucesso!",
+                        description: `${defaultName} foi criado com sucesso.`,
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Erro",
+                        description: "Erro ao criar. Tente novamente.",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
+                >
+                  <Building className="h-6 w-6" />
+                  <div className="text-center">
+                    <div className="text-sm font-medium">Criação Simples</div>
+                    <div className="text-xs opacity-90">{selectedType === 'personal' ? 'Perfil' : 'Empresa'} vazio</div>
+                  </div>
+                </Button>
+              </div>
+            </>
           )}
 
           <div className="flex justify-end">
