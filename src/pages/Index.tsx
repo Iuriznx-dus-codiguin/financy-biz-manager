@@ -123,8 +123,6 @@ export default function Index() {
     }
 
     switch (activeSection) {
-      case 'painel':
-        return <Dashboard setActiveSection={handleSectionChange} />;
       case 'receitas':
         return <Receitas />;
       case 'despesas':
@@ -150,7 +148,7 @@ export default function Index() {
       case 'ajuda':
         return <Ajuda />;
       default:
-        return <Dashboard setActiveSection={handleSectionChange} />;
+        return null;
     }
   };
 
@@ -175,7 +173,12 @@ export default function Index() {
             </div>
             {isSubscriptionExpiredState && <SubscriptionBanners />}
             <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
-              {renderActiveSection()}
+              {/* Dashboard permanece sempre montado, apenas oculto quando não ativo */}
+              <div className={activeSection === 'painel' ? '' : 'hidden'}>
+                <Dashboard setActiveSection={handleSectionChange} />
+              </div>
+              {/* Outras seções são renderizadas condicionalmente */}
+              {activeSection !== 'painel' && renderActiveSection()}
             </main>
             <Footer />
           </div>
