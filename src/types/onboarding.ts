@@ -6,6 +6,7 @@ export interface OnboardingData {
   salary_range?: string;
   revenue_range?: string;
   nome_preferido?: string;
+  nome_empresa?: string;
   termos_aceitos?: boolean;
   // Dados financeiros básicos
   saldo_conta?: number;

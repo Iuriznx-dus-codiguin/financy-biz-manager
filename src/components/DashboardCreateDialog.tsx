@@ -40,8 +40,10 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
     if (!user) return;
 
     try {
-      // Usar o tipo selecionado no diálogo, não do onboarding
-      const dashboardName = data.nome_preferido || `${selectedType === 'personal' ? 'Perfil' : 'Empresa'} ${dashboards.length + 1}`;
+      // Para empresas, usar nome_empresa; para perfis pessoais, usar nome_preferido
+      const dashboardName = selectedType === 'business' && data.nome_empresa
+        ? data.nome_empresa
+        : data.nome_preferido || `${selectedType === 'personal' ? 'Perfil' : 'Empresa'} ${dashboards.length + 1}`;
       
       // Criar o dashboard com o tipo selecionado
       await createDashboard(dashboardName, selectedType);
@@ -164,7 +166,7 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
             overflow: 'auto'
           }}
         >
-          <OnboardingFlow onComplete={handleOnboardingComplete} />
+          <OnboardingFlow onComplete={handleOnboardingComplete} skipPhoneStep={true} />
         </div>
       </div>,
       document.body
@@ -265,54 +267,22 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
                 )}
               </div>
 
-              {/* Opções de criação */}
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="h-20 flex-col gap-2"
-                  onClick={() => {
-                    setShowOnboarding(true);
-                  }}
-                >
-                  <User className="h-6 w-6" />
-                  <div className="text-center">
-                    <div className="text-sm font-medium">Configuração Completa</div>
-                    <div className="text-xs text-muted-foreground">Com onboarding</div>
+              {/* Botão de criação com onboarding */}
+              <Button
+                size="lg"
+                className="w-full h-16"
+                onClick={() => {
+                  setShowOnboarding(true);
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  <div className="text-left">
+                    <div className="text-sm font-medium">Criar {selectedType === 'personal' ? 'Perfil' : 'Empresa'}</div>
+                    <div className="text-xs opacity-90">Configuração completa</div>
                   </div>
-                </Button>
-
-                <Button
-                  size="lg"
-                  className="h-20 flex-col gap-2"
-                  onClick={async () => {
-                    try {
-                      const defaultName = selectedType === 'personal' 
-                        ? `Perfil ${dashboards.length + 1}` 
-                        : `Empresa ${dashboards.length + 1}`;
-                      
-                      await createDashboard(defaultName, selectedType);
-                      onOpenChange(false);
-                      toast({
-                        title: "Sucesso!",
-                        description: `${defaultName} foi criado com sucesso.`,
-                      });
-                    } catch (error) {
-                      toast({
-                        title: "Erro",
-                        description: "Erro ao criar. Tente novamente.",
-                        variant: "destructive"
-                      });
-                    }
-                  }}
-                >
-                  <Building className="h-6 w-6" />
-                  <div className="text-center">
-                    <div className="text-sm font-medium">Criação Simples</div>
-                    <div className="text-xs opacity-90">{selectedType === 'personal' ? 'Perfil' : 'Empresa'} vazio</div>
-                  </div>
-                </Button>
-              </div>
+                </div>
+              </Button>
             </>
           )}
 

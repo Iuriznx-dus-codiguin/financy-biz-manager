@@ -65,7 +65,46 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!user) return;
 
     try {
-      // Atualizar o perfil com o telefone se fornecido
+      // 1. Obter ou criar dashboard principal
+      const { data: existingDashboards } = await supabase
+        .from('user_dashboards')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_default', true)
+        .single();
+
+      let mainDashboardId = existingDashboards?.id;
+
+      if (!mainDashboardId) {
+        // Criar dashboard principal com nome apropriado
+        const dashboardName = data.user_type === 'empresarial' && data.nome_empresa
+          ? data.nome_empresa
+          : data.nome_preferido || 'Perfil Principal';
+        
+        const dashboardType = data.user_type === 'empresarial' ? 'business' : 'personal';
+
+        const { data: newDashboard, error: dashboardError } = await supabase
+          .from('user_dashboards')
+          .insert({
+            user_id: user.id,
+            name: dashboardName,
+            type: dashboardType,
+            is_default: true
+          })
+          .select()
+          .single();
+
+        if (dashboardError) throw dashboardError;
+        mainDashboardId = newDashboard.id;
+      } else if (data.user_type === 'empresarial' && data.nome_empresa) {
+        // Atualizar nome do dashboard existente se for empresa
+        await supabase
+          .from('user_dashboards')
+          .update({ name: data.nome_empresa })
+          .eq('id', mainDashboardId);
+      }
+
+      // 2. Atualizar o perfil com o telefone se fornecido
       if (data.whatsapp) {
         // Verificar se o telefone já está cadastrado em outra conta
         const { data: existingPhone, error: checkError } = await supabase
@@ -86,7 +125,10 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({ telefone: data.whatsapp })
+          .update({ 
+            telefone: data.whatsapp,
+            nome_completo: data.nome_preferido
+          })
           .eq('id', user.id);
 
         if (profileError) {
@@ -101,7 +143,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
 
-      // Salvar dados de onboarding (usar upsert para evitar duplicatas)
+      // 3. Salvar dados de onboarding (usar upsert para evitar duplicatas)
       const { error: onboardingError } = await supabase
         .from('onboarding_data')
         .upsert({
@@ -121,15 +163,17 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         throw onboardingError;
       }
 
-      // Salvar gastos iniciais como despesas
+      // 4. Salvar gastos iniciais como despesas (com dashboard_id)
       if (data.gastos_iniciais && data.gastos_iniciais.length > 0) {
         const despesas = data.gastos_iniciais.map(gasto => ({
           user_id: user.id,
+          dashboard_id: mainDashboardId,
           data: new Date().toISOString().split('T')[0],
           valor: gasto.valor_mensal,
           descricao: gasto.descricao,
           categoria: gasto.categoria,
-          forma_pagamento: gasto.forma_pagamento
+          forma_pagamento: gasto.forma_pagamento,
+          fornecedor: ''
         }));
 
         const { error: despesasError } = await supabase
@@ -141,7 +185,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
 
-      // Salvar meta financeira
+      // 5. Salvar meta financeira (com dashboard_id)
       if (data.meta_financeira && data.valor_meta) {
         const prazoDate = new Date();
         switch (data.prazo_meta) {
@@ -168,6 +212,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           .from('metas')
           .insert({
             user_id: user.id,
+            dashboard_id: mainDashboardId,
             titulo: data.meta_financeira,
             categoria: 'Financeira',
             valor_meta: data.valor_meta,

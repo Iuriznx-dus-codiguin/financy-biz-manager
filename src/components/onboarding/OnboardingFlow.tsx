@@ -22,10 +22,11 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>;
+  skipPhoneStep?: boolean;
 }
 
-export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
-  const [currentStep, setCurrentStep] = useState(1);
+export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skipPhoneStep = false }) => {
+  const [currentStep, setCurrentStep] = useState(skipPhoneStep ? 2 : 1);
   const [loading, setLoading] = useState(false);
   const [whatsappE164, setWhatsappE164] = useState('');
   const [isPhoneValid, setIsPhoneValid] = useState(false);
@@ -39,6 +40,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     salary_range: '',
     revenue_range: '',
     nome_preferido: '',
+    nome_empresa: '',
     termos_aceitos: false,
     gastos_iniciais: []
   });
@@ -193,7 +195,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
+    const minStep = skipPhoneStep ? 2 : 1;
+    if (currentStep > minStep) {
       setCurrentStep(currentStep - 1);
     }
   };
@@ -235,7 +238,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         return isPhoneValid && whatsappE164.length > 0;
       case 2: return data.user_type !== '';
       case 3: return data.user_type === 'pessoal' ? data.salary_range !== '' : data.revenue_range !== '';
-      case 4: return data.nome_preferido !== '';
+      case 4: 
+        if (data.user_type === 'empresarial') {
+          return data.nome_empresa !== '' && data.nome_preferido !== '';
+        }
+        return data.nome_preferido !== '';
       case 5: return data.how_did_you_know !== '';
       case 6: return true;
       case 7: return true;
@@ -512,34 +519,71 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       className="space-y-6"
     >
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Como você quer que nos te chamemos?</h2>
-        <p className="text-muted-foreground">Este nome aparecerá na sua dashboard personalizada.</p>
+        <h2 className="text-2xl font-bold">
+          {data.user_type === 'empresarial' ? 'Dados da Empresa e Usuário' : 'Como você quer que nos te chamemos?'}
+        </h2>
+        <p className="text-muted-foreground">
+          {data.user_type === 'empresarial' 
+            ? 'Estes dados aparecerão no seletor e na sua dashboard.' 
+            : 'Este nome aparecerá na sua dashboard personalizada.'
+          }
+        </p>
       </div>
 
       <div className="max-w-md mx-auto space-y-6">
+        {data.user_type === 'empresarial' && (
+          <div className="relative">
+            <Label htmlFor="nome_empresa" className="text-sm font-medium mb-2 block">
+              Nome da Empresa
+            </Label>
+            <Input
+              id="nome_empresa"
+              type="text"
+              placeholder="Ex: Garota Pink"
+              value={data.nome_empresa}
+              onChange={(e) => setData({ ...data, nome_empresa: e.target.value })}
+              className="h-14 text-center text-lg border-2 focus:ring-2 focus:ring-primary/20"
+            />
+            <Building className="absolute right-4 bottom-1/2 translate-y-1/2 w-5 h-5 text-primary" />
+          </div>
+        )}
+
         <div className="relative">
+          <Label htmlFor="nome_preferido" className="text-sm font-medium mb-2 block">
+            {data.user_type === 'empresarial' ? 'Seu Nome ou Apelido' : 'Nome Preferido'}
+          </Label>
           <Input
+            id="nome_preferido"
             type="text"
-            placeholder="Digite seu nome preferido"
+            placeholder={data.user_type === 'empresarial' ? 'Digite seu nome' : 'Digite seu nome preferido'}
             value={data.nome_preferido}
             onChange={(e) => setData({ ...data, nome_preferido: e.target.value })}
             className="h-14 text-center text-lg border-2 focus:ring-2 focus:ring-primary/20"
           />
-          <Sparkles className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary" />
+          <Sparkles className="absolute right-4 bottom-1/2 translate-y-1/2 w-5 h-5 text-primary" />
         </div>
 
         <AnimatePresence>
-          {data.nome_preferido && (
+          {data.nome_preferido && (data.user_type === 'pessoal' || data.nome_empresa) && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               className="text-center p-6 bg-gradient-to-r from-primary/10 to-blue-500/10 rounded-xl border border-primary/20"
             >
-              <p className="text-sm text-muted-foreground mb-1">Prévia da sua dashboard:</p>
-              <p className="text-xl font-semibold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                Olá, {data.nome_preferido}! 👋
-              </p>
+              <p className="text-sm text-muted-foreground mb-1">Prévia:</p>
+              {data.user_type === 'empresarial' ? (
+                <>
+                  <p className="text-lg font-semibold text-muted-foreground">Empresa: {data.nome_empresa}</p>
+                  <p className="text-xl font-semibold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                    Olá, {data.nome_preferido}! 👋
+                  </p>
+                </>
+              ) : (
+                <p className="text-xl font-semibold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                  Olá, {data.nome_preferido}! 👋
+                </p>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -718,7 +762,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
           {/* Navigation */}
           <div className="flex justify-between items-center pt-8 mt-8 border-t border-border">
-            {currentStep > 1 ? (
+            {currentStep > (skipPhoneStep ? 2 : 1) ? (
               <Button 
                 variant="outline" 
                 onClick={handleBack} 
