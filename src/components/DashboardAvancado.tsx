@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   LineChart, 
   Line, 
@@ -62,6 +63,26 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const { user } = useAuth();
   const { currentDashboard } = useDashboard();
+  const [onboardingData, setOnboardingData] = React.useState<any>(null);
+
+  // Buscar dados do onboarding
+  React.useEffect(() => {
+    const fetchOnboardingData = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('onboarding_data')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (data) {
+        setOnboardingData(data);
+      }
+    };
+    
+    fetchOnboardingData();
+  }, [user]);
 
   // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
@@ -134,10 +155,23 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const margemLucro = totalReceitas > 0 ? ((lucroLiquido / totalReceitas) * 100) : 0;
 
   // Métricas específicas para dashboard pessoal
-  // Estimativa de saldo atual (lucro líquido)
-  const estimativaSaldoAtual = isDashboardPessoal 
-    ? lucroLiquido
-    : 0;
+  // Estimativa de saldo atual considerando dados do onboarding
+  const getEstimativaSaldoAtual = () => {
+    if (!isDashboardPessoal) return 0;
+    
+    // Começar com o saldo base do onboarding
+    let saldoBase = 0;
+    if (onboardingData) {
+      saldoBase = (onboardingData.saldo_conta || 0) + 
+                  (onboardingData.saldo_carteira || 0) - 
+                  (onboardingData.dividas_atuais || 0);
+    }
+    
+    // Adicionar o lucro líquido do período
+    return saldoBase + lucroLiquido;
+  };
+  
+  const estimativaSaldoAtual = getEstimativaSaldoAtual();
   
   // Gasto diário (total de despesas dividido pelos dias do período)
   const getDiasNoPeriodo = () => {
@@ -180,9 +214,38 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     ? filteredReceitas.filter(r => r.categoria === 'terceiros' || r.categoria === 'freelance' || r.categoria === 'extras').reduce((sum, r) => sum + r.valor, 0)
     : 0;
 
-  const salarioMensal = isDashboardPessoal 
-    ? filteredReceitas.filter(r => r.categoria === 'salario' || r.categoria === 'salário' || r.categoria === 'trabalho').reduce((sum, r) => sum + r.valor, 0)
-    : totalReceitas;
+  // Calcular salário mensal usando dados do onboarding se disponível
+  const getSalarioMensal = () => {
+    if (!isDashboardPessoal) return totalReceitas;
+    
+    // 1. Tentar obter das receitas cadastradas
+    const salarioReceitas = filteredReceitas
+      .filter(r => r.categoria === 'salario' || r.categoria === 'salário' || r.categoria === 'trabalho')
+      .reduce((sum, r) => sum + r.valor, 0);
+    
+    if (salarioReceitas > 0) return salarioReceitas;
+    
+    // 2. Se não tiver receitas, usar dados do onboarding
+    if (onboardingData) {
+      // Converter salary_range em valor aproximado
+      const salaryRange = onboardingData.salary_range;
+      if (salaryRange) {
+        const rangeMap: Record<string, number> = {
+          'ate-2k': 1500,
+          '2k-5k': 3500,
+          '5k-10k': 7500,
+          '10k-20k': 15000,
+          '20k-50k': 35000,
+          'acima-50k': 50000
+        };
+        return rangeMap[salaryRange] || 0;
+      }
+    }
+    
+    return totalReceitas;
+  };
+  
+  const salarioMensal = getSalarioMensal();
   
   // Métricas adicionais - ROI calculado com TODOS os gastos
   const totalGastos = totalDespesas + totalImpostos + totalTaxas;
@@ -318,9 +381,21 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     : lucroLiquido > 0 ? 100 : lucroLiquido < 0 ? -100 : 0;
 
   // Calcular variações para dashboard pessoal
-  const estimativaSaldoAtualPeriodoAnterior = isDashboardPessoal 
-    ? lucroPeriodoAnterior
-    : 0;
+  const getEstimativaSaldoAtualPeriodoAnterior = () => {
+    if (!isDashboardPessoal) return 0;
+    
+    // Usar o mesmo saldo base do onboarding + lucro do período anterior
+    let saldoBase = 0;
+    if (onboardingData) {
+      saldoBase = (onboardingData.saldo_conta || 0) + 
+                  (onboardingData.saldo_carteira || 0) - 
+                  (onboardingData.dividas_atuais || 0);
+    }
+    
+    return saldoBase + lucroPeriodoAnterior;
+  };
+  
+  const estimativaSaldoAtualPeriodoAnterior = getEstimativaSaldoAtualPeriodoAnterior();
 
   const gastoDiarioPeriodoAnterior = isDashboardPessoal 
     ? despesasPeriodoAnterior / getDiasNoPeriodo()
