@@ -82,16 +82,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   
   const currentLogo = shouldShowExpanded ? financyLogo : (isCollapsed ? iconLogo : financyLogo);
 
-  // Filtrar menu baseado no tipo de usuário E tipo de dashboard
+  // Filtrar menu baseado APENAS no tipo do dashboard atual
   const menuItems = allMenuItems.filter(item => {
     if (!currentDashboard) return true;
     
-    // Seções apenas para empresarial
-    if (item.businessOnly) {
-      // Ocultar se usuário é pessoal OU dashboard atual é personal
-      if (userType === 'pessoal' || currentDashboard.type === 'personal') {
-        return false;
-      }
+    // Seções apenas para empresarial - ocultar se dashboard atual é personal
+    if (item.businessOnly && currentDashboard.type === 'personal') {
+      return false;
     }
     
     return true;

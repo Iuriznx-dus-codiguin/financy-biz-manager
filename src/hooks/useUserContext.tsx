@@ -23,11 +23,10 @@ export const UserContextProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const userType = (onboardingData?.user_type as 'pessoal' | 'empresarial') || 'pessoal';
     const currentDashboardType = (currentDashboard?.type as 'personal' | 'business') || 'personal';
     
-    // Contexto pessoal: usuário É pessoal OU dashboard atual é pessoal
-    const isPersonalContext = userType === 'pessoal' || currentDashboardType === 'personal';
-    
-    // Contexto empresarial: usuário É empresarial E dashboard atual é business
-    const isBusinessContext = userType === 'empresarial' && currentDashboardType === 'business';
+    // Contexto é definido pelo tipo do dashboard ATUAL, não pelo userType
+    // Isso permite que usuários empresariais vejam contexto pessoal em dashboards pessoais
+    const isPersonalContext = currentDashboardType === 'personal';
+    const isBusinessContext = currentDashboardType === 'business';
     
     const nomePreferido = onboardingData?.nome_preferido || '';
     
