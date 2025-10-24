@@ -134,12 +134,42 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   const margemLucro = totalReceitas > 0 ? ((lucroLiquido / totalReceitas) * 100) : 0;
 
   // Métricas específicas para dashboard pessoal
-  const gastosAlimentacao = isDashboardPessoal 
-    ? filteredDespesas.filter(d => d.categoria === 'alimentacao' || d.categoria === 'alimentação').reduce((sum, d) => sum + d.valor, 0)
+  // Estimativa de saldo atual (lucro líquido)
+  const estimativaSaldoAtual = isDashboardPessoal 
+    ? lucroLiquido
     : 0;
   
-  const gastosLazer = isDashboardPessoal 
-    ? filteredDespesas.filter(d => d.categoria === 'lazer' || d.categoria === 'entretenimento').reduce((sum, d) => sum + d.valor, 0)
+  // Gasto diário (total de despesas dividido pelos dias do período)
+  const getDiasNoPeriodo = () => {
+    const hoje = new Date();
+    switch (timeFilter) {
+      case 'hoje':
+      case 'ontem':
+        return 1;
+      case 'esta-semana':
+        return 7;
+      case 'semana-passada':
+        return 7;
+      case 'este-mes':
+        return hoje.getDate();
+      case 'mes-passado':
+        const ultimoDiaMesPassado = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+        return ultimoDiaMesPassado.getDate();
+      case 'ultimos-30-dias':
+        return 30;
+      case 'ultimos-90-dias':
+        return 90;
+      case 'este-ano':
+        return Math.floor((hoje.getTime() - new Date(hoje.getFullYear(), 0, 1).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      case 'ano-passado':
+        return 365;
+      default:
+        return 30;
+    }
+  };
+  
+  const gastoDiario = isDashboardPessoal 
+    ? totalDespesas / getDiasNoPeriodo()
     : 0;
   
   const totalInvestido = isDashboardPessoal 
@@ -288,20 +318,12 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     : lucroLiquido > 0 ? 100 : lucroLiquido < 0 ? -100 : 0;
 
   // Calcular variações para dashboard pessoal
-  const gastosAlimentacaoPeriodoAnterior = isDashboardPessoal 
-    ? despesas.filter(d => {
-        const data = new Date(d.data);
-        return (d.categoria === 'alimentacao' || d.categoria === 'alimentação') && 
-               data >= startAnterior && data <= endAnterior;
-      }).reduce((sum, d) => sum + d.valor, 0)
+  const estimativaSaldoAtualPeriodoAnterior = isDashboardPessoal 
+    ? lucroPeriodoAnterior
     : 0;
 
-  const gastosLazerPeriodoAnterior = isDashboardPessoal 
-    ? despesas.filter(d => {
-        const data = new Date(d.data);
-        return (d.categoria === 'lazer' || d.categoria === 'entretenimento') && 
-               data >= startAnterior && data <= endAnterior;
-      }).reduce((sum, d) => sum + d.valor, 0)
+  const gastoDiarioPeriodoAnterior = isDashboardPessoal 
+    ? despesasPeriodoAnterior / getDiasNoPeriodo()
     : 0;
 
   const totalInvestidoPeriodoAnterior = isDashboardPessoal 
@@ -360,13 +382,13 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     : roi > 0 ? 100 : roi < 0 ? -100 : 0;
 
   // Calcular crescimentos
-  const crescimentoAlimentacao = gastosAlimentacaoPeriodoAnterior > 0
-    ? ((gastosAlimentacao - gastosAlimentacaoPeriodoAnterior) / gastosAlimentacaoPeriodoAnterior) * 100 
-    : gastosAlimentacao > 0 ? 100 : 0;
+  const crescimentoEstimativaSaldo = estimativaSaldoAtualPeriodoAnterior !== 0
+    ? ((estimativaSaldoAtual - estimativaSaldoAtualPeriodoAnterior) / Math.abs(estimativaSaldoAtualPeriodoAnterior)) * 100 
+    : estimativaSaldoAtual > 0 ? 100 : estimativaSaldoAtual < 0 ? -100 : 0;
 
-  const crescimentoLazer = gastosLazerPeriodoAnterior > 0 
-    ? ((gastosLazer - gastosLazerPeriodoAnterior) / gastosLazerPeriodoAnterior) * 100 
-    : gastosLazer > 0 ? 100 : 0;
+  const crescimentoGastoDiario = gastoDiarioPeriodoAnterior > 0 
+    ? ((gastoDiario - gastoDiarioPeriodoAnterior) / gastoDiarioPeriodoAnterior) * 100 
+    : gastoDiario > 0 ? 100 : 0;
 
   const crescimentoInvestido = totalInvestidoPeriodoAnterior > 0 
     ? ((totalInvestido - totalInvestidoPeriodoAnterior) / totalInvestidoPeriodoAnterior) * 100 
@@ -523,17 +545,16 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
           // KPIs para dashboard pessoal
           <>
             <MetricCard
-              title="Gastos em Alimentação"
-              value={`R$ ${gastosAlimentacao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-              change={crescimentoAlimentacao}
+              title="Estimativa de Saldo Atual"
+              value={`R$ ${estimativaSaldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoEstimativaSaldo}
               icon={DollarSign}
               gradient="from-green-500 to-emerald-600"
-              isExpense={true}
             />
             <MetricCard
-              title="Gastos em Lazer"
-              value={`R$ ${gastosLazer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-              change={crescimentoLazer}
+              title="Gasto Diário"
+              value={`R$ ${gastoDiario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              change={crescimentoGastoDiario}
               icon={Activity}
               gradient="from-purple-500 to-violet-600"
               isExpense={true}
