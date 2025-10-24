@@ -14,6 +14,7 @@ const allMenuItems = [
   { id: 'painel', label: 'Painel', businessOnly: false },
   { id: 'receitas', label: 'Receitas', businessOnly: false },
   { id: 'despesas', label: 'Despesas', businessOnly: false },
+  { id: 'categorias', label: 'Categorias', businessOnly: false },
   { id: 'impostos', label: 'Impostos e Taxas', businessOnly: false },
   { id: 'equipe', label: 'Equipe', businessOnly: true },
   { id: 'metas', label: 'Objetivos', businessOnly: false },
@@ -40,16 +41,13 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   const isDarkTheme = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const financyLogo = isDarkTheme ? financyLogoDark : financyLogoLight;
 
-  // Filtrar menu baseado no tipo de dashboard atual
+  // Filtrar menu baseado APENAS no tipo do dashboard atual
   const menuItems = allMenuItems.filter(item => {
     if (!currentDashboard) return true;
     
-    // Seções apenas para empresarial
-    if (item.businessOnly) {
-      // Ocultar se o dashboard atual é pessoal
-      if (currentDashboard.type === 'personal') {
-        return false;
-      }
+    // Seções apenas para empresarial - ocultar se dashboard atual é personal
+    if (item.businessOnly && currentDashboard.type === 'personal') {
+      return false;
     }
     
     return true;
