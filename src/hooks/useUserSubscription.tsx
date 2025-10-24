@@ -200,6 +200,11 @@ export const useUserSubscription = () => {
   const isBusinessPlan = (): boolean => {
     if (!subscription) return false;
     
+    // Desenvolvedores têm acesso total (incluindo criação de empresas)
+    if (subscription.subscription_type === 'developer') {
+      return true;
+    }
+    
     // Verificar pelo plan_name se é plano empresarial
     const planName = subscription.plan_name?.toLowerCase() || '';
     return planName.includes('empresarial') ||
