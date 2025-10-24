@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useTheme } from '@/hooks/useTheme';
 import { useDashboard } from '@/hooks/useDashboard';
-import { useUserContext } from '@/hooks/useUserContext';
 
 // Logos for light theme
 import financyLogoLight from '@/assets/financy-logo-light.png';
@@ -35,21 +34,20 @@ interface MobileSidebarProps {
 export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, setActiveSection, disabled = false }) => {
   const { theme, setTheme } = useTheme();
   const { currentDashboard } = useDashboard();
-  const { userType } = useUserContext();
   const [open, setOpen] = React.useState(false);
   
   // Selecionar logo baseado no tema
   const isDarkTheme = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const financyLogo = isDarkTheme ? financyLogoDark : financyLogoLight;
 
-  // Filtrar menu baseado no tipo de usuário E tipo de dashboard
+  // Filtrar menu baseado no tipo de dashboard atual
   const menuItems = allMenuItems.filter(item => {
     if (!currentDashboard) return true;
     
     // Seções apenas para empresarial
     if (item.businessOnly) {
-      // Ocultar se usuário é pessoal OU dashboard atual é personal
-      if (userType === 'pessoal' || currentDashboard.type === 'personal') {
+      // Ocultar se o dashboard atual é pessoal
+      if (currentDashboard.type === 'personal') {
         return false;
       }
     }
