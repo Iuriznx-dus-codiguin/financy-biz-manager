@@ -382,16 +382,16 @@ export const AuthPage = () => {
                     disabled={loading || googleLoading}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                    <span className="relative z-10">
+                    <span className="relative z-10 flex items-center justify-center">
                     {loading ? (
                       <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Criando sua conta...
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin inline-block" />
+                        <span>Criando sua conta...</span>
                       </>
                     ) : (
                       <>
-                        <Sparkles className="mr-2 h-5 w-5" />
-                        Criar minha conta grátis
+                        <Sparkles className="mr-2 h-5 w-5 inline-block" />
+                        <span>Criar minha conta grátis</span>
                       </>
                     )}
                     </span>
