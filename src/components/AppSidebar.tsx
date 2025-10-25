@@ -145,11 +145,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
-                      onClick={() => !disabled && setActiveSection(item.id)}
+                      onClick={() => {
+                        const allowedWhenDisabled = ['assinatura', 'configuracoes', 'ajuda'];
+                        if (!disabled || allowedWhenDisabled.includes(item.id)) {
+                          setActiveSection(item.id);
+                        }
+                      }}
                       tooltip={isCollapsed && !shouldShowExpanded ? item.label : undefined}
                       isActive={activeSection === item.id}
-                      disabled={disabled && item.id !== 'assinatura'}
-                      className={disabled && item.id !== 'assinatura' ? 'opacity-50 cursor-not-allowed' : ''}
+                      disabled={disabled && !['assinatura', 'configuracoes', 'ajuda'].includes(item.id)}
+                      className={disabled && !['assinatura', 'configuracoes', 'ajuda'].includes(item.id) ? 'opacity-50 cursor-not-allowed' : ''}
                     >
                       <Icon className="h-4 w-4" />
                       <span className="transition-opacity duration-300">{item.label}</span>

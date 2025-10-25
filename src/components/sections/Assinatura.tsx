@@ -112,7 +112,7 @@ const Assinatura: React.FC = () => {
         { name: 'Perfil pessoal', value: 'Simples' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'Múltiplos Perfis', value: '1 perfil' },
-        { name: 'IA no WhatsApp', value: false },
+        { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Suporte', value: 'Email' },
         { name: 'Teste gratuito', value: '7 dias' }
       ]
@@ -184,7 +184,7 @@ const Assinatura: React.FC = () => {
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
         { name: 'Múltiplas Empresas', value: '1 empresa' },
-        { name: 'IA no WhatsApp', value: false },
+        { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Suporte', value: 'Email/WhatsApp' },
         { name: 'Teste gratuito', value: '7 dias' }
       ]

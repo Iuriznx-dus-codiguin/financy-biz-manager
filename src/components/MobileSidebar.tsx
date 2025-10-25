@@ -59,8 +59,9 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   };
 
   const handleMenuClick = (section: string) => {
-    if (disabled && section !== 'assinatura') {
-      return; // Não permite navegação se desabilitado, exceto para assinatura
+    const allowedWhenDisabled = ['assinatura', 'configuracoes', 'ajuda'];
+    if (disabled && !allowedWhenDisabled.includes(section)) {
+      return; // Não permite navegação se desabilitado, exceto para assinatura, configurações e ajuda
     }
     setActiveSection(section);
     setOpen(false);
@@ -97,19 +98,24 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
               <SheetTitle className="text-left">Menu</SheetTitle>
             </SheetHeader>
             <div className="mt-6 space-y-2">
-              {menuItems.map((item) => (
-                <Button
-                  key={item.id}
-                  variant={activeSection === item.id ? "default" : "ghost"}
-                  className={`w-full justify-start ${
-                    disabled && item.id !== 'assinatura' ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  onClick={() => handleMenuClick(item.id)}
-                  disabled={disabled && item.id !== 'assinatura'}
-                >
-                  {item.label}
-                </Button>
-              ))}
+              {menuItems.map((item) => {
+                const allowedWhenDisabled = ['assinatura', 'configuracoes', 'ajuda'];
+                const isAllowed = !disabled || allowedWhenDisabled.includes(item.id);
+                
+                return (
+                  <Button
+                    key={item.id}
+                    variant={activeSection === item.id ? "default" : "ghost"}
+                    className={`w-full justify-start ${
+                      !isAllowed ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    onClick={() => handleMenuClick(item.id)}
+                    disabled={!isAllowed}
+                  >
+                    {item.label}
+                  </Button>
+                );
+              })}
             </div>
           </SheetContent>
         </Sheet>
