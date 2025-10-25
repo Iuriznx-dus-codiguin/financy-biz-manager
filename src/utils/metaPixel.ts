@@ -41,3 +41,36 @@ export const trackLead = () => {
     console.log('📊 Meta Pixel: Lead tracked');
   }
 };
+
+/**
+ * Rastreia início de trial gratuito (StartTrial)
+ * Disparar quando usuário inicia o período de teste gratuito
+ */
+export const trackStartTrial = (params?: { value?: number; currency?: string; predicted_ltv?: number }) => {
+  if (typeof window !== 'undefined' && window.fbq) {
+    window.fbq('track', 'StartTrial', params);
+    console.log('📊 Meta Pixel: StartTrial tracked', params);
+  }
+};
+
+/**
+ * Rastreia assinatura/renovação (Subscribe)
+ * Disparar quando usuário assina ou renova um plano
+ */
+export const trackSubscribe = (params?: { value?: number; currency?: string; predicted_ltv?: number }) => {
+  if (typeof window !== 'undefined' && window.fbq) {
+    window.fbq('track', 'Subscribe', params);
+    console.log('📊 Meta Pixel: Subscribe tracked', params);
+  }
+};
+
+/**
+ * Rastreia compra/pagamento confirmado (Purchase)
+ * Disparar após confirmação de pagamento bem-sucedido
+ */
+export const trackPurchase = (params: { value: number; currency: string; content_name?: string; content_type?: string }) => {
+  if (typeof window !== 'undefined' && window.fbq) {
+    window.fbq('track', 'Purchase', params);
+    console.log('📊 Meta Pixel: Purchase tracked', params);
+  }
+};

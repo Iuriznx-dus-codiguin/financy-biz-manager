@@ -24,7 +24,8 @@ import {
   Eye,
   EyeOff,
   Phone,
-  Mail
+  Mail,
+  LogOut
 } from 'lucide-react';
 import { useSettings, useCurrency } from '@/hooks/useSettings';
 import { useTheme } from '@/hooks/useTheme';
@@ -715,6 +716,31 @@ const Configuracoes = () => {
             <p className="text-sm text-muted-foreground">
               Altere sua senha para manter sua conta segura
             </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Sessão - Botão de Desconectar */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LogOut className="h-5 w-5" />
+            Sessão
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Sair da sua conta e encerrar a sessão atual.
+            </p>
+            <Button 
+              variant="destructive" 
+              onClick={signOut}
+              className="w-full"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Desconectar
+            </Button>
           </div>
         </CardContent>
       </Card>
