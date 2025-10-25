@@ -116,7 +116,7 @@ export const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 dark:from-primary/10 dark:via-background dark:to-primary/5 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Grid pattern background */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--primary)/0.03)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--primary)/0.03)_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
       
@@ -133,15 +133,15 @@ export const AuthPage = () => {
       {/* Container principal */}
       <div className="relative z-10 w-full max-w-lg">
         {/* Logo e título no topo */}
-        <div className="text-center mb-8 space-y-4">
-          {/* Logo */}
+        <div className="text-center mb-8 space-y-6">
+          {/* Logo com efeito glassmorphism */}
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
             <div className="relative mx-auto">
               <img 
                 src={financyLogoDark}
                 alt="Financy" 
-                className="w-32 h-32 object-contain drop-shadow-2xl mx-auto"
+                className="w-32 h-32 object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-500"
               />
             </div>
           </div>
@@ -150,7 +150,7 @@ export const AuthPage = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-center gap-2">
               <div className="h-px w-8 bg-gradient-to-r from-transparent to-primary/50"></div>
-              <p className="text-gray-300 text-base font-medium">
+              <p className="text-muted-foreground text-base font-medium">
                 Gestão Financeira Inteligente
               </p>
               <div className="h-px w-8 bg-gradient-to-l from-transparent to-primary/50"></div>

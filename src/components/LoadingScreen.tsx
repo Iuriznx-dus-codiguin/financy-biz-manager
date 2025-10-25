@@ -124,7 +124,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             times: [0, 0.6, 1],
             ease: "easeInOut"
           }}
-          className="relative mx-auto w-24 h-24"
+          className="relative mx-auto w-32 h-32 mt-12"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-full opacity-20 animate-pulse" />
           <div className="absolute -inset-2 bg-gradient-to-r from-green-500/30 to-teal-500/30 rounded-full blur-lg animate-pulse" />
@@ -142,9 +142,6 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           transition={{ delay: 0.8, duration: 0.8 }}
           className="space-y-2"
         >
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent">
-            Financy
-          </h1>
           <p className="text-gray-300 text-sm font-medium">
             Inteligência financeira ao seu alcance
           </p>
