@@ -101,7 +101,13 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
 
       if (updateError) {
         console.error('Erro ao salvar telefone:', updateError);
-        setError('Erro ao salvar telefone. Tente novamente.');
+        
+        // Verificar se é erro de duplicata (código 23505 = unique constraint violation)
+        if (updateError.code === '23505' || updateError.message?.includes('duplicate') || updateError.message?.includes('idx_profiles_telefone_unique')) {
+          setError('⚠️ Este número de telefone já está cadastrado em outra conta.');
+        } else {
+          setError('Erro ao salvar telefone. Tente novamente.');
+        }
         setLoading(false);
         return;
       }

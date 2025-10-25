@@ -1129,6 +1129,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      normalize_phone_br: { Args: { phone_input: string }; Returns: string }
       processar_despesas_recorrentes: { Args: never; Returns: number }
       processar_receitas_recorrentes: { Args: never; Returns: number }
       renew_subscription: {
