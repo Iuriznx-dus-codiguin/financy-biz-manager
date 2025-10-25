@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff, Sparkles } from 'lucide-react';
-import financyLogo from '@/assets/financy-logo-new.png';
+import financyLogoDark from '@/assets/financy-logo-dark-theme.png';
 import { trackCompleteRegistration } from '@/utils/metaPixel';
 
 export const AuthPage = () => {
@@ -116,7 +116,7 @@ export const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 dark:from-primary/10 dark:via-background dark:to-primary/5 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Grid pattern background */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--primary)/0.03)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--primary)/0.03)_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
       
@@ -133,27 +133,24 @@ export const AuthPage = () => {
       {/* Container principal */}
       <div className="relative z-10 w-full max-w-lg">
         {/* Logo e título no topo */}
-        <div className="text-center mb-8 space-y-6">
-          {/* Logo com efeito glassmorphism */}
+        <div className="text-center mb-8 space-y-4">
+          {/* Logo */}
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-            <div className="relative w-24 h-24 mx-auto bg-gradient-to-br from-primary/10 to-primary/5 backdrop-blur-md rounded-3xl flex items-center justify-center shadow-2xl ring-1 ring-primary/20 group-hover:scale-105 transition-transform duration-500">
+            <div className="relative mx-auto">
               <img 
-                src={financyLogo}
+                src={financyLogoDark}
                 alt="Financy" 
-                className="w-16 h-16 object-contain drop-shadow-2xl"
+                className="w-32 h-32 object-contain drop-shadow-2xl mx-auto"
               />
             </div>
           </div>
           
-          {/* Título com gradiente */}
+          {/* Subtítulo */}
           <div className="space-y-2">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent font-inter tracking-tight">
-              Financy
-            </h1>
             <div className="flex items-center justify-center gap-2">
               <div className="h-px w-8 bg-gradient-to-r from-transparent to-primary/50"></div>
-              <p className="text-muted-foreground text-base font-medium">
+              <p className="text-gray-300 text-base font-medium">
                 Gestão Financeira Inteligente
               </p>
               <div className="h-px w-8 bg-gradient-to-l from-transparent to-primary/50"></div>

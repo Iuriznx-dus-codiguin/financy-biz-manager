@@ -5,7 +5,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { Sparkles, Zap, TrendingUp, Shield } from 'lucide-react';
 
 // Import da logo
-const financyLogo = '/lovable-uploads/11a67f5c-242f-4740-b1f7-1ed6c6895f51.png';
+import financyLogoDark from '@/assets/financy-logo-dark-theme.png';
 
 interface LoadingScreenProps {
   onComplete: () => void;
@@ -80,7 +80,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   }, [onComplete, user, onboardingLoading]);
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-green-900 dark:to-emerald-900 flex items-center justify-center z-50 overflow-hidden">
+    <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-green-900 to-emerald-900 flex items-center justify-center z-50 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute inset-0 bg-grid-pattern"></div>
@@ -129,7 +129,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-full opacity-20 animate-pulse" />
           <div className="absolute -inset-2 bg-gradient-to-r from-green-500/30 to-teal-500/30 rounded-full blur-lg animate-pulse" />
           <img 
-            src={financyLogo} 
+            src={financyLogoDark} 
             alt="Financy Logo" 
             className="w-full h-full object-contain relative z-10 drop-shadow-lg"
           />
@@ -142,10 +142,10 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           transition={{ delay: 0.8, duration: 0.8 }}
           className="space-y-2"
         >
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent">
             Financy
           </h1>
-          <p className="text-muted-foreground text-sm font-medium">
+          <p className="text-gray-300 text-sm font-medium">
             Inteligência financeira ao seu alcance
           </p>
         </motion.div>
@@ -155,7 +155,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 1.2, duration: 0.6 }}
-          className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-xl"
+          className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-xl"
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -170,10 +170,10 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
                 {React.createElement(features[currentFeature].icon, { className: "w-6 h-6 text-white" })}
               </div>
               <div className="flex-1 text-left">
-                <h3 className="font-semibold text-gray-900 dark:text-white">
+                <h3 className="font-semibold text-white">
                   {features[currentFeature].title}
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-300">
                   {features[currentFeature].desc}
                 </p>
               </div>
@@ -189,7 +189,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           className="space-y-4"
         >
           <div className="relative">
-            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
               <motion.div
                 className="h-full bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500"
                 initial={{ width: "0%" }}
@@ -218,10 +218,10 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
               transition={{ duration: 0.3 }}
               className="space-y-2"
             >
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <p className="text-sm font-medium text-gray-300">
                 {loadingText}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-400">
                 {Math.round(progress)}% concluído
               </p>
             </motion.div>
