@@ -5,7 +5,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { Sparkles, Zap, TrendingUp, Shield } from 'lucide-react';
 
 // Import da logo
-import financyLogoDark from '@/assets/financy-logo-dark-theme.png';
+import financyLogoDark from '@/assets/financy-logo-new-dark.png';
 
 interface LoadingScreenProps {
   onComplete: () => void;
@@ -110,7 +110,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         ))}
       </div>
 
-      <div className="relative z-10 text-center space-y-8 max-w-md mx-auto px-6">
+      <div className="relative z-10 text-center space-y-8 max-w-md mx-auto px-6 mt-16">
         {/* Logo com animação aprimorada */}
         <motion.div
           initial={{ scale: 0.3, opacity: 0, rotateY: 0 }}
@@ -124,7 +124,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             times: [0, 0.6, 1],
             ease: "easeInOut"
           }}
-          className="relative mx-auto w-24 h-24"
+          className="relative mx-auto w-32 h-32"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-full opacity-20 animate-pulse" />
           <div className="absolute -inset-2 bg-gradient-to-r from-green-500/30 to-teal-500/30 rounded-full blur-lg animate-pulse" />
@@ -135,16 +135,13 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
           />
         </motion.div>
 
-        {/* Branding */}
+        {/* Subtítulo */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.8 }}
           className="space-y-2"
         >
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent">
-            Financy
-          </h1>
           <p className="text-gray-300 text-sm font-medium">
             Inteligência financeira ao seu alcance
           </p>

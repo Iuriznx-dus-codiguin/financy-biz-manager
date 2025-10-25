@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff, Sparkles } from 'lucide-react';
-import financyLogoDark from '@/assets/financy-logo-dark-theme.png';
+import financyLogoDark from '@/assets/financy-logo-new-dark.png';
 import { trackCompleteRegistration } from '@/utils/metaPixel';
 
 export const AuthPage = () => {
