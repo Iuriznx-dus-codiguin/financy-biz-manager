@@ -720,31 +720,6 @@ const Configuracoes = () => {
         </CardContent>
       </Card>
 
-      {/* Sessão - Desconectar */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LogOut className="h-5 w-5" />
-            Sessão
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Sair da sua conta e voltar para a tela de login.
-            </p>
-            <Button 
-              variant="destructive" 
-              onClick={signOut}
-              className="w-full"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Desconectar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Dashboard Principal */}
       <DashboardPersonalization />
 
@@ -961,6 +936,31 @@ const Configuracoes = () => {
                 <div>Metas: {limits.maxMetas === -1 ? 'Ilimitado' : limits.maxMetas}</div>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Sessão - Desconectar */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LogOut className="h-5 w-5" />
+            Sessão
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Sair da sua conta e voltar para a tela de login.
+            </p>
+            <Button 
+              variant="destructive" 
+              onClick={signOut}
+              className="w-full"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Desconectar
+            </Button>
           </div>
         </CardContent>
       </Card>

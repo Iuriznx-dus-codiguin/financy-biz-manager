@@ -64,8 +64,8 @@ export const useSubscriptionRedirect = ({ setActiveSection, currentSection }: Us
 
         // Redirecionar para assinatura se necessário e bloquear outras seções
         if (shouldRedirectToSubscription) {
-          // Bloquear acesso a outras seções quando assinatura expirou, mas permitir acesso à assinatura
-          const restrictedSections = ['painel', 'receitas', 'despesas', 'impostos', 'metas', 'relatorios', 'fechamento', 'agentes-ia', 'equipe', 'configuracoes'];
+          // Bloquear acesso a outras seções quando assinatura expirou, mas permitir acesso à assinatura, configurações e ajuda
+          const restrictedSections = ['painel', 'receitas', 'despesas', 'impostos', 'metas', 'relatorios', 'fechamento', 'agentes-ia', 'equipe'];
           if (restrictedSections.includes(currentSection)) {
             setActiveSection('assinatura');
           }
