@@ -55,8 +55,10 @@ export default function Index() {
 
   // Bloquear navegação se assinatura expirou
   const handleSectionChange = (newSection: string) => {
-    if (user && subscription && isSubscriptionExpired() && newSection !== 'assinatura') {
-      // Não permite mudança de seção se assinatura expirou
+    // Permitir navegação apenas para assinatura, configurações e ajuda quando assinatura expirou
+    const allowedSectionsWhenExpired = ['assinatura', 'configuracoes', 'ajuda'];
+    if (user && subscription && isSubscriptionExpired() && !allowedSectionsWhenExpired.includes(newSection)) {
+      // Não permite mudança de seção se assinatura expirou (exceto para assinatura, configurações e ajuda)
       return;
     }
     
@@ -75,8 +77,9 @@ export default function Index() {
     const handleNavigateToSection = (event: any) => {
       const targetSection = event.detail;
       
-      // Se assinatura expirou, só permite ir para assinatura
-      if (user && subscription && isSubscriptionExpired() && targetSection !== 'assinatura') {
+      // Permitir navegação apenas para assinatura, configurações e ajuda quando assinatura expirou
+      const allowedSectionsWhenExpired = ['assinatura', 'configuracoes', 'ajuda'];
+      if (user && subscription && isSubscriptionExpired() && !allowedSectionsWhenExpired.includes(targetSection)) {
         return;
       }
       
@@ -116,8 +119,9 @@ export default function Index() {
   }
 
   const renderActiveSection = () => {
-    // Se assinatura expirou, sempre mostrar aba de assinatura
-    if (user && subscription && isSubscriptionExpired()) {
+    // Se assinatura expirou, permitir apenas assinatura, configurações e ajuda
+    const allowedSectionsWhenExpired = ['assinatura', 'configuracoes', 'ajuda'];
+    if (user && subscription && isSubscriptionExpired() && !allowedSectionsWhenExpired.includes(activeSection)) {
       return <Assinatura />;
     }
 
