@@ -46,12 +46,15 @@ export default function Index() {
   // Hook para gerenciar redirecionamentos baseados na assinatura
   useSubscriptionRedirect({ setActiveSection, currentSection: activeSection });
 
-  // Verificar se assinatura expirou e forçar aba de assinatura
+  // Verificar se assinatura expirou e forçar aba de assinatura (exceto para configurações e ajuda)
   useEffect(() => {
     if (user && subscription && isSubscriptionExpired()) {
-      setActiveSection('assinatura');
+      const allowedSectionsWhenExpired = ['assinatura', 'configuracoes', 'ajuda'];
+      if (!allowedSectionsWhenExpired.includes(activeSection)) {
+        setActiveSection('assinatura');
+      }
     }
-  }, [user, subscription, isSubscriptionExpired]);
+  }, [user, subscription, isSubscriptionExpired, activeSection]);
 
   // Bloquear navegação se assinatura expirou
   const handleSectionChange = (newSection: string) => {
@@ -162,14 +165,14 @@ export default function Index() {
       <SidebarProvider defaultOpen={false}>
         <div className="flex h-full w-full">
           <AppSidebar
-            activeSection={isSubscriptionExpiredState ? 'assinatura' : activeSection} 
+            activeSection={activeSection} 
             setActiveSection={handleSectionChange}
             disabled={isSubscriptionExpiredState}
           />
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="lg:hidden">
               <MobileSidebar 
-                activeSection={isSubscriptionExpiredState ? 'assinatura' : activeSection} 
+                activeSection={activeSection} 
                 setActiveSection={handleSectionChange}
                 disabled={isSubscriptionExpiredState}
               />
