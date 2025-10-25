@@ -31,7 +31,7 @@ export const BrazilianPhoneInput: React.FC<BrazilianPhoneInputProps> = ({
   error: externalError,
   showValidationFeedback = true
 }) => {
-  const [inputValue, setInputValue] = useState(value);
+  const [inputValue, setInputValue] = useState(value || '+55');
   const [validationState, setValidationState] = useState<{
     isValid: boolean;
     message?: string;
@@ -39,15 +39,31 @@ export const BrazilianPhoneInput: React.FC<BrazilianPhoneInputProps> = ({
   }>({ isValid: false });
 
   useEffect(() => {
-    setInputValue(value);
+    // Se o valor estiver vazio, sempre inicializar com +55
+    setInputValue(value || '+55');
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
+    let rawValue = e.target.value;
+    
+    // Garantir que sempre tenha +55 no início
+    if (!rawValue.startsWith('+55')) {
+      if (rawValue.startsWith('+5')) {
+        rawValue = '+55';
+      } else if (rawValue.startsWith('+')) {
+        rawValue = '+55';
+      } else if (rawValue.length === 0) {
+        rawValue = '+55';
+      } else {
+        // Se o usuário começar a digitar sem o +55, adiciona automaticamente
+        rawValue = '+55' + rawValue.replace(/^\+?55?/, '');
+      }
+    }
+    
     setInputValue(rawValue);
 
-    // Validar apenas se houver conteúdo suficiente
-    if (rawValue.trim().length < 5) {
+    // Validar apenas se houver conteúdo suficiente (mais que apenas +55)
+    if (rawValue.trim().length <= 3) {
       setValidationState({ isValid: false });
       onChange(rawValue, false, '');
       return;
