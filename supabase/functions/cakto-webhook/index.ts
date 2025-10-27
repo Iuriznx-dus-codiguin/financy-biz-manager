@@ -325,14 +325,17 @@ serve(safeHandler(async (req) => {
     }
 
     // Verificar se é um evento de pagamento aprovado
-    if (payload.event === 'payment.approved' || payload.status === 'approved' || payload.status === 'paid') {
-      const {
-        customer_email,
-        amount,
-        transaction_id,
-        product_name,
-        metadata
-      } = payload;
+    const eventType = payload.event;
+    const paymentData = payload.data || payload;
+    const paymentStatus = paymentData.status || payload.status;
+    
+    if (eventType === 'purchase_approved' || eventType === 'payment.approved' || paymentStatus === 'approved' || paymentStatus === 'paid') {
+      // Extrair dados da estrutura do Cakto
+      const customer_email = paymentData.customer?.email || payload.customer_email;
+      const amount = paymentData.amount || payload.amount;
+      const transaction_id = paymentData.id || paymentData.transaction_id || payload.transaction_id;
+      const product_name = paymentData.product?.name || paymentData.product_name || payload.product_name;
+      const metadata = paymentData.metadata || payload.metadata || {};
 
       console.log('Processando pagamento aprovado:', {
         email: customer_email,
