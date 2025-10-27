@@ -201,36 +201,6 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skip
     }
   };
 
-  const handleSkip = async () => {
-    setLoading(true);
-    try {
-      const minimalData: OnboardingData = {
-        whatsapp: '(11) 99999-9999',
-        user_type: 'pessoal',
-        how_did_you_know: 'other',
-        salary_range: '0-2000',
-        revenue_range: '',
-        nome_preferido: 'Usuário',
-        termos_aceitos: true,
-        gastos_iniciais: []
-      };
-      await onComplete(minimalData);
-      toast({
-        title: "✅ Configuração rápida concluída",
-        description: "Você pode personalizar sua experiência a qualquer momento nas configurações.",
-      });
-    } catch (error) {
-      console.error('Erro ao pular onboarding:', error);
-      toast({
-        title: "❌ Erro",
-        description: "Houve um erro. Tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const canProceed = () => {
     switch (currentStep) {
       case 1: 
@@ -687,18 +657,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skip
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl rounded-3xl shadow-2xl border-0 overflow-hidden">
         <CardHeader className="text-center space-y-6 px-8 py-8 bg-gradient-to-r from-primary/5 to-blue-500/5">
-          <div className="flex justify-between items-center w-full">
-            {/* Skip Button */}
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleSkip}
-              disabled={loading}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Configuração rápida
-            </Button>
-
+          <div className="flex justify-center items-center w-full">
             {/* Logo and Progress */}
             <div className="flex flex-col items-center space-y-4">
               <motion.div 
@@ -727,14 +686,6 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skip
                 <h1 className="text-lg font-semibold">{getStepTitle()}</h1>
                 <p className="text-sm text-muted-foreground">Passo {currentStep} de 9</p>
               </div>
-            </div>
-
-            {/* Progress Percentage */}
-            <div className="text-right">
-              <div className="text-2xl font-bold text-primary">
-                {Math.round((currentStep / 9) * 100)}%
-              </div>
-              <div className="text-xs text-muted-foreground">concluído</div>
             </div>
           </div>
         </CardHeader>
