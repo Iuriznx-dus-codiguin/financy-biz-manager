@@ -1043,6 +1043,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      enviar_lembretes_financy: { Args: never; Returns: undefined }
       get_dashboard_data: {
         Args: {
           p_dashboard_id: string
