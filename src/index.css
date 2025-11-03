@@ -184,4 +184,25 @@
   .space-y-6 > * + * {
     margin-top: 1rem;
   }
+  
+  /* Ajustes específicos para auth page em mobile */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Prevenir overflow horizontal */
+  * {
+    max-width: 100vw;
+  }
+}
+
+/* Extra small screens (phones in portrait) */
+@media (max-width: 375px) {
+  .xs\:hidden {
+    display: none !important;
+  }
+  
+  .xs\:inline {
+    display: inline !important;
+  }
 }

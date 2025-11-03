@@ -161,15 +161,15 @@ export default function Index() {
   const isSubscriptionExpiredState = user && subscription && isSubscriptionExpired();
 
   return (
-    <div className="h-screen bg-background">
+    <div className="h-screen bg-background overflow-hidden">
       <SidebarProvider defaultOpen={false}>
-        <div className="flex h-full w-full">
+        <div className="flex h-full w-full overflow-hidden">
           <AppSidebar
             activeSection={activeSection} 
             setActiveSection={handleSectionChange}
             disabled={isSubscriptionExpiredState}
           />
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden min-w-0">
             <div className="lg:hidden">
               <MobileSidebar 
                 activeSection={activeSection} 
@@ -178,7 +178,7 @@ export default function Index() {
               />
             </div>
             {isSubscriptionExpiredState && <SubscriptionBanners />}
-            <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
+            <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
               {/* Dashboard permanece sempre montado, apenas oculto quando não ativo */}
               <div className={activeSection === 'painel' ? '' : 'hidden'}>
                 <Dashboard setActiveSection={handleSectionChange} />
