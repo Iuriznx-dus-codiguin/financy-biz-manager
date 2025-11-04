@@ -1153,6 +1153,7 @@ export type Database = {
         Args: { p_feature: string; p_user_id: string }
         Returns: boolean
       }
+      verificar_usuarios_sem_transacao: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
