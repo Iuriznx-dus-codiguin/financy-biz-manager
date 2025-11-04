@@ -188,11 +188,18 @@
   /* Ajustes específicos para auth page em mobile */
   body {
     overflow-x: hidden;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+  
+  html {
+    height: -webkit-fill-available;
   }
   
   /* Prevenir overflow horizontal */
   * {
     max-width: 100vw;
+    box-sizing: border-box;
   }
 }
 

@@ -103,6 +103,9 @@ export const AuthPage = () => {
 
       if (error) {
         setError('Erro ao fazer login com Google: ' + error.message);
+      } else {
+        // Track Meta Pixel event for Google sign-in
+        trackCompleteRegistration();
       }
     } catch (err) {
       setError('Erro inesperado ao fazer login com Google.');
@@ -116,14 +119,14 @@ export const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center py-6 px-3 sm:p-6 lg:p-8 relative overflow-x-hidden">
       {/* Grid pattern background */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--primary)/0.03)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--primary)/0.03)_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
       
       {/* Elementos decorativos de background com animação - ajustados para mobile */}
-      <div className="absolute top-0 left-0 w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
-      <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-primary/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 animate-pulse" style={{ animationDelay: '1s' }}></div>
-      <div className="absolute top-1/2 left-1/2 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-primary/5 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+      <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 lg:w-96 lg:h-96 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
+      <div className="absolute bottom-0 right-0 w-32 h-32 sm:w-48 sm:h-48 lg:w-96 lg:h-96 bg-primary/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 animate-pulse" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-primary/5 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
       
       {/* Floating particles - ocultos em mobile para melhor performance */}
       <div className="hidden sm:block absolute top-1/4 left-1/4 w-2 h-2 bg-primary/30 rounded-full animate-ping"></div>
@@ -131,9 +134,9 @@ export const AuthPage = () => {
       <div className="hidden sm:block absolute top-1/2 right-1/3 w-2 h-2 bg-primary/30 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
       
       {/* Container principal */}
-      <div className="relative z-10 w-full max-w-lg">
+      <div className="relative z-10 w-full max-w-lg px-2">
         {/* Logo e título no topo */}
-        <div className="text-center mb-6 sm:mb-8 space-y-3 sm:space-y-4">
+        <div className="text-center mb-4 sm:mb-6 space-y-2 sm:space-y-3">
           {/* Logo */}
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
@@ -141,19 +144,19 @@ export const AuthPage = () => {
               <img 
                 src={financyLogoDark}
                 alt="Financy" 
-                className="w-20 h-20 sm:w-28 sm:h-28 lg:w-32 lg:h-32 object-contain drop-shadow-2xl mx-auto"
+                className="w-16 h-16 sm:w-24 sm:h-24 lg:w-32 lg:h-32 object-contain drop-shadow-2xl mx-auto"
               />
             </div>
           </div>
           
           {/* Subtítulo */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <div className="flex items-center justify-center gap-2">
-              <div className="h-px w-6 sm:w-8 bg-gradient-to-r from-transparent to-primary/50"></div>
-              <p className="text-gray-300 text-sm sm:text-base font-medium">
+              <div className="h-px w-4 sm:w-8 bg-gradient-to-r from-transparent to-primary/50"></div>
+              <p className="text-gray-300 text-xs sm:text-base font-medium">
                 Gestão Financeira Inteligente
               </p>
-              <div className="h-px w-6 sm:w-8 bg-gradient-to-l from-transparent to-primary/50"></div>
+              <div className="h-px w-4 sm:w-8 bg-gradient-to-l from-transparent to-primary/50"></div>
             </div>
           </div>
         </div>
@@ -162,7 +165,7 @@ export const AuthPage = () => {
           {/* Animated gradient border effect */}
           <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-primary/0 via-primary/20 to-primary/0 opacity-50 blur-xl"></div>
           <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-primary/5 to-transparent"></div>
-          <CardContent className="relative z-10 p-5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
+          <CardContent className="relative z-10 p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-5">
             {error && (
               <Alert className="border-destructive/20 bg-destructive/5 text-destructive rounded-xl">
                 <AlertDescription className="font-medium">{error}</AlertDescription>
@@ -180,7 +183,7 @@ export const AuthPage = () => {
               onClick={handleGoogleLogin}
               disabled={googleLoading || loading}
               variant="outline"
-              className="w-full rounded-xl sm:rounded-2xl h-12 sm:h-14 text-sm sm:text-base font-semibold border-2 border-border/50 hover:border-primary/30 bg-background/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:bg-background/70 group"
+              className="w-full rounded-xl sm:rounded-2xl h-11 sm:h-13 text-xs sm:text-base font-semibold border-2 border-border/50 hover:border-primary/30 bg-background/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:bg-background/70 group"
             >
               {googleLoading ? (
                 <>
@@ -230,25 +233,24 @@ export const AuthPage = () => {
               setMessage(null);
               setFormData({ email: '', password: '', nomeCompleto: '' });
             }} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 backdrop-blur-sm p-1 border border-border/50">
+              <TabsList className="grid w-full grid-cols-2 h-11 sm:h-13 rounded-xl sm:rounded-2xl bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 backdrop-blur-sm p-1 border border-border/50">
                 <TabsTrigger 
                   value="login" 
-                  className="rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold data-[state=active]:bg-background/90 data-[state=active]:shadow-lg data-[state=active]:shadow-primary/5 transition-all duration-300"
+                  className="rounded-lg sm:rounded-xl text-xs sm:text-base font-semibold data-[state=active]:bg-background/90 data-[state=active]:shadow-lg data-[state=active]:shadow-primary/5 transition-all duration-300"
                 >
                   Entrar
                 </TabsTrigger>
                 <TabsTrigger 
                   value="signup" 
-                  className="rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 transition-all duration-300"
+                  className="rounded-lg sm:rounded-xl text-xs sm:text-base font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 transition-all duration-300"
                 >
                   <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  <span className="hidden xs:inline">Criar Conta</span>
-                  <span className="xs:hidden">Cadastrar</span>
+                  Criar Conta
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login" className="mt-6">
-                <form onSubmit={handleSubmit} className="space-y-5">
+              <TabsContent value="login" className="mt-4 sm:mt-5">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email" className="text-sm font-medium text-foreground">
                       Email
@@ -293,7 +295,7 @@ export const AuthPage = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full rounded-xl sm:rounded-2xl h-12 sm:h-14 lg:h-16 text-sm sm:text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/30 transform hover:-translate-y-1 active:translate-y-0 relative overflow-hidden group"
+                    className="w-full rounded-xl sm:rounded-2xl h-11 sm:h-13 lg:h-14 text-xs sm:text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/30 transform hover:-translate-y-1 active:translate-y-0 relative overflow-hidden group"
                     disabled={loading || googleLoading}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
@@ -311,8 +313,8 @@ export const AuthPage = () => {
                 </form>
               </TabsContent>
 
-              <TabsContent value="signup" className="mt-6">
-                <form onSubmit={handleSubmit} className="space-y-5">
+              <TabsContent value="signup" className="mt-4 sm:mt-5">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-name" className="text-sm font-medium text-foreground">Nome Completo</Label>
                     <div className="relative group">
