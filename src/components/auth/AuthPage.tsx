@@ -165,7 +165,7 @@ export const AuthPage = () => {
           {/* Animated gradient border effect */}
           <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-primary/0 via-primary/20 to-primary/0 opacity-50 blur-xl"></div>
           <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-primary/5 to-transparent"></div>
-          <CardContent className="relative z-10 p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-5">
+          <CardContent className="relative z-10 p-3 sm:p-6 lg:p-8 space-y-3 sm:space-y-5">
             {error && (
               <Alert className="border-destructive/20 bg-destructive/5 text-destructive rounded-xl">
                 <AlertDescription className="font-medium">{error}</AlertDescription>
@@ -233,19 +233,19 @@ export const AuthPage = () => {
               setMessage(null);
               setFormData({ email: '', password: '', nomeCompleto: '' });
             }} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 h-11 sm:h-13 rounded-xl sm:rounded-2xl bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 backdrop-blur-sm p-1 border border-border/50">
+              <TabsList className="grid w-full grid-cols-2 h-auto min-h-[44px] rounded-xl sm:rounded-2xl bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 backdrop-blur-sm p-1 border border-border/50">
                 <TabsTrigger 
                   value="login" 
-                  className="rounded-lg sm:rounded-xl text-xs sm:text-base font-semibold data-[state=active]:bg-background/90 data-[state=active]:shadow-lg data-[state=active]:shadow-primary/5 transition-all duration-300"
+                  className="rounded-lg sm:rounded-xl text-[11px] xs:text-xs sm:text-base font-semibold data-[state=active]:bg-background/90 data-[state=active]:shadow-lg data-[state=active]:shadow-primary/5 transition-all duration-300 py-2.5"
                 >
                   Entrar
                 </TabsTrigger>
                 <TabsTrigger 
                   value="signup" 
-                  className="rounded-lg sm:rounded-xl text-xs sm:text-base font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 transition-all duration-300"
+                  className="rounded-lg sm:rounded-xl text-[11px] xs:text-xs sm:text-base font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 transition-all duration-300 py-2.5"
                 >
-                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  Criar Conta
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="truncate">Criar Conta</span>
                 </TabsTrigger>
               </TabsList>
 

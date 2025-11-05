@@ -229,6 +229,18 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       setIsOnboardingComplete(true);
       
+      // Chamar webhook de novo usuário para envio de boas-vindas
+      try {
+        console.log('Chamando webhook de novo usuário...');
+        await supabase.functions.invoke('novo-usuario-webhook', {
+          body: { userId: user.id }
+        });
+        console.log('Webhook de novo usuário chamado com sucesso');
+      } catch (webhookError) {
+        // Log mas não bloqueia o onboarding se webhook falhar
+        console.error('Erro ao enviar webhook de novo usuário:', webhookError);
+      }
+      
       // Recarregar dados de onboarding após completar
       await checkOnboardingStatus();
     } catch (error) {
