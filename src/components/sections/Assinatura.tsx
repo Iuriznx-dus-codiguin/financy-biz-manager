@@ -32,6 +32,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { DeveloperAccessDialog } from '@/components/DeveloperAccessDialog';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { PromotionBanner } from '@/components/PromotionBanner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -497,7 +498,9 @@ const Assinatura: React.FC = () => {
 
   // Tela de seleção de planos (para teste gratuito ou sem assinatura)
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
+      {/* Banner de Promoção - 10% OFF */}
+      {user?.created_at && isFreeTrial() && <PromotionBanner userCreatedAt={user.created_at} />}
       <div className="text-center space-y-6">
         <h1 className="text-4xl font-bold text-foreground">Escolha seu Plano</h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">

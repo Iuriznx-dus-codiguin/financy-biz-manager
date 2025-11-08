@@ -32,6 +32,7 @@ import { DashboardProvider, useDashboard } from '@/hooks/useDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { usePaymentSuccess } from '@/hooks/usePaymentSuccess';
 import { SubscriptionBanners } from '@/components/SubscriptionBanners';
 import { FloatingWhatsAppButton } from '@/components/FloatingWhatsAppButton';
 
@@ -42,6 +43,9 @@ export default function Index() {
   const { currentDashboard } = useDashboard();
   const [showLoading, setShowLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('painel');
+  
+  // Hook para detectar pagamentos bem-sucedidos e mostrar confetti + alert
+  usePaymentSuccess();
 
   // Hook para gerenciar redirecionamentos baseados na assinatura
   useSubscriptionRedirect({ setActiveSection, currentSection: activeSection });
@@ -163,7 +167,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       <SidebarProvider defaultOpen={false}>
-        <div className="flex min-h-screen w-full">
+        <div className="flex w-full">
           <AppSidebar
             activeSection={activeSection} 
             setActiveSection={handleSectionChange}

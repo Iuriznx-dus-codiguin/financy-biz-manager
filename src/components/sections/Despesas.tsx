@@ -148,15 +148,15 @@ const Despesas = () => {
               Nova Despesa
             </Button>
           </DialogTrigger>
-          <DialogContent className="rounded-2xl max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="rounded-2xl max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Adicionar Nova Despesa</DialogTitle>
               <DialogDescription>
                 Registre uma nova despesa com todos os detalhes necessários para controle financeiro.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleAddDespesa} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleAddDespesa} className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                 {/* Coluna Esquerda - Dados Básicos */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-foreground border-b pb-2">Informações Básicas</h3>
@@ -343,9 +343,9 @@ const Despesas = () => {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
         <Card className="rounded-2xl shadow-sm">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Despesa Total</p>

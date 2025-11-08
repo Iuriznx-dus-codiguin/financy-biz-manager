@@ -168,9 +168,9 @@ const Metas = () => {
       </div>
 
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center space-x-2">
               <Target className="h-5 w-5 text-blue-500" />
               <div>
@@ -236,7 +236,7 @@ const Metas = () => {
           </Button>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {metas.map((meta) => (
             <Card key={meta.id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3">

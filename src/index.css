@@ -197,6 +197,24 @@
   * {
     box-sizing: border-box;
   }
+  
+  /* Dialogs responsivos */
+  .responsive-dialog {
+    max-width: 95vw !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  /* Tables com scroll horizontal */
+  .responsive-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Grid responsivo forçado */
+  .responsive-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
 }
 
 /* Extra small screens (phones in portrait) */

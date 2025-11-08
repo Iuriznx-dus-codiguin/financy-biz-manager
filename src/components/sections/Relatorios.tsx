@@ -570,16 +570,16 @@ import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
         </CardHeader>
         <CardContent>
           {dadosPrincipaisGastos.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               <div className="lg:col-span-2">
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
                   <PieChart>
                     <Pie
                       data={dadosPrincipaisGastos}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={120}
+                      innerRadius={50}
+                      outerRadius={90}
                       paddingAngle={5}
                       dataKey="value"
                     >
@@ -592,7 +592,7 @@ import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
                 </ResponsiveContainer>
               </div>
               
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <h3 className="font-semibold text-lg mb-4">Legenda</h3>
                 {dadosPrincipaisGastos.map((item, index) => (
                   <div key={item.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/20">
@@ -632,7 +632,7 @@ import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
           <p className="text-sm text-muted-foreground">Escolha o tipo de análise e período</p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Select value={selectedReport} onValueChange={setSelectedReport}>
               <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder="Tipo de Relatório" />

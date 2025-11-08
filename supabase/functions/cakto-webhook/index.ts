@@ -492,6 +492,25 @@ serve(safeHandler(async (req) => {
         console.log('✅ Tabela subscribers atualizada para compatibilidade');
       }
 
+      // Criar notificação de pagamento para feedback ao usuário
+      const { error: notificationError } = await supabase
+        .from('payment_notifications')
+        .insert({
+          user_id: profiles.id,
+          plan_name: planConfig.plan_name,
+          plan_id: planConfig.plan_id,
+          amount: parseFloat(payload.product_value || '0'),
+          transaction_id: payload.cakto_id || payload.id,
+          processed: false
+        });
+
+      if (notificationError) {
+        console.error('⚠️ Erro ao criar notificação de pagamento:', notificationError);
+        // Não falha o webhook por causa disso - é apenas feedback visual
+      } else {
+        console.log('✅ Notificação de pagamento criada com sucesso');
+      }
+
       // Responder com sucesso
       return new Response(
         JSON.stringify({ 

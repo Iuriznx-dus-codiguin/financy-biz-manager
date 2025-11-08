@@ -552,6 +552,39 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_notifications: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          plan_id: string
+          plan_name: string
+          processed: boolean | null
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          plan_id: string
+          plan_name: string
+          processed?: boolean | null
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          plan_id?: string
+          plan_name?: string
+          processed?: boolean | null
+          transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       phone_corrections_audit: {
         Row: {
           corrections_applied: Json | null
