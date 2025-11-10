@@ -1,12 +1,22 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Download } from 'lucide-react';
+import { Download, BarChart3, TrendingUp, TrendingDown, FolderOpen, FileText, Users, Target, DollarSign, Calendar } from 'lucide-react';
 import jsPDF from 'jspdf';
 import FlappyFinancyGame from '@/components/FlappyFinancyGame';
+import { useSectionTutorials } from '@/hooks/useSectionTutorials';
 
 const Ajuda = () => {
+  const { resetTutorials } = useSectionTutorials();
+  
+  const restartTutorial = async (section: string) => {
+    await resetTutorials();
+    // Recarregar a página para a seção específica
+    window.location.hash = section;
+    window.location.reload();
+  };
+
   const generatePDF = (guideType: string) => {
     const doc = new jsPDF();
     
@@ -268,6 +278,144 @@ const Ajuda = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader>
+          <CardTitle>🎓 Tutoriais Interativos</CardTitle>
+          <CardDescription>
+            Revise os tutoriais de cada seção da plataforma
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start h-auto py-4"
+              onClick={() => restartTutorial('painel')}
+            >
+              <div className="flex items-center gap-3">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                <div className="text-left">
+                  <div className="font-semibold">Dashboard</div>
+                  <div className="text-xs text-muted-foreground">Visão geral financeira</div>
+                </div>
+              </div>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              className="w-full justify-start h-auto py-4"
+              onClick={() => restartTutorial('receitas')}
+            >
+              <div className="flex items-center gap-3">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+                <div className="text-left">
+                  <div className="font-semibold">Receitas</div>
+                  <div className="text-xs text-muted-foreground">Registrar entradas</div>
+                </div>
+              </div>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              className="w-full justify-start h-auto py-4"
+              onClick={() => restartTutorial('despesas')}
+            >
+              <div className="flex items-center gap-3">
+                <TrendingDown className="w-5 h-5 text-red-600" />
+                <div className="text-left">
+                  <div className="font-semibold">Despesas</div>
+                  <div className="text-xs text-muted-foreground">Registrar saídas</div>
+                </div>
+              </div>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              className="w-full justify-start h-auto py-4"
+              onClick={() => restartTutorial('categorias')}
+            >
+              <div className="flex items-center gap-3">
+                <FolderOpen className="w-5 h-5 text-blue-600" />
+                <div className="text-left">
+                  <div className="font-semibold">Categorias</div>
+                  <div className="text-xs text-muted-foreground">Organizar finanças</div>
+                </div>
+              </div>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              className="w-full justify-start h-auto py-4"
+              onClick={() => restartTutorial('impostos')}
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-orange-600" />
+                <div className="text-left">
+                  <div className="font-semibold">Impostos</div>
+                  <div className="text-xs text-muted-foreground">Gerenciar tributos</div>
+                </div>
+              </div>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              className="w-full justify-start h-auto py-4"
+              onClick={() => restartTutorial('metas')}
+            >
+              <div className="flex items-center gap-3">
+                <Target className="w-5 h-5 text-purple-600" />
+                <div className="text-left">
+                  <div className="font-semibold">Metas</div>
+                  <div className="text-xs text-muted-foreground">Definir objetivos</div>
+                </div>
+              </div>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              className="w-full justify-start h-auto py-4"
+              onClick={() => restartTutorial('relatorios')}
+            >
+              <div className="flex items-center gap-3">
+                <DollarSign className="w-5 h-5 text-green-600" />
+                <div className="text-left">
+                  <div className="font-semibold">Relatórios</div>
+                  <div className="text-xs text-muted-foreground">Análises financeiras</div>
+                </div>
+              </div>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              className="w-full justify-start h-auto py-4"
+              onClick={() => restartTutorial('equipe')}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-indigo-600" />
+                <div className="text-left">
+                  <div className="font-semibold">Equipe</div>
+                  <div className="text-xs text-muted-foreground">Gerenciar membros</div>
+                </div>
+              </div>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              className="w-full justify-start h-auto py-4"
+              onClick={() => restartTutorial('fechamento')}
+            >
+              <div className="flex items-center gap-3">
+                <Calendar className="w-5 h-5 text-teal-600" />
+                <div className="text-left">
+                  <div className="font-semibold">Fechamento</div>
+                  <div className="text-xs text-muted-foreground">Fechar período</div>
+                </div>
+              </div>
+            </Button>
           </div>
         </CardContent>
       </Card>

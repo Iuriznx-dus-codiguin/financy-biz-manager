@@ -134,28 +134,6 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
     });
   };
 
-  const exportarCSV = () => {
-    if (gastos.length === 0) {
-      toast({
-        title: "Nenhum dado para exportar",
-        description: "Adicione alguns gastos primeiro."
-      });
-      return;
-    }
-
-    const csv = [
-      'Categoria,Descrição,Valor Mensal,Forma de Pagamento',
-      ...gastos.map(g => `${g.categoria},${g.descricao},${g.valor_mensal},${g.forma_pagamento}`)
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'gastos-iniciais.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   const importarCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -201,13 +179,16 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">
-          {isEmpresarial ? 'Planilha de Custos Operacionais' : 'Planilha Inicial de Gastos'}
+          {isEmpresarial ? 'Planilha de Custos Operacionais (Opcional)' : 'Planilha Inicial de Gastos (Opcional)'}
         </h2>
         <p className="text-muted-foreground">
           {isEmpresarial 
             ? 'Configure os custos operacionais da sua empresa para personalizar dashboards e relatórios.'
             : 'Registre seus gastos cotidianos para personalizar seu dashboard e relatórios.'
           }
+        </p>
+        <p className="text-xs text-muted-foreground">
+          💡 Preencher estes dados nos ajuda a personalizar melhor sua experiência
         </p>
       </div>
 
@@ -235,10 +216,6 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
           </Button>
         </div>
 
-        <Button onClick={exportarCSV} variant="outline" size="sm" disabled={gastos.length === 0}>
-          <Download className="w-4 h-4 mr-2" />
-          Exportar CSV
-        </Button>
       </div>
 
       {gastos.length > 0 && (

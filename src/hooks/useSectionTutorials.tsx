@@ -84,7 +84,7 @@ export const SectionTutorialsProvider: React.FC<{ children: React.ReactNode }> =
     // Não mostrar se já foi completado
     if (completedTutorials.includes(section)) return false;
     
-    // Não mostrar se foi pulado nesta sessão
+    // Não mostrar se foi pulado (permanentemente)
     if (skippedTutorials.includes(section)) return false;
     
     // Mostrar apenas se está na lista de seções válidas
@@ -99,9 +99,14 @@ export const SectionTutorialsProvider: React.FC<{ children: React.ReactNode }> =
         // Marcar como completado permanentemente
         const { error } = await supabase
           .from('section_tutorials')
-          .insert({
+          .upsert({
             user_id: user.id,
-            section_name: section
+            section_name: section,
+            viewed_at: new Date().toISOString(),
+            skipped: false,
+            progress: 0
+          }, {
+            onConflict: 'user_id,section_name'
           });
 
         if (error) {
@@ -121,7 +126,22 @@ export const SectionTutorialsProvider: React.FC<{ children: React.ReactNode }> =
         const skippedKey = `skipped_tutorials_${user.id}`;
         localStorage.setItem(skippedKey, JSON.stringify(newSkippedTutorials));
       } else {
-        // Marcar como pulado apenas para esta sessão
+        // Marcar como pulado PERMANENTEMENTE
+        const { error } = await supabase
+          .from('section_tutorials')
+          .upsert({
+            user_id: user.id,
+            section_name: section,
+            skipped: true,
+            last_viewed: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,section_name'
+          });
+
+        if (error) {
+          console.error('Erro ao marcar como pulado:', error);
+        }
+
         const newSkippedTutorials = [...skippedTutorials, section];
         setSkippedTutorials(newSkippedTutorials);
         

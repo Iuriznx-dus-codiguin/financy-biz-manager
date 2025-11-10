@@ -13,7 +13,7 @@ export const TimeFilter: React.FC<TimeFilterProps> = ({ value, onChange, showIco
   return (
     <div className="flex items-center gap-2">
       {showIcon && <Clock className="h-4 w-4 text-muted-foreground" />}
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={onChange} data-tutorial="time-filter">
         <SelectTrigger className="w-32 rounded-xl">
           <SelectValue placeholder="Período" />
         </SelectTrigger>

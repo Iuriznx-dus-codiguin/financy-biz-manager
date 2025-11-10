@@ -15,7 +15,8 @@ import { Crown, Sparkles } from 'lucide-react';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { FloatingDashboardInfo } from '@/components/FloatingDashboardInfo';
 import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
-import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
+import { InteractiveTutorial } from '@/components/tutorials/InteractiveTutorial';
+import { getTutorialSteps } from '@/config/tutorialSteps';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useDashboard } from '@/hooks/useDashboard';
 import { RecurringTransactions } from '@/components/RecurringTransactions';
@@ -30,6 +31,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const { onboardingData } = useOnboarding();
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('painel');
   const { currentDashboard } = useDashboard();
+  
+  // Tutorial adaptativo
+  const tutorialSteps = getTutorialSteps('painel', onboardingData?.user_type as 'pessoal' | 'empresarial');
   
   const { isFeatureAvailable } = useFeatureAccess();
   const hasBasicIntelligence = isFeatureAvailable('inteligencia_basica');
@@ -61,8 +65,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   if (hasAdvancedDashboard) {
     return (
       <section id="painel" className="space-y-6">
-        <SectionTutorial 
+        <InteractiveTutorial
           section="painel"
+          steps={tutorialSteps}
           isOpen={showTutorial}
           onClose={(completed) => closeTutorial(completed)}
         />
@@ -119,7 +124,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         dismissible={true}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3" data-tutorial="metric-cards">
         <OptimizedMetricCard
           title="Total de Receitas"
           value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
@@ -156,8 +161,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         />
       </div>
 
-      {hasAdvancedIntelligence ? (
-        <InteligenciaFinanceiraAprimorada
+      <div data-tutorial="intelligence">
+        {hasAdvancedIntelligence ? (
+          <InteligenciaFinanceiraAprimorada
           receitas={filteredReceitas}
           despesas={filteredDespesas}
           impostos={filteredImpostos}
@@ -177,6 +183,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           onUpgrade={() => setActiveSection?.('assinatura')}
         />
       )}
+      </div>
 
       <RecurringTransactions />
     </section>

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { BrazilianPhoneInput } from '@/components/ui/BrazilianPhoneInput';
 import { ChevronLeft, ChevronRight, User, Building, Star, PartyPopper, Sparkles, Target, TrendingUp, Phone, MessageCircle, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -568,8 +569,14 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skip
       className="space-y-6"
     >
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Como você conheceu a Financy?</h2>
+        <div className="flex items-center justify-center gap-2">
+          <h2 className="text-2xl font-bold">Como você conheceu a Financy?</h2>
+          <Badge variant="secondary">Opcional</Badge>
+        </div>
         <p className="text-muted-foreground">Queremos entender como você chegou até nós.</p>
+        <p className="text-xs text-muted-foreground mt-2">
+          💡 Preencher estes dados nos ajuda a melhorar nosso serviço
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">

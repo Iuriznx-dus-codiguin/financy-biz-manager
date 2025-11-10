@@ -733,21 +733,30 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_viewed: string | null
+          progress: number | null
           section_name: string
+          skipped: boolean | null
           user_id: string
           viewed_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          last_viewed?: string | null
+          progress?: number | null
           section_name: string
+          skipped?: boolean | null
           user_id: string
           viewed_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          last_viewed?: string | null
+          progress?: number | null
           section_name?: string
+          skipped?: boolean | null
           user_id?: string
           viewed_at?: string
         }
