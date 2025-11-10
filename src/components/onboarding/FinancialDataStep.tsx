@@ -12,9 +12,12 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ data, setD
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Dados Financeiros Básicos</h2>
+        <h2 className="text-2xl font-bold">Dados Financeiros Básicos (Opcional)</h2>
         <p className="text-muted-foreground">
           Conte-nos sobre sua situação financeira atual para personalizar melhor sua experiência.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          💡 Preencher estes dados nos ajuda a personalizar melhor sua experiência
         </p>
       </div>
 

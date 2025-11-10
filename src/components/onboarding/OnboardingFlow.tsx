@@ -213,10 +213,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skip
           return data.nome_empresa !== '' && data.nome_preferido !== '';
         }
         return data.nome_preferido !== '';
-      case 5: return data.how_did_you_know !== '';
-      case 6: return true;
-      case 7: return true;
-      case 8: return true;
+      case 5: return true; // Opcional
+      case 6: return true; // Opcional
+      case 7: return true; // Opcional
+      case 8: return true; // Opcional
       case 9: return data.termos_aceitos === true;
       default: return false;
     }
@@ -228,10 +228,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skip
       2: 'Escolha seu perfil',
       3: 'Situação financeira',
       4: 'Como devemos te chamar?',
-      5: 'Como nos conheceu?',
-      6: 'Dados financeiros básicos',
-      7: 'Seus gastos principais',
-      8: 'Defina uma meta',
+      5: 'Como nos conheceu? (Opcional)',
+      6: 'Dados financeiros básicos (Opcional)',
+      7: 'Seus gastos principais (Opcional)',
+      8: 'Defina uma meta (Opcional)',
       9: 'Termos e condições'
     };
     return titles[currentStep as keyof typeof titles];
