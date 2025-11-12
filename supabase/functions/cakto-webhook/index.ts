@@ -489,7 +489,27 @@ serve(safeHandler(async (req) => {
       if (subscribersError) {
         console.error('Erro ao atualizar subscribers (não crítico):', subscribersError);
       } else {
-        console.log('✅ Tabela subscribers atualizada para compatibilidade');
+      console.log('✅ Tabela subscribers atualizada para compatibilidade');
+      }
+
+      // Agendar webhooks de renovação
+      try {
+        console.log('📅 Agendando webhooks de renovação para:', profiles.id);
+        
+        const { data: scheduleData, error: scheduleError } = await supabaseClient.functions.invoke('schedule-user-webhooks', {
+          body: {
+            userId: profiles.id,
+            eventType: 'subscription_renewal'
+          }
+        });
+        
+        if (scheduleError) {
+          console.error('❌ Erro ao agendar webhooks de renovação:', scheduleError);
+        } else {
+          console.log('✅ Webhooks de renovação agendados:', scheduleData);
+        }
+      } catch (scheduleError) {
+        console.error('❌ Exceção ao agendar webhooks de renovação:', scheduleError);
       }
 
       // Criar notificação de pagamento para feedback ao usuário

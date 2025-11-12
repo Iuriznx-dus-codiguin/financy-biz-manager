@@ -231,14 +231,39 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       // Chamar webhook de novo usuário para envio de boas-vindas
       try {
-        console.log('Chamando webhook de novo usuário...');
-        await supabase.functions.invoke('novo-usuario-webhook', {
+        console.log('🚀 Chamando webhook de novo usuário para:', user.id);
+        
+        const { data: webhookData, error: webhookError } = await supabase.functions.invoke('novo-usuario-webhook', {
           body: { userId: user.id }
         });
-        console.log('Webhook de novo usuário chamado com sucesso');
+        
+        if (webhookError) {
+          console.error('❌ Erro no webhook de boas-vindas:', webhookError);
+        } else {
+          console.log('✅ Webhook de boas-vindas executado com sucesso:', webhookData);
+        }
       } catch (webhookError) {
-        // Log mas não bloqueia o onboarding se webhook falhar
-        console.error('Erro ao enviar webhook de novo usuário:', webhookError);
+        console.error('❌ Exceção ao enviar webhook de boas-vindas:', webhookError);
+      }
+
+      // Agendar webhooks de relacionamento (teste gratuito)
+      try {
+        console.log('📅 Agendando webhooks de relacionamento (teste gratuito)...');
+        
+        const { data: scheduleData, error: scheduleError } = await supabase.functions.invoke('schedule-user-webhooks', {
+          body: { 
+            userId: user.id,
+            eventType: 'free_trial'
+          }
+        });
+        
+        if (scheduleError) {
+          console.error('❌ Erro ao agendar webhooks:', scheduleError);
+        } else {
+          console.log('✅ Webhooks de relacionamento agendados:', scheduleData);
+        }
+      } catch (scheduleError) {
+        console.error('❌ Exceção ao agendar webhooks:', scheduleError);
       }
       
       // Recarregar dados de onboarding após completar

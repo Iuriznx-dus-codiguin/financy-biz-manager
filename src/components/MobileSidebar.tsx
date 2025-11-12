@@ -93,12 +93,12 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-            <SheetHeader>
-              <SheetTitle className="text-left">Menu</SheetTitle>
-            </SheetHeader>
-            <div className="mt-6 space-y-2">
-              {menuItems.map((item) => {
+          <SheetContent side="right" className="w-[300px] sm:w-[400px] flex flex-col">
+          <SheetHeader>
+            <SheetTitle className="text-left">Menu</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-2 overflow-y-auto flex-1 pr-2">
+            {menuItems.map((item) => {
                 const allowedWhenDisabled = ['assinatura', 'configuracoes', 'ajuda'];
                 const isAllowed = !disabled || allowedWhenDisabled.includes(item.id);
                 

@@ -80,7 +80,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
   }, [onComplete, user, onboardingLoading]);
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-green-900 to-emerald-900 flex items-center justify-center z-50 overflow-hidden">
+    <div className="dark loading-screen fixed inset-0 !bg-gradient-to-br !from-gray-900 !via-green-900 !to-emerald-900 flex items-center justify-center z-50 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute inset-0 bg-grid-pattern"></div>

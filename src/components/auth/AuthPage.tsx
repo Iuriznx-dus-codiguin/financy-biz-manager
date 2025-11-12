@@ -119,7 +119,7 @@ export const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center py-6 px-3 sm:p-6 lg:p-8 relative overflow-x-hidden">
+    <div className="dark auth-page min-h-screen w-full !bg-gradient-to-br !from-gray-950 !via-gray-900 !to-gray-950 flex items-center justify-center py-6 px-3 sm:p-6 lg:p-8 relative overflow-x-hidden">
       {/* Grid pattern background */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--primary)/0.03)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--primary)/0.03)_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
       

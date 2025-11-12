@@ -227,3 +227,19 @@
     display: inline !important;
   }
 }
+
+/* Forçar tema escuro em páginas específicas */
+.dark {
+  color-scheme: dark !important;
+}
+
+/* Garantir que auth e loading sejam sempre escuros */
+body:has(.auth-page),
+body:has(.loading-screen) {
+  color-scheme: dark !important;
+  background: #000 !important;
+}
+
+.auth-page, .loading-screen {
+  color-scheme: dark !important;
+}

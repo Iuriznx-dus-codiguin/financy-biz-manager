@@ -17,10 +17,19 @@ export const PromotionBanner: React.FC<PromotionBannerProps> = ({ userCreatedAt 
 
   useEffect(() => {
     // Verificar se o banner foi fechado anteriormente
-    const wasClosed = localStorage.getItem('promotion-banner-closed');
+    const wasClosed = localStorage.getItem(`promotion-banner-closed-${userCreatedAt}`);
+    const closedDate = localStorage.getItem('promotion-banner-closed-date');
+
+    // Se fechou há mais de 24h, permitir reaparecer
     if (wasClosed === 'true') {
-      setIsVisible(false);
-      return;
+      const closedTime = closedDate ? new Date(closedDate).getTime() : 0;
+      const now = new Date().getTime();
+      const hoursElapsed = (now - closedTime) / (1000 * 60 * 60);
+      
+      if (hoursElapsed < 24) {
+        setIsVisible(false);
+        return;
+      }
     }
 
     // Calcular tempo restante
@@ -59,7 +68,8 @@ export const PromotionBanner: React.FC<PromotionBannerProps> = ({ userCreatedAt 
 
   const handleClose = () => {
     setIsVisible(false);
-    localStorage.setItem('promotion-banner-closed', 'true');
+    localStorage.setItem(`promotion-banner-closed-${userCreatedAt}`, 'true');
+    localStorage.setItem('promotion-banner-closed-date', new Date().toISOString());
   };
 
   if (!isVisible) return null;

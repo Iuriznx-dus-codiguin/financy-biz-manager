@@ -40,8 +40,30 @@ const Assinatura: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [planType, setPlanType] = useState<'personal' | 'business'>('personal');
   const [isDeveloperDialogOpen, setIsDeveloperDialogOpen] = useState(false);
+  const [userCreatedAt, setUserCreatedAt] = useState<string>('');
   const { user } = useAuth();
   const { subscription, loading, isFreeTrial, isPremium } = useUserSubscription();
+
+  // Buscar created_at do perfil do usuário
+  React.useEffect(() => {
+    const fetchCreatedAt = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('created_at')
+        .eq('id', user.id)
+        .single();
+      
+      if (data?.created_at) {
+        setUserCreatedAt(data.created_at);
+      } else if (error) {
+        console.error('Erro ao buscar created_at:', error);
+      }
+    };
+    
+    fetchCreatedAt();
+  }, [user]);
 
   const paymentUrls = {
     // Planos Pessoais - Mensal
@@ -500,7 +522,7 @@ const Assinatura: React.FC = () => {
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Banner de Promoção - 10% OFF */}
-      {user?.created_at && isFreeTrial() && <PromotionBanner userCreatedAt={user.created_at} />}
+      {userCreatedAt && isFreeTrial() && <PromotionBanner userCreatedAt={userCreatedAt} />}
       <div className="text-center space-y-6">
         <h1 className="text-4xl font-bold text-foreground">Escolha seu Plano</h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
