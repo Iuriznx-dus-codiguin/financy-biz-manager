@@ -729,6 +729,45 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_webhooks: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          event_type: string
+          executed: boolean | null
+          executed_at: string | null
+          id: string
+          payload: Json
+          scheduled_date: string
+          user_id: string
+          webhook_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          event_type: string
+          executed?: boolean | null
+          executed_at?: string | null
+          id?: string
+          payload: Json
+          scheduled_date: string
+          user_id: string
+          webhook_url: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          event_type?: string
+          executed?: boolean | null
+          executed_at?: string | null
+          id?: string
+          payload?: Json
+          scheduled_date?: string
+          user_id?: string
+          webhook_url?: string
+        }
+        Relationships: []
+      }
       section_tutorials: {
         Row: {
           created_at: string
