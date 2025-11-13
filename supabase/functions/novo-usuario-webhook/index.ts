@@ -13,14 +13,30 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🎉 [WEBHOOK BOAS-VINDAS] Iniciando processamento...');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
 
-    const { userId } = await req.json();
+    // Parse do body com validação
+    let userId;
+    try {
+      const body = await req.json();
+      userId = body.userId;
+      console.log('📋 [WEBHOOK BOAS-VINDAS] Body recebido:', JSON.stringify(body));
+    } catch (parseError) {
+      console.error('❌ [WEBHOOK BOAS-VINDAS] Erro ao parsear JSON:', parseError);
+      throw new Error('Invalid JSON body');
+    }
 
-    console.log('Buscando dados do usuário:', userId);
+    if (!userId) {
+      console.error('❌ [WEBHOOK BOAS-VINDAS] userId não fornecido');
+      throw new Error('userId is required');
+    }
+
+    console.log('🔍 [WEBHOOK BOAS-VINDAS] Buscando dados do usuário:', userId);
 
     // Buscar dados do perfil do usuário
     const { data: profile, error: profileError } = await supabaseClient
@@ -30,11 +46,25 @@ serve(async (req) => {
       .single();
 
     if (profileError) {
-      console.error('Erro ao buscar perfil:', profileError);
+      console.error('❌ [WEBHOOK BOAS-VINDAS] Erro ao buscar perfil:', {
+        error: profileError,
+        userId,
+        code: profileError.code,
+        message: profileError.message
+      });
       throw profileError;
     }
 
-    console.log('Perfil encontrado:', profile);
+    if (!profile) {
+      console.error('❌ [WEBHOOK BOAS-VINDAS] Perfil não encontrado para userId:', userId);
+      throw new Error('Profile not found');
+    }
+
+    console.log('✅ [WEBHOOK BOAS-VINDAS] Perfil encontrado:', {
+      nome: profile.nome_completo,
+      email: profile.email,
+      telefone: profile.telefone ? 'Sim' : 'Não'
+    });
 
     // Preparar dados para enviar ao webhook n8n
     const webhookUrl = 'https://central-financy-n8n.y8enlt.easypanel.host/webhook/Novo-Usúario';
@@ -47,24 +77,50 @@ serve(async (req) => {
       user_id: userId
     };
 
-    console.log('Enviando dados para webhook n8n:', webhookPayload);
-
-    // Enviar para webhook n8n
-    const webhookResponse = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(webhookPayload)
+    console.log('📤 [WEBHOOK BOAS-VINDAS] Enviando dados para n8n:', {
+      url: webhookUrl,
+      payload: webhookPayload
     });
 
-    if (!webhookResponse.ok) {
-      const errorText = await webhookResponse.text();
-      console.error('Erro ao enviar webhook:', errorText);
-      throw new Error(`Webhook failed with status ${webhookResponse.status}`);
-    }
+    // Enviar para webhook n8n com timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-    console.log('Webhook enviado com sucesso');
+    try {
+      const webhookResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log('📨 [WEBHOOK BOAS-VINDAS] Resposta do n8n:', {
+        status: webhookResponse.status,
+        statusText: webhookResponse.statusText
+      });
+
+      if (!webhookResponse.ok) {
+        const errorText = await webhookResponse.text();
+        console.error('❌ [WEBHOOK BOAS-VINDAS] n8n retornou erro:', {
+          status: webhookResponse.status,
+          error: errorText
+        });
+        throw new Error(`Webhook failed with status ${webhookResponse.status}: ${errorText}`);
+      }
+
+      console.log('✅ [WEBHOOK BOAS-VINDAS] Webhook enviado com sucesso!');
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.error('⏱️ [WEBHOOK BOAS-VINDAS] Timeout ao enviar webhook');
+        throw new Error('Webhook request timeout after 10s');
+      }
+      throw fetchError;
+    }
 
     return new Response(
       JSON.stringify({ 
@@ -78,11 +134,17 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Erro no webhook de novo usuário:', error);
+    console.error('❌ [WEBHOOK BOAS-VINDAS] Erro geral:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        success: false
+        success: false,
+        timestamp: new Date().toISOString()
       }),
       { 
         status: 500,
