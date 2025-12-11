@@ -1214,6 +1214,10 @@ export type Database = {
       normalize_phone_br: { Args: { phone_input: string }; Returns: string }
       processar_despesas_recorrentes: { Args: never; Returns: number }
       processar_receitas_recorrentes: { Args: never; Returns: number }
+      processar_transacoes_recorrentes_usuario: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       renew_subscription: {
         Args: {
           p_amount?: number
