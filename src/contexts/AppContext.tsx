@@ -1,9 +1,9 @@
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { logger } from '@/utils/logger';
+import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
 
 export interface Receita {
   id: number;
@@ -144,9 +144,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const { user } = useAuth();
   const { currentDashboard } = useDashboard();
+  const { processRecurringTransactions } = useRecurringTransactions();
+  const hasProcessedRecurringRef = useRef<string | null>(null);
 
   // Cache timeout de 5 minutos
   const CACHE_TIMEOUT = 5 * 60 * 1000;
+
+  // Processar transações recorrentes quando usuário e dashboard estiverem prontos
+  useEffect(() => {
+    const processRecurring = async () => {
+      if (!user?.id) return;
+      
+      const today = new Date().toISOString().split('T')[0];
+      const key = `${user.id}_${today}`;
+      
+      // Evitar reprocessamento no mesmo dia
+      if (hasProcessedRecurringRef.current === key) return;
+      
+      const result = await processRecurringTransactions(user.id);
+      if (result && result.total > 0) {
+        hasProcessedRecurringRef.current = key;
+        // Invalidar cache para forçar recarregamento
+        if (currentDashboard) {
+          clearCacheForDashboard(currentDashboard.id);
+        }
+      } else if (result) {
+        hasProcessedRecurringRef.current = key;
+      }
+    };
+
+    processRecurring();
+  }, [user?.id, processRecurringTransactions]);
 
   useEffect(() => {
     if (user && currentDashboard) {
