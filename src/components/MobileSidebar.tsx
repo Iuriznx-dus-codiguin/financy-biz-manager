@@ -1,5 +1,6 @@
 import React from 'react';
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Menu, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useTheme } from '@/hooks/useTheme';
@@ -9,6 +10,40 @@ import { useDashboard } from '@/hooks/useDashboard';
 import financyLogoLight from '@/assets/financy-logo-light.png';
 // Logos for dark theme
 import financyLogoDark from '@/assets/financy-logo-dark.png';
+
+// Mapeamento de seção para rota
+const sectionToRoute: Record<string, string> = {
+  'painel': '/dashboard',
+  'receitas': '/receitas',
+  'despesas': '/despesas',
+  'categorias': '/categorias',
+  'impostos': '/impostos',
+  'equipe': '/equipe',
+  'metas': '/metas',
+  'relatorios': '/relatorios',
+  'fechamento': '/fechamento',
+  'agentes-ia': '/agentes-ia',
+  'assinatura': '/assinatura',
+  'configuracoes': '/configuracoes',
+  'ajuda': '/ajuda',
+};
+
+// Mapeamento de rota para seção
+const routeToSection: Record<string, string> = {
+  '/dashboard': 'painel',
+  '/receitas': 'receitas',
+  '/despesas': 'despesas',
+  '/categorias': 'categorias',
+  '/impostos': 'impostos',
+  '/equipe': 'equipe',
+  '/metas': 'metas',
+  '/relatorios': 'relatorios',
+  '/fechamento': 'fechamento',
+  '/agentes-ia': 'agentes-ia',
+  '/assinatura': 'assinatura',
+  '/configuracoes': 'configuracoes',
+  '/ajuda': 'ajuda',
+};
 
 const allMenuItems = [
   { id: 'painel', label: 'Painel', businessOnly: false },
@@ -36,10 +71,15 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   const { theme, setTheme } = useTheme();
   const { currentDashboard } = useDashboard();
   const [open, setOpen] = React.useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
   
   // Selecionar logo baseado no tema
   const isDarkTheme = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const financyLogo = isDarkTheme ? financyLogoDark : financyLogoLight;
+  
+  // Determinar seção ativa pela rota atual
+  const currentSection = routeToSection[location.pathname] || activeSection;
 
   // Filtrar menu baseado APENAS no tipo do dashboard atual
   const menuItems = allMenuItems.filter(item => {
@@ -61,8 +101,10 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   const handleMenuClick = (section: string) => {
     const allowedWhenDisabled = ['assinatura', 'configuracoes', 'ajuda'];
     if (disabled && !allowedWhenDisabled.includes(section)) {
-      return; // Não permite navegação se desabilitado, exceto para assinatura, configurações e ajuda
+      return;
     }
+    const route = sectionToRoute[section] || '/dashboard';
+    navigate(route);
     setActiveSection(section);
     setOpen(false);
   };
@@ -105,7 +147,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
                 return (
                   <Button
                     key={item.id}
-                    variant={activeSection === item.id ? "default" : "ghost"}
+                    variant={currentSection === item.id ? "default" : "ghost"}
                     className={`w-full justify-start ${
                       !isAllowed ? 'opacity-50 cursor-not-allowed' : ''
                     }`}

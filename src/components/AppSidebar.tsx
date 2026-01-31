@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 // Logos for light theme
 import financyLogoLight from '@/assets/financy-logo-light.png';
 import iconLogoLight from '@/assets/financy-icon-light.png';
@@ -20,10 +21,42 @@ import {
   Moon,
   Target,
   Bot,
-  Pin,
-  PinOff,
   Folder
 } from 'lucide-react';
+
+// Mapeamento de seção para rota
+const sectionToRoute: Record<string, string> = {
+  'painel': '/dashboard',
+  'receitas': '/receitas',
+  'despesas': '/despesas',
+  'categorias': '/categorias',
+  'impostos': '/impostos',
+  'equipe': '/equipe',
+  'metas': '/metas',
+  'relatorios': '/relatorios',
+  'fechamento': '/fechamento',
+  'agentes-ia': '/agentes-ia',
+  'assinatura': '/assinatura',
+  'configuracoes': '/configuracoes',
+  'ajuda': '/ajuda',
+};
+
+// Mapeamento de rota para seção
+const routeToSection: Record<string, string> = {
+  '/dashboard': 'painel',
+  '/receitas': 'receitas',
+  '/despesas': 'despesas',
+  '/categorias': 'categorias',
+  '/impostos': 'impostos',
+  '/equipe': 'equipe',
+  '/metas': 'metas',
+  '/relatorios': 'relatorios',
+  '/fechamento': 'fechamento',
+  '/agentes-ia': 'agentes-ia',
+  '/assinatura': 'assinatura',
+  '/configuracoes': 'configuracoes',
+  '/ajuda': 'ajuda',
+};
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/hooks/useTheme';
 import { useUserContext } from '@/hooks/useUserContext';
@@ -71,10 +104,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   const { currentDashboard } = useDashboard();
   const { userType } = useUserContext();
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const isCollapsed = state === 'collapsed';
   const shouldShowExpanded = isCollapsed && isHovered;
   
+  // Determinar seção ativa pela rota atual
+  const currentSection = routeToSection[location.pathname] || activeSection;
   // Selecionar logos baseado no tema
   const isDarkTheme = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const financyLogo = isDarkTheme ? financyLogoDark : financyLogoLight;
@@ -141,6 +178,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
             <SidebarMenu>
               {menuItems.map((item) => {
                 const Icon = item.icon;
+                const route = sectionToRoute[item.id] || '/dashboard';
+                const isActive = currentSection === item.id;
                 
                 return (
                   <SidebarMenuItem key={item.id}>
@@ -148,11 +187,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
                       onClick={() => {
                         const allowedWhenDisabled = ['assinatura', 'configuracoes', 'ajuda'];
                         if (!disabled || allowedWhenDisabled.includes(item.id)) {
+                          navigate(route);
                           setActiveSection(item.id);
                         }
                       }}
                       tooltip={isCollapsed && !shouldShowExpanded ? item.label : undefined}
-                      isActive={activeSection === item.id}
+                      isActive={isActive}
                       disabled={disabled && !['assinatura', 'configuracoes', 'ajuda'].includes(item.id)}
                       className={disabled && !['assinatura', 'configuracoes', 'ajuda'].includes(item.id) ? 'opacity-50 cursor-not-allowed' : ''}
                     >
