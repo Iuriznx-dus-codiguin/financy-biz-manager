@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, Calendar, AlertTriangle } from 'lucide-react';
+import { X, CreditCard, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,46 +12,29 @@ interface FreeTrialNotificationProps {
 export const FreeTrialNotification: React.FC<FreeTrialNotificationProps> = ({ setActiveSection }) => {
   const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
-  const [trialEndDate, setTrialEndDate] = useState<Date | null>(null);
-  const [daysLeft, setDaysLeft] = useState(0);
+  const [isPendingPayment, setIsPendingPayment] = useState(false);
 
   useEffect(() => {
     if (!user) return;
 
-    checkTrialStatus();
+    checkSubscriptionStatus();
   }, [user]);
 
-  const checkTrialStatus = async () => {
+  const checkSubscriptionStatus = async () => {
     try {
-      const { data: subscriber } = await supabase
-        .from('subscribers')
-        .select('*')
-        .eq('email', user?.email)
+      const { data: userSub } = await supabase
+        .from('user_subscriptions')
+        .select('status, subscription_type')
+        .eq('user_id', user?.id)
         .maybeSingle();
 
-      if (!subscriber?.subscribed) {
-        // Simular teste gratuito de 7 dias
-        const userCreatedAt = new Date(user?.created_at || new Date());
-        const trialEnd = new Date(userCreatedAt);
-        trialEnd.setDate(trialEnd.getDate() + 7);
-        
-        const now = new Date();
-        const timeDiff = trialEnd.getTime() - now.getTime();
-        const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-        
-        if (daysRemaining <= 3 && daysRemaining > 0) {
-          setTrialEndDate(trialEnd);
-          setDaysLeft(daysRemaining);
-          setIsVisible(true);
-        } else if (daysRemaining <= 0) {
-          // Trial expirado - redirecionar para assinatura
-          if (setActiveSection) {
-            setActiveSection('assinatura');
-          }
-        }
+      // Mostrar notificação apenas para usuários com pending_payment
+      if (userSub?.status === 'pending_payment') {
+        setIsPendingPayment(true);
+        setIsVisible(true);
       }
     } catch (error) {
-      console.error('Erro ao verificar status do trial:', error);
+      console.error('Erro ao verificar status da assinatura:', error);
     }
   };
 
@@ -66,26 +49,25 @@ export const FreeTrialNotification: React.FC<FreeTrialNotificationProps> = ({ se
     setIsVisible(false);
   };
 
-  if (!isVisible || !user || !trialEndDate) {
+  if (!isVisible || !user || !isPendingPayment) {
     return null;
   }
 
   return (
     <div className="fixed top-4 right-4 z-50 w-80">
-      <Card className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 shadow-lg">
+      <Card className="bg-gradient-to-br from-primary/10 via-purple-50 to-primary/5 dark:from-primary/20 dark:via-purple-900/20 dark:to-primary/10 border-primary/30 shadow-lg">
         <CardContent className="p-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-2 flex-1">
-              <AlertTriangle className="h-5 w-5 text-orange-500 flex-shrink-0" />
+              <div className="p-2 bg-primary/20 rounded-full">
+                <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
+              </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
-                  Teste Gratuito
+                <p className="text-sm font-medium text-primary dark:text-primary">
+                  Bem-vindo ao Financy!
                 </p>
-                <p className="text-xs text-orange-700 dark:text-orange-300">
-                  Seu teste gratuito acaba em {daysLeft} {daysLeft === 1 ? 'dia' : 'dias'}
-                </p>
-                <p className="text-xs text-orange-600 dark:text-orange-400">
-                  {trialEndDate.toLocaleDateString('pt-BR')}
+                <p className="text-xs text-muted-foreground">
+                  Escolha um plano para desbloquear todas as funcionalidades
                 </p>
               </div>
             </div>
@@ -93,7 +75,7 @@ export const FreeTrialNotification: React.FC<FreeTrialNotificationProps> = ({ se
               variant="ghost"
               size="sm"
               onClick={handleDismiss}
-              className="h-6 w-6 p-0 text-orange-500 hover:text-orange-700"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -102,9 +84,10 @@ export const FreeTrialNotification: React.FC<FreeTrialNotificationProps> = ({ se
             <Button
               onClick={handleGoToSubscription}
               size="sm"
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              Assinar Agora
+              <CreditCard className="h-4 w-4 mr-2" />
+              Ver Planos
             </Button>
           </div>
         </CardContent>

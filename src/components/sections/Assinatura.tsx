@@ -136,8 +136,7 @@ const Assinatura: React.FC = () => {
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'Múltiplos Perfis', value: '1 perfil' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
-        { name: 'Suporte', value: 'Email' },
-        { name: 'Teste gratuito', value: '7 dias' }
+        { name: 'Suporte', value: 'Email' }
       ]
     },
     {
@@ -154,8 +153,7 @@ const Assinatura: React.FC = () => {
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Múltiplos Perfis', value: '1 perfil' },
-        { name: 'Suporte', value: 'Email/WhatsApp' },
-        { name: 'Teste gratuito', value: '7 dias' }
+        { name: 'Suporte', value: 'Email/WhatsApp' }
       ]
     },
     {
@@ -172,8 +170,7 @@ const Assinatura: React.FC = () => {
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Múltiplos Perfis', value: '2 perfis' },
-        { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
-        { name: 'Teste gratuito', value: '7 dias' }
+        { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
       ]
     },
     {
@@ -188,8 +185,7 @@ const Assinatura: React.FC = () => {
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Múltiplos Perfis', value: '10 perfis' },
-        { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
-        { name: 'Teste gratuito', value: '7 dias' }
+        { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
       ]
     }
   ];
@@ -208,8 +204,7 @@ const Assinatura: React.FC = () => {
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
         { name: 'Múltiplas Empresas', value: '1 empresa' },
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
-        { name: 'Suporte', value: 'Email/WhatsApp' },
-        { name: 'Teste gratuito', value: '7 dias' }
+        { name: 'Suporte', value: 'Email/WhatsApp' }
       ]
     },
     {
@@ -227,8 +222,7 @@ const Assinatura: React.FC = () => {
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
         { name: 'Múltiplas Empresas', value: '1 empresa' },
-        { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
-        { name: 'Teste gratuito', value: '7 dias' }
+        { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
       ]
     },
     {
@@ -246,8 +240,7 @@ const Assinatura: React.FC = () => {
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
         { name: 'Múltiplas Empresas/Perfis', value: '2 empresas/perfis' },
-        { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
-        { name: 'Teste gratuito', value: '7 dias' }
+        { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
       ]
     },
     {
@@ -263,8 +256,7 @@ const Assinatura: React.FC = () => {
         { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
         { name: 'Múltiplas Empresas/Perfis', value: '10 empresas/perfis' },
-        { name: 'Suporte', value: 'Email/WhatsApp 24/7' },
-        { name: 'Teste gratuito', value: '7 dias' }
+        { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
       ]
     }
   ];
@@ -697,17 +689,16 @@ const Assinatura: React.FC = () => {
         <CardContent className="space-y-4">
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-3">
-              <AlertTriangle className="h-5 w-5 text-blue-600" />
-              <span className="font-semibold text-blue-800 dark:text-blue-200">Período de Teste Gratuito</span>
+              <CreditCard className="h-5 w-5 text-blue-600" />
+              <span className="font-semibold text-blue-800 dark:text-blue-200">Aguardando Pagamento</span>
             </div>
             <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
-              Você está em seu período de teste gratuito de 7 dias. 
-              Assine um plano para continuar aproveitando nossa plataforma após o teste.
+              Escolha um plano acima para desbloquear todas as funcionalidades do Financy.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Status:</span>
-                <span className="font-medium text-blue-600">Teste Gratuito</span>
+                <span className="font-medium text-blue-600">Pendente</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Plano Ativo:</span>
@@ -762,11 +753,11 @@ const Assinatura: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h4 className="font-semibold mb-2 flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                O que acontece após os 7 dias de teste gratuito?
+                <CreditCard className="h-4 w-4 text-primary" />
+                Como funciona o pagamento?
               </h4>
               <p className="text-sm text-muted-foreground">
-                Nada será cobrado automaticamente. Você escolhe se deseja assinar.
+                Após escolher o plano, você será redirecionado para o checkout seguro. Após a confirmação, o acesso é liberado imediatamente.
               </p>
             </div>
             <div>

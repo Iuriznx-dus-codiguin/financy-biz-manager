@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { X, Crown, AlertTriangle, Clock } from 'lucide-react';
+import { X, Crown, AlertTriangle, Clock, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 export const SubscriptionBanners: React.FC = () => {
-  const { subscription, isSubscriptionExpired, isFreeTrial, getDaysUntilExpiration } = useUserSubscription();
+  const { subscription, isSubscriptionExpired, isFreeTrial, isPendingPayment, getDaysUntilExpiration } = useUserSubscription();
   const [dismissed, setDismissed] = useState(false);
 
   // Não mostrar nada se não houver assinatura ou se foi dispensado
@@ -14,6 +14,7 @@ export const SubscriptionBanners: React.FC = () => {
 
   const expired = isSubscriptionExpired();
   const isTrial = isFreeTrial();
+  const isPending = isPendingPayment();
   const daysRemaining = getDaysUntilExpiration();
 
   const handleNavigateToSubscription = () => {
@@ -25,14 +26,15 @@ export const SubscriptionBanners: React.FC = () => {
     setDismissed(true);
   };
 
-  // Banner Principal - Para estados expirados ou últimos dias de assinatura paga
+  // Banner Principal - Para estados expirados, pending_payment ou últimos dias de assinatura paga
   const shouldShowMainBanner = () => {
+    if (isPending) return true; // Novo: pending_payment sempre mostra banner
     if (expired) return true; // Qualquer expirado
-    if (!isTrial && daysRemaining !== null && daysRemaining <= 3) return true; // Últimos 3 dias de assinatura paga
+    if (!isTrial && !isPending && daysRemaining !== null && daysRemaining <= 3) return true; // Últimos 3 dias de assinatura paga
     return false;
   };
 
-  // Card de Aviso - Apenas para últimos 3 dias de teste gratuito
+  // Card de Aviso - Apenas para últimos 3 dias de teste gratuito (usuários antigos)
   const shouldShowTrialCard = () => {
     return isTrial && !expired && daysRemaining !== null && daysRemaining <= 3;
   };
@@ -64,7 +66,7 @@ export const SubscriptionBanners: React.FC = () => {
             <div className={`
               rounded-lg shadow-2xl p-4 flex items-center justify-between
               border-l-4
-              ${expired 
+              ${expired || isPending
                 ? 'bg-red-50 border-red-500 dark:bg-red-950/30' 
                 : 'bg-orange-50 border-orange-500 dark:bg-orange-950/30'
               }
@@ -72,33 +74,39 @@ export const SubscriptionBanners: React.FC = () => {
               <div className="flex items-center gap-3">
                 <div className={`
                   rounded-full p-2
-                  ${expired 
+                  ${expired || isPending
                     ? 'bg-red-100 dark:bg-red-900/50' 
                     : 'bg-orange-100 dark:bg-orange-900/50'
                   }
                 `}>
-                  <AlertTriangle className={`
-                    h-5 w-5
-                    ${expired ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}
-                  `} />
+                  {isPending ? (
+                    <CreditCard className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  ) : (
+                    <AlertTriangle className={`
+                      h-5 w-5
+                      ${expired ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}
+                    `} />
+                  )}
                 </div>
                 
                 <div>
                   <h3 className={`
                     font-bold text-lg
-                    ${expired ? 'text-red-900 dark:text-red-100' : 'text-orange-900 dark:text-orange-100'}
+                    ${expired || isPending ? 'text-red-900 dark:text-red-100' : 'text-orange-900 dark:text-orange-100'}
                   `}>
-                    {expired && isTrial && '🚨 Teste Gratuito Expirado!'}
-                    {expired && !isTrial && '🚨 Assinatura Expirada!'}
-                    {!expired && '⚠️ Atenção: Sua assinatura está expirando!'}
+                    {isPending && '🚀 Assine para Começar!'}
+                    {!isPending && expired && isTrial && '🚨 Teste Gratuito Expirado!'}
+                    {!isPending && expired && !isTrial && '🚨 Assinatura Expirada!'}
+                    {!isPending && !expired && '⚠️ Atenção: Sua assinatura está expirando!'}
                   </h3>
                   <p className={`
                     text-sm
-                    ${expired ? 'text-red-700 dark:text-red-200' : 'text-orange-700 dark:text-orange-200'}
+                    ${expired || isPending ? 'text-red-700 dark:text-red-200' : 'text-orange-700 dark:text-orange-200'}
                   `}>
-                    {expired && isTrial && 'Seu período de teste de 7 dias chegou ao fim. Assine um plano para continuar usando o Financy!'}
-                    {expired && !isTrial && 'Renove sua assinatura para continuar usando todas as funcionalidades.'}
-                    {!expired && daysRemaining !== null && `Restam apenas ${daysRemaining} ${daysRemaining === 1 ? 'dia' : 'dias'}. Renove agora para não perder acesso!`}
+                    {isPending && 'Escolha um plano para desbloquear todas as funcionalidades do Financy!'}
+                    {!isPending && expired && isTrial && 'Seu período de teste chegou ao fim. Assine um plano para continuar usando o Financy!'}
+                    {!isPending && expired && !isTrial && 'Renove sua assinatura para continuar usando todas as funcionalidades.'}
+                    {!isPending && !expired && daysRemaining !== null && `Restam apenas ${daysRemaining} ${daysRemaining === 1 ? 'dia' : 'dias'}. Renove agora para não perder acesso!`}
                   </p>
                 </div>
               </div>

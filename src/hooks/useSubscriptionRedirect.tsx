@@ -21,10 +21,23 @@ export const useSubscriptionRedirect = ({ setActiveSection, currentSection }: Us
 
     const checkAndRedirect = async () => {
       try {
-        const { data: subscriber, error } = await supabase
+        // Primeiro verificar se é desenvolvedor (bypass completo)
+        const { data: subscriber } = await supabase
           .from('subscribers')
-          .select('*')
-          .eq('email', user.email)
+          .select('subscription_tier, subscribed')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        // Desenvolvedores têm acesso total
+        if (subscriber?.subscription_tier === 'developer' && subscriber?.subscribed === true) {
+          return;
+        }
+
+        // Verificar status na tabela user_subscriptions
+        const { data: userSub, error } = await supabase
+          .from('user_subscriptions')
+          .select('status, subscription_type, expires_at')
+          .eq('user_id', user.id)
           .maybeSingle();
 
         if (error && error.code !== 'PGRST116') {
@@ -34,38 +47,31 @@ export const useSubscriptionRedirect = ({ setActiveSection, currentSection }: Us
 
         let shouldRedirectToSubscription = false;
 
-        if (!subscriber) {
-          // Usuário sem assinatura = teste gratuito
-          const signUpDate = new Date(user.created_at || Date.now());
-          const trialEndDate = new Date(signUpDate.getTime() + (7 * 24 * 60 * 60 * 1000));
-          const today = new Date();
-          const diffTime = trialEndDate.getTime() - today.getTime();
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          
-          // Se teste expirou, redirecionar para assinatura
-          if (diffDays < 0) {
-            shouldRedirectToSubscription = true;
-          }
-        } else if (subscriber.subscribed && subscriber.subscription_end) {
+        if (!userSub) {
+          // Usuário sem assinatura = precisa pagar
+          shouldRedirectToSubscription = true;
+        } else if (userSub.status === 'pending_payment') {
+          // NOVO: Status pending_payment = precisa pagar
+          shouldRedirectToSubscription = true;
+        } else if (userSub.status === 'active') {
           // Verificar se assinatura expirou
-          const endDate = new Date(subscriber.subscription_end);
-          const today = new Date();
-          const diffTime = endDate.getTime() - today.getTime();
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          
-          // Se assinatura expirou, redirecionar para assinatura
-          if (diffDays < 0) {
-            shouldRedirectToSubscription = true;
+          if (userSub.expires_at) {
+            const endDate = new Date(userSub.expires_at);
+            const today = new Date();
+            if (endDate < today) {
+              shouldRedirectToSubscription = true;
+            }
           }
-        } else if (!subscriber.subscribed) {
-          // Usuário sem assinatura ativa
+          // Se não tem expires_at mas é active, está OK (ex: desenvolvedor)
+        } else if (userSub.status === 'expired' || userSub.status === 'cancelled') {
+          // Assinatura expirada ou cancelada
           shouldRedirectToSubscription = true;
         }
 
         // Redirecionar para assinatura se necessário e bloquear outras seções
         if (shouldRedirectToSubscription) {
           // Bloquear acesso a outras seções quando assinatura expirou, mas permitir acesso à assinatura, configurações e ajuda
-          const restrictedSections = ['painel', 'receitas', 'despesas', 'impostos', 'metas', 'relatorios', 'fechamento', 'agentes-ia', 'equipe'];
+          const restrictedSections = ['painel', 'receitas', 'despesas', 'impostos', 'metas', 'relatorios', 'fechamento', 'agentes-ia', 'equipe', 'categorias'];
           if (restrictedSections.includes(currentSection)) {
             setActiveSection('assinatura');
           }
