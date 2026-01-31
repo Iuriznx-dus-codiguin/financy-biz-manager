@@ -93,7 +93,7 @@ export const useUserSubscription = () => {
 
       // Se não encontrou assinatura, criar automaticamente (fallback)
       if (!data) {
-        logger.warn('Assinatura não encontrada para o usuário. Criando teste gratuito automaticamente...');
+        logger.warn('Assinatura não encontrada para o usuário. Criando assinatura pendente automaticamente...');
         
         // Chamar função do banco que cria assinatura de teste gratuito
         const { error: ensureError } = await supabase.rpc('ensure_user_has_subscription', {
@@ -158,22 +158,25 @@ export const useUserSubscription = () => {
       return false;
     }
 
-    // Se não tem assinatura, verificar se o teste gratuito de 7 dias expirou
+    // Se não tem assinatura, considerar como expirado (precisa pagar)
     if (!subscription) {
-      if (!user?.created_at) return true;
-      
-      const userCreatedAt = new Date(user.created_at);
-      const trialEndDate = new Date(userCreatedAt.getTime() + (7 * 24 * 60 * 60 * 1000));
-      const isExpired = trialEndDate < new Date();
-      
-      if (isExpired) {
-        logger.warn('Teste gratuito expirado para usuário sem assinatura');
-      }
-      
-      return isExpired;
+      logger.warn('Usuário sem assinatura - acesso bloqueado');
+      return true;
     }
     
-    // Se tem assinatura, verificar data de expiração
+    // NOVO: Se status é pending_payment, considerar como expirado (precisa pagar)
+    if (subscription.status === 'pending_payment') {
+      logger.warn('Assinatura pendente de pagamento - acesso bloqueado');
+      return true;
+    }
+    
+    // Se status não é active, considerar como expirado
+    if (subscription.status !== 'active') {
+      logger.warn('Assinatura não está ativa - acesso bloqueado');
+      return true;
+    }
+    
+    // Se tem assinatura ativa, verificar data de expiração
     if (!subscription.expires_at) return false;
     
     const isExpired = new Date(subscription.expires_at) < new Date();
@@ -186,7 +189,12 @@ export const useUserSubscription = () => {
   };
 
   const isFreeTrial = (): boolean => {
+    // free_trial ainda é suportado para usuários antigos
     return subscription?.subscription_type === 'free_trial';
+  };
+
+  const isPendingPayment = (): boolean => {
+    return subscription?.status === 'pending_payment' || subscription?.subscription_type === 'pending';
   };
 
   const isPremium = (): boolean => {
@@ -287,6 +295,7 @@ export const useUserSubscription = () => {
     getFeatureLimit,
     isSubscriptionExpired,
     isFreeTrial,
+    isPendingPayment,
     isPremium,
     isBusinessPlan,
     isPersonalPlan,

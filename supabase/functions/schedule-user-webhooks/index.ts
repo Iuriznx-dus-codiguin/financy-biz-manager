@@ -43,44 +43,10 @@ serve(async (req) => {
 
     const webhooksToSchedule = [];
 
-    if (eventType === 'free_trial') {
-      // Calcular datas baseadas no created_at
-      const createdDate = new Date(profile.created_at);
-      
-      // Teste gratuito: 3 dias após, 1 dia antes de encerrar (6 dias), dia do encerramento (7 dias)
-      const date3 = new Date(createdDate);
-      date3.setDate(date3.getDate() + 3);
-      
-      const date6 = new Date(createdDate);
-      date6.setDate(date6.getDate() + 6);
-      
-      const date7 = new Date(createdDate);
-      date7.setDate(date7.getDate() + 7);
+    // NOTA: Lógica de free_trial removida - modelo de pagamento direto implementado
+    // Agora apenas webhooks de renovação são agendados quando o usuário assina
 
-      webhooksToSchedule.push(
-        {
-          user_id: userId,
-          event_type: 'testegratuito3',
-          scheduled_date: date3.toISOString().split('T')[0],
-          webhook_url: webhookUrl,
-          payload: basePayload
-        },
-        {
-          user_id: userId,
-          event_type: 'testegratuito1',
-          scheduled_date: date6.toISOString().split('T')[0],
-          webhook_url: webhookUrl,
-          payload: basePayload
-        },
-        {
-          user_id: userId,
-          event_type: 'testegratuito0',
-          scheduled_date: date7.toISOString().split('T')[0],
-          webhook_url: webhookUrl,
-          payload: basePayload
-        }
-      );
-    } else if (eventType === 'subscription_renewal') {
+    if (eventType === 'subscription_renewal') {
       // Buscar data de renovação
       const { data: subscription } = await supabaseClient
         .from('user_subscriptions')

@@ -29,47 +29,65 @@ export const GlobalSubscriptionAlert: React.FC<GlobalSubscriptionAlertProps> = (
     if (!user) return;
 
     try {
-      const { data: subscriber, error } = await supabase
-        .from('subscribers')
-        .select('*')
-        .eq('email', user.email)
+      // Verificar na tabela user_subscriptions (nova lógica)
+      const { data: userSub, error: subError } = await supabase
+        .from('user_subscriptions')
+        .select('status, subscription_type, expires_at, plan_name')
+        .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Erro ao verificar assinatura:', error);
+      if (subError && subError.code !== 'PGRST116') {
+        console.error('Erro ao verificar assinatura:', subError);
         return;
       }
 
-      if (subscriber) {
-        setSubscriptionData({
-          subscribed: subscriber.subscribed,
-          subscription_tier: subscriber.subscription_tier,
-          subscription_end: subscriber.subscription_end
-        });
+      if (userSub) {
+        // Verificar status pending_payment
+        if (userSub.status === 'pending_payment') {
+          setSubscriptionData({
+            subscribed: false,
+            subscription_tier: 'pending',
+            subscription_end: null
+          });
+          setDaysUntilExpiry(0); // Força exibição do alerta
+          return;
+        }
 
-        // Calcular dias até expiração
-        if (subscriber.subscription_end) {
-          const endDate = new Date(subscriber.subscription_end);
+        // Verificar se assinatura ativa expirou
+        if (userSub.status === 'active' && userSub.expires_at) {
+          const endDate = new Date(userSub.expires_at);
           const today = new Date();
           const diffTime = endDate.getTime() - today.getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
           setDaysUntilExpiry(diffDays);
+          setSubscriptionData({
+            subscribed: diffDays >= 0,
+            subscription_tier: userSub.subscription_type,
+            subscription_end: userSub.expires_at
+          });
+          return;
         }
-      } else {
-        // Usuário sem assinatura = teste gratuito de 7 dias
-        const signUpDate = new Date(user.created_at || Date.now());
-        const trialEndDate = new Date(signUpDate.getTime() + (7 * 24 * 60 * 60 * 1000));
-        const today = new Date();
-        const diffTime = trialEndDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        setDaysUntilExpiry(diffDays);
-        setSubscriptionData({
-          subscribed: false,
-          subscription_tier: null,
-          subscription_end: trialEndDate.toISOString()
-        });
+
+        // Assinatura ativa sem data de expiração (ex: desenvolvedor)
+        if (userSub.status === 'active' && !userSub.expires_at) {
+          setSubscriptionData({
+            subscribed: true,
+            subscription_tier: userSub.subscription_type,
+            subscription_end: null
+          });
+          setDaysUntilExpiry(null);
+          return;
+        }
       }
+
+      // Sem assinatura = precisa pagar
+      setSubscriptionData({
+        subscribed: false,
+        subscription_tier: null,
+        subscription_end: null
+      });
+      setDaysUntilExpiry(0);
     } catch (error) {
       console.error('Erro ao verificar status da assinatura:', error);
     }
@@ -89,18 +107,18 @@ export const GlobalSubscriptionAlert: React.FC<GlobalSubscriptionAlertProps> = (
   }
 
   // Lógica de exibição:
-  // - Vermelho: plano gratuito (não assinado)
+  // - Vermelho: pending_payment ou não assinado
   // - Laranja: próximo ao vencimento (3 dias ou menos)
-  const isFreePlan = !subscriptionData.subscribed;
-  const isNearExpiry = subscriptionData.subscribed && daysUntilExpiry <= 3 && daysUntilExpiry >= 0;
-  const isExpired = daysUntilExpiry < 0;
+  const isPendingPayment = subscriptionData.subscription_tier === 'pending' || !subscriptionData.subscribed;
+  const isNearExpiry = subscriptionData.subscribed && daysUntilExpiry !== null && daysUntilExpiry <= 3 && daysUntilExpiry >= 0;
+  const isExpired = daysUntilExpiry !== null && daysUntilExpiry < 0;
 
-  if (!isFreePlan && !isNearExpiry && !isExpired) {
+  if (!isPendingPayment && !isNearExpiry && !isExpired) {
     return null;
   }
 
   const getAlertConfig = () => {
-    if (isFreePlan || isExpired) {
+    if (isPendingPayment || isExpired) {
       return {
         variant: 'red',
         bgClass: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
@@ -108,14 +126,12 @@ export const GlobalSubscriptionAlert: React.FC<GlobalSubscriptionAlertProps> = (
         textClass: 'text-red-800 dark:text-red-200',
         buttonClass: 'bg-red-600 hover:bg-red-700 text-white',
         dismissClass: 'text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200',
-        icon: isExpired ? CreditCard : AlertTriangle,
-        title: isExpired ? 'Assinatura Expirada' : 'Teste Gratuito',
-        message: isExpired 
-          ? 'Sua assinatura expirou. Renove para continuar usando todos os recursos.'
-          : daysUntilExpiry > 0 
-            ? `Seu teste expira em ${daysUntilExpiry} ${daysUntilExpiry === 1 ? 'dia' : 'dias'}.`
-            : 'Seu teste gratuito expirou hoje.',
-        buttonText: isExpired ? 'Renovar Agora' : 'Assinar Agora'
+        icon: isPendingPayment ? CreditCard : AlertTriangle,
+        title: isPendingPayment ? 'Assine um Plano' : 'Assinatura Expirada',
+        message: isPendingPayment 
+          ? 'Escolha um plano para desbloquear todas as funcionalidades.'
+          : 'Sua assinatura expirou. Renove para continuar usando todos os recursos.',
+        buttonText: isPendingPayment ? 'Ver Planos' : 'Renovar Agora'
       };
     } else {
       return {

@@ -246,25 +246,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         console.error('❌ Exceção ao enviar webhook de boas-vindas:', webhookError);
       }
 
-      // Agendar webhooks de relacionamento (teste gratuito)
-      try {
-        console.log('📅 Agendando webhooks de relacionamento (teste gratuito)...');
-        
-        const { data: scheduleData, error: scheduleError } = await supabase.functions.invoke('schedule-user-webhooks', {
-          body: { 
-            userId: user.id,
-            eventType: 'free_trial'
-          }
-        });
-        
-        if (scheduleError) {
-          console.error('❌ Erro ao agendar webhooks:', scheduleError);
-        } else {
-          console.log('✅ Webhooks de relacionamento agendados:', scheduleData);
-        }
-      } catch (scheduleError) {
-        console.error('❌ Exceção ao agendar webhooks:', scheduleError);
-      }
+      // NOTA: Webhooks de teste gratuito removidos - modelo de pagamento direto implementado
+      // Os webhooks de renovação serão agendados quando o usuário assinar um plano
       
       // Recarregar dados de onboarding após completar
       await checkOnboardingStatus();
