@@ -9,11 +9,9 @@ import {
   CreditCard, 
   Check, 
   Calendar, 
-  AlertTriangle, 
   Crown, 
   Sparkles, 
   Bot, 
-  Lock, 
   User, 
   Building2,
   Star,
@@ -27,12 +25,9 @@ import {
   ArrowRight,
   CheckCircle2
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
 import { DeveloperAccessDialog } from '@/components/DeveloperAccessDialog';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
-import { PromotionBanner } from '@/components/PromotionBanner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -40,69 +35,38 @@ const Assinatura: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [planType, setPlanType] = useState<'personal' | 'business'>('personal');
   const [isDeveloperDialogOpen, setIsDeveloperDialogOpen] = useState(false);
-  const [userCreatedAt, setUserCreatedAt] = useState<string>('');
   const { user } = useAuth();
-  const { subscription, loading, isFreeTrial, isPremium } = useUserSubscription();
+  const { subscription, loading, isPremium } = useUserSubscription();
 
-  // Buscar created_at do perfil do usuário
-  React.useEffect(() => {
-    const fetchCreatedAt = async () => {
-      if (!user) return;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('created_at')
-        .eq('id', user.id)
-        .single();
-      
-      if (data?.created_at) {
-        setUserCreatedAt(data.created_at);
-      } else if (error) {
-        console.error('Erro ao buscar created_at:', error);
-      }
-    };
-    
-    fetchCreatedAt();
-  }, [user]);
-
-  const paymentUrls = {
+  const paymentUrls: Record<string, string> = {
     // Planos Pessoais - Mensal
-    'personal-basic-monthly': 'https://pay.cakto.com.br/32twvdb_506799',
     'personal-plus-monthly': 'https://pay.cakto.com.br/gbmkspq_506803',
     'personal-pro-monthly': 'https://pay.cakto.com.br/rtfgu9x_511525',
-    'personal-enterprise-monthly': 'https://pay.cakto.com.br/6m4eyqf_506810',
     
     // Planos Pessoais - Anual
-    'personal-basic-annual': 'https://pay.cakto.com.br/ydsbtqa',
     'personal-plus-annual': 'https://pay.cakto.com.br/39r822v',
     'personal-pro-annual': 'https://pay.cakto.com.br/jtvtbzy',
-    'personal-enterprise-annual': 'https://pay.cakto.com.br/d73estf',
     
     // Planos Empresariais - Mensal
     'business-plus-monthly': 'https://pay.cakto.com.br/izhudpq_590408',
-    'business-premium-monthly': 'https://pay.cakto.com.br/34ngzrg_511510',
     'business-pro-monthly': 'https://pay.cakto.com.br/f7d9hvg_506809',
     'business-enterprise-monthly': 'https://pay.cakto.com.br/3ei5eox_590705',
     
     // Planos Empresariais - Anual
     'business-plus-annual': 'https://pay.cakto.com.br/cx7b7r6_590691',
-    'business-premium-annual': 'https://pay.cakto.com.br/5bz2sy4_590696',
     'business-pro-annual': 'https://pay.cakto.com.br/36ffsgo_590699',
     'business-enterprise-annual': 'https://pay.cakto.com.br/t2cpi2a_590702'
   };
 
   const handlePayment = (planId: string, period: string) => {
-    // Corrigir o mapeamento para corresponder às chaves dos paymentUrls
     const billing = period === 'annual' ? 'annual' : 'monthly';
-    const urlKey = `${planId}-${billing}` as keyof typeof paymentUrls;
+    const urlKey = `${planId}-${billing}`;
     const url = paymentUrls[urlKey];
     
-    // Payment processing - debug logging removed for security
-    
-    if (url && url !== '#') {
+    if (url) {
       window.open(url, '_blank');
     } else {
-      alert(`URL de pagamento para ${planId} (${billing}) não configurada ainda. Chave procurada: ${urlKey}`);
+      alert(`URL de pagamento para ${planId} (${billing}) não configurada ainda.`);
     }
   };
 
@@ -125,66 +89,36 @@ const Assinatura: React.FC = () => {
 
   const personalPlans = [
     {
-      id: 'personal-basic',
-      name: 'Básico',
-      monthlyPrice: 24.90,
-      annualPrice: 197.00,
-      icon: <User className="h-6 w-6" />,
-      description: 'Para controle financeiro pessoal simples',
-      features: [
-        { name: 'Perfil pessoal', value: 'Simples' },
-        { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'Múltiplos Perfis', value: '1 perfil' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
-        { name: 'Suporte', value: 'Email' }
-      ]
-    },
-    {
       id: 'personal-plus',
       name: 'Plus',
-      monthlyPrice: 34.90,
-      annualPrice: 280.00,
+      monthlyPrice: 19.90,
+      annualPrice: 159.90,
       icon: <TrendingUp className="h-6 w-6" />,
-      description: 'Gestão financeira pessoal avançada',
+      description: 'Controle financeiro pessoal completo',
       badge: 'Recomendado',
       recommended: true,
       features: [
-        { name: 'Perfil pessoal', value: 'Avançado' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
-        { name: 'Múltiplos Perfis', value: '1 perfil' },
+        { name: 'IA no WhatsApp', value: 'ILIMITADA (texto, áudio, foto)' },
+        { name: 'Dashboard Pessoal', value: 'Básico' },
+        { name: 'Contas Pessoais', value: 'Até 1' },
         { name: 'Suporte', value: 'Email/WhatsApp' }
       ]
     },
     {
       id: 'personal-pro',
-      name: 'PRO',
-      monthlyPrice: 44.90,
-      annualPrice: 360.00,
+      name: 'Pro',
+      monthlyPrice: 34.90,
+      annualPrice: 279.90,
       icon: <Flame className="h-6 w-6" />,
       description: 'Ideal para casais',
       badge: 'Popular',
       popular: true,
       features: [
-        { name: 'Perfil pessoal', value: 'Avançado' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
-        { name: 'Múltiplos Perfis', value: '2 perfis' },
-        { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
-      ]
-    },
-    {
-      id: 'personal-enterprise',
-      name: 'Família',
-      monthlyPrice: 97.00,
-      annualPrice: 770.00,
-      icon: <Users className="h-6 w-6" />,
-      description: 'Máximo controle familiar',
-      features: [
-        { name: 'Perfil pessoal', value: 'Avançado' },
-        { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
-        { name: 'Múltiplos Perfis', value: '10 perfis' },
+        { name: 'IA no WhatsApp', value: 'ILIMITADA (texto, áudio, foto)' },
+        { name: 'Dashboard Pessoal', value: 'Avançado' },
+        { name: 'Contas Pessoais', value: 'Até 3' },
         { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
       ]
     }
@@ -193,22 +127,6 @@ const Assinatura: React.FC = () => {
   const businessPlans = [
     {
       id: 'business-plus',
-      name: 'Básico',
-      monthlyPrice: 34.90,
-      annualPrice: 280.00,
-      icon: <Building2 className="h-6 w-6" />,
-      description: 'Gestão empresarial essencial',
-      features: [
-        { name: 'Empresa', value: 'Simples' },
-        { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Múltiplas Empresas', value: '1 empresa' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
-        { name: 'Suporte', value: 'Email/WhatsApp' }
-      ]
-    },
-    {
-      id: 'business-premium',
       name: 'Plus',
       monthlyPrice: 44.90,
       annualPrice: 360.00,
@@ -217,11 +135,10 @@ const Assinatura: React.FC = () => {
       badge: 'Recomendado',
       recommended: true,
       features: [
-        { name: 'Empresa', value: 'Avançado' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
+        { name: 'IA no WhatsApp', value: 'ILIMITADA (texto, áudio, foto)' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Múltiplas Empresas', value: '1 empresa' },
+        { name: 'Empresas', value: 'Até 1' },
         { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
       ]
     },
@@ -231,15 +148,14 @@ const Assinatura: React.FC = () => {
       monthlyPrice: 97.00,
       annualPrice: 770.00,
       icon: <Flame className="h-6 w-6" />,
-      description: 'Ideal para administrar as finanças pessoais e empresariais',
+      description: 'Finanças pessoais e empresariais juntas',
       badge: 'Popular',
       popular: true,
       features: [
-        { name: 'Empresa', value: 'Avançado' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
+        { name: 'IA no WhatsApp', value: 'ILIMITADA (texto, áudio, foto)' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Múltiplas Empresas/Perfis', value: '2 empresas/perfis' },
+        { name: 'Empresas/Perfis', value: 'Até 2' },
         { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
       ]
     },
@@ -251,11 +167,10 @@ const Assinatura: React.FC = () => {
       icon: <Shield className="h-6 w-6" />,
       description: 'Solução empresarial premium',
       features: [
-        { name: 'Empresa', value: 'Avançado' },
         { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADO (texto, áudio, imagem)' },
+        { name: 'IA no WhatsApp', value: 'ILIMITADA (texto, áudio, foto)' },
         { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Múltiplas Empresas/Perfis', value: '10 empresas/perfis' },
+        { name: 'Empresas/Perfis', value: 'Até 10' },
         { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
       ]
     }
@@ -267,16 +182,9 @@ const Assinatura: React.FC = () => {
     setIsDeveloperDialogOpen(true);
   };
 
-  // Verificar se o plano atual é pessoal ou empresarial
   const isPersonalPlan = subscription?.plan_name?.toLowerCase().includes('pessoal') || 
-                         subscription?.plan_name?.toLowerCase().includes('básico') ||
                          subscription?.plan_name?.toLowerCase().includes('plus') ||
-                         subscription?.plan_name?.toLowerCase().includes('pro') ||
-                         subscription?.plan_name?.toLowerCase().includes('família');
-
-  const isBusinessPlan = subscription?.plan_name?.toLowerCase().includes('empresarial') ||
-                         subscription?.plan_name?.toLowerCase().includes('premium') ||
-                         subscription?.plan_name?.toLowerCase().includes('company');
+                         subscription?.plan_name?.toLowerCase().includes('pro');
 
   if (loading) {
     return (
@@ -286,11 +194,10 @@ const Assinatura: React.FC = () => {
     );
   }
 
-  // Se usuário tem plano ativo (não está em teste gratuito)
-  if (isPremium() && subscription && !isFreeTrial()) {
+  // Se usuário tem plano ativo
+  if (isPremium() && subscription) {
     return (
       <div className="space-y-8">
-        {/* Card de Assinatura Atual */}
         <Card className="border-2 border-primary/20 bg-gradient-to-br from-background via-primary/5 to-background">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -310,13 +217,12 @@ const Assinatura: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Informações do Plano */}
             <div className="grid md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Plano Atual</p>
                 <p className="text-2xl font-bold text-foreground">{subscription.plan_name}</p>
                 <Badge variant="outline" className="mt-2">
-                  {subscription.subscription_type === 'yearly' ? 'Anual' : 'Mensal'}
+                  {subscription.billing_period === 'yearly' ? 'Anual' : 'Mensal'}
                 </Badge>
               </div>
               
@@ -329,9 +235,7 @@ const Assinatura: React.FC = () => {
                       {format(new Date(subscription.expires_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                     </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Renovação automática
-                  </p>
+                  <p className="text-xs text-muted-foreground">Renovação automática</p>
                 </div>
               )}
               
@@ -346,7 +250,6 @@ const Assinatura: React.FC = () => {
               </div>
             </div>
 
-            {/* Recursos Disponíveis */}
             <div className="border-t pt-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
@@ -366,34 +269,12 @@ const Assinatura: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    {subscription.features.ai_requests_per_month && (
-                      <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                        <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-medium">Solicitações IA</p>
-                          <p className="text-sm text-muted-foreground">
-                            {subscription.features.ai_requests_per_month === -1 ? 'Ilimitadas' : `${subscription.features.ai_requests_per_month}/mês`}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {subscription.features.team_members && (
-                      <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                        <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-medium">Membros da Equipe</p>
-                          <p className="text-sm text-muted-foreground">
-                            {subscription.features.team_members === -1 ? 'Ilimitados' : `Até ${subscription.features.team_members}`}
-                          </p>
-                        </div>
-                      </div>
-                    )}
                     {subscription.features.whatsapp_integration && (
                       <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                         <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="font-medium">WhatsApp IA</p>
-                          <p className="text-sm text-muted-foreground">Integração completa</p>
+                          <p className="text-sm text-muted-foreground">ILIMITADA (texto, áudio, foto)</p>
                         </div>
                       </div>
                     )}
@@ -401,8 +282,8 @@ const Assinatura: React.FC = () => {
                       <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                         <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-medium">Análises Avançadas</p>
-                          <p className="text-sm text-muted-foreground">Relatórios completos</p>
+                          <p className="font-medium">Dashboard Avançado</p>
+                          <p className="text-sm text-muted-foreground">Análises completas</p>
                         </div>
                       </div>
                     )}
@@ -422,7 +303,6 @@ const Assinatura: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Upgrade para Empresarial (apenas para planos pessoais) */}
         {isPersonalPlan && (
           <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-50/50 via-purple-50/50 to-blue-50/50 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-blue-950/20">
             <CardHeader>
@@ -441,37 +321,6 @@ const Assinatura: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-white/50 dark:bg-black/20 rounded-xl p-6 space-y-4">
-                <p className="text-foreground leading-relaxed">
-                  <strong className="text-blue-700 dark:text-blue-300">Planos empresariais</strong> suportam múltiplos dashboards que podem ser configurados como:
-                </p>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                    <Building2 className="h-6 w-6 text-green-600 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-green-900 dark:text-green-100">Dashboards Empresariais</p>
-                      <p className="text-sm text-green-700 dark:text-green-300">
-                        Gestão completa do seu negócio com ferramentas profissionais
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                    <User className="h-6 w-6 text-purple-600 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-purple-900 dark:text-purple-100">Dashboards Pessoais</p>
-                      <p className="text-sm text-purple-700 dark:text-purple-300">
-                        Controle suas finanças pessoais separadamente
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-blue-100 dark:bg-blue-900/30 rounded-lg p-4 border-l-4 border-blue-500">
-                  <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
-                    💡 Ideal para empreendedores que querem administrar as finanças pessoais e empresariais em apenas um plano, de forma profissional e organizada.
-                  </p>
-                </div>
-              </div>
-              
               <Button 
                 onClick={() => setPlanType('business')}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg py-6"
@@ -483,7 +332,6 @@ const Assinatura: React.FC = () => {
           </Card>
         )}
 
-        {/* Dúvidas ou Suporte */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -493,7 +341,7 @@ const Assinatura: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Entre em contato com nosso suporte para dúvidas sobre sua assinatura, alterações de plano ou cancelamento.
+              Entre em contato com nosso suporte para dúvidas sobre sua assinatura.
             </p>
             <Button variant="outline" className="w-full" onClick={() => window.open('https://wa.me/5511999999999', '_blank')}>
               <MessageCircle className="mr-2 h-4 w-4" />
@@ -510,11 +358,9 @@ const Assinatura: React.FC = () => {
     );
   }
 
-  // Tela de seleção de planos (para teste gratuito ou sem assinatura)
+  // Tela de seleção de planos
   return (
     <div className="space-y-6 sm:space-y-8">
-      {/* Banner de Promoção - 10% OFF */}
-      {userCreatedAt && isFreeTrial() && <PromotionBanner userCreatedAt={userCreatedAt} />}
       <div className="text-center space-y-6">
         <h1 className="text-4xl font-bold text-foreground">Escolha seu Plano</h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -522,7 +368,7 @@ const Assinatura: React.FC = () => {
           Transforme sua relação com o dinheiro com nossa plataforma completa.
         </p>
 
-        {/* Banner de Desconto Anual - Destaque */}
+        {/* Banner de Desconto Anual */}
         <div className="relative overflow-hidden bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 rounded-2xl p-6 shadow-2xl animate-pulse max-w-4xl mx-auto">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-4">
@@ -545,7 +391,7 @@ const Assinatura: React.FC = () => {
           </div>
         </div>
         
-        {/* Toggle Planos Pessoais/Empresariais */}
+        {/* Toggle Pessoal/Empresarial */}
         <div className="flex items-center justify-center space-x-2">
           <Button
             variant={planType === 'personal' ? 'default' : 'outline'}
@@ -588,7 +434,7 @@ const Assinatura: React.FC = () => {
       </div>
 
       {/* Cards dos Planos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className={`grid grid-cols-1 ${currentPlans.length === 2 ? 'md:grid-cols-2 max-w-3xl mx-auto' : 'md:grid-cols-3'} gap-6`}>
         {currentPlans.map((plan) => {
           const pricing = getPrice(plan.monthlyPrice, plan.annualPrice);
           
@@ -599,7 +445,6 @@ const Assinatura: React.FC = () => {
                 plan.popular || plan.recommended ? 'border-primary shadow-lg scale-105' : ''
               }`}
             >
-              {/* Badge do Plano */}
               {(plan.popular || plan.recommended) && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
                   <Badge className={`px-3 py-1 rounded-full text-white ${
@@ -619,7 +464,6 @@ const Assinatura: React.FC = () => {
                 <CardTitle className="text-xl">{plan.name}</CardTitle>
                 <CardDescription>{plan.description}</CardDescription>
                 
-                {/* Preço */}
                 <div className="space-y-2 pt-4">
                   {isAnnual && (
                     <div className="text-sm text-muted-foreground line-through">
@@ -651,24 +495,14 @@ const Assinatura: React.FC = () => {
               <CardContent className="space-y-3">
                 {plan.features.map((feature, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    {typeof feature.value === 'boolean' ? (
-                      feature.value ? (
-                        <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      ) : (
-                        <span className="h-4 w-4 text-muted-foreground flex-shrink-0">×</span>
-                      )
-                    ) : (
-                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    )}
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <div className="flex-1">
                       <span className="text-sm font-medium text-foreground">
                         {feature.name}
                       </span>
-                      {typeof feature.value === 'string' && (
-                        <div className="text-xs text-muted-foreground">
-                          {feature.value}
-                        </div>
-                      )}
+                      <div className="text-xs text-muted-foreground">
+                        {feature.value}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -695,36 +529,8 @@ const Assinatura: React.FC = () => {
             <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
               Escolha um plano acima para desbloquear todas as funcionalidades do Financy.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Status:</span>
-                <span className="font-medium text-blue-600">Pendente</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Plano Ativo:</span>
-                <span className="font-medium">Nenhum</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Próximo Vencimento:</span>
-                <span className="font-medium">--</span>
-              </div>
-            </div>
           </div>
 
-          {/* Área de status do teste */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-            <div className="text-sm">
-              <p className="font-medium text-blue-800 dark:text-blue-200 mb-2">
-                Status da Integração
-              </p>
-              <p className="text-xs text-blue-600 dark:text-blue-300">
-                A integração com o sistema de pagamentos está ativa e funcionando corretamente.
-                Suas assinaturas serão ativadas automaticamente após o pagamento.
-              </p>
-            </div>
-          </div>
-
-          {/* Botão de acesso desenvolvedor - mais discreto */}
           <div className="pt-2 border-t border-border/50">
             <div className="text-center">
               <Button
@@ -741,7 +547,7 @@ const Assinatura: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* FAQ Atualizada */}
+      {/* FAQ */}
       <Card className="rounded-2xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -767,15 +573,6 @@ const Assinatura: React.FC = () => {
               </h4>
               <p className="text-sm text-muted-foreground">
                 Sim, você pode mudar de plano a qualquer momento sem perder seus dados.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2 flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" />
-                O que é um Multi-Dashboard?
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                É a capacidade de criar diferentes visões/empresas/pessoas em dashboards separados.
               </p>
             </div>
             <div>

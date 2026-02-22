@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff, Sparkles } from 'lucide-react';
 import financyLogoDark from '@/assets/financy-logo-new-dark.png';
-import { trackCompleteRegistration } from '@/utils/metaPixel';
+
 
 export const AuthPage = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
@@ -76,8 +76,6 @@ export const AuthPage = () => {
         }
 
         if (data.user) {
-          // Disparar evento do Meta Pixel para conversão de cadastro
-          trackCompleteRegistration();
           setMessage('Conta criada com sucesso! Verifique seu email para confirmar.');
         }
       }
@@ -104,8 +102,6 @@ export const AuthPage = () => {
       if (error) {
         setError('Erro ao fazer login com Google: ' + error.message);
       } else {
-        // Track Meta Pixel event for Google sign-in
-        trackCompleteRegistration();
       }
     } catch (err) {
       setError('Erro inesperado ao fazer login com Google.');
