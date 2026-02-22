@@ -16,7 +16,7 @@ import { ExpenseSheetStep } from './ExpenseSheetStep';
 import { FinancialGoalStep } from './FinancialGoalStep';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
-import { trackLead } from '@/utils/metaPixel';
+
 import { validateAndNormalizePhone, savePhoneCorrection, type CorrectionType } from '@/utils/evolutionPhoneValidation';
 import { checkPhoneDuplicate } from '@/utils/phoneValidation';
 import { useAuth } from '@/hooks/useAuth';
@@ -168,8 +168,6 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skip
           );
         }
         
-        // Disparar evento do Meta Pixel para lead qualificado
-        trackLead();
         
         triggerConfetti();
         toast({

@@ -4,33 +4,36 @@ export const useFeatureAccess = () => {
   const { subscriptionTier } = useSubscription();
 
   const isFeatureAvailable = (feature: string) => {
-    const freePlanFeatures = [
-      'dashboard_basic',
-      'receitas_basic', // Limitado
-      'despesas_basic', // Limitado  
-      'impostos_basic',
-      'inteligencia_basica' // Básica funciona no plano gratuito
-    ];
-
+    // Plano Plus Pessoal
     const plusPlanFeatures = [
-      ...freePlanFeatures,
-      'dashboard_complete',
+      'dashboard_basic',
       'receitas_unlimited',
       'despesas_unlimited',
-      'relatorios_basic',
-      'fechamento_caixa',
+      'impostos_basic',
+      'inteligencia_basica',
+      'whatsapp_ia',
       'export_data'
     ];
 
-    const premiumPlanFeatures = [
+    // Plano Pro Pessoal (inclui Plus + avançado)
+    const proPlanFeatures = [
       ...plusPlanFeatures,
-      'multi_dashboard',
+      'dashboard_complete',
+      'dashboard_avancado',
       'inteligencia_avancada',
-      'dashboard_avancado', // Dashboard avançado apenas em planos premium
+      'relatorios_basic',
+      'fechamento_caixa',
+      'multi_dashboard'
+    ];
+
+    // Plano Premium/Enterprise (empresarial)
+    const premiumPlanFeatures = [
+      ...proPlanFeatures,
       'gestao_equipe',
       'fechamento_automatico',
       'whatsapp_support',
-      'premiacoes_anuais'
+      'premiacoes_anuais',
+      'relatorios_corporativos'
     ];
 
     const enterprisePlanFeatures = [
@@ -38,7 +41,6 @@ export const useFeatureAccess = () => {
       'ia_pixel',
       'economia_impostos',
       'gestao_multi_empresa',
-      'relatorios_corporativos',
       'suporte_dedicado'
     ];
 
@@ -56,71 +58,73 @@ export const useFeatureAccess = () => {
         return enterprisePlanFeatures.includes(feature);
       case 'free':
       default:
-        return freePlanFeatures.includes(feature);
+        // Sem plano ativo = sem acesso
+        return false;
     }
   };
 
   const getFeatureLimitMessage = (feature: string) => {
-    const messages = {
-      'receitas_unlimited': 'Limite de 50 receitas no plano gratuito. Atualize para Plus para acesso ilimitado.',
-      'despesas_unlimited': 'Limite de 50 despesas no plano gratuito. Atualize para Plus para acesso ilimitado.',
-      'relatorios_basic': 'Relatórios avançados disponíveis no plano Plus ou superior.',
-      'inteligencia_basica': 'Inteligência financeira disponível no plano Plus ou superior.',
-      'inteligencia_avancada': 'Inteligência financeira avançada disponível no plano Premium ou superior.',
-      'multi_dashboard': 'Múltiplos perfis/empresas disponíveis apenas no plano Premium.',
-      'fechamento_automatico': 'Fechamento automático disponível no plano Premium ou superior.',
-      'export_data': 'Exportação de dados disponível no plano Plus ou superior.'
+    const messages: Record<string, string> = {
+      'receitas_unlimited': 'Assine um plano para ter acesso a receitas.',
+      'despesas_unlimited': 'Assine um plano para ter acesso a despesas.',
+      'relatorios_basic': 'Relatórios disponíveis no plano Pro ou superior.',
+      'inteligencia_basica': 'Inteligência financeira disponível em todos os planos pagos.',
+      'inteligencia_avancada': 'Inteligência financeira avançada disponível no plano Pro ou superior.',
+      'multi_dashboard': 'Múltiplas contas disponíveis no plano Pro (até 3) ou empresarial.',
+      'fechamento_automatico': 'Fechamento automático disponível nos planos empresariais.',
+      'export_data': 'Exportação de dados disponível em todos os planos pagos.',
+      'gestao_equipe': 'Gestão de equipe disponível nos planos empresariais.',
     };
 
     return messages[feature] || 'Este recurso requer uma assinatura ativa.';
   };
 
-  // Limites específicos para plano gratuito
+  // Limites específicos por plano
   const getLimits = () => {
-    // Desenvolvedor tem acesso ilimitado a tudo, exceto perfis/empresas (limite de 10)
+    // Desenvolvedor tem acesso ilimitado
     if (subscriptionTier === 'developer') {
       return {
         maxReceitas: -1,
         maxDespesas: -1,
         maxImpostos: -1,
         maxMetas: -1,
-        maxProfiles: 10 // Renomeado de maxDashboards
+        maxProfiles: 10
       };
     }
 
     switch (subscriptionTier) {
-      case 'free':
-        return {
-          maxReceitas: 50,
-          maxDespesas: 50,
-          maxImpostos: 20,
-          maxMetas: 5,
-          maxProfiles: 1 // Renomeado de maxDashboards
-        };
       case 'plus':
         return {
-          maxReceitas: -1, // Ilimitado
+          maxReceitas: -1,
           maxDespesas: -1,
           maxImpostos: -1,
           maxMetas: -1,
-          maxProfiles: 1 // Renomeado de maxDashboards
+          maxProfiles: 1
         };
       case 'premium':
+        return {
+          maxReceitas: -1,
+          maxDespesas: -1,
+          maxImpostos: -1,
+          maxMetas: -1,
+          maxProfiles: 3
+        };
       case 'enterprise':
         return {
           maxReceitas: -1,
           maxDespesas: -1,
           maxImpostos: -1,
           maxMetas: -1,
-          maxProfiles: 5 // Renomeado de maxDashboards
+          maxProfiles: 10
         };
+      case 'free':
       default:
         return {
-          maxReceitas: 50,
-          maxDespesas: 50,
-          maxImpostos: 20,
-          maxMetas: 5,
-          maxProfiles: 1 // Renomeado de maxDashboards
+          maxReceitas: 0,
+          maxDespesas: 0,
+          maxImpostos: 0,
+          maxMetas: 0,
+          maxProfiles: 0
         };
     }
   };
