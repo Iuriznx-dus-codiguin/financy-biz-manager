@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
@@ -13,44 +13,16 @@ import { SubscriptionBanners } from '@/components/SubscriptionBanners';
 import { FloatingWhatsAppButton } from '@/components/FloatingWhatsAppButton';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
-import { useState } from 'react';
-
-// Mapeamento de rotas para IDs de seção
-const routeToSection: Record<string, string> = {
-  '/dashboard': 'painel',
-  '/receitas': 'receitas',
-  '/despesas': 'despesas',
-  '/categorias': 'categorias',
-  '/impostos': 'impostos',
-  '/equipe': 'equipe',
-  '/metas': 'metas',
-  '/relatorios': 'relatorios',
-  '/fechamento': 'fechamento',
-  '/agentes-ia': 'agentes-ia',
-  '/assinatura': 'assinatura',
-  '/configuracoes': 'configuracoes',
-  '/ajuda': 'ajuda',
-};
-
-// Mapeamento de seção para rota
-const sectionToRoute: Record<string, string> = {
-  'painel': '/dashboard',
-  'receitas': '/receitas',
-  'despesas': '/despesas',
-  'categorias': '/categorias',
-  'impostos': '/impostos',
-  'equipe': '/equipe',
-  'metas': '/metas',
-  'relatorios': '/relatorios',
-  'fechamento': '/fechamento',
-  'agentes-ia': '/agentes-ia',
-  'assinatura': '/assinatura',
-  'configuracoes': '/configuracoes',
-  'ajuda': '/ajuda',
-};
-
-// Seções permitidas quando assinatura está expirada ou pendente
-const ALLOWED_SECTIONS_WHEN_BLOCKED = ['assinatura', 'configuracoes', 'ajuda'];
+import {
+  ROUTE_TO_SECTION,
+  SECTION_TO_ROUTE,
+  ALLOWED_SECTIONS_WHEN_BLOCKED,
+  BUSINESS_ONLY_SECTIONS,
+  isSectionAllowedWhenBlocked,
+  isBusinessOnlySection,
+  getRouteForSection,
+  getSectionForRoute,
+} from '@/constants/routes';
 
 export const AuthenticatedLayout = () => {
   const { user, loading: authLoading } = useAuth();
@@ -61,67 +33,48 @@ export const AuthenticatedLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hook para detectar pagamentos bem-sucedidos
   usePaymentSuccess();
 
-  // Obter seção atual baseada na rota
-  const activeSection = routeToSection[location.pathname] || 'painel';
-
-  // Verificar se usuário está bloqueado (assinatura expirada ou pendente)
+  const activeSection = getSectionForRoute(location.pathname);
   const isBlocked = user && subscription && isSubscriptionExpired();
 
   // Redirecionar para assinatura se bloqueado e tentando acessar seção restrita
   useEffect(() => {
-    if (isBlocked && !ALLOWED_SECTIONS_WHEN_BLOCKED.includes(activeSection)) {
+    if (isBlocked && !isSectionAllowedWhenBlocked(activeSection)) {
       navigate('/assinatura', { replace: true });
     }
   }, [isBlocked, activeSection, navigate]);
 
   // Bloquear navegação para seções empresariais se dashboard é pessoal
   useEffect(() => {
-    if (currentDashboard?.type === 'personal' && ['equipe', 'fechamento'].includes(activeSection)) {
+    if (currentDashboard?.type === 'personal' && isBusinessOnlySection(activeSection)) {
       navigate('/dashboard', { replace: true });
     }
   }, [currentDashboard, activeSection, navigate]);
 
-  // Função para navegar entre seções
   const handleSectionChange = (section: string) => {
-    // Bloquear se assinatura expirada (exceto seções permitidas)
-    if (isBlocked && !ALLOWED_SECTIONS_WHEN_BLOCKED.includes(section)) {
-      return;
-    }
-
-    // Bloquear seções empresariais para dashboard pessoal
-    if (currentDashboard?.type === 'personal' && ['equipe', 'fechamento'].includes(section)) {
+    if (isBlocked && !isSectionAllowedWhenBlocked(section)) return;
+    if (currentDashboard?.type === 'personal' && isBusinessOnlySection(section)) {
       navigate('/dashboard', { replace: true });
       return;
     }
-
-    const route = sectionToRoute[section] || '/dashboard';
-    navigate(route);
+    navigate(getRouteForSection(section));
   };
 
   // Listener para navegação customizada dos agentes
   useEffect(() => {
     const handleNavigateToSection = (event: CustomEvent<string>) => {
       const targetSection = event.detail;
-      
-      if (isBlocked && !ALLOWED_SECTIONS_WHEN_BLOCKED.includes(targetSection)) {
-        return;
-      }
-      
-      const route = sectionToRoute[targetSection] || '/dashboard';
-      navigate(route);
+      if (isBlocked && !isSectionAllowedWhenBlocked(targetSection)) return;
+      navigate(getRouteForSection(targetSection));
     };
 
     window.addEventListener('navigate-to-section', handleNavigateToSection as EventListener);
-    
     return () => {
       window.removeEventListener('navigate-to-section', handleNavigateToSection as EventListener);
     };
   }, [isBlocked, navigate]);
 
-  // Loading state
   if (authLoading || onboardingLoading || subscriptionLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -133,12 +86,10 @@ export const AuthenticatedLayout = () => {
     );
   }
 
-  // Mostrar loading screen apenas para usuários autenticados
   if (showLoading && user) {
     return <LoadingScreen onComplete={() => setShowLoading(false)} />;
   }
 
-  // Mostrar onboarding para novos usuários
   if (user && !isOnboardingComplete) {
     return <OnboardingFlow onComplete={completeOnboarding} />;
   }

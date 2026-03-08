@@ -12,6 +12,10 @@ interface Subscription {
   subscription_end?: string;
 }
 
+/**
+ * Hook consolidado de assinatura.
+ * Prioridade: developer > user_subscriptions > customer_subscriptions > subscribers > free
+ */
 export const useSubscription = () => {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -19,30 +23,31 @@ export const useSubscription = () => {
 
   useEffect(() => {
     if (!user) {
+      setSubscription(null);
       setLoading(false);
       return;
     }
-
     fetchSubscription();
   }, [user]);
 
   const fetchSubscription = async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
       
-      // PRIMEIRO: Verificar se é desenvolvedor na tabela subscribers
+      // 1. Verificar se é desenvolvedor
       const { data: subscriberData } = await supabase
         .from('subscribers')
         .select('subscription_tier, subscribed, subscription_end')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
-      // Se é desenvolvedor, retornar acesso ilimitado
       if (isDeveloperTier(subscriberData)) {
-        logger.success('Acesso de desenvolvedor detectado em useSubscription');
+        logger.success('Acesso de desenvolvedor detectado');
         setSubscription({
           id: 'developer',
-          email: user!.email || '',
+          email: user.email || '',
           subscribed: true,
           subscription_tier: 'developer',
           subscription_end: undefined
@@ -50,33 +55,35 @@ export const useSubscription = () => {
         return;
       }
       
-      // Tentar buscar na nova tabela user_subscriptions
+      // 2. Tabela principal: user_subscriptions
       const { data: userSubData } = await supabase
         .from('user_subscriptions')
-        .select('*')
-        .eq('user_id', user!.id)
-        .single();
+        .select('id, email, status, subscription_type, expires_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
       if (userSubData) {
+        const isActive = userSubData.status === 'active' && 
+          (!userSubData.expires_at || new Date(userSubData.expires_at) > new Date());
+        
         setSubscription({
           id: userSubData.id,
           email: userSubData.email,
-          subscribed: userSubData.status === 'active' && 
-                     (!userSubData.expires_at || new Date(userSubData.expires_at) > new Date()),
+          subscribed: isActive,
           subscription_tier: userSubData.subscription_type,
           subscription_end: userSubData.expires_at
         });
         return;
       }
       
-      // Fallback: tentar buscar na tabela customer_subscriptions (dados do Cakto)
+      // 3. Fallback: customer_subscriptions (Cakto)
       const { data: caktoData } = await supabase
         .from('customer_subscriptions')
-        .select('*')
-        .or(`user_id.eq.${user!.id},email.eq.${user!.email}`)
+        .select('id, email, status, plan_type, expires_at')
+        .or(`user_id.eq.${user.id},email.eq.${user.email}`)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (caktoData) {
         setSubscription({
@@ -89,28 +96,10 @@ export const useSubscription = () => {
         return;
       }
 
-      // Fallback para a tabela subscribers (dados do Stripe)
-      const { data: stripeData } = await supabase
-        .from('subscribers')
-        .select('*')
-        .or(`user_id.eq.${user!.id},email.eq.${user!.email}`)
-        .single();
-
-      if (stripeData) {
-        setSubscription({
-          id: stripeData.id,
-          email: stripeData.email,
-          subscribed: stripeData.subscribed,
-          subscription_tier: stripeData.subscription_tier,
-          subscription_end: stripeData.subscription_end
-        });
-        return;
-      }
-
-      // Se não encontrar nada, define como usuário gratuito
+      // 4. Sem assinatura
       setSubscription({
         id: 'free',
-        email: user!.email || '',
+        email: user.email || '',
         subscribed: false,
         subscription_tier: 'free'
       });
@@ -119,7 +108,7 @@ export const useSubscription = () => {
       logger.error('Erro ao buscar assinatura:', error);
       setSubscription({
         id: 'free',
-        email: user!.email || '',
+        email: user?.email || '',
         subscribed: false,
         subscription_tier: 'free'
       });
@@ -129,15 +118,10 @@ export const useSubscription = () => {
   };
 
   const isPremium = () => {
-    // Desenvolvedores sempre têm acesso premium
-    if (isDeveloperTier(subscription)) {
-      return true;
-    }
-    
+    if (isDeveloperTier(subscription)) return true;
     return subscription?.subscribed && 
            subscription?.subscription_tier && 
-           subscription.subscription_tier !== 'free' &&
-           subscription.subscription_tier !== 'free_trial';
+           !['free', 'pending'].includes(subscription.subscription_tier);
   };
 
   const isSubscriptionExpired = () => {

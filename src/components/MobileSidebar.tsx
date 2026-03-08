@@ -5,61 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useTheme } from '@/hooks/useTheme';
 import { useDashboard } from '@/hooks/useDashboard';
+import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/constants/routes';
 
-// Logos for light theme
 import financyLogoLight from '@/assets/financy-logo-light.png';
-// Logos for dark theme
 import financyLogoDark from '@/assets/financy-logo-dark.png';
-
-// Mapeamento de seção para rota
-const sectionToRoute: Record<string, string> = {
-  'painel': '/dashboard',
-  'receitas': '/receitas',
-  'despesas': '/despesas',
-  'categorias': '/categorias',
-  'impostos': '/impostos',
-  'equipe': '/equipe',
-  'metas': '/metas',
-  'relatorios': '/relatorios',
-  'fechamento': '/fechamento',
-  'agentes-ia': '/agentes-ia',
-  'assinatura': '/assinatura',
-  'configuracoes': '/configuracoes',
-  'ajuda': '/ajuda',
-};
-
-// Mapeamento de rota para seção
-const routeToSection: Record<string, string> = {
-  '/dashboard': 'painel',
-  '/receitas': 'receitas',
-  '/despesas': 'despesas',
-  '/categorias': 'categorias',
-  '/impostos': 'impostos',
-  '/equipe': 'equipe',
-  '/metas': 'metas',
-  '/relatorios': 'relatorios',
-  '/fechamento': 'fechamento',
-  '/agentes-ia': 'agentes-ia',
-  '/assinatura': 'assinatura',
-  '/configuracoes': 'configuracoes',
-  '/ajuda': 'ajuda',
-};
-
-const allMenuItems = [
-  { id: 'painel', label: 'Painel', businessOnly: false },
-  { id: 'receitas', label: 'Receitas', businessOnly: false },
-  { id: 'despesas', label: 'Despesas', businessOnly: false },
-  { id: 'categorias', label: 'Categorias', businessOnly: false },
-  { id: 'impostos', label: 'Impostos e Taxas', businessOnly: false },
-  { id: 'equipe', label: 'Equipe', businessOnly: true },
-  { id: 'metas', label: 'Objetivos', businessOnly: false },
-  { id: 'relatorios', label: 'Relatórios', businessOnly: false },
-  { id: 'fechamento', label: 'Fechamento de Caixa', businessOnly: true },
-  { id: 'agentes-ia', label: 'Agentes de IA', businessOnly: false },
-  { id: 'assinatura', label: 'Assinatura', businessOnly: false },
-  { id: 'configuracoes', label: 'Configurações', businessOnly: false },
-  { id: 'ajuda', label: 'Ajuda e Suporte', businessOnly: false }
-];
 
 interface MobileSidebarProps {
   activeSection: string;
@@ -74,37 +23,21 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Selecionar logo baseado no tema
   const isDarkTheme = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const financyLogo = isDarkTheme ? financyLogoDark : financyLogoLight;
-  
-  // Determinar seção ativa pela rota atual
-  const currentSection = routeToSection[location.pathname] || activeSection;
+  const currentSection = getSectionForRoute(location.pathname);
 
-  // Filtrar menu baseado APENAS no tipo do dashboard atual
-  const menuItems = allMenuItems.filter(item => {
+  const menuItems = MENU_ITEMS.filter(item => {
     if (!currentDashboard) return true;
-    
-    // Seções apenas para empresarial - ocultar se dashboard atual é personal
-    if (item.businessOnly && currentDashboard.type === 'personal') {
-      return false;
-    }
-    
+    if (item.businessOnly && currentDashboard.type === 'personal') return false;
     return true;
   });
 
-  const handleThemeToggle = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-  };
+  const handleThemeToggle = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   const handleMenuClick = (section: string) => {
-    const allowedWhenDisabled = ['assinatura', 'configuracoes', 'ajuda'];
-    if (disabled && !allowedWhenDisabled.includes(section)) {
-      return;
-    }
-    const route = sectionToRoute[section] || '/dashboard';
-    navigate(route);
+    if (disabled && !isSectionAllowedWhenBlocked(section)) return;
+    navigate(getRouteForSection(section));
     setActiveSection(section);
     setOpen(false);
   };
@@ -112,20 +45,11 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   return (
     <div className="lg:hidden flex items-center justify-between py-2 px-2 bg-background border-b">
       <div className="flex items-center w-full max-w-[320px]">
-        <img 
-          src={financyLogo}
-          alt="Financy" 
-          className="h-24 w-full object-contain object-left"
-        />
+        <img src={financyLogo} alt="Financy" className="h-24 w-full object-contain object-left" />
       </div>
       
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleThemeToggle}
-          className="p-2"
-        >
+        <Button variant="ghost" size="sm" onClick={handleThemeToggle} className="p-2">
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
         
@@ -136,21 +60,17 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-[300px] sm:w-[400px] flex flex-col">
-          <SheetHeader>
-            <SheetTitle className="text-left">Menu</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6 space-y-2 overflow-y-auto flex-1 pr-2">
-            {menuItems.map((item) => {
-                const allowedWhenDisabled = ['assinatura', 'configuracoes', 'ajuda'];
-                const isAllowed = !disabled || allowedWhenDisabled.includes(item.id);
-                
+            <SheetHeader>
+              <SheetTitle className="text-left">Menu</SheetTitle>
+            </SheetHeader>
+            <div className="mt-6 space-y-2 overflow-y-auto flex-1 pr-2">
+              {menuItems.map((item) => {
+                const isAllowed = !disabled || isSectionAllowedWhenBlocked(item.id);
                 return (
                   <Button
                     key={item.id}
                     variant={currentSection === item.id ? "default" : "ghost"}
-                    className={`w-full justify-start ${
-                      !isAllowed ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
+                    className={`w-full justify-start ${!isAllowed ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={() => handleMenuClick(item.id)}
                     disabled={!isAllowed}
                   >

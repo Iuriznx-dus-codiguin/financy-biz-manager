@@ -1,96 +1,31 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-// Logos for light theme
 import financyLogoLight from '@/assets/financy-logo-light.png';
 import iconLogoLight from '@/assets/financy-icon-light.png';
-// Logos for dark theme
 import financyLogoDark from '@/assets/financy-logo-dark.png';
 import iconLogoDark from '@/assets/financy-icon-dark.png';
 import {
-  Layout, 
-  TrendingUp, 
-  TrendingDown, 
-  Receipt, 
-  PieChart, 
-  Settings, 
-  HelpCircle,
-  CreditCard,
-  Calculator,
-  Users,
-  Sun,
-  Moon,
-  Target,
-  Bot,
-  Folder
+  Layout, TrendingUp, TrendingDown, Receipt, PieChart, Settings, HelpCircle,
+  CreditCard, Calculator, Users, Sun, Moon, Target, Bot, Folder
 } from 'lucide-react';
-
-// Mapeamento de seção para rota
-const sectionToRoute: Record<string, string> = {
-  'painel': '/dashboard',
-  'receitas': '/receitas',
-  'despesas': '/despesas',
-  'categorias': '/categorias',
-  'impostos': '/impostos',
-  'equipe': '/equipe',
-  'metas': '/metas',
-  'relatorios': '/relatorios',
-  'fechamento': '/fechamento',
-  'agentes-ia': '/agentes-ia',
-  'assinatura': '/assinatura',
-  'configuracoes': '/configuracoes',
-  'ajuda': '/ajuda',
-};
-
-// Mapeamento de rota para seção
-const routeToSection: Record<string, string> = {
-  '/dashboard': 'painel',
-  '/receitas': 'receitas',
-  '/despesas': 'despesas',
-  '/categorias': 'categorias',
-  '/impostos': 'impostos',
-  '/equipe': 'equipe',
-  '/metas': 'metas',
-  '/relatorios': 'relatorios',
-  '/fechamento': 'fechamento',
-  '/agentes-ia': 'agentes-ia',
-  '/assinatura': 'assinatura',
-  '/configuracoes': 'configuracoes',
-  '/ajuda': 'ajuda',
-};
+import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/constants/routes';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/hooks/useTheme';
 import { useUserContext } from '@/hooks/useUserContext';
 import { Button } from '@/components/ui/button';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarTrigger,
-  useSidebar,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from '@/components/ui/sidebar';
 
-const allMenuItems = [
-  { id: 'painel', label: 'Painel', icon: Layout, businessOnly: false },
-  { id: 'receitas', label: 'Receitas', icon: TrendingUp, businessOnly: false },
-  { id: 'despesas', label: 'Despesas', icon: TrendingDown, businessOnly: false },
-  { id: 'categorias', label: 'Categorias', icon: Folder, businessOnly: false },
-  { id: 'impostos', label: 'Impostos e Taxas', icon: Receipt, businessOnly: false },
-  { id: 'equipe', label: 'Equipe', icon: Users, businessOnly: true },
-  { id: 'metas', label: 'Objetivos', icon: Target, businessOnly: false },
-  { id: 'relatorios', label: 'Relatórios', icon: PieChart, businessOnly: false },
-  { id: 'fechamento', label: 'Fechamento de Caixa', icon: Calculator, businessOnly: true },
-  { id: 'agentes-ia', label: 'Agentes de IA', icon: Bot, businessOnly: false },
-  { id: 'assinatura', label: 'Assinatura', icon: CreditCard, businessOnly: false },
-  { id: 'configuracoes', label: 'Configurações', icon: Settings, businessOnly: false },
-  { id: 'ajuda', label: 'Ajuda e Suporte', icon: HelpCircle, businessOnly: false }
-];
+// Icon mapping - mantém associação id → ícone sem duplicar labels
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  'painel': Layout, 'receitas': TrendingUp, 'despesas': TrendingDown,
+  'categorias': Folder, 'impostos': Receipt, 'equipe': Users,
+  'metas': Target, 'relatorios': PieChart, 'fechamento': Calculator,
+  'agentes-ia': Bot, 'assinatura': CreditCard, 'configuracoes': Settings,
+  'ajuda': HelpCircle,
+};
 
 interface AppSidebarProps {
   activeSection: string;
@@ -102,7 +37,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   const { state, setOpen } = useSidebar();
   const { theme, setTheme } = useTheme();
   const { currentDashboard } = useDashboard();
-  const { userType } = useUserContext();
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -110,44 +44,21 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   const isCollapsed = state === 'collapsed';
   const shouldShowExpanded = isCollapsed && isHovered;
   
-  // Determinar seção ativa pela rota atual
-  const currentSection = routeToSection[location.pathname] || activeSection;
-  // Selecionar logos baseado no tema
+  const currentSection = getSectionForRoute(location.pathname);
   const isDarkTheme = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const financyLogo = isDarkTheme ? financyLogoDark : financyLogoLight;
   const iconLogo = isDarkTheme ? iconLogoDark : iconLogoLight;
-  
   const currentLogo = shouldShowExpanded ? financyLogo : (isCollapsed ? iconLogo : financyLogo);
 
-  // Filtrar menu baseado APENAS no tipo do dashboard atual
-  const menuItems = allMenuItems.filter(item => {
+  const menuItems = MENU_ITEMS.filter(item => {
     if (!currentDashboard) return true;
-    
-    // Seções apenas para empresarial - ocultar se dashboard atual é personal
-    if (item.businessOnly && currentDashboard.type === 'personal') {
-      return false;
-    }
-    
+    if (item.businessOnly && currentDashboard.type === 'personal') return false;
     return true;
   });
 
-  const handleThemeToggle = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-  };
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-    setOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    // Pequeno delay para garantir transição suave
-    setTimeout(() => {
-      setOpen(false);
-    }, 100);
-  };
+  const handleThemeToggle = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+  const handleMouseEnter = () => { setIsHovered(true); setOpen(true); };
+  const handleMouseLeave = () => { setIsHovered(false); setTimeout(() => setOpen(false), 100); };
 
   return (
     <Sidebar 
@@ -177,24 +88,24 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
-                const Icon = item.icon;
-                const route = sectionToRoute[item.id] || '/dashboard';
+                const Icon = ICON_MAP[item.id] || Layout;
+                const route = getRouteForSection(item.id);
                 const isActive = currentSection === item.id;
+                const isAllowed = !disabled || isSectionAllowedWhenBlocked(item.id);
                 
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       onClick={() => {
-                        const allowedWhenDisabled = ['assinatura', 'configuracoes', 'ajuda'];
-                        if (!disabled || allowedWhenDisabled.includes(item.id)) {
+                        if (isAllowed) {
                           navigate(route);
                           setActiveSection(item.id);
                         }
                       }}
                       tooltip={isCollapsed && !shouldShowExpanded ? item.label : undefined}
                       isActive={isActive}
-                      disabled={disabled && !['assinatura', 'configuracoes', 'ajuda'].includes(item.id)}
-                      className={disabled && !['assinatura', 'configuracoes', 'ajuda'].includes(item.id) ? 'opacity-50 cursor-not-allowed' : ''}
+                      disabled={!isAllowed}
+                      className={!isAllowed ? 'opacity-50 cursor-not-allowed' : ''}
                     >
                       <Icon className="h-4 w-4" />
                       <span className="transition-opacity duration-300">{item.label}</span>

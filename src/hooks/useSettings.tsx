@@ -1,11 +1,10 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react';
 import { useTheme } from './useTheme';
 import { useToast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 export interface UserSettings {
-  // Aparência
   tema: 'light' | 'dark' | 'system';
   moeda: 'BRL' | 'USD' | 'EUR';
 }
@@ -30,12 +29,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Carregar configurações do localStorage e Supabase
   useEffect(() => {
     loadSettings();
   }, [user]);
 
-  // Sincronizar configurações com o tema atual
   useEffect(() => {
     if (settings.tema !== theme && !loading) {
       setSettings(prev => ({ ...prev, tema: theme }));
@@ -46,39 +43,32 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       
-      // Carregar do localStorage primeiro (mais rápido) - TODO: Migrar para cookies HttpOnly
       const localSettings = localStorage.getItem('financy-settings');
       if (localSettings) {
         const parsed = JSON.parse(localSettings);
         const mergedSettings = { ...defaultSettings, ...parsed };
         setSettings(mergedSettings);
-        // Sincronizar tema
-        if (mergedSettings.tema !== theme) {
-          setTheme(mergedSettings.tema);
-        }
+        if (mergedSettings.tema !== theme) setTheme(mergedSettings.tema);
       } else {
-        // Se não há configurações locais, use o tema atual
-        const initialSettings = { ...defaultSettings, tema: theme };
-        setSettings(initialSettings);
+        setSettings({ ...defaultSettings, tema: theme });
       }
 
-      // Se há usuário logado, carregar do Supabase também
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('*, settings')
+          .select('settings')
           .eq('id', user.id)
           .maybeSingle();
 
-        if (profile && (profile as any).settings) {
-          const remoteSettings = JSON.parse((profile as any).settings);
+        if (profile?.settings) {
+          // settings é jsonb no Supabase - pode ser objeto diretamente
+          const remoteSettings = typeof profile.settings === 'string' 
+            ? JSON.parse(profile.settings) 
+            : profile.settings;
           const finalSettings = { ...defaultSettings, ...remoteSettings };
           setSettings(finalSettings);
-          // Sincronizar com localStorage e tema
           localStorage.setItem('financy-settings', JSON.stringify(finalSettings));
-          if (finalSettings.tema !== theme) {
-            setTheme(finalSettings.tema);
-          }
+          if (finalSettings.tema !== theme) setTheme(finalSettings.tema);
         }
       }
     } catch (error) {
@@ -93,22 +83,19 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const updatedSettings = { ...settings, ...newSettings };
       setSettings(updatedSettings);
 
-      // Se o tema foi alterado, atualizar no ThemeProvider também
       if (newSettings.tema && newSettings.tema !== theme) {
         setTheme(newSettings.tema);
       }
 
-      // Salvar no localStorage - TODO: Migrar para cookies HttpOnly
       localStorage.setItem('financy-settings', JSON.stringify(updatedSettings));
 
-      // Salvar no Supabase se há usuário logado
       if (user) {
         await supabase
           .from('profiles')
           .upsert({
             id: user.id,
             email: user.email,
-            settings: JSON.stringify(updatedSettings),
+            settings: updatedSettings as any, // jsonb aceita objeto diretamente
           } as any);
       }
 
@@ -126,12 +113,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-
-  const value: SettingsContextType = {
-    settings,
-    updateSettings,
-    loading,
-  };
+  const value: SettingsContextType = { settings, updateSettings, loading };
 
   return (
     <SettingsContext.Provider value={value}>
@@ -148,24 +130,28 @@ export function useSettings() {
   return context;
 }
 
-// Hook para formatação de moeda baseada nas configurações
+// Formatadores memoizados fora do hook para reuso
+const formatters: Record<string, Intl.NumberFormat> = {};
+
+function getFormatter(currency: 'BRL' | 'USD' | 'EUR'): Intl.NumberFormat {
+  if (!formatters[currency]) {
+    const localeMap = { BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE' };
+    formatters[currency] = new Intl.NumberFormat(localeMap[currency], {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+    });
+  }
+  return formatters[currency];
+}
+
+const CURRENCY_SYMBOLS = { BRL: 'R$', USD: '$', EUR: '€' } as const;
+
 export function useCurrency() {
   const { settings } = useSettings();
   
-  const formatCurrency = (value: number) => {
-    const formatters = {
-      BRL: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }),
-      USD: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
-      EUR: new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }),
-    };
-    
-    return formatters[settings.moeda].format(value);
-  };
-  
-  const getCurrencySymbol = () => {
-    const symbols = { BRL: 'R$', USD: '$', EUR: '€' };
-    return symbols[settings.moeda];
-  };
+  const formatCurrency = (value: number) => getFormatter(settings.moeda).format(value);
+  const getCurrencySymbol = () => CURRENCY_SYMBOLS[settings.moeda];
   
   return { formatCurrency, getCurrencySymbol, currency: settings.moeda };
 }
