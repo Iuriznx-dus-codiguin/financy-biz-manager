@@ -228,6 +228,11 @@
   }
 }
 
+/* Safe area for bottom nav on notched devices */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Forçar tema escuro em páginas específicas */
 .dark {
   color-scheme: dark !important;
