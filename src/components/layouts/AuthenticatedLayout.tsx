@@ -7,7 +7,6 @@ import { useDashboard } from '@/hooks/useDashboard';
 import { usePaymentSuccess } from '@/hooks/usePaymentSuccess';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MobileSidebar } from '@/components/MobileSidebar';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { SubscriptionBanners } from '@/components/SubscriptionBanners';
@@ -113,16 +112,13 @@ export const AuthenticatedLayout = () => {
               />
             </div>
             {isBlocked && <SubscriptionBanners />}
-            <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 xl:p-8 pb-20 lg:pb-6 space-y-4 sm:space-y-6">
+            <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
               <Outlet />
             </main>
-            <div className="hidden lg:block">
-              <Footer />
-            </div>
+            <Footer />
           </div>
         </div>
       </SidebarProvider>
-      <MobileBottomNav disabled={isBlocked} />
       <FloatingWhatsAppButton />
     </div>
   );
