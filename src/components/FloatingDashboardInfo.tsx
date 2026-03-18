@@ -125,25 +125,36 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
 
   return (
     <Card className="shadow-lg border-0 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="p-4">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="space-y-3">
+      <div className="p-3 sm:p-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-4">
+          <div className="space-y-2 lg:space-y-3">
             {/* Saudação personalizada */}
-            <div>
-              <h2 className="text-xl lg:text-2xl font-bold text-foreground">
+            <div className="flex items-center justify-between sm:justify-start gap-2">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
                 Olá, {userName}
               </h2>
+              {/* Refresh inline on mobile */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleRefreshData}
+                disabled={isRefreshing}
+                className="lg:hidden h-8 w-8 shrink-0"
+                title="Atualizar dados"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
 
             {/* Badges de assinatura */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge className={`${subscriptionBadge.bgClass} text-white border-0 shadow-sm`}>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <Badge className={`${subscriptionBadge.bgClass} text-white border-0 shadow-sm text-xs`}>
                 <IconComponent className="h-3 w-3 mr-1" />
                 {subscriptionBadge.text}
               </Badge>
               
               {iaBadge && (
-                <Badge variant={iaBadge.variant} className="shadow-sm">
+                <Badge variant={iaBadge.variant} className="shadow-sm text-xs">
                   <Settings className="h-3 w-3 mr-1" />
                   {iaBadge.text}
                 </Badge>
@@ -167,13 +178,13 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
           </div>
 
           {/* Controles - Layout responsivo */}
-          <div className="flex items-center gap-2 lg:gap-3 flex-wrap lg:flex-nowrap">
+          <div className="flex items-center gap-2 lg:gap-3">
             <Button
               variant="outline"
               size="icon"
               onClick={handleRefreshData}
               disabled={isRefreshing}
-              className="rounded-xl shrink-0"
+              className="rounded-xl shrink-0 hidden lg:inline-flex"
               title="Atualizar e processar transações recorrentes"
             >
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
