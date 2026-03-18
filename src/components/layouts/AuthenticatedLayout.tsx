@@ -7,7 +7,6 @@ import { useDashboard } from '@/hooks/useDashboard';
 import { usePaymentSuccess } from '@/hooks/usePaymentSuccess';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MobileSidebar } from '@/components/MobileSidebar';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { SubscriptionBanners } from '@/components/SubscriptionBanners';
