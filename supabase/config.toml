@@ -20,6 +20,9 @@ verify_jwt = true
 [functions.ai-tax-agent]
 verify_jwt = true
 
+[functions.ai-agent]
+verify_jwt = false
+
 [functions.validate-developer-key]
 verify_jwt = false
 
