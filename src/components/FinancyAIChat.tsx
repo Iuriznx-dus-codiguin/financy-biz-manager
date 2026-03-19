@@ -214,8 +214,8 @@ export const FinancyAIChat = () => {
                     )}
                   </div>
                   {msg.toolResults && msg.toolResults.some(r => r.success) && (
-                    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-green-600 dark:text-green-400">
-                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-primary">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
                       Dados atualizados na plataforma
                     </div>
                   )}
