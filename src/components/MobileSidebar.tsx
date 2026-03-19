@@ -109,6 +109,16 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
                   </Button>
                 </div>
               </div>
+              {/* Dashboard type indicator */}
+              {currentDashboard && (
+                <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-muted/50">
+                  <span className="text-[11px] text-muted-foreground">Dashboard:</span>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                    {currentDashboard.type === 'personal' ? '👤 Pessoal' : '🏢 Empresarial'}
+                  </Badge>
+                  <span className="text-[11px] text-foreground truncate flex-1">{currentDashboard.name}</span>
+                </div>
+              )}
             </div>
 
             <Separator />
