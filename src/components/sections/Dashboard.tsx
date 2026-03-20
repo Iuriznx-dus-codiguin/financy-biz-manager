@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
-import { InteligenciaFinanceiraAprimorada } from '@/components/InteligenciaFinanceiraAprimorada';
+import { InteligenciaFinanceiraIA } from '@/components/InteligenciaFinanceiraIA';
 import { InteligenciaFinanceiraBasica } from '@/components/InteligenciaFinanceiraBasica';
 import { UpgradeCard } from '@/components/UpgradeCard';
 import { OptimizedMetricCard } from '@/components/OptimizedMetricCard';
