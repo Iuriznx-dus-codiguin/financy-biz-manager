@@ -81,12 +81,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         <DashboardAvancado timeFilter={timeFilter} setTimeFilter={setTimeFilter} />
 
         {hasAdvancedIntelligence ? (
-          <InteligenciaFinanceiraAprimorada
-            receitas={filteredReceitas}
-            despesas={filteredDespesas}
-            impostos={filteredImpostos}
-            membrosEquipe={membrosEquipe}
-          />
+          <InteligenciaFinanceiraIA timeFilter={timeFilter} />
         ) : hasBasicIntelligence ? (
           <InteligenciaFinanceiraBasica
             receitas={filteredReceitas}
