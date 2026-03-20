@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAppContext } from '@/contexts/AppContext';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useUserContext } from '@/hooks/useUserContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -41,6 +42,7 @@ export const FinancyAIChat = () => {
   const { currentDashboard } = useDashboard();
   const { isPersonalContext, nomePreferido, currentDashboardType } = useUserContext();
   const { user } = useAuth();
+  const { carregarDados } = useAppContext();
 
   const suggestions = isPersonalContext ? WELCOME_SUGGESTIONS_PERSONAL : WELCOME_SUGGESTIONS_BUSINESS;
 
@@ -109,9 +111,10 @@ export const FinancyAIChat = () => {
       };
       setMessages(prev => [...prev, assistantMsg]);
 
-      // If there were tool actions (transactions created/deleted), trigger data reload
+      // If there were tool actions (transactions created/deleted/updated), reload data
       if (data.tool_results?.some((r: any) => r.success)) {
-        // Dispatch event to reload financial data
+        // Reload financial data from context
+        await carregarDados();
         window.dispatchEvent(new CustomEvent('financial-data-changed'));
       }
 

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
-import { InteligenciaFinanceiraAprimorada } from '@/components/InteligenciaFinanceiraAprimorada';
+import { InteligenciaFinanceiraIA } from '@/components/InteligenciaFinanceiraIA';
 import { InteligenciaFinanceiraBasica } from '@/components/InteligenciaFinanceiraBasica';
 import { UpgradeCard } from '@/components/UpgradeCard';
 import { OptimizedMetricCard } from '@/components/OptimizedMetricCard';
@@ -81,12 +81,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         <DashboardAvancado timeFilter={timeFilter} setTimeFilter={setTimeFilter} />
 
         {hasAdvancedIntelligence ? (
-          <InteligenciaFinanceiraAprimorada
-            receitas={filteredReceitas}
-            despesas={filteredDespesas}
-            impostos={filteredImpostos}
-            membrosEquipe={membrosEquipe}
-          />
+          <InteligenciaFinanceiraIA timeFilter={timeFilter} />
         ) : hasBasicIntelligence ? (
           <InteligenciaFinanceiraBasica
             receitas={filteredReceitas}
@@ -163,26 +158,21 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
 
       <div data-tutorial="intelligence">
         {hasAdvancedIntelligence ? (
-          <InteligenciaFinanceiraAprimorada
-          receitas={filteredReceitas}
-          despesas={filteredDespesas}
-          impostos={filteredImpostos}
-          membrosEquipe={membrosEquipe}
-        />
-      ) : hasBasicIntelligence ? (
-        <InteligenciaFinanceiraBasica
-          receitas={filteredReceitas}
-          despesas={filteredDespesas}
-          impostos={filteredImpostos}
-        />
-      ) : (
-        <UpgradeCard
-          feature="Inteligência Financeira"
-          description="Análises básicas de suas finanças com insights relevantes"
-          requiredPlan="Plano gratuito"
-          onUpgrade={() => setActiveSection?.('assinatura')}
-        />
-      )}
+          <InteligenciaFinanceiraIA timeFilter={timeFilter} />
+        ) : hasBasicIntelligence ? (
+          <InteligenciaFinanceiraBasica
+            receitas={filteredReceitas}
+            despesas={filteredDespesas}
+            impostos={filteredImpostos}
+          />
+        ) : (
+          <UpgradeCard
+            feature="Inteligência Financeira"
+            description="Análises básicas de suas finanças com insights relevantes"
+            requiredPlan="Plano gratuito"
+            onUpgrade={() => setActiveSection?.('assinatura')}
+          />
+        )}
       </div>
 
       <RecurringTransactions />
