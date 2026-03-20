@@ -158,26 +158,21 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
 
       <div data-tutorial="intelligence">
         {hasAdvancedIntelligence ? (
-          <InteligenciaFinanceiraAprimorada
-          receitas={filteredReceitas}
-          despesas={filteredDespesas}
-          impostos={filteredImpostos}
-          membrosEquipe={membrosEquipe}
-        />
-      ) : hasBasicIntelligence ? (
-        <InteligenciaFinanceiraBasica
-          receitas={filteredReceitas}
-          despesas={filteredDespesas}
-          impostos={filteredImpostos}
-        />
-      ) : (
-        <UpgradeCard
-          feature="Inteligência Financeira"
-          description="Análises básicas de suas finanças com insights relevantes"
-          requiredPlan="Plano gratuito"
-          onUpgrade={() => setActiveSection?.('assinatura')}
-        />
-      )}
+          <InteligenciaFinanceiraIA timeFilter={timeFilter} />
+        ) : hasBasicIntelligence ? (
+          <InteligenciaFinanceiraBasica
+            receitas={filteredReceitas}
+            despesas={filteredDespesas}
+            impostos={filteredImpostos}
+          />
+        ) : (
+          <UpgradeCard
+            feature="Inteligência Financeira"
+            description="Análises básicas de suas finanças com insights relevantes"
+            requiredPlan="Plano gratuito"
+            onUpgrade={() => setActiveSection?.('assinatura')}
+          />
+        )}
       </div>
 
       <RecurringTransactions />
