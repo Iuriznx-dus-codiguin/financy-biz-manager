@@ -111,9 +111,10 @@ export const FinancyAIChat = () => {
       };
       setMessages(prev => [...prev, assistantMsg]);
 
-      // If there were tool actions (transactions created/deleted), trigger data reload
+      // If there were tool actions (transactions created/deleted/updated), reload data
       if (data.tool_results?.some((r: any) => r.success)) {
-        // Dispatch event to reload financial data
+        // Reload financial data from context
+        await carregarDados();
         window.dispatchEvent(new CustomEvent('financial-data-changed'));
       }
 
