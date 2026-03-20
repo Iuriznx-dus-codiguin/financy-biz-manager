@@ -42,6 +42,7 @@ export const FinancyAIChat = () => {
   const { currentDashboard } = useDashboard();
   const { isPersonalContext, nomePreferido, currentDashboardType } = useUserContext();
   const { user } = useAuth();
+  const { carregarDados } = useAppContext();
 
   const suggestions = isPersonalContext ? WELCOME_SUGGESTIONS_PERSONAL : WELCOME_SUGGESTIONS_BUSINESS;
 
