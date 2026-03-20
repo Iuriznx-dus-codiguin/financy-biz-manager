@@ -23,6 +23,9 @@ verify_jwt = true
 [functions.ai-agent]
 verify_jwt = false
 
+[functions.ai-financial-insights]
+verify_jwt = false
+
 [functions.validate-developer-key]
 verify_jwt = false
 
