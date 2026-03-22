@@ -75,9 +75,12 @@ const Receitas = () => {
     }
   };
 
-  const handleDeleteReceita = async (id: number) => {
-    if (confirm('Tem certeza que deseja excluir esta receita?')) {
-      await deleteReceita(id);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const handleDeleteReceita = async () => {
+    if (deleteId !== null) {
+      await deleteReceita(deleteId);
+      setDeleteId(null);
     }
   };
 

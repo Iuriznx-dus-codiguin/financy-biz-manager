@@ -66,7 +66,7 @@ const Assinatura: React.FC = () => {
     if (url) {
       window.open(url, '_blank');
     } else {
-      alert(`URL de pagamento para ${planId} (${billing}) não configurada ainda.`);
+      import('@/hooks/use-toast').then(({ toast }) => toast({ title: 'Erro', description: `URL de pagamento para este plano não está configurada ainda.`, variant: 'destructive' }));
     }
   };
 

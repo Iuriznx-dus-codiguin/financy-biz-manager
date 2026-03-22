@@ -85,9 +85,12 @@ const Despesas = () => {
     .filter(despesa => despesa.status === 'paga')
     .reduce((sum, despesa) => sum + despesa.valor, 0);
 
-  const handleDeleteDespesa = async (id: number) => {
-    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
-      await deleteDespesa(id);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const handleDeleteDespesa = async () => {
+    if (deleteId !== null) {
+      await deleteDespesa(deleteId);
+      setDeleteId(null);
     }
   };
 
