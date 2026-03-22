@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -66,7 +67,7 @@ const Assinatura: React.FC = () => {
     if (url) {
       window.open(url, '_blank');
     } else {
-      alert(`URL de pagamento para ${planId} (${billing}) não configurada ainda.`);
+      toast({ title: 'Erro', description: 'URL de pagamento para este plano não está configurada ainda.', variant: 'destructive' });
     }
   };
 

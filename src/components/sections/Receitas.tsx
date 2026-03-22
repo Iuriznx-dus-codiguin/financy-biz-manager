@@ -8,6 +8,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
@@ -65,9 +75,12 @@ const Receitas = () => {
     }
   };
 
-  const handleDeleteReceita = async (id: number) => {
-    if (confirm('Tem certeza que deseja excluir esta receita?')) {
-      await deleteReceita(id);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const handleDeleteReceita = async () => {
+    if (deleteId !== null) {
+      await deleteReceita(deleteId);
+      setDeleteId(null);
     }
   };
 
@@ -485,7 +498,7 @@ const Receitas = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeleteReceita(receita.id)}
+                          onClick={() => setDeleteId(receita.id)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -499,6 +512,23 @@ const Receitas = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir receita?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta receita? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteReceita} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 };

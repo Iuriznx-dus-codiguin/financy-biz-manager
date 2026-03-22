@@ -8,6 +8,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { CategorySelector } from '@/components/CategorySelector';
@@ -75,9 +85,12 @@ const Despesas = () => {
     .filter(despesa => despesa.status === 'paga')
     .reduce((sum, despesa) => sum + despesa.valor, 0);
 
-  const handleDeleteDespesa = async (id: number) => {
-    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
-      await deleteDespesa(id);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const handleDeleteDespesa = async () => {
+    if (deleteId !== null) {
+      await deleteDespesa(deleteId);
+      setDeleteId(null);
     }
   };
 
@@ -494,7 +507,7 @@ const Despesas = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeleteDespesa(despesa.id)}
+                          onClick={() => setDeleteId(despesa.id)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -508,6 +521,23 @@ const Despesas = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir despesa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDespesa} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 };

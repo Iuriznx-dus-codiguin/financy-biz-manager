@@ -92,7 +92,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           <UpgradeCard
             feature="Inteligência Financeira"
             description="Análises básicas de suas finanças com insights relevantes"
-            requiredPlan="Plano gratuito"
+            requiredPlan="Plano pago"
             onUpgrade={() => setActiveSection?.('assinatura')}
           />
         )}
@@ -169,7 +169,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           <UpgradeCard
             feature="Inteligência Financeira"
             description="Análises básicas de suas finanças com insights relevantes"
-            requiredPlan="Plano gratuito"
+            requiredPlan="Plano pago"
             onUpgrade={() => setActiveSection?.('assinatura')}
           />
         )}
