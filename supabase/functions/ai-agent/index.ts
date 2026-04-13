@@ -171,8 +171,8 @@ serve(async (req) => {
           ...messages,
         ],
         tools,
-        temperature: 0.7,
-        max_tokens: 2000,
+        temperature: 0.5,
+        max_tokens: 800,
       }),
     });
 
@@ -245,8 +245,8 @@ serve(async (req) => {
             choice.message,
             ...toolResults,
           ],
-          temperature: 0.7,
-          max_tokens: 1500,
+          temperature: 0.5,
+          max_tokens: 600,
         }),
       });
 
@@ -441,21 +441,15 @@ ${ctx.ultimasReceitas.slice(0, 5).map((r: any) => `📈 [ID:${r.id}] ${r.data}: 
 ${ctx.ultimasDespesas.slice(0, 5).map((d: any) => `📉 [ID:${d.id}] ${d.data}: ${d.descricao} - ${formatBRL(Number(d.valor))} (${d.categoria})`).join('\n') || 'Sem despesas'}
 
 INSTRUÇÕES IMPORTANTES:
-1. Responda SEMPRE em português brasileiro, de forma natural e amigável
+1. Responda SEMPRE em português brasileiro, de forma CONCISA e direta (máximo 3-4 frases por resposta, exceto relatórios)
 2. Adapte linguagem: ${isPersonal ? 'use "saldo", "gastos pessoais", "economia", "renda"' : 'use "faturamento", "custos operacionais", "margem de lucro", "fluxo de caixa"'}
 3. Quando o usuário mencionar gastos ou receitas, USE AS FERRAMENTAS para registrar
-4. Para QUALQUER consulta sobre valores, faturamento, gastos, lucro: SEMPRE use a ferramenta query_financial_data. Isso consulta o banco de dados real com TODAS as transações (manuais e via chat)
-5. Seja proativo: sugira insights e alertas baseados nos dados
-6. Se o saldo/lucro estiver negativo, alerte com cuidado
-7. Classifique transações automaticamente
-8. ${isPersonal ? 'Categorias: alimentacao, transporte, saude, educacao, lazer, vestuario, casa, contas, outros' : 'Categorias: vendas, servicos, marketing, tecnologia, escritorio, pessoal, impostos, estoque, logistica, outros'}
-9. Use formatação brasileira para valores (R$)
-10. Mantenha contexto da conversa
-11. Quando registrar transações, informe o impacto no saldo/lucro
-12. Use emojis com moderação
-13. Formate com markdown quando útil
-14. Ao listar transações, inclua o ID para referência
-15. Quando o usuário pedir relatório ou resumo, use query_financial_data com periodo 'tudo' ou o período relevante`;
+4. Para consultas sobre valores: use query_financial_data
+5. Classifique transações automaticamente
+6. ${isPersonal ? 'Categorias: alimentacao, transporte, saude, educacao, lazer, vestuario, casa, contas, outros' : 'Categorias: vendas, servicos, marketing, tecnologia, escritorio, pessoal, impostos, estoque, logistica, outros'}
+7. Use R$ para valores. Inclua ID ao listar transações
+8. Seja breve. Evite repetir dados que o usuário já sabe. Vá direto ao ponto
+9. Após registrar transação, confirme em 1 frase com o impacto no saldo`;
 }
 
 async function executeToolCall(supabase: any, userId: string, dashboardId: string, fnName: string, args: any) {
