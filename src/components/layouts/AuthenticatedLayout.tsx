@@ -112,10 +112,18 @@ export const AuthenticatedLayout = () => {
               />
             </div>
             {isBlocked && <SubscriptionBanners />}
-            <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
-              <Outlet />
-            </main>
-            <Footer />
+            {activeSection === 'agentes-ia' ? (
+              <main className="flex-1 overflow-hidden">
+                <Outlet />
+              </main>
+            ) : (
+              <>
+                <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
+                  <Outlet />
+                </main>
+                <Footer />
+              </>
+            )}
           </div>
         </div>
       </SidebarProvider>
