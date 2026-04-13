@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Lightbulb, AlertTriangle, TrendingUp, Target, RefreshCw, Sparkles, Info } from 'lucide-react';
+import { Lightbulb, AlertTriangle, TrendingUp, RefreshCw, Sparkles, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useUserContext } from '@/hooks/useUserContext';
@@ -24,11 +24,14 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
   const [loading, setLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
   const { currentDashboard } = useDashboard();
   const { isPersonalContext } = useUserContext();
   const { toast } = useToast();
+  const lastFilterRef = useRef<string>('');
+  const hasInitialLoadRef = useRef(false);
 
-  const fetchInsights = useCallback(async () => {
+  const fetchInsights = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
 
@@ -41,6 +44,7 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
           dashboardId: currentDashboard?.id,
           dashboardType: currentDashboard?.type || 'personal',
           timeFilter,
+          forceRefresh,
         },
       });
 
@@ -57,6 +61,7 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
       }
 
       setInsights(data?.insights || []);
+      setFromCache(data?.fromCache || false);
       setHasLoaded(true);
     } catch (e: any) {
       console.error('Error fetching AI insights:', e);
@@ -66,12 +71,27 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
     }
   }, [currentDashboard, timeFilter]);
 
-  // Auto-load on mount and when timeFilter changes
+  // Load on mount and when timeFilter changes
   useEffect(() => {
-    if (currentDashboard?.id) {
-      fetchInsights();
-    }
+    if (!currentDashboard?.id) return;
+    const filterKey = `${currentDashboard.id}_${timeFilter}`;
+    if (filterKey === lastFilterRef.current && hasInitialLoadRef.current) return;
+    lastFilterRef.current = filterKey;
+    hasInitialLoadRef.current = true;
+    fetchInsights(false);
   }, [currentDashboard?.id, timeFilter]);
+
+  // Listen for data changes from AI chat or manual edits
+  useEffect(() => {
+    const handleDataChanged = () => {
+      // Data changed - next fetch will detect fingerprint mismatch and regenerate
+      if (hasLoaded) {
+        fetchInsights(false); // cache will miss because fingerprint changed
+      }
+    };
+    window.addEventListener('financial-data-changed', handleDataChanged);
+    return () => window.removeEventListener('financial-data-changed', handleDataChanged);
+  }, [hasLoaded, fetchInsights]);
 
   const getIconByType = (tipo: string) => {
     switch (tipo) {
@@ -112,15 +132,21 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
             {isPersonalContext ? 'Inteligência Financeira' : 'Inteligência Financeira Avançada'}
           </CardTitle>
           <div className="flex items-center gap-2">
+            {fromCache && hasLoaded && !loading && (
+              <Badge variant="outline" className="text-[9px] text-muted-foreground">
+                cache
+              </Badge>
+            )}
             <Badge variant="outline" className="text-[10px]">
               IA
             </Badge>
             <Button
               variant="ghost"
               size="icon"
-              onClick={fetchInsights}
+              onClick={() => fetchInsights(true)}
               disabled={loading}
               className="h-8 w-8"
+              title="Forçar nova análise"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
@@ -140,7 +166,7 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
           <div className="text-center py-6">
             <AlertTriangle className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">{error}</p>
-            <Button variant="ghost" size="sm" onClick={fetchInsights} className="mt-2">
+            <Button variant="ghost" size="sm" onClick={() => fetchInsights(true)} className="mt-2">
               Tentar novamente
             </Button>
           </div>
