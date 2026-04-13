@@ -6,6 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// Simple hash for change detection
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const chr = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0;
+  }
+  return hash.toString(36);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -34,10 +45,10 @@ serve(async (req) => {
       });
     }
 
-    const { dashboardId, dashboardType, timeFilter } = await req.json();
+    const { dashboardId, dashboardType, timeFilter, forceRefresh } = await req.json();
     const isPersonal = dashboardType === 'personal';
 
-    // Build date range from timeFilter
+    // Build date range
     const now = new Date();
     let startDate: string;
     let endDate = now.toISOString().split('T')[0];
@@ -67,16 +78,15 @@ serve(async (req) => {
       return q;
     };
 
-    const [recRes, despRes, impRes, metRes, eqRes, onbRes] = await Promise.all([
-      buildFilter(supabase.from('receitas').select('data, descricao, categoria, valor, status'))
+    const [recRes, despRes, impRes, metRes, eqRes] = await Promise.all([
+      buildFilter(supabase.from('receitas').select('data, categoria, valor, status'))
         .gte('data', startDate).lte('data', endDate).order('data', { ascending: false }).limit(500),
-      buildFilter(supabase.from('despesas').select('data, descricao, categoria, valor, status'))
+      buildFilter(supabase.from('despesas').select('data, categoria, valor, status'))
         .gte('data', startDate).lte('data', endDate).order('data', { ascending: false }).limit(500),
-      buildFilter(supabase.from('impostos').select('descricao, tipo, valor, vencimento, pago'))
+      buildFilter(supabase.from('impostos').select('tipo, valor, vencimento, pago'))
         .gte('vencimento', startDate).lte('vencimento', endDate).limit(100),
-      buildFilter(supabase.from('metas').select('titulo, valor_meta, valor_atual, progresso, prazo, status')).limit(20),
-      buildFilter(supabase.from('equipe_membros').select('nome, cargo, salario, status, periodicidade')).limit(50),
-      supabase.from('onboarding_data').select('user_type, nome_preferido').eq('user_id', user.id).maybeSingle(),
+      buildFilter(supabase.from('metas').select('titulo, progresso, status')).limit(20),
+      buildFilter(supabase.from('equipe_membros').select('salario, status, periodicidade')).limit(50),
     ]);
 
     const receitas = recRes.data || [];
@@ -84,7 +94,6 @@ serve(async (req) => {
     const impostos = impRes.data || [];
     const metas = metRes.data || [];
     const equipe = eqRes.data || [];
-    const onboarding = onbRes.data;
 
     const totalRec = receitas.reduce((s: number, r: any) => s + Number(r.valor), 0);
     const totalDesp = despesas.reduce((s: number, d: any) => s + Number(d.valor), 0);
@@ -103,61 +112,54 @@ serve(async (req) => {
 
     const lucro = totalRec - totalDesp - totalImpPago - gastosEquipe;
     const margem = totalRec > 0 ? (lucro / totalRec) * 100 : 0;
+
+    // Metrics to return
+    const metrics = {
+      totalReceitas: totalRec,
+      totalDespesas: totalDesp,
+      lucro,
+      margem,
+      totalImpostosPendente: totalImpPendente,
+      gastosEquipe,
+      periodo: `${startDate} a ${endDate}`,
+    };
+
+    // Create data fingerprint for cache invalidation
+    const dataFingerprint = simpleHash(JSON.stringify({
+      recs: receitas.length, desps: despesas.length,
+      totalRec: Math.round(totalRec), totalDesp: Math.round(totalDesp),
+      imps: impostos.length, totalImpPend: Math.round(totalImpPendente),
+      metas: metas.length, eq: equipe.length, gastosEq: Math.round(gastosEquipe),
+    }));
+
+    const cacheKey = `insights_${dashboardId || 'default'}_${timeFilter || 'default'}_${dataFingerprint}`;
+
+    // Check cache (skip if forceRefresh)
+    if (!forceRefresh) {
+      const { data: cached } = await supabase
+        .from('query_cache')
+        .select('cached_data')
+        .eq('user_id', user.id)
+        .eq('query_key', cacheKey)
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
+
+      if (cached?.cached_data) {
+        return new Response(JSON.stringify({ ...cached.cached_data as any, metrics, fromCache: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const formatBRL = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-    // Build context for AI
-    const dataContext = `
-DADOS FINANCEIROS (${startDate} a ${endDate}):
-- Receitas: ${formatBRL(totalRec)} (${receitas.length} registros)
-- Despesas: ${formatBRL(totalDesp)} (${despesas.length} registros)
-- Impostos pagos: ${formatBRL(totalImpPago)} | Pendentes: ${formatBRL(totalImpPendente)}
-${gastosEquipe > 0 ? `- Custos com equipe: ${formatBRL(gastosEquipe)} (${equipe.filter((e: any) => e.status === 'ativo').length} membros ativos)` : ''}
-- ${isPersonal ? 'Saldo' : 'Lucro líquido'}: ${formatBRL(lucro)}
-- Margem: ${margem.toFixed(1)}%
-
-Despesas por categoria: ${JSON.stringify(catDesp)}
-Receitas por categoria: ${JSON.stringify(catRec)}
-${metas.length > 0 ? `Metas: ${metas.map((m: any) => `${m.titulo}: ${m.progresso}%`).join(', ')}` : ''}
-${impostos.filter((i: any) => !i.pago).length > 0 ? `Impostos pendentes: ${impostos.filter((i: any) => !i.pago).map((i: any) => `${i.descricao} ${formatBRL(Number(i.valor))} venc ${i.vencimento}`).join('; ')}` : ''}
-Tem dados: receitas=${receitas.length > 0}, despesas=${despesas.length > 0}
-`;
+    // Compact data context
+    const dataContext = `${startDate} a ${endDate}: Rec ${formatBRL(totalRec)}(${receitas.length}), Desp ${formatBRL(totalDesp)}(${despesas.length}), Imp pagos ${formatBRL(totalImpPago)}, pend ${formatBRL(totalImpPendente)}${gastosEquipe > 0 ? `, Equipe ${formatBRL(gastosEquipe)}` : ''}, ${isPersonal ? 'Saldo' : 'Lucro'} ${formatBRL(lucro)}, Margem ${margem.toFixed(1)}%. CatDesp: ${JSON.stringify(catDesp)}. CatRec: ${JSON.stringify(catRec)}.${metas.length > 0 ? ` Metas: ${metas.map((m: any) => `${m.titulo}:${m.progresso}%`).join(',')}` : ''}`;
 
     const systemPrompt = isPersonal
-      ? `Você é um consultor financeiro pessoal da plataforma Financy. Analise os dados financeiros pessoais e gere EXATAMENTE 3-5 insights práticos e acionáveis.
+      ? `Consultor financeiro pessoal Financy. Gere 3-4 insights curtos (max 2 frases cada). JSON: {"insights":[{"tipo":"alerta|sucesso|dica|info","titulo":"max 5 palavras","descricao":"max 2 frases","acao":"max 1 frase"}]}. Sem dados insuficientes, dê dicas motivacionais.`
+      : `Consultor empresarial Financy. Gere 3-4 insights estratégicos curtos (max 2 frases cada). JSON: {"insights":[{"tipo":"alerta|sucesso|dica|info","titulo":"max 5 palavras","descricao":"max 2 frases","acao":"max 1 frase"}]}. Foque em KPIs, margem, fluxo de caixa.`;
 
-Foque em:
-- Padrões de gastos e economia
-- Saúde financeira pessoal (saldo positivo/negativo)
-- Oportunidades de economia (categorias com gastos altos)
-- Alertas sobre contas/impostos pendentes
-- Progresso em metas pessoais
-- Dicas práticas de economia
-
-Responda em JSON com a estrutura:
-{"insights": [{"tipo": "alerta|sucesso|dica|info", "titulo": "...", "descricao": "...", "acao": "..."}, ...]}
-
-Se não houver dados suficientes, retorne insights motivacionais para começar a registrar transações.
-Tipo "alerta" = vermelho (problemas), "sucesso" = verde (positivo), "dica" = amarelo (sugestões), "info" = azul (informativo).
-Não repita dados brutos. Seja analítico e perspicaz. Use linguagem simples e direta.`
-      : `Você é um consultor financeiro empresarial da plataforma Financy. Analise os dados financeiros da empresa e gere EXATAMENTE 3-5 insights estratégicos.
-
-Foque em:
-- Margem de lucro e eficiência operacional
-- Fluxo de caixa e runway (sobrevivência)
-- ROI por categoria de investimento
-- Carga tributária e planejamento fiscal
-- Custos com equipe vs receita
-- Tendências de faturamento
-- Riscos financeiros e oportunidades
-
-Responda em JSON com a estrutura:
-{"insights": [{"tipo": "alerta|sucesso|dica|info", "titulo": "...", "descricao": "...", "acao": "..."}, ...]}
-
-Se não houver dados suficientes, retorne insights sobre como começar a organizar as finanças empresariais.
-Tipo "alerta" = vermelho (riscos), "sucesso" = verde (indicadores positivos), "dica" = amarelo (oportunidades), "info" = azul (métricas).
-Foque em KPIs empresariais. Seja estratégico e data-driven.`;
-
-    // Use tool calling for structured output
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -174,7 +176,7 @@ Foque em KPIs empresariais. Seja estratégico e data-driven.`;
           type: "function",
           function: {
             name: "generate_insights",
-            description: "Gerar insights financeiros estruturados",
+            description: "Gerar insights financeiros",
             parameters: {
               type: "object",
               properties: {
@@ -199,8 +201,8 @@ Foque em KPIs empresariais. Seja estratégico e data-driven.`;
           }
         }],
         tool_choice: { type: "function", function: { name: "generate_insights" } },
-        temperature: 0.7,
-        max_tokens: 1500,
+        temperature: 0.5,
+        max_tokens: 800,
       }),
     });
 
@@ -232,32 +234,29 @@ Foque em KPIs empresariais. Seja estratégico e data-driven.`;
       }
     }
 
-    // Fallback if no insights generated
     if (insights.length === 0) {
-      insights = [
-        {
-          tipo: "info",
-          titulo: isPersonal ? "Comece a registrar" : "Configure suas finanças",
-          descricao: isPersonal
-            ? "Registre suas receitas e despesas para receber insights personalizados sobre sua saúde financeira."
-            : "Adicione receitas e despesas para que a IA analise a performance do seu negócio.",
-          acao: isPersonal ? "Registre seu primeiro gasto ou recebimento" : "Cadastre seu faturamento mensal"
-        }
-      ];
+      insights = [{
+        tipo: "info",
+        titulo: isPersonal ? "Comece a registrar" : "Configure suas finanças",
+        descricao: isPersonal
+          ? "Registre receitas e despesas para insights personalizados."
+          : "Adicione dados para análise de performance.",
+        acao: isPersonal ? "Registre sua primeira transação" : "Cadastre seu faturamento"
+      }];
     }
 
-    // Include summary metrics
-    const metrics = {
-      totalReceitas: totalRec,
-      totalDespesas: totalDesp,
-      lucro,
-      margem,
-      totalImpostosPendente: totalImpPendente,
-      gastosEquipe,
-      periodo: `${startDate} a ${endDate}`,
-    };
+    // Save to cache (expires in 6 hours)
+    const cacheData = { insights };
+    const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
+    
+    await supabase.from('query_cache').upsert({
+      user_id: user.id,
+      query_key: cacheKey,
+      cached_data: cacheData,
+      expires_at: expiresAt,
+    }, { onConflict: 'user_id,query_key' });
 
-    return new Response(JSON.stringify({ insights, metrics }), {
+    return new Response(JSON.stringify({ insights, metrics, fromCache: false }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
