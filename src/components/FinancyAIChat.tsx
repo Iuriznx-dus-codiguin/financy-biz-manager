@@ -105,14 +105,21 @@ export const FinancyAIChat = () => {
     if (!user?.id) return;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const { data: userSessions } = await supabase
+      .from('ai_chat_sessions')
+      .select('id')
+      .eq('user_id', user.id);
+    const sessionIds = userSessions?.map((s: any) => s.id) || [];
+    if (sessionIds.length === 0) {
+      setDailyCount(0);
+      return;
+    }
     const { count } = await supabase
       .from('ai_chat_messages')
       .select('id', { count: 'exact', head: true })
       .eq('role', 'user')
       .gte('created_at', today.toISOString())
-      .in('session_id',
-        (await supabase.from('ai_chat_sessions').select('id').eq('user_id', user.id)).data?.map((s: any) => s.id) || []
-      );
+      .in('session_id', sessionIds);
     setDailyCount(count || 0);
   };
 
@@ -180,12 +187,12 @@ export const FinancyAIChat = () => {
     }
   };
 
-  const saveMessage = async (sessionId: string, role: string, content: string, toolResults?: any) => {
+  const saveMessage = async (sessionId: string, role: string, content: string, currentMsgCount: number, toolResults?: any) => {
     await supabase.from('ai_chat_messages').insert({
       session_id: sessionId, role, content, tool_results: toolResults || null,
     });
-    const updates: any = { message_count: messages.length + 1 };
-    if (role === 'user' && messages.length === 0) {
+    const updates: any = { message_count: currentMsgCount + 1, updated_at: new Date().toISOString() };
+    if (role === 'user' && currentMsgCount === 0) {
       updates.title = content.substring(0, 60);
     }
     await supabase.from('ai_chat_sessions').update(updates).eq('id', sessionId);
@@ -217,7 +224,7 @@ export const FinancyAIChat = () => {
     setDailyCount(prev => prev + 1);
     if (inputRef.current) inputRef.current.style.height = 'auto';
 
-    await saveMessage(sessionId, 'user', text);
+    await saveMessage(sessionId, 'user', text, messages.length);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -247,7 +254,7 @@ export const FinancyAIChat = () => {
         toolResults: data.tool_results,
       };
       setMessages(prev => [...prev, assistantMsg]);
-      await saveMessage(sessionId, 'assistant', assistantMsg.content, assistantMsg.toolResults);
+      await saveMessage(sessionId, 'assistant', assistantMsg.content, newMessages.length, assistantMsg.toolResults);
 
       if (newMessages.length === 1) {
         setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title: text.substring(0, 60) } : s));

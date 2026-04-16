@@ -407,7 +407,6 @@ import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
   // Usar useMemo para recalcular dados quando filtros mudam
   const dadosRelatorio = useMemo(() => {
-    console.log('Gerando dados do relatório:', selectedReport, timeFilter);
     return gerarDadosRelatorio();
   }, [selectedReport, timeFilter, reportKey, receitas, despesas, impostos]);
 

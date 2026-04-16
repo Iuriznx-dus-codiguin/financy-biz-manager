@@ -5,6 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Users, UserPlus, Mail, Phone, Edit, Trash2, Shield, Eye, EyeOff } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { MembroEquipe } from '@/contexts/AppContext';
@@ -127,6 +131,7 @@ const Equipe = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<MembroEquipe | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showSensitiveData, setShowSensitiveData] = useState<{[key: string]: boolean}>({});
   const [formData, setFormData] = useState({
     nome: '',
@@ -215,10 +220,15 @@ const Equipe = () => {
     setIsEditDialogOpen(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja remover este membro da equipe?')) {
-      await deleteMembroEquipe(id);
+  const handleDelete = (id: string) => {
+    setDeletingId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (deletingId) {
+      await deleteMembroEquipe(deletingId);
       toast.success('Membro removido com sucesso!');
+      setDeletingId(null);
     }
   };
 
@@ -435,6 +445,23 @@ const Equipe = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover membro da equipe?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Os dados do membro serão removidos permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 };
