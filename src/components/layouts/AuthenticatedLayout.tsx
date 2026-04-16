@@ -113,7 +113,7 @@ export const AuthenticatedLayout = () => {
             </div>
             {isBlocked && <SubscriptionBanners />}
             {activeSection === 'agentes-ia' ? (
-              <main className="flex-1 overflow-hidden">
+              <main className="flex-1 overflow-hidden h-[calc(100dvh-3.5rem)] lg:h-screen">
                 <Outlet />
               </main>
             ) : (
