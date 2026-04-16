@@ -13,6 +13,10 @@ import { useAppContext } from '@/contexts/AppContext';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
 import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const iconOptions = [
   'folder', 'utensils', 'car', 'home', 'heart', 'book-open', 'gamepad-2',
@@ -33,6 +37,7 @@ export function Categorias() {
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('categorias');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState<CategoriaPersonalizada | null>(null);
+  const [deletingCategoria, setDeletingCategoria] = useState<CategoriaPersonalizada | null>(null);
   const [novaCategoria, setNovaCategoria] = useState({
     nome: '',
     tipo: 'despesa' as 'receita' | 'despesa' | 'ambos',
@@ -106,9 +111,14 @@ export function Categorias() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (categoria: CategoriaPersonalizada) => {
-    if (confirm(`Tem certeza que deseja remover a categoria "${categoria.nome}"?`)) {
-      await removerCategoria(categoria.id);
+  const handleDelete = (categoria: CategoriaPersonalizada) => {
+    setDeletingCategoria(categoria);
+  };
+
+  const confirmDelete = async () => {
+    if (deletingCategoria) {
+      await removerCategoria(deletingCategoria.id);
+      setDeletingCategoria(null);
     }
   };
 

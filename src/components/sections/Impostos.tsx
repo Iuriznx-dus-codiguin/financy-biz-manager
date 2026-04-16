@@ -6,6 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus, Filter, Search, CheckCircle, XCircle, Trash2, Calendar, Repeat } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
@@ -15,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 const Impostos = () => {
   const { impostos, addImposto, updateImposto, deleteImposto, receitas } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('impostos');
   const [novoImposto, setNovoImposto] = useState({
     tipo: '',
@@ -82,9 +87,14 @@ const Impostos = () => {
     updateImposto(id, { pago: !pago });
   };
 
-  const handleDeleteImposto = async (id: number) => {
-    if (confirm('Tem certeza que deseja excluir este imposto/taxa?')) {
-      await deleteImposto(id);
+  const handleDeleteImposto = (id: number) => {
+    setDeletingId(id);
+  };
+
+  const confirmDeleteImposto = async () => {
+    if (deletingId !== null) {
+      await deleteImposto(deletingId);
+      setDeletingId(null);
     }
   };
 
