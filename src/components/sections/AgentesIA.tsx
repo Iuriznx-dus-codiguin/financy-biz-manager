@@ -11,7 +11,7 @@ const AgentesIA: React.FC = () => {
 
   if (!hasAccess) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full p-4">
         <Card className="max-w-lg mx-auto rounded-2xl">
           <CardHeader className="text-center">
             <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
