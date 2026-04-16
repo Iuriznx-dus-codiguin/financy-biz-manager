@@ -303,7 +303,7 @@ export const FinancyAIChat = () => {
   }, {} as Record<string, ChatSession[]>);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] lg:h-[calc(100vh-2rem)] -m-3 sm:-m-4 lg:-m-6 xl:-m-8">
+    <div className="flex h-full w-full overflow-hidden">
       {/* Sidebar overlay for mobile */}
       {sidebarOpen && isMobile && (
         <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />
@@ -312,9 +312,9 @@ export const FinancyAIChat = () => {
       {/* Conversations Sidebar */}
       <div className={`
         ${isMobile ? 'fixed inset-y-0 left-0 z-50' : 'relative'}
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${isMobile ? 'w-[280px]' : 'w-[260px]'}
-        transition-transform duration-200 ease-in-out
+        ${!isMobile && !sidebarOpen ? 'w-0 -ml-px overflow-hidden' : ''}
+        ${isMobile ? (sidebarOpen ? 'translate-x-0 w-[280px]' : '-translate-x-full w-[280px]') : (sidebarOpen ? 'w-[260px]' : '')}
+        transition-all duration-200 ease-in-out
         bg-muted/50 border-r border-border flex flex-col shrink-0
       `}>
         {/* Sidebar Header */}
