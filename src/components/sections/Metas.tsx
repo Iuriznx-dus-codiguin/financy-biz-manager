@@ -92,11 +92,11 @@ const Metas = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'concluida':
-        return <Badge className="bg-green-100 text-green-800">Concluída</Badge>;
+        return <Badge className="bg-success/10 text-green-800">Concluída</Badge>;
       case 'em_andamento':
-        return <Badge className="bg-blue-100 text-blue-800">Em Andamento</Badge>;
+        return <Badge className="bg-primary/10 text-blue-800">Em Andamento</Badge>;
       case 'atrasada':
-        return <Badge className="bg-red-100 text-red-800">Atrasada</Badge>;
+        return <Badge className="bg-destructive/10 text-red-800">Atrasada</Badge>;
       default:
         return <Badge>Indefinido</Badge>;
     }

@@ -247,10 +247,10 @@ const Fechamento = () => {
         <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center space-x-2 mb-4">
-              <TrendingUp className="h-8 w-8 text-green-600" />
+              <TrendingUp className="h-8 w-8 text-success" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Receitas</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-success">
                   R$ {receitasDia.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
@@ -261,10 +261,10 @@ const Fechamento = () => {
         <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center space-x-2 mb-4">
-              <TrendingDown className="h-8 w-8 text-red-600" />
+              <TrendingDown className="h-8 w-8 text-destructive" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Despesas</p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-2xl font-bold text-destructive">
                   R$ {despesasDia.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
@@ -275,10 +275,10 @@ const Fechamento = () => {
         <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center space-x-2 mb-4">
-              <CalendarDays className="h-8 w-8 text-orange-600" />
+              <CalendarDays className="h-8 w-8 text-warning" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Impostos Vencendo</p>
-                <p className="text-2xl font-bold text-orange-600">
+                <p className="text-2xl font-bold text-warning">
                   R$ {impostosVencendoDia.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
@@ -289,11 +289,11 @@ const Fechamento = () => {
         <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center space-x-2 mb-4">
-              <DollarSign className="h-8 w-8 text-blue-600" />
+              <DollarSign className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Saldo Líquido</p>
                 <p className={`text-2xl font-bold ${
-                  saldoLiquido >= 0 ? 'text-green-600' : 'text-red-600'
+                  saldoLiquido >= 0 ? 'text-success' : 'text-destructive'
                 }`}>
                   R$ {saldoLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
@@ -311,8 +311,8 @@ const Fechamento = () => {
         <CardContent>
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                <h3 className="font-semibold text-green-800 dark:text-green-200 mb-3">Entradas</h3>
+              <div className="p-4 bg-success/10 rounded-xl">
+                <h3 className="font-semibold text-success mb-3">Entradas</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm">Receitas Operacionais:</span>
@@ -322,7 +322,7 @@ const Fechamento = () => {
                     <span className="text-sm">Outras Receitas:</span>
                     <span className="font-medium">R$ 0,00</span>
                   </div>
-                  <hr className="border-green-200 dark:border-green-800" />
+                  <hr className="border-success/30" />
                   <div className="flex justify-between font-bold">
                     <span>Total de Entradas:</span>
                     <span>R$ {receitasDia.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -330,8 +330,8 @@ const Fechamento = () => {
                 </div>
               </div>
 
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
-                <h3 className="font-semibold text-red-800 dark:text-red-200 mb-3">Saídas</h3>
+              <div className="p-4 bg-destructive/10 rounded-xl">
+                <h3 className="font-semibold text-destructive mb-3">Saídas</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm">Despesas Operacionais:</span>
@@ -345,7 +345,7 @@ const Fechamento = () => {
                     <span className="text-sm">Custos com Equipe:</span>
                     <span className="font-medium">R$ {custosEquipeDia.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   </div>
-                  <hr className="border-red-200 dark:border-red-800" />
+                  <hr className="border-destructive/30" />
                   <div className="flex justify-between font-bold">
                     <span>Total de Saídas:</span>
                     <span>R$ {(despesasDia + impostosVencendoDia + custosEquipeDia).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -354,12 +354,12 @@ const Fechamento = () => {
               </div>
             </div>
 
-            <div className="text-center p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-              <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">
+            <div className="text-center p-6 bg-primary/10 rounded-xl">
+              <h3 className="text-lg font-semibold text-primary mb-2">
                 Resultado do Dia
               </h3>
               <p className={`text-3xl font-bold ${
-                saldoLiquido >= 0 ? 'text-green-600' : 'text-red-600'
+                saldoLiquido >= 0 ? 'text-success' : 'text-destructive'
               }`}>
                 {saldoLiquido >= 0 ? 'Lucro' : 'Prejuízo'}: R$ {Math.abs(saldoLiquido).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
@@ -458,19 +458,19 @@ const Fechamento = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-xl">
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-1">Total Entradas</p>
-              <p className="text-xl font-bold text-green-600">
+              <p className="text-xl font-bold text-success">
                 R$ {totaisFiltrados.entradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-1">Total Saídas</p>
-              <p className="text-xl font-bold text-red-600">
+              <p className="text-xl font-bold text-destructive">
                 R$ {totaisFiltrados.saidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-1">Saldo</p>
-              <p className={`text-xl font-bold ${totaisFiltrados.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className={`text-xl font-bold ${totaisFiltrados.saldo >= 0 ? 'text-success' : 'text-destructive'}`}>
                 R$ {totaisFiltrados.saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
@@ -510,24 +510,24 @@ const Fechamento = () => {
                         </TableCell>
                         <TableCell>
                           {transacao.tipo === 'receita' && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/30">
                               <TrendingUp className="h-3 w-3 mr-1" />
                               Receita
                             </Badge>
                           )}
                           {transacao.tipo === 'despesa' && (
-                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                            <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
                               <TrendingDown className="h-3 w-3 mr-1" />
                               Despesa
                             </Badge>
                           )}
                           {transacao.tipo === 'imposto' && (
-                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                            <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
                               Imposto
                             </Badge>
                           )}
                           {transacao.tipo === 'equipe' && (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
                               Equipe
                             </Badge>
                           )}
@@ -539,7 +539,7 @@ const Fechamento = () => {
                         </TableCell>
                         <TableCell>
                           {transacao.status === 'paga' && (
-                            <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Paga</Badge>
+                            <Badge className="bg-success/10 text-green-800 hover:bg-success/10">Paga</Badge>
                           )}
                           {transacao.status === 'pendente' && (
                             <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pendente</Badge>
@@ -548,11 +548,11 @@ const Fechamento = () => {
                             <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">Recorrente</Badge>
                           )}
                           {transacao.status === 'automático' && (
-                            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Automático</Badge>
+                            <Badge className="bg-primary/10 text-blue-800 hover:bg-primary/10">Automático</Badge>
                           )}
                         </TableCell>
                         <TableCell className={`text-right font-semibold ${
-                          transacao.tipo === 'receita' ? 'text-green-600' : 'text-red-600'
+                          transacao.tipo === 'receita' ? 'text-success' : 'text-destructive'
                         }`}>
                           {transacao.tipo === 'receita' ? '+' : '-'} R$ {transacao.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
@@ -619,7 +619,7 @@ const Fechamento = () => {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Valor</label>
                 <p className={`text-2xl font-bold ${
-                  transacaoSelecionada.tipo === 'receita' ? 'text-green-600' : 'text-red-600'
+                  transacaoSelecionada.tipo === 'receita' ? 'text-success' : 'text-destructive'
                 }`}>
                   {transacaoSelecionada.tipo === 'receita' ? '+' : '-'} R$ {Number(transacaoSelecionada.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
@@ -682,9 +682,9 @@ const Fechamento = () => {
 
               {/* Indicador de Recorrência */}
               {transacaoSelecionada.isRecorrente && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <Calendar className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm text-blue-700 dark:text-blue-400">
+                <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/30">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  <span className="text-sm text-primary">
                     Esta é uma transação recorrente
                   </span>
                 </div>

@@ -309,13 +309,13 @@ const Assinatura: React.FC = () => {
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-blue-500/10 rounded-xl">
-                  <Building2 className="h-6 w-6 text-blue-600" />
+                  <Building2 className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <CardTitle className="text-xl text-blue-900 dark:text-blue-100">
                     Faça Upgrade para Plano Empresarial
                   </CardTitle>
-                  <CardDescription className="text-blue-700 dark:text-blue-300">
+                  <CardDescription className="text-primary">
                     Gerencie suas finanças pessoais E empresariais em um único plano
                   </CardDescription>
                 </div>
@@ -522,12 +522,12 @@ const Assinatura: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-primary/30 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-3">
-              <CreditCard className="h-5 w-5 text-blue-600" />
-              <span className="font-semibold text-blue-800 dark:text-blue-200">Aguardando Pagamento</span>
+              <CreditCard className="h-5 w-5 text-primary" />
+              <span className="font-semibold text-primary">Aguardando Pagamento</span>
             </div>
-            <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+            <p className="text-sm text-primary mb-4">
               Escolha um plano acima para desbloquear todas as funcionalidades do Financy.
             </p>
           </div>

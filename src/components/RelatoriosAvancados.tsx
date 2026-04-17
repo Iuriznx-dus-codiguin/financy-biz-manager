@@ -208,9 +208,9 @@ export const RelatoriosAvancados: React.FC = () => {
 
   const getTrendenciaColor = (tendencia: string) => {
     switch (tendencia) {
-      case 'crescimento': return 'text-green-600';
-      case 'declinio': return 'text-red-600';
-      default: return 'text-blue-600';
+      case 'crescimento': return 'text-success';
+      case 'declinio': return 'text-destructive';
+      default: return 'text-primary';
     }
   };
 
@@ -332,21 +332,21 @@ export const RelatoriosAvancados: React.FC = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Card className="p-4">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-success">
                 R$ {reportData.resumo.total_receitas.toFixed(2)}
               </div>
               <p className="text-sm text-muted-foreground">Total de Receitas</p>
             </Card>
 
             <Card className="p-4">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-destructive">
                 R$ {reportData.resumo.total_despesas.toFixed(2)}
               </div>
               <p className="text-sm text-muted-foreground">Total de Despesas</p>
             </Card>
 
             <Card className="p-4">
-              <div className={`text-2xl font-bold ${reportData.resumo.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-2xl font-bold ${reportData.resumo.saldo >= 0 ? 'text-success' : 'text-destructive'}`}>
                 R$ {reportData.resumo.saldo.toFixed(2)}
               </div>
               <p className="text-sm text-muted-foreground">Saldo Líquido</p>

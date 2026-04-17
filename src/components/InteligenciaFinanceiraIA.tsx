@@ -105,10 +105,10 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
 
   const getColorByType = (tipo: string) => {
     switch (tipo) {
-      case 'alerta': return 'text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
-      case 'sucesso': return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+      case 'alerta': return 'text-destructive bg-destructive/10 border-destructive/30';
+      case 'sucesso': return 'text-success bg-success/10 border-success/30';
       case 'dica': return 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800';
-      case 'info': return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
+      case 'info': return 'text-primary bg-primary/10 border-primary/30';
       default: return 'text-purple-600 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800';
     }
   };

@@ -239,8 +239,8 @@ const Impostos = () => {
               )}
 
               {novoImposto.valorTipo === 'porcentagem' && (
-                <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-xl border border-blue-200 dark:border-blue-900">
-                  <p className="text-sm text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                <div className="p-4 bg-primary/10 rounded-xl border border-primary/30">
+                  <p className="text-sm text-primary flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     O valor será calculado como {novoImposto.valor || '0'}% sobre o total de receitas
                   </p>
@@ -260,9 +260,9 @@ const Impostos = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total de Impostos</p>
-                <p className="text-2xl font-bold text-orange-600">R$ {totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-bold text-warning">R$ {totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               </div>
-              <div className="text-orange-600 text-2xl">🏛️</div>
+              <div className="text-warning text-2xl">🏛️</div>
             </div>
           </CardContent>
         </Card>
@@ -272,9 +272,9 @@ const Impostos = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Pagos</p>
-                <p className="text-2xl font-bold text-green-600">{impostosPagos.length}</p>
+                <p className="text-2xl font-bold text-success">{impostosPagos.length}</p>
               </div>
-              <div className="text-green-600 text-2xl">✅</div>
+              <div className="text-success text-2xl">✅</div>
             </div>
           </CardContent>
         </Card>
@@ -284,9 +284,9 @@ const Impostos = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Vencidos</p>
-                <p className="text-2xl font-bold text-red-600">{impostosVencidos.length}</p>
+                <p className="text-2xl font-bold text-destructive">{impostosVencidos.length}</p>
               </div>
-              <div className="text-red-600 text-2xl">⚠️</div>
+              <div className="text-destructive text-2xl">⚠️</div>
             </div>
           </CardContent>
         </Card>
@@ -298,7 +298,7 @@ const Impostos = () => {
                 <p className="text-sm text-muted-foreground">Total de Itens</p>
                 <p className="text-2xl font-bold">{impostos.length}</p>
               </div>
-              <div className="text-blue-600 text-2xl">📊</div>
+              <div className="text-primary text-2xl">📊</div>
             </div>
           </CardContent>
         </Card>
@@ -394,9 +394,9 @@ const Impostos = () => {
                       </TableCell>
                       <TableCell className="text-center">
                         {imposto.pago ? (
-                          <CheckCircle className="h-5 w-5 text-green-600 mx-auto" />
+                          <CheckCircle className="h-5 w-5 text-success mx-auto" />
                         ) : (
-                          <XCircle className="h-5 w-5 text-red-600 mx-auto" />
+                          <XCircle className="h-5 w-5 text-destructive mx-auto" />
                         )}
                       </TableCell>
                     <TableCell className="text-center">
@@ -413,7 +413,7 @@ const Impostos = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeleteImposto(imposto.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

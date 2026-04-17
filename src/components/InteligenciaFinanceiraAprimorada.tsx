@@ -157,10 +157,10 @@ export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAp
 
   const getColorByTipo = (tipo: string) => {
     switch (tipo) {
-      case 'alerta': return 'text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200';
-      case 'aviso': return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-200';
-      case 'sucesso': return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200';
-      case 'info': return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-200';
+      case 'alerta': return 'text-destructive bg-destructive/10 border-destructive/30';
+      case 'aviso': return 'text-warning bg-warning/10 border-warning/30';
+      case 'sucesso': return 'text-success bg-success/10 border-success/30';
+      case 'info': return 'text-primary bg-primary/10 border-primary/30';
       default: return 'text-purple-600 bg-purple-50 dark:bg-purple-900/20 border-purple-200';
     }
   };
@@ -171,17 +171,17 @@ export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAp
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="rounded-xl">
           <CardContent className="p-4 text-center">
-            <DollarSign className="h-6 w-6 text-green-600 mx-auto mb-2" />
+            <DollarSign className="h-6 w-6 text-success mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Margem Líquida</p>
-            <p className="text-xl font-bold text-green-600">{margemLiquida.toFixed(1)}%</p>
+            <p className="text-xl font-bold text-success">{margemLiquida.toFixed(1)}%</p>
           </CardContent>
         </Card>
         
         <Card className="rounded-xl">
           <CardContent className="p-4 text-center">
-            <Target className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+            <Target className="h-6 w-6 text-primary mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Margem Bruta</p>
-            <p className="text-xl font-bold text-blue-600">{margemBruta.toFixed(1)}%</p>
+            <p className="text-xl font-bold text-primary">{margemBruta.toFixed(1)}%</p>
           </CardContent>
         </Card>
         
@@ -195,9 +195,9 @@ export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAp
         
         <Card className="rounded-xl">
           <CardContent className="p-4 text-center">
-            <PieChart className="h-6 w-6 text-orange-600 mx-auto mb-2" />
+            <PieChart className="h-6 w-6 text-warning mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Taxa Queima</p>
-            <p className="text-xl font-bold text-orange-600">{(taxaQueima * 100).toFixed(1)}%</p>
+            <p className="text-xl font-bold text-warning">{(taxaQueima * 100).toFixed(1)}%</p>
           </CardContent>
         </Card>
       </div>
@@ -241,7 +241,7 @@ export const InteligenciaFinanceiraAprimorada: React.FC<InteligenciaFinanceiraAp
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-xl">
               <h4 className="font-semibold mb-2">Valuation Estimado</h4>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-success">
                 R$ {valuationEstimado.toLocaleString('pt-BR')}
               </p>
               <p className="text-xs text-muted-foreground mt-1">

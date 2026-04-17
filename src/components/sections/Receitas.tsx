@@ -275,23 +275,23 @@ const Receitas = () => {
                   </div>
 
                   {novaReceita.emAndamento && (
-                    <div className="bg-orange-50 p-3 rounded-xl border border-orange-200">
+                    <div className="bg-warning/10 p-3 rounded-xl border border-warning/30">
                       <div className="flex items-center space-x-2">
-                        <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                        <Badge variant="secondary" className="bg-warning/10 text-warning">
                           Em Andamento
                         </Badge>
-                        <span className="text-sm text-orange-700">Esta receita não será contabilizada até ser marcada como paga</span>
+                        <span className="text-sm text-warning">Esta receita não será contabilizada até ser marcada como paga</span>
                       </div>
                     </div>
                   )}
 
                   {!novaReceita.recorrente && !novaReceita.emAndamento && (
-                    <div className="bg-green-50 p-3 rounded-xl border border-green-200">
+                    <div className="bg-success/10 p-3 rounded-xl border border-success/30">
                       <div className="flex items-center space-x-2">
-                        <Badge variant="secondary" className="bg-green-100 text-green-700">
+                        <Badge variant="secondary" className="bg-success/10 text-success">
                           Receita Única
                         </Badge>
-                        <span className="text-sm text-green-700">Esta receita será registrada apenas uma vez</span>
+                        <span className="text-sm text-success">Esta receita será registrada apenas uma vez</span>
                       </div>
                     </div>
                   )}
@@ -314,25 +314,25 @@ const Receitas = () => {
 
               {/* Seção de Simulação Mensal */}
               {novaReceita.recorrente && generateMonthlySimulation.length > 0 && (
-                <div className="mt-6 p-4 bg-green-50 rounded-xl border border-green-200">
+                <div className="mt-6 p-4 bg-success/10 rounded-xl border border-success/30">
                   <div className="flex items-center space-x-2 mb-4">
-                    <Calendar className="h-5 w-5 text-green-600" />
-                    <h4 className="text-lg font-semibold text-green-700">Simulação Anual - Receita Recorrente</h4>
+                    <Calendar className="h-5 w-5 text-success" />
+                    <h4 className="text-lg font-semibold text-success">Simulação Anual - Receita Recorrente</h4>
                   </div>
                   
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
                     {generateMonthlySimulation.map((item, index) => (
-                      <div key={index} className="bg-white p-3 rounded-lg border border-green-200">
-                        <div className="text-sm font-medium text-green-700 capitalize">{item.month}</div>
+                      <div key={index} className="bg-white p-3 rounded-lg border border-success/30">
+                        <div className="text-sm font-medium text-success capitalize">{item.month}</div>
                         <div className="text-xs text-muted-foreground">{item.date}</div>
-                        <div className="text-sm font-bold text-green-600">R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div className="text-sm font-bold text-success">R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                       </div>
                     ))}
                   </div>
                   
-                  <div className="flex justify-between items-center p-3 bg-green-100 rounded-lg">
-                    <span className="text-green-700 font-semibold">Total Anual Estimado:</span>
-                    <span className="text-xl font-bold text-green-600">
+                  <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
+                    <span className="text-success font-semibold">Total Anual Estimado:</span>
+                    <span className="text-xl font-bold text-success">
                       R$ {totalAnualSimulado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -353,9 +353,9 @@ const Receitas = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Receita Total</p>
-                <p className="text-2xl font-bold text-green-600">R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-bold text-success">R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               </div>
-              <div className="text-green-600 text-2xl">💰</div>
+              <div className="text-success text-2xl">💰</div>
             </div>
           </CardContent>
         </Card>
@@ -367,7 +367,7 @@ const Receitas = () => {
                 <p className="text-sm text-muted-foreground">Total de Transações</p>
                 <p className="text-2xl font-bold">{receitas.length}</p>
               </div>
-              <div className="text-blue-600 text-2xl">📊</div>
+              <div className="text-primary text-2xl">📊</div>
             </div>
           </CardContent>
         </Card>
@@ -464,12 +464,12 @@ const Receitas = () => {
                   <TableRow key={receita.id}>
                     <TableCell>
                       {receita.status === 'paga' ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-700">
+                        <Badge variant="secondary" className="bg-success/10 text-success">
                           <Check className="h-3 w-3 mr-1" />
                           Paga
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                        <Badge variant="secondary" className="bg-warning/10 text-warning">
                           <Clock className="h-3 w-3 mr-1" />
                           Pendente
                         </Badge>
@@ -480,7 +480,7 @@ const Receitas = () => {
                     <TableCell>{receita.categoria}</TableCell>
                     <TableCell>{receita.cliente}</TableCell>
                     <TableCell>{receita.formaPagamento}</TableCell>
-                    <TableCell className="text-right font-medium text-green-600">
+                    <TableCell className="text-right font-medium text-success">
                       R$ {receita.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-center">
@@ -490,7 +490,7 @@ const Receitas = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleMarkAsPaid(receita.id)}
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            className="text-success hover:text-success hover:bg-success/10"
                           >
                             <Check className="h-4 w-4" />
                           </Button>
@@ -499,7 +499,7 @@ const Receitas = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => setDeleteId(receita.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

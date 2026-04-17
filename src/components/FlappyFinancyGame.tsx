@@ -315,7 +315,7 @@ const FlappyFinancyGame = () => {
 
   return (
     <>
-      <Card className="rounded-2xl shadow-sm border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+      <Card className="rounded-2xl shadow-sm border-success/30 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
         <CardContent className="p-6 text-center">
           <div className="text-4xl mb-4">🎮</div>
           <h3 className="font-bold mb-2">Passar o Tempo</h3>
@@ -351,7 +351,7 @@ const FlappyFinancyGame = () => {
                 ref={canvasRef}
                 width={800}
                 height={400}
-                className="border-2 border-green-200 dark:border-green-600 rounded-lg bg-gradient-to-b from-blue-400 to-green-400 cursor-pointer"
+                className="border-2 border-success/30 dark:border-green-600 rounded-lg bg-gradient-to-b from-blue-400 to-green-400 cursor-pointer"
                 onClick={jump}
               />
               

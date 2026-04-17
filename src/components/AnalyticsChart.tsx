@@ -36,9 +36,9 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ data, title }) =
             <div key={index} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
               <span className="font-medium">{item.period}</span>
               <div className="flex gap-4 text-sm">
-                <span className="text-green-600">R$ {item.revenue.toFixed(2)}</span>
-                <span className="text-red-600">R$ {item.expenses.toFixed(2)}</span>
-                <span className={item.profit >= 0 ? 'text-green-600' : 'text-red-600'}>
+                <span className="text-success">R$ {item.revenue.toFixed(2)}</span>
+                <span className="text-destructive">R$ {item.expenses.toFixed(2)}</span>
+                <span className={item.profit >= 0 ? 'text-success' : 'text-destructive'}>
                   R$ {item.profit.toFixed(2)}
                 </span>
               </div>
@@ -48,7 +48,7 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ data, title }) =
         <div className="mt-4 pt-4 border-t">
           <div className="flex justify-between items-center">
             <span className="font-semibold">Total do Período:</span>
-            <span className={totalProfit >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+            <span className={totalProfit >= 0 ? 'text-success font-bold' : 'text-destructive font-bold'}>
               R$ {totalProfit.toFixed(2)}
             </span>
           </div>

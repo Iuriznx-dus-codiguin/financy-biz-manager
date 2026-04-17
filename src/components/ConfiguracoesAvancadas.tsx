@@ -273,12 +273,12 @@ export const ConfiguracoesAvancadas: React.FC = () => {
             </Button>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+          <div className="bg-primary/10 dark:bg-blue-950 p-4 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <Database className="h-4 w-4 text-blue-600" />
+              <Database className="h-4 w-4 text-primary" />
               <span className="font-medium text-blue-900 dark:text-blue-100">Informações de Segurança</span>
             </div>
-            <p className="text-sm text-blue-800 dark:text-blue-200">
+            <p className="text-sm text-primary">
               Seus dados são criptografados e armazenados de forma segura. 
               Recomendamos fazer backups regulares para maior segurança.
             </p>

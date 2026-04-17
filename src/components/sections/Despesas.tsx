@@ -284,23 +284,23 @@ const Despesas = () => {
                   </div>
 
                   {novaDespesa.emAndamento && (
-                    <div className="bg-orange-50 p-3 rounded-xl border border-orange-200">
+                    <div className="bg-warning/10 p-3 rounded-xl border border-warning/30">
                       <div className="flex items-center space-x-2">
-                        <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                        <Badge variant="secondary" className="bg-warning/10 text-warning">
                           Em Andamento
                         </Badge>
-                        <span className="text-sm text-orange-700">Esta despesa não será contabilizada até ser marcada como paga</span>
+                        <span className="text-sm text-warning">Esta despesa não será contabilizada até ser marcada como paga</span>
                       </div>
                     </div>
                   )}
 
                   {!novaDespesa.recorrente && !novaDespesa.emAndamento && (
-                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-200">
+                    <div className="bg-primary/10 p-3 rounded-xl border border-primary/30">
                       <div className="flex items-center space-x-2">
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                        <Badge variant="secondary" className="bg-primary/10 text-primary">
                           Despesa Única
                         </Badge>
-                        <span className="text-sm text-blue-700">Esta despesa será registrada apenas uma vez</span>
+                        <span className="text-sm text-primary">Esta despesa será registrada apenas uma vez</span>
                       </div>
                     </div>
                   )}
@@ -323,25 +323,25 @@ const Despesas = () => {
 
               {/* Seção de Simulação Mensal */}
               {novaDespesa.recorrente && generateMonthlySimulation.length > 0 && (
-                <div className="mt-6 p-4 bg-red-50 rounded-xl border border-red-200">
+                <div className="mt-6 p-4 bg-destructive/10 rounded-xl border border-destructive/30">
                   <div className="flex items-center space-x-2 mb-4">
-                    <Calendar className="h-5 w-5 text-red-600" />
-                    <h4 className="text-lg font-semibold text-red-700">Simulação Anual - Despesa Recorrente</h4>
+                    <Calendar className="h-5 w-5 text-destructive" />
+                    <h4 className="text-lg font-semibold text-destructive">Simulação Anual - Despesa Recorrente</h4>
                   </div>
                   
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
                     {generateMonthlySimulation.map((item, index) => (
-                      <div key={index} className="bg-white p-3 rounded-lg border border-red-200">
-                        <div className="text-sm font-medium text-red-700 capitalize">{item.month}</div>
+                      <div key={index} className="bg-white p-3 rounded-lg border border-destructive/30">
+                        <div className="text-sm font-medium text-destructive capitalize">{item.month}</div>
                         <div className="text-xs text-muted-foreground">{item.date}</div>
-                        <div className="text-sm font-bold text-red-600">R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div className="text-sm font-bold text-destructive">R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                       </div>
                     ))}
                   </div>
                   
-                  <div className="flex justify-between items-center p-3 bg-red-100 rounded-lg">
-                    <span className="text-red-700 font-semibold">Total Anual Estimado:</span>
-                    <span className="text-xl font-bold text-red-600">
+                  <div className="flex justify-between items-center p-3 bg-destructive/10 rounded-lg">
+                    <span className="text-destructive font-semibold">Total Anual Estimado:</span>
+                    <span className="text-xl font-bold text-destructive">
                       R$ {totalAnualSimulado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -362,9 +362,9 @@ const Despesas = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Despesa Total</p>
-                <p className="text-2xl font-bold text-red-600">R$ {totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-bold text-destructive">R$ {totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               </div>
-              <div className="text-red-600 text-2xl">💸</div>
+              <div className="text-destructive text-2xl">💸</div>
             </div>
           </CardContent>
         </Card>
@@ -376,7 +376,7 @@ const Despesas = () => {
                 <p className="text-sm text-muted-foreground">Total de Transações</p>
                 <p className="text-2xl font-bold">{despesas.length}</p>
               </div>
-              <div className="text-blue-600 text-2xl">📊</div>
+              <div className="text-primary text-2xl">📊</div>
             </div>
           </CardContent>
         </Card>
@@ -473,12 +473,12 @@ const Despesas = () => {
                   <TableRow key={despesa.id}>
                     <TableCell>
                       {despesa.status === 'paga' ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-700">
+                        <Badge variant="secondary" className="bg-success/10 text-success">
                           <Check className="h-3 w-3 mr-1" />
                           Paga
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                        <Badge variant="secondary" className="bg-warning/10 text-warning">
                           <Clock className="h-3 w-3 mr-1" />
                           Pendente
                         </Badge>
@@ -489,7 +489,7 @@ const Despesas = () => {
                     <TableCell>{despesa.categoria}</TableCell>
                     <TableCell>{despesa.fornecedor}</TableCell>
                     <TableCell>{despesa.formaPagamento}</TableCell>
-                    <TableCell className="text-right font-medium text-red-600">
+                    <TableCell className="text-right font-medium text-destructive">
                       R$ {despesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-center">
@@ -499,7 +499,7 @@ const Despesas = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleMarkAsPaid(despesa.id)}
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            className="text-success hover:text-success hover:bg-success/10"
                           >
                             <Check className="h-4 w-4" />
                           </Button>
@@ -508,7 +508,7 @@ const Despesas = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => setDeleteId(despesa.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

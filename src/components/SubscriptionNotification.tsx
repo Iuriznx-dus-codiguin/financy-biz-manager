@@ -102,9 +102,9 @@ export const SubscriptionNotification: React.FC<SubscriptionNotificationProps> =
   return (
     <div className="fixed top-4 right-4 z-50 max-w-md">
       {showTrialNotification && (
-        <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 shadow-lg">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800 dark:text-red-200">
+        <Alert className="border-destructive/30 bg-destructive/10 shadow-lg">
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <AlertDescription className="text-destructive">
             <div className="flex items-start justify-between">
               <div className="flex-1 pr-2">
                 <p className="font-semibold mb-1">Teste Gratuito</p>
@@ -128,7 +128,7 @@ export const SubscriptionNotification: React.FC<SubscriptionNotificationProps> =
                 variant="ghost"
                 size="sm"
                 onClick={handleDismiss}
-                className="h-6 w-6 p-0 text-red-600 hover:text-red-800"
+                className="h-6 w-6 p-0 text-destructive hover:text-red-800"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -138,9 +138,9 @@ export const SubscriptionNotification: React.FC<SubscriptionNotificationProps> =
       )}
 
       {showRenewalNotification && (
-        <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-900/20 shadow-lg">
-          <Calendar className="h-4 w-4 text-orange-600" />
-          <AlertDescription className="text-orange-800 dark:text-orange-200">
+        <Alert className="border-warning/30 bg-warning/10 shadow-lg">
+          <Calendar className="h-4 w-4 text-warning" />
+          <AlertDescription className="text-warning">
             <div className="flex items-start justify-between">
               <div className="flex-1 pr-2">
                 <p className="font-semibold mb-1">Renovação da Assinatura</p>
@@ -161,7 +161,7 @@ export const SubscriptionNotification: React.FC<SubscriptionNotificationProps> =
                 variant="ghost"
                 size="sm"
                 onClick={handleDismiss}
-                className="h-6 w-6 p-0 text-orange-600 hover:text-orange-800"
+                className="h-6 w-6 p-0 text-warning hover:text-orange-800"
               >
                 <X className="h-4 w-4" />
               </Button>

@@ -83,10 +83,10 @@ export const InteligenciaFinanceiraBasica: React.FC<InteligenciaFinanceiraBasica
 
   const getColorByTipo = (tipo: string) => {
     switch (tipo) {
-      case 'alerta': return 'text-red-600 bg-red-50 dark:bg-red-900/20';
-      case 'aviso': return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20';
-      case 'sucesso': return 'text-green-600 bg-green-50 dark:bg-green-900/20';
-      default: return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20';
+      case 'alerta': return 'text-destructive bg-destructive/10';
+      case 'aviso': return 'text-warning bg-warning/10';
+      case 'sucesso': return 'text-success bg-success/10';
+      default: return 'text-primary bg-primary/10';
     }
   };
 
@@ -100,24 +100,24 @@ export const InteligenciaFinanceiraBasica: React.FC<InteligenciaFinanceiraBasica
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-            <DollarSign className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+          <div className="text-center p-4 bg-primary/10 rounded-xl">
+            <DollarSign className="h-6 w-6 text-primary mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Saldo Atual</p>
-            <p className={`text-lg font-bold ${saldoAtual >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-lg font-bold ${saldoAtual >= 0 ? 'text-success' : 'text-destructive'}`}>
               R$ {saldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </div>
-          <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-            <TrendingUp className="h-6 w-6 text-green-600 mx-auto mb-2" />
+          <div className="text-center p-4 bg-success/10 rounded-xl">
+            <TrendingUp className="h-6 w-6 text-success mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Total Receitas</p>
-            <p className="text-lg font-bold text-green-600">
+            <p className="text-lg font-bold text-success">
               R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </div>
-          <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
-            <TrendingDown className="h-6 w-6 text-red-600 mx-auto mb-2" />
+          <div className="text-center p-4 bg-destructive/10 rounded-xl">
+            <TrendingDown className="h-6 w-6 text-destructive mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Total Despesas</p>
-            <p className="text-lg font-bold text-red-600">
+            <p className="text-lg font-bold text-destructive">
               R$ {totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </div>

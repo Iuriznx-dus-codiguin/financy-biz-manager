@@ -20,6 +20,7 @@ import { getTutorialSteps } from '@/config/tutorialSteps';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useDashboard } from '@/hooks/useDashboard';
 import { RecurringTransactions } from '@/components/RecurringTransactions';
+import { DashboardSkeleton } from '@/components/DashboardSkeleton';
 
 interface DashboardProps {
   setActiveSection?: (section: string) => void;
@@ -27,7 +28,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [timeFilter, setTimeFilter] = React.useState('este-mes');
-  const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
+  const { receitas, despesas, impostos, membrosEquipe, loading } = useAppContext();
   const { onboardingData } = useOnboarding();
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('painel');
   const { currentDashboard } = useDashboard();
@@ -60,6 +61,15 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   }, [receitas, despesas, impostos, timeFilter]);
 
   const { receitas: filteredReceitas, despesas: filteredDespesas, impostos: filteredImpostos } = filteredData;
+
+  // Show skeleton while data loads on first render
+  if (loading && receitas.length === 0 && despesas.length === 0) {
+    return (
+      <section id="painel" className="space-y-6">
+        <DashboardSkeleton />
+      </section>
+    );
+  }
 
   // Dashboard avançado para planos premium
   if (hasAdvancedDashboard) {
@@ -124,35 +134,35 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
           title="Total de Receitas"
           value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitle={`${filteredReceitas.length} transações`}
-          valueClassName="text-2xl font-bold text-green-600"
+          valueClassName="text-2xl font-bold text-success"
         />
 
         <OptimizedMetricCard
           title="Total de Despesas"
           value={`R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitle={`${filteredDespesas.length} transações`}
-          valueClassName="text-2xl font-bold text-red-600"
+          valueClassName="text-2xl font-bold text-destructive"
         />
 
         <OptimizedMetricCard
           title="Saldo"
           value={`R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitle="Receitas - Despesas"
-          valueClassName={`text-2xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}
+          valueClassName={`text-2xl font-bold ${saldo >= 0 ? 'text-success' : 'text-destructive'}`}
         />
 
         <OptimizedMetricCard
           title="Total de Impostos"
           value={`R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitle={`${filteredImpostos.filter(i => i.tipo === 'imposto').length} impostos`}
-          valueClassName="text-2xl font-bold text-blue-600"
+          valueClassName="text-2xl font-bold text-primary"
         />
 
         <OptimizedMetricCard
           title="Total de Taxas"
           value={`R$ ${totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitle={`${filteredImpostos.filter(i => i.tipo === 'taxa').length} taxas`}
-          valueClassName="text-2xl font-bold text-orange-600"
+          valueClassName="text-2xl font-bold text-warning"
         />
       </div>
 

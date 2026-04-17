@@ -560,14 +560,14 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               {change === 0 ? (
                 <Minus className="h-4 w-4 text-muted-foreground" />
               ) : change > 0 ? (
-                <ArrowUpRight className={`h-4 w-4 ${isExpense ? 'text-red-600' : 'text-green-600'}`} />
+                <ArrowUpRight className={`h-4 w-4 ${isExpense ? 'text-destructive' : 'text-success'}`} />
               ) : (
-                <ArrowDownRight className={`h-4 w-4 ${isExpense ? 'text-green-600' : 'text-red-600'}`} />
+                <ArrowDownRight className={`h-4 w-4 ${isExpense ? 'text-success' : 'text-destructive'}`} />
               )}
               <span className={`text-sm font-medium ${
                 change === 0 ? 'text-muted-foreground' : 
-                isPositiveChange ? (isExpense ? 'text-green-600' : 'text-green-600') : 
-                (isExpense ? 'text-red-600' : 'text-red-600')
+                isPositiveChange ? (isExpense ? 'text-success' : 'text-success') : 
+                (isExpense ? 'text-destructive' : 'text-destructive')
               }`}>
                 {change === 0 ? '0.0' : `${Math.abs(change).toFixed(1)}`}%
               </span>
@@ -956,9 +956,9 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
               <CardContent>
                 <div className="space-y-2">
                   {margemLucro < 10 && (
-                    <div className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-950 rounded-lg">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <span className="text-xs text-red-800 dark:text-red-200">
+                    <div className="flex items-center gap-2 p-2 bg-destructive/10 dark:bg-red-950 rounded-lg">
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                      <span className="text-xs text-destructive">
                         Margem baixa
                       </span>
                     </div>
@@ -971,9 +971,9 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-lg">
-                    <Target className="h-4 w-4 text-green-600" />
-                    <span className="text-xs text-green-800 dark:text-green-200">
+                  <div className="flex items-center gap-2 p-2 bg-success/10 dark:bg-green-950 rounded-lg">
+                    <Target className="h-4 w-4 text-success" />
+                    <span className="text-xs text-success">
                       Meta em dia
                     </span>
                   </div>

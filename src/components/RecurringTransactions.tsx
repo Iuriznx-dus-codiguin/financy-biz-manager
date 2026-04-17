@@ -111,13 +111,13 @@ export const RecurringTransactions: React.FC = () => {
               <div className="flex items-start gap-4 flex-1">
                 <div className={`p-2 rounded-lg ${
                   transaction.tipo === 'receita' 
-                    ? 'bg-green-100 dark:bg-green-900/20' 
-                    : 'bg-red-100 dark:bg-red-900/20'
+                    ? 'bg-success/10' 
+                    : 'bg-destructive/10'
                 }`}>
                   {transaction.tipo === 'receita' ? (
-                    <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <TrendingUp className="h-5 w-5 text-success" />
                   ) : (
-                    <TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <TrendingDown className="h-5 w-5 text-destructive" />
                   )}
                 </div>
 
@@ -147,8 +147,8 @@ export const RecurringTransactions: React.FC = () => {
                 <div className="text-right">
                   <p className={`text-xl font-bold ${
                     transaction.tipo === 'receita' 
-                      ? 'text-green-600 dark:text-green-400' 
-                      : 'text-red-600 dark:text-red-400'
+                      ? 'text-success' 
+                      : 'text-destructive'
                   }`}>
                     {transaction.tipo === 'receita' ? '+' : '-'} R$ {transaction.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
@@ -160,8 +160,8 @@ export const RecurringTransactions: React.FC = () => {
 
         <div className="mt-6 p-4 bg-muted/30 rounded-xl">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
-              <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Calendar className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
               <h4 className="font-semibold text-sm mb-1">Como funciona?</h4>
