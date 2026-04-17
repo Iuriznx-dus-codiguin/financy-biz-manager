@@ -103,6 +103,7 @@ interface AppContextType {
   metas: Meta[];
   membrosEquipe: MembroEquipe[];
   configuracoes: Configuracoes;
+  loading: boolean;
   setReceitas: React.Dispatch<React.SetStateAction<Receita[]>>;
   setDespesas: React.Dispatch<React.SetStateAction<Despesa[]>>;
   setImpostos: React.Dispatch<React.SetStateAction<Imposto[]>>;
@@ -141,6 +142,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     idioma: 'pt-BR'
   });
   const [dashboardCache, setDashboardCache] = useState<DashboardCache>({});
+  const [loading, setLoading] = useState<boolean>(true);
 
   const { user } = useAuth();
   const { currentDashboard } = useDashboard();
@@ -227,9 +229,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setDespesas(cached.despesas);
       setImpostos(cached.impostos);
       setMetas(cached.metas);
+      setLoading(false);
       return;
     }
 
+    setLoading(true);
     try {
       if (!user || !currentDashboard) return;
 
