@@ -20,6 +20,7 @@ import { getTutorialSteps } from '@/config/tutorialSteps';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useDashboard } from '@/hooks/useDashboard';
 import { RecurringTransactions } from '@/components/RecurringTransactions';
+import { DashboardSkeleton } from '@/components/DashboardSkeleton';
 
 interface DashboardProps {
   setActiveSection?: (section: string) => void;
@@ -27,7 +28,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [timeFilter, setTimeFilter] = React.useState('este-mes');
-  const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
+  const { receitas, despesas, impostos, membrosEquipe, loading } = useAppContext();
   const { onboardingData } = useOnboarding();
   const { showTutorial, closeTutorial } = useSectionTutorialTrigger('painel');
   const { currentDashboard } = useDashboard();
@@ -60,6 +61,15 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   }, [receitas, despesas, impostos, timeFilter]);
 
   const { receitas: filteredReceitas, despesas: filteredDespesas, impostos: filteredImpostos } = filteredData;
+
+  // Show skeleton while data loads on first render
+  if (loading && receitas.length === 0 && despesas.length === 0) {
+    return (
+      <section id="painel" className="space-y-6">
+        <DashboardSkeleton />
+      </section>
+    );
+  }
 
   // Dashboard avançado para planos premium
   if (hasAdvancedDashboard) {
