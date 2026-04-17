@@ -347,7 +347,7 @@ const Equipe = () => {
                   </Badge>
                 </div>
                 <div className="text-right">
-                  <span className="font-bold text-green-600">
+                  <span className="font-bold text-success">
                     {showSensitiveData[membro.id] 
                       ? `R$ ${membro.salario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                       : maskSalary(membro.salario)
@@ -357,7 +357,7 @@ const Equipe = () => {
                 
                 <div className="flex justify-between items-center mt-3">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    membro.status === 'ativo' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                    membro.status === 'ativo' ? 'bg-success/10 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-destructive/10 text-red-800 dark:bg-red-900 dark:text-red-200'
                   }`}>
                     {membro.status}
                   </span>
@@ -399,12 +399,12 @@ const Equipe = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-              <p className="text-3xl font-bold text-blue-600">{membrosEquipe.filter(m => m.status === 'ativo').length}</p>
+            <div className="text-center p-4 bg-primary/10 rounded-xl">
+              <p className="text-3xl font-bold text-primary">{membrosEquipe.filter(m => m.status === 'ativo').length}</p>
               <p className="text-sm text-muted-foreground">Membros Ativos</p>
             </div>
-            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-              <p className="text-3xl font-bold text-green-600">
+            <div className="text-center p-4 bg-success/10 rounded-xl">
+              <p className="text-3xl font-bold text-success">
                 R$ {calcularCustoTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
               <p className="text-sm text-muted-foreground">Custo Mensal Total</p>
@@ -415,8 +415,8 @@ const Equipe = () => {
               </p>
               <p className="text-sm text-muted-foreground">Taxa de Atividade</p>
             </div>
-            <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
-              <p className="text-3xl font-bold text-orange-600">
+            <div className="text-center p-4 bg-warning/10 rounded-xl">
+              <p className="text-3xl font-bold text-warning">
                 {membrosEquipe.length}
               </p>
               <p className="text-sm text-muted-foreground">Total de Membros</p>

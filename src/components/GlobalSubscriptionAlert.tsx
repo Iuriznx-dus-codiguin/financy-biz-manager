@@ -75,21 +75,21 @@ export const GlobalSubscriptionAlert: React.FC = () => {
   const isUrgent = isPendingPayment || isExpired;
 
   const config = isUrgent ? {
-    bgClass: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
-    iconClass: 'text-red-600 dark:text-red-400',
-    textClass: 'text-red-800 dark:text-red-200',
+    bgClass: 'bg-destructive/10 border-destructive/30',
+    iconClass: 'text-destructive',
+    textClass: 'text-destructive',
     buttonClass: 'bg-red-600 hover:bg-red-700 text-white',
-    dismissClass: 'text-red-600 hover:text-red-800 dark:text-red-400',
+    dismissClass: 'text-destructive hover:text-destructive',
     icon: isPendingPayment ? CreditCard : AlertTriangle,
     title: isPendingPayment ? 'Assine um Plano' : 'Assinatura Expirada',
     message: isPendingPayment ? 'Escolha um plano para desbloquear todas as funcionalidades.' : 'Sua assinatura expirou. Renove para continuar.',
     buttonText: isPendingPayment ? 'Ver Planos' : 'Renovar Agora'
   } : {
-    bgClass: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
-    iconClass: 'text-orange-600 dark:text-orange-400',
-    textClass: 'text-orange-800 dark:text-orange-200',
+    bgClass: 'bg-warning/10 border-warning/30',
+    iconClass: 'text-warning',
+    textClass: 'text-warning',
     buttonClass: 'bg-orange-600 hover:bg-orange-700 text-white',
-    dismissClass: 'text-orange-600 hover:text-orange-800 dark:text-orange-400',
+    dismissClass: 'text-warning hover:text-warning',
     icon: Calendar,
     title: 'Renovação da Assinatura',
     message: `Sua assinatura expira em ${daysUntilExpiry} ${daysUntilExpiry === 1 ? 'dia' : 'dias'}.`,

@@ -38,16 +38,16 @@ export const SubscriptionBanners: React.FC = () => {
         <div className={`
           rounded-lg shadow-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-4
           ${isUrgent
-            ? 'bg-red-50 border-red-500 dark:bg-red-950/30' 
-            : 'bg-orange-50 border-orange-500 dark:bg-orange-950/30'
+            ? 'bg-destructive/10 border-red-500 dark:bg-red-950/30' 
+            : 'bg-warning/10 border-orange-500 dark:bg-orange-950/30'
           }
         `}>
           <div className="flex items-start sm:items-center gap-3 min-w-0">
-            <div className={`rounded-full p-2 shrink-0 ${isUrgent ? 'bg-red-100 dark:bg-red-900/50' : 'bg-orange-100 dark:bg-orange-900/50'}`}>
+            <div className={`rounded-full p-2 shrink-0 ${isUrgent ? 'bg-destructive/10' : 'bg-warning/10'}`}>
               {isPending ? (
-                <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 dark:text-red-400" />
+                <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
               ) : (
-                <AlertTriangle className={`h-4 w-4 sm:h-5 sm:w-5 ${isUrgent ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}`} />
+                <AlertTriangle className={`h-4 w-4 sm:h-5 sm:w-5 ${isUrgent ? 'text-destructive' : 'text-warning'}`} />
               )}
             </div>
             
@@ -57,7 +57,7 @@ export const SubscriptionBanners: React.FC = () => {
                 {!isPending && expired && '🚨 Assinatura Expirada!'}
                 {!isPending && !expired && '⚠️ Sua assinatura está expirando!'}
               </h3>
-              <p className={`text-xs sm:text-sm mt-0.5 ${isUrgent ? 'text-red-700 dark:text-red-200' : 'text-orange-700 dark:text-orange-200'}`}>
+              <p className={`text-xs sm:text-sm mt-0.5 ${isUrgent ? 'text-destructive' : 'text-warning'}`}>
                 {isPending && 'Escolha um plano para desbloquear todas as funcionalidades!'}
                 {!isPending && expired && 'Renove sua assinatura para continuar usando.'}
                 {!isPending && !expired && daysRemaining !== null && `Restam apenas ${daysRemaining} ${daysRemaining === 1 ? 'dia' : 'dias'}. Renove agora!`}
@@ -69,8 +69,8 @@ export const SubscriptionBanners: React.FC = () => {
               onClick={() => setDismissed(true)}
               className={`sm:hidden rounded-full p-1 shrink-0 transition-colors ${
                 isUrgent 
-                  ? 'hover:bg-red-200 text-red-600 dark:hover:bg-red-900 dark:text-red-400' 
-                  : 'hover:bg-orange-200 text-orange-600 dark:hover:bg-orange-900 dark:text-orange-400'
+                  ? 'hover:bg-red-200 text-destructive dark:hover:bg-red-900 dark:text-red-400' 
+                  : 'hover:bg-orange-200 text-warning dark:hover:bg-orange-900 dark:text-orange-400'
               }`}
             >
               <X className="h-4 w-4" />
@@ -79,7 +79,7 @@ export const SubscriptionBanners: React.FC = () => {
 
           <div className="flex items-center gap-2 shrink-0">
             {expired && daysRemaining !== null && daysRemaining < 0 && (
-              <div className="hidden sm:block text-xs px-3 py-1 rounded-full font-semibold bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
+              <div className="hidden sm:block text-xs px-3 py-1 rounded-full font-semibold bg-destructive/10 text-red-800 dark:bg-destructive/10 dark:text-red-200">
                 Expirou há {Math.abs(daysRemaining)} {Math.abs(daysRemaining) === 1 ? 'dia' : 'dias'}
               </div>
             )}
@@ -99,8 +99,8 @@ export const SubscriptionBanners: React.FC = () => {
               onClick={() => setDismissed(true)}
               className={`hidden sm:block rounded-full p-1 transition-colors ${
                 isUrgent 
-                  ? 'hover:bg-red-200 text-red-600 dark:hover:bg-red-900 dark:text-red-400' 
-                  : 'hover:bg-orange-200 text-orange-600 dark:hover:bg-orange-900 dark:text-orange-400'
+                  ? 'hover:bg-red-200 text-destructive dark:hover:bg-red-900 dark:text-red-400' 
+                  : 'hover:bg-orange-200 text-warning dark:hover:bg-orange-900 dark:text-orange-400'
               }`}
             >
               <X className="h-4 w-4" />

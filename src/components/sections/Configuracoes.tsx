@@ -790,7 +790,7 @@ const Configuracoes = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteDashboard(dashboard.id, dashboard.name)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             title="Excluir dashboard"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -990,8 +990,8 @@ const Configuracoes = () => {
                   <li>Configurações e preferências</li>
                   <li>Notificações e tutoriais</li>
                 </ul>
-                <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded p-2 mt-2">
-                  <p className="text-xs text-green-800 dark:text-green-200 font-medium">
+                <div className="bg-success/10 dark:bg-green-950/20 border border-success/30 rounded p-2 mt-2">
+                  <p className="text-xs text-success font-medium">
                     ✅ Serão mantidos: assinatura ativa e histórico de teste gratuito (para prevenção de fraude)
                   </p>
                 </div>
@@ -1030,11 +1030,11 @@ const Configuracoes = () => {
                     <li>Todas as configurações personalizadas</li>
                   </ul>
                   
-                  <div className="bg-green-50 dark:bg-green-950/20 border-2 border-green-500 rounded-lg p-3 mt-3">
+                  <div className="bg-success/10 dark:bg-green-950/20 border-2 border-green-500 rounded-lg p-3 mt-3">
                     <p className="text-sm text-green-900 dark:text-green-100 font-semibold">
                       ✅ O QUE SERÁ MANTIDO:
                     </p>
-                    <ul className="text-xs text-green-800 dark:text-green-200 space-y-1 mt-2 ml-4 list-disc">
+                    <ul className="text-xs text-success space-y-1 mt-2 ml-4 list-disc">
                       <li>Suas credenciais de login (email/senha)</li>
                       <li>Status da sua assinatura atual</li>
                       <li><strong>Histórico de teste gratuito</strong> (prevenção de fraude)</li>

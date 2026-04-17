@@ -217,7 +217,7 @@ const Ajuda = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="rounded-2xl shadow-sm border-green-200 dark:border-green-800">
+        <Card className="rounded-2xl shadow-sm border-success/30">
           <CardContent className="p-6 text-center">
             <div className="text-4xl mb-4">💬</div>
             <h3 className="font-bold mb-2">WhatsApp</h3>
@@ -228,7 +228,7 @@ const Ajuda = () => {
           </CardContent>
         </Card>
         
-        <Card className="rounded-2xl shadow-sm border-blue-200 dark:border-blue-800">
+        <Card className="rounded-2xl shadow-sm border-primary/30">
           <CardContent className="p-6 text-center">
             <div className="text-4xl mb-4">📧</div>
             <h3 className="font-bold mb-2">Email</h3>
@@ -241,7 +241,7 @@ const Ajuda = () => {
         
         <FlappyFinancyGame />
         
-        <Card className="rounded-2xl shadow-sm border-red-200 dark:border-red-800">
+        <Card className="rounded-2xl shadow-sm border-destructive/30">
           <CardContent className="p-6 text-center">
             <div className="text-4xl mb-4">🐛</div>
             <h3 className="font-bold mb-2">Relatar Problema</h3>
@@ -311,7 +311,7 @@ const Ajuda = () => {
               onClick={() => restartTutorial('receitas')}
             >
               <div className="flex items-center gap-3">
-                <TrendingUp className="w-5 h-5 text-green-600" />
+                <TrendingUp className="w-5 h-5 text-success" />
                 <div className="text-left">
                   <div className="font-semibold">Receitas</div>
                   <div className="text-xs text-muted-foreground">Registrar entradas</div>
@@ -325,7 +325,7 @@ const Ajuda = () => {
               onClick={() => restartTutorial('despesas')}
             >
               <div className="flex items-center gap-3">
-                <TrendingDown className="w-5 h-5 text-red-600" />
+                <TrendingDown className="w-5 h-5 text-destructive" />
                 <div className="text-left">
                   <div className="font-semibold">Despesas</div>
                   <div className="text-xs text-muted-foreground">Registrar saídas</div>
@@ -339,7 +339,7 @@ const Ajuda = () => {
               onClick={() => restartTutorial('categorias')}
             >
               <div className="flex items-center gap-3">
-                <FolderOpen className="w-5 h-5 text-blue-600" />
+                <FolderOpen className="w-5 h-5 text-primary" />
                 <div className="text-left">
                   <div className="font-semibold">Categorias</div>
                   <div className="text-xs text-muted-foreground">Organizar finanças</div>
@@ -353,7 +353,7 @@ const Ajuda = () => {
               onClick={() => restartTutorial('impostos')}
             >
               <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-orange-600" />
+                <FileText className="w-5 h-5 text-warning" />
                 <div className="text-left">
                   <div className="font-semibold">Impostos</div>
                   <div className="text-xs text-muted-foreground">Gerenciar tributos</div>
@@ -381,7 +381,7 @@ const Ajuda = () => {
               onClick={() => restartTutorial('relatorios')}
             >
               <div className="flex items-center gap-3">
-                <DollarSign className="w-5 h-5 text-green-600" />
+                <DollarSign className="w-5 h-5 text-success" />
                 <div className="text-left">
                   <div className="font-semibold">Relatórios</div>
                   <div className="text-xs text-muted-foreground">Análises financeiras</div>

@@ -87,10 +87,10 @@ export const InteligenciaFinanceira: React.FC<InteligenciaFinanceiraProps> = ({
 
   const getColorByTipo = (tipo: string) => {
     switch (tipo) {
-      case 'alerta': return 'text-red-600 bg-red-50 dark:bg-red-900/20';
-      case 'aviso': return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20';
-      case 'sucesso': return 'text-green-600 bg-green-50 dark:bg-green-900/20';
-      default: return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20';
+      case 'alerta': return 'text-destructive bg-destructive/10';
+      case 'aviso': return 'text-warning bg-warning/10';
+      case 'sucesso': return 'text-success bg-success/10';
+      default: return 'text-primary bg-primary/10';
     }
   };
 
@@ -127,9 +127,9 @@ export const InteligenciaFinanceira: React.FC<InteligenciaFinanceiraProps> = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+            <div className="text-center p-3 bg-primary/10 rounded-xl">
               <p className="text-sm text-muted-foreground">Margem Líquida</p>
-              <p className="text-lg font-bold text-blue-600">{margemLiquida.toFixed(1)}%</p>
+              <p className="text-lg font-bold text-primary">{margemLiquida.toFixed(1)}%</p>
             </div>
             <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
               <p className="text-sm text-muted-foreground">Taxa de Queima</p>
@@ -139,7 +139,7 @@ export const InteligenciaFinanceira: React.FC<InteligenciaFinanceiraProps> = ({
           
           <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-xl">
             <h4 className="font-semibold mb-2">Valuation Estimado</h4>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-success">
               R$ {valuationEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
             <p className="text-xs text-muted-foreground mt-1">

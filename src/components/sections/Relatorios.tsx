@@ -489,9 +489,9 @@ import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
   const getInsightColor = (type: string) => {
     switch (type) {
-      case 'positive': return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
-      case 'warning': return 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800';
-      case 'info': return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
+      case 'positive': return 'bg-success/10 border-success/30';
+      case 'warning': return 'bg-warning/10 border-warning/30';
+      case 'info': return 'bg-primary/10 border-primary/30';
       default: return 'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
     }
   };
@@ -531,27 +531,27 @@ import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
+            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-primary/30/50 dark:border-blue-800/50">
               <p className="text-xs text-muted-foreground mb-1">💵 Total de Receitas</p>
-              <p className="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400">
+              <p className="text-xl md:text-2xl font-bold text-primary">
                 R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
-            <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-xl border border-red-200/50 dark:border-red-800/50">
+            <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-xl border border-destructive/30/50 dark:border-red-800/50">
               <p className="text-xs text-muted-foreground mb-1">💸 Total de Despesas</p>
-              <p className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400">
+              <p className="text-xl md:text-2xl font-bold text-destructive">
                 R$ {totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
-            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200/50 dark:border-green-800/50">
+            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-success/30/50 dark:border-green-800/50">
               <p className="text-xs text-muted-foreground mb-1">💰 Saldo do Período</p>
-              <p className={`text-xl md:text-2xl font-bold ${lucroLiquido >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              <p className={`text-xl md:text-2xl font-bold ${lucroLiquido >= 0 ? 'text-success' : 'text-destructive'}`}>
                 R$ {lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
             <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border border-purple-200/50 dark:border-purple-800/50">
               <p className="text-xs text-muted-foreground mb-1">📊 Taxa de Economia</p>
-              <p className={`text-xl md:text-2xl font-bold ${margemLucro >= 0 ? 'text-purple-600 dark:text-purple-400' : 'text-red-600 dark:text-red-400'}`}>
+              <p className={`text-xl md:text-2xl font-bold ${margemLucro >= 0 ? 'text-purple-600 dark:text-purple-400' : 'text-destructive'}`}>
                 {margemLucro.toFixed(1)}%
               </p>
             </div>
@@ -766,7 +766,7 @@ import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-lg">R$ {imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                        <p className={`text-sm font-semibold mt-1 ${imposto.status === 'Pago' ? 'text-green-600' : 'text-orange-600'}`}>
+                        <p className={`text-sm font-semibold mt-1 ${imposto.status === 'Pago' ? 'text-success' : 'text-warning'}`}>
                           {imposto.status === 'Pago' ? '✅ Pago' : '⏰ Pendente'}
                         </p>
                       </div>

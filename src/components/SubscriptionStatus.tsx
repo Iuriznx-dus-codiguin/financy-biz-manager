@@ -83,7 +83,7 @@ export const SubscriptionStatus: React.FC = () => {
             <CardTitle className="flex items-center gap-2">
               <StatusIcon className={`h-5 w-5 ${
                 isPremiumUser ? 'text-yellow-600' :
-                isTrialUser ? 'text-blue-600' :
+                isTrialUser ? 'text-primary' :
                 'text-gray-600'
               }`} />
               Status da Assinatura
@@ -128,7 +128,7 @@ export const SubscriptionStatus: React.FC = () => {
                   <p className={`font-semibold ${
                     daysUntilExpiration <= 7 ? 'text-destructive' :
                     daysUntilExpiration <= 30 ? 'text-yellow-600' :
-                    'text-green-600'
+                    'text-success'
                   }`}>
                     {daysUntilExpiration} dias
                   </p>
@@ -187,7 +187,7 @@ export const SubscriptionStatus: React.FC = () => {
           )}
 
           {isTrialUser && daysUntilExpiration !== null && daysUntilExpiration <= 7 && (
-            <Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20">
+            <Alert className="border-yellow-200 bg-warning/10">
               <Clock className="h-4 w-4" />
               <AlertDescription>
                 Seu teste gratuito expira em {daysUntilExpiration} dias. Faça upgrade para continuar.

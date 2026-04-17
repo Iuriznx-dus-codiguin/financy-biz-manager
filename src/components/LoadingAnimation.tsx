@@ -42,7 +42,7 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
           {isLoading ? (
             <>
               <div className="flex justify-center mb-4">
-                <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
+                <Loader2 className="h-12 w-12 text-primary animate-spin" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 {message}
@@ -54,11 +54,11 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
           ) : showSuccess ? (
             <>
               <div className="flex justify-center mb-4">
-                <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <Check className="h-6 w-6 text-green-600 animate-pulse" />
+                <div className="h-12 w-12 bg-success/10 rounded-full flex items-center justify-center">
+                  <Check className="h-6 w-6 text-success animate-pulse" />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-2">
+              <h3 className="text-lg font-semibold text-success mb-2">
                 {successMessage}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">

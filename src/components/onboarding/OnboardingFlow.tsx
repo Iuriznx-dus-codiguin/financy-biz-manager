@@ -326,15 +326,15 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skip
         <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
           <div className="space-y-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              <span className="text-green-600">✓</span>
+              <span className="text-success">✓</span>
               <span>Receba insights financeiros automáticos</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-green-600">✓</span>
+              <span className="text-success">✓</span>
               <span>Alertas de vencimentos e metas</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-green-600">✓</span>
+              <span className="text-success">✓</span>
               <span>Suporte personalizado via IA</span>
             </div>
           </div>

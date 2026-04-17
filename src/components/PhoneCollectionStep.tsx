@@ -147,7 +147,7 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Card className="rounded-3xl shadow-2xl border border-green-200/50 dark:border-green-800/50 bg-card/95 backdrop-blur-md">
+        <Card className="rounded-3xl shadow-2xl border border-success/30/50 dark:border-green-800/50 bg-card/95 backdrop-blur-md">
           <CardHeader className="text-center p-8 bg-gradient-to-r from-green-500 to-green-600 rounded-t-3xl">
             <motion.div
               initial={{ scale: 0 }}
@@ -166,7 +166,7 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
           </CardHeader>
 
           <CardContent className="p-8 space-y-6">
-            <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
+            <Alert className="border-success/30 bg-success/10 dark:border-green-800">
               <MessageCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">
                 <strong>🤖 IA no WhatsApp disponível!</strong><br />
@@ -224,15 +224,15 @@ export const PhoneCollectionStep: React.FC<PhoneCollectionStepProps> = ({ onComp
             <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
               <div className="space-y-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span>
+                  <span className="text-success">✓</span>
                   <span>Receba insights financeiros automáticos</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span>
+                  <span className="text-success">✓</span>
                   <span>Alertas de vencimentos e metas</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span>
+                  <span className="text-success">✓</span>
                   <span>Suporte personalizado via IA</span>
                 </div>
               </div>
