@@ -370,6 +370,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     } catch (error) {
       logger.error('Erro ao carregar dados financeiros:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -793,6 +795,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       metas,
       membrosEquipe,
       configuracoes,
+      loading,
       setReceitas,
       setDespesas,
       setImpostos,
