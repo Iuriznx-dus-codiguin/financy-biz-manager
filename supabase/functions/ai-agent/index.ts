@@ -27,8 +27,16 @@ serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
-  }
+    }
 
+    // Rate limit: 50 mensagens de IA por dia por usuário
+    const withinLimit = await checkRateLimit(supabase, user.id, 'ai_message', 50, 1440);
+    if (!withinLimit) {
+      return new Response(
+        JSON.stringify({ error: 'Limite diário de mensagens atingido. Tente novamente amanhã.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
   try {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
