@@ -65,12 +65,12 @@ interface PlanLimits {
 }
 
 const PLAN_LIMITS: Record<string, PlanLimits> = {
-  developer: { maxReceitas: -1, maxDespesas: -1, maxImpostos: -1, maxMetas: -1, maxProfiles: 10 },
-  plus:      { maxReceitas: -1, maxDespesas: -1, maxImpostos: -1, maxMetas: -1, maxProfiles: 1 },
-  pro:       { maxReceitas: -1, maxDespesas: -1, maxImpostos: -1, maxMetas: -1, maxProfiles: 3 },
-  premium:   { maxReceitas: -1, maxDespesas: -1, maxImpostos: -1, maxMetas: -1, maxProfiles: 5 },
-  enterprise:{ maxReceitas: -1, maxDespesas: -1, maxImpostos: -1, maxMetas: -1, maxProfiles: 10 },
-  free:      { maxReceitas: 0, maxDespesas: 0, maxImpostos: 0, maxMetas: 0, maxProfiles: 0 },
+  developer:    { maxReceitas: -1, maxDespesas: -1, maxImpostos: -1, maxMetas: -1, maxProfiles: 10 },
+  plus:         { maxReceitas: -1, maxDespesas: -1, maxImpostos: -1, maxMetas: -1, maxProfiles: 1 },
+  pro:          { maxReceitas: -1, maxDespesas: -1, maxImpostos: -1, maxMetas: -1, maxProfiles: 3 },
+  premium:      { maxReceitas: -1, maxDespesas: -1, maxImpostos: -1, maxMetas: -1, maxProfiles: 5 },
+  enterprise:   { maxReceitas: -1, maxDespesas: -1, maxImpostos: -1, maxMetas: -1, maxProfiles: 10 },
+  unsubscribed: { maxReceitas: 0, maxDespesas: 0, maxImpostos: 0, maxMetas: 0, maxProfiles: 0 },
 };
 
 export const useFeatureAccess = () => {
