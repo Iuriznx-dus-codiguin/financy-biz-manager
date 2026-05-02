@@ -93,16 +93,14 @@ export const SubscriptionBanners: React.FC = () => {
               {isPending ? 'Ver Planos' : 'Renovar Agora'}
             </Button>
 
-            <button
-              onClick={() => setDismissed(true)}
-              className={`hidden sm:block rounded-full p-1 transition-colors ${
-                isUrgent 
-                  ? 'hover:bg-red-200 text-destructive dark:hover:bg-red-900 dark:text-red-400' 
-                  : 'hover:bg-orange-200 text-warning dark:hover:bg-orange-900 dark:text-orange-400'
-              }`}
-            >
-              <X className="h-4 w-4" />
-            </button>
+            {!isUrgent && (
+              <button
+                onClick={() => setDismissed(true)}
+                className="hidden sm:block rounded-full p-1 transition-colors hover:bg-orange-200 text-warning dark:hover:bg-orange-900 dark:text-orange-400"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
       </motion.div>
