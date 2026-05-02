@@ -740,6 +740,33 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action: string
+          count: number
+          created_at: string
+          id: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          action?: string
+          count?: number
+          created_at?: string
+          id?: string
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          action?: string
+          count?: number
+          created_at?: string
+          id?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       receitas: {
         Row: {
           categoria: string
@@ -1162,6 +1189,15 @@ export type Database = {
       calcular_proxima_data: {
         Args: { data_atual: string; tipo: string }
         Returns: string
+      }
+      check_and_increment_rate_limit: {
+        Args: {
+          p_action: string
+          p_max_requests: number
+          p_user_id: string
+          p_window_minutes: number
+        }
+        Returns: boolean
       }
       check_auth_rate_limit: {
         Args: {
