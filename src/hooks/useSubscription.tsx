@@ -14,7 +14,7 @@ interface Subscription {
 
 /**
  * Hook consolidado de assinatura.
- * Prioridade: developer > user_subscriptions > customer_subscriptions > subscribers > free
+ * Prioridade: developer > user_subscriptions > customer_subscriptions > não_assinante
  */
 export const useSubscription = () => {
   const { user } = useAuth();
