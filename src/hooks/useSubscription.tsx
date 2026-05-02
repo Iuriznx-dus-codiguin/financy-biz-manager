@@ -119,9 +119,9 @@ export const useSubscription = () => {
 
   const isPremium = () => {
     if (isDeveloperTier(subscription)) return true;
-    return subscription?.subscribed && 
-           subscription?.subscription_tier && 
-           !['free', 'pending'].includes(subscription.subscription_tier);
+    return subscription?.subscribed &&
+           subscription?.subscription_tier &&
+           !['unsubscribed', 'pending'].includes(subscription.subscription_tier);
   };
 
   const isSubscriptionExpired = () => {
@@ -132,7 +132,7 @@ export const useSubscription = () => {
   return {
     subscription,
     subscriptionData: subscription,
-    subscriptionTier: subscription?.subscription_tier || 'free',
+    subscriptionTier: subscription?.subscription_tier || 'unsubscribed',
     loading,
     isPremium,
     isSubscriptionExpired,
