@@ -15,7 +15,7 @@ serve(safeHandler(async (req) => {
 
   // Rate limit por IP ANTES da autenticação (prevenir ataques de força bruta)
   const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-  if (!checkRateLimit(`ip:${clientIp}`, 20, 60000)) {
+  if (!(await checkRateLimit(supabase, `ip:${clientIp}`, 'ip_request', 60, 1))) {
     throw new Error('Too many requests from this IP');
   }
 
@@ -33,7 +33,7 @@ serve(safeHandler(async (req) => {
   }
 
   // Rate limit por usuário APÓS autenticação (5 requests/min para IA)
-  if (!checkRateLimit(`user:${user.id}`, 5, 60000)) {
+  if (!(await checkRateLimit(supabase, `user:${user.id}`, 'ai_message', 50, 1440))) {
     throw new Error('Rate limit exceeded - Limite de 5 requisições por minuto atingido');
   }
 
