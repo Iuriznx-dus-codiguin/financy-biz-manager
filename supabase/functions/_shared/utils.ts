@@ -29,15 +29,15 @@ export function checkEnv(requiredVars: string[]): Record<string, string> {
  * Comparação em tempo constante para verificação de assinatura
  */
 export function constantTimeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
+  // Preencher ambas as strings ao mesmo comprimento para evitar timing attack por tamanho
+  const maxLen = Math.max(a.length, b.length);
+  const paddedA = a.padEnd(maxLen, '\0');
+  const paddedB = b.padEnd(maxLen, '\0');
 
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  let result = a.length === b.length ? 0 : 1; // diferença de tamanho já marca como diferente
+  for (let i = 0; i < maxLen; i++) {
+    result |= paddedA.charCodeAt(i) ^ paddedB.charCodeAt(i);
   }
-
   return result === 0;
 }
 
@@ -67,99 +67,78 @@ export async function generateHmacSha256(secret: string, data: string): Promise<
 /**
  * Wrapper seguro para tratamento de erros em edge functions
  */
+const ALLOWED_ORIGINS_SHARED = [
+  'https://app.financy.site',
+  'https://financy.site',
+  'https://www.financy.site',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+function getAllowedOrigin(req: Request): string {
+  const origin = req.headers.get('Origin') || '';
+  return ALLOWED_ORIGINS_SHARED.includes(origin)
+    ? origin
+    : 'https://app.financy.site';
+}
+
 export function safeHandler(handler: (req: Request) => Promise<Response>) {
   return async (req: Request): Promise<Response> => {
     const corsHeaders = {
-      'Access-Control-Allow-Origin': getDevelopmentCorsOrigin(),
-      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-signature',
+      'Access-Control-Allow-Origin': getAllowedOrigin(req),
+      'Access-Control-Allow-Headers':
+        'authorization, x-client-info, apikey, content-type, x-webhook-signature',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
     };
 
     try {
-      // Handle CORS preflight requests
       if (req.method === 'OPTIONS') {
         return new Response(null, { headers: corsHeaders });
       }
-
       return await handler(req);
     } catch (error) {
       console.error('Erro capturado pelo safeHandler:', error);
-
       let status = 500;
       let message = 'Erro interno do servidor';
-
       if (error instanceof Error) {
-        // Mapear tipos específicos de erro
         if (error.message.includes('Missing required environment variables')) {
-          status = 500;
-          message = 'Configuração do servidor inválida';
+          status = 500; message = 'Configuração do servidor inválida';
         } else if (error.message.includes('Unauthorized') || error.message.includes('Invalid JWT')) {
-          status = 401;
-          message = 'Não autorizado';
+          status = 401; message = 'Não autorizado';
         } else if (error.message.includes('Forbidden')) {
-          status = 403;
-          message = 'Acesso negado';
+          status = 403; message = 'Acesso negado';
         } else if (error.message.includes('Invalid input') || error.message.includes('Bad request')) {
-          status = 400;
-          message = 'Dados inválidos';
+          status = 400; message = 'Dados inválidos';
         }
       }
-
       return new Response(
-        JSON.stringify({ 
-          error: message,
-          timestamp: new Date().toISOString()
-        }),
-        {
-          status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        JSON.stringify({ error: message, timestamp: new Date().toISOString() }),
+        { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
   };
 }
 
 /**
- * Obtém origem CORS baseada no ambiente
+ * Rate limiting persistente via banco de dados (Postgres).
+ * Usa a função SQL `check_and_increment_rate_limit`.
  */
-function getDevelopmentCorsOrigin(): string {
-  const isProduction = Deno.env.get('DENO_DEPLOYMENT_ID');
-  
-  if (isProduction) {
-    // Domínios de produção confiáveis
-    const allowedOrigins = [
-      'https://app.financy.site',
-      'https://financy.site',
-      'https://www.financy.site'
-    ];
-    
-    // Verificar se o origin está na lista permitida
-    const origin = Deno.env.get('REQUEST_ORIGIN') || 'https://app.financy.site';
-    return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+export async function checkRateLimit(
+  supabase: any,
+  userId: string,
+  action: string = 'ai_message',
+  maxRequests: number = 50,
+  windowMinutes: number = 1440 // 24 horas
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc('check_and_increment_rate_limit', {
+    p_user_id: userId,
+    p_action: action,
+    p_max_requests: maxRequests,
+    p_window_minutes: windowMinutes,
+  });
+  if (error) {
+    console.error('Rate limit check error:', error);
+    return true; // Fail open em caso de erro de banco
   }
-  
-  // Em desenvolvimento, permitir origins específicos
-  return 'http://localhost:3000, http://127.0.0.1:3000, https://localhost:3000';
-}
-
-/**
- * Rate limiting simples por usuário
- */
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-
-export function checkRateLimit(userId: string, maxRequests: number = 10, windowMs: number = 60000): boolean {
-  const now = Date.now();
-  const userLimit = rateLimitMap.get(userId);
-  
-  if (!userLimit || now > userLimit.resetTime) {
-    // Reset ou primeira vez
-    rateLimitMap.set(userId, { count: 1, resetTime: now + windowMs });
-    return true;
-  }
-  
-  if (userLimit.count >= maxRequests) {
-    return false; // Rate limit atingido
-  }
-  
-  userLimit.count++;
-  return true;
+  return data === true;
 }

@@ -4,6 +4,21 @@
 
 **URL**: https://lovable.dev/projects/9282ef49-6210-4d01-b2e5-859e8a275941
 
+## Configuração
+
+Antes de rodar o projeto localmente, configure as variáveis de ambiente:
+
+1. Copie o arquivo `.env.example` para `.env`:
+   ```sh
+   cp .env.example .env
+   ```
+2. Preencha os valores no `.env` com as credenciais do seu projeto no painel Supabase (Project Settings → API):
+   - `VITE_SUPABASE_PROJECT_ID` — Project Ref
+   - `VITE_SUPABASE_URL` — Project URL
+   - `VITE_SUPABASE_PUBLISHABLE_KEY` — anon/publishable key
+
+⚠️ **Nunca commite o arquivo `.env`** — ele já está listado no `.gitignore`.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
