@@ -93,7 +93,7 @@ export const useFeatureAccess = () => {
   };
 
   const getLimits = (): PlanLimits => {
-    return PLAN_LIMITS[subscriptionTier] || PLAN_LIMITS.free;
+    return PLAN_LIMITS[subscriptionTier] || PLAN_LIMITS.unsubscribed;
   };
 
   return {
