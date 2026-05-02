@@ -190,14 +190,14 @@ export const SubscriptionStatus: React.FC = () => {
             <Alert className="border-yellow-200 bg-warning/10">
               <Clock className="h-4 w-4" />
               <AlertDescription>
-                Seu teste gratuito expira em {daysUntilExpiration} dias. Faça upgrade para continuar.
+                Sua assinatura expira em {daysUntilExpiration} dias. Renove para continuar.
               </AlertDescription>
             </Alert>
           )}
 
           {(isExpired || (isTrialUser && daysUntilExpiration !== null && daysUntilExpiration <= 3)) && (
             <Button className="w-full" size="sm">
-              {isExpired ? 'Renovar Assinatura' : 'Fazer Upgrade'}
+              {isExpired ? 'Renovar Assinatura' : 'Renovar Agora'}
             </Button>
           )}
         </CardContent>

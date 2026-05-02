@@ -118,9 +118,11 @@ export const GlobalSubscriptionAlert: React.FC = () => {
             </div>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setIsVisible(false)} className={`h-6 w-6 p-0 ${config.dismissClass}`}>
-          <X className="h-3 w-3" />
-        </Button>
+        {!isPendingPayment && (
+          <Button variant="ghost" size="sm" onClick={() => setIsVisible(false)} className={`h-6 w-6 p-0 ${config.dismissClass}`}>
+            <X className="h-3 w-3" />
+          </Button>
+        )}
       </div>
     </div>
   );

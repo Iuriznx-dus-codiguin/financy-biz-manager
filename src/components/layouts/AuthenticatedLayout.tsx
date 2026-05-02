@@ -36,14 +36,28 @@ export const AuthenticatedLayout = () => {
   usePaymentSuccess();
 
   const activeSection = getSectionForRoute(location.pathname);
-  const isBlocked = user && subscription && isSubscriptionExpired();
+  const isBlocked = user && subscription && (
+    isSubscriptionExpired() ||
+    !subscription.subscription_type ||
+    subscription.status === 'pending_payment' ||
+    subscription.status === 'cancelled'
+  );
 
   // Redirecionar para assinatura se bloqueado e tentando acessar seção restrita
   useEffect(() => {
-    if (isBlocked && !isSectionAllowedWhenBlocked(activeSection)) {
+    if (!subscriptionLoading && user && isBlocked && !isSectionAllowedWhenBlocked(activeSection)) {
       navigate('/assinatura', { replace: true });
     }
-  }, [isBlocked, activeSection, navigate]);
+  }, [isBlocked, activeSection, navigate, subscriptionLoading, user]);
+
+  // Garantir gating após carregamento completo (auth + onboarding + subscription)
+  useEffect(() => {
+    if (!authLoading && !onboardingLoading && !subscriptionLoading && user && isOnboardingComplete) {
+      if (isBlocked && !isSectionAllowedWhenBlocked(activeSection)) {
+        navigate('/assinatura', { replace: true });
+      }
+    }
+  }, [authLoading, onboardingLoading, subscriptionLoading, user, isOnboardingComplete, isBlocked, activeSection, navigate]);
 
   // Bloquear navegação para seções empresariais se dashboard é pessoal
   useEffect(() => {

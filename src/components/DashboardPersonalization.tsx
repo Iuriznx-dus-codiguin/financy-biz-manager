@@ -113,7 +113,7 @@ export const DashboardPersonalization: React.FC = () => {
             {userProfileData.user_type === 'empresarial' ? 'Empresarial' : 'Pessoal'}
           </Badge>
           <Badge variant="secondary">
-            {userProfileData.subscription_tier === 'free' ? 'Gratuito' : 
+            {userProfileData.subscription_tier === 'unsubscribed' || userProfileData.subscription_tier === 'free' ? 'Sem Assinatura' : 
              userProfileData.subscription_tier.charAt(0).toUpperCase() + userProfileData.subscription_tier.slice(1)}
           </Badge>
         </div>

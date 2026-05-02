@@ -14,7 +14,7 @@ interface Subscription {
 
 /**
  * Hook consolidado de assinatura.
- * Prioridade: developer > user_subscriptions > customer_subscriptions > subscribers > free
+ * Prioridade: developer > user_subscriptions > customer_subscriptions > não_assinante
  */
 export const useSubscription = () => {
   const { user } = useAuth();
@@ -98,19 +98,19 @@ export const useSubscription = () => {
 
       // 4. Sem assinatura
       setSubscription({
-        id: 'free',
+        id: 'unsubscribed',
         email: user.email || '',
         subscribed: false,
-        subscription_tier: 'free'
+        subscription_tier: 'unsubscribed'
       });
 
     } catch (error) {
       logger.error('Erro ao buscar assinatura:', error);
       setSubscription({
-        id: 'free',
+        id: 'unsubscribed',
         email: user?.email || '',
         subscribed: false,
-        subscription_tier: 'free'
+        subscription_tier: 'unsubscribed'
       });
     } finally {
       setLoading(false);
@@ -119,9 +119,9 @@ export const useSubscription = () => {
 
   const isPremium = () => {
     if (isDeveloperTier(subscription)) return true;
-    return subscription?.subscribed && 
-           subscription?.subscription_tier && 
-           !['free', 'pending'].includes(subscription.subscription_tier);
+    return subscription?.subscribed &&
+           subscription?.subscription_tier &&
+           !['unsubscribed', 'pending'].includes(subscription.subscription_tier);
   };
 
   const isSubscriptionExpired = () => {
@@ -132,7 +132,7 @@ export const useSubscription = () => {
   return {
     subscription,
     subscriptionData: subscription,
-    subscriptionTier: subscription?.subscription_tier || 'free',
+    subscriptionTier: subscription?.subscription_tier || 'unsubscribed',
     loading,
     isPremium,
     isSubscriptionExpired,
