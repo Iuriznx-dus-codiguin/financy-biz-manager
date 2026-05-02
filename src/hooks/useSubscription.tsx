@@ -98,19 +98,19 @@ export const useSubscription = () => {
 
       // 4. Sem assinatura
       setSubscription({
-        id: 'free',
+        id: 'unsubscribed',
         email: user.email || '',
         subscribed: false,
-        subscription_tier: 'free'
+        subscription_tier: 'unsubscribed'
       });
 
     } catch (error) {
       logger.error('Erro ao buscar assinatura:', error);
       setSubscription({
-        id: 'free',
+        id: 'unsubscribed',
         email: user?.email || '',
         subscribed: false,
-        subscription_tier: 'free'
+        subscription_tier: 'unsubscribed'
       });
     } finally {
       setLoading(false);
