@@ -29,15 +29,15 @@ export function checkEnv(requiredVars: string[]): Record<string, string> {
  * Comparação em tempo constante para verificação de assinatura
  */
 export function constantTimeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
+  // Preencher ambas as strings ao mesmo comprimento para evitar timing attack por tamanho
+  const maxLen = Math.max(a.length, b.length);
+  const paddedA = a.padEnd(maxLen, '\0');
+  const paddedB = b.padEnd(maxLen, '\0');
 
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  let result = a.length === b.length ? 0 : 1; // diferença de tamanho já marca como diferente
+  for (let i = 0; i < maxLen; i++) {
+    result |= paddedA.charCodeAt(i) ^ paddedB.charCodeAt(i);
   }
-
   return result === 0;
 }
 
