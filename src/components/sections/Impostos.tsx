@@ -11,6 +11,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Plus, Filter, Search, CheckCircle, XCircle, Trash2, Calendar, Repeat } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
 import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
 import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
