@@ -33,10 +33,9 @@ const Impostos = () => {
     baseCalculo: '' // Para impostos em porcentagem
   });
 
-  const handleAddImposto = (e: React.FormEvent) => {
+  const handleAddImposto = async (e: React.FormEvent) => {
     e.preventDefault();
     if (novoImposto.tipo && novoImposto.valor && novoImposto.vencimento) {
-      // Calcular próxima data se for recorrente
       let proximaData = null;
       if (novoImposto.tipoRecorrencia === 'recorrente') {
         const vencimentoDate = new Date(novoImposto.vencimento);
@@ -57,35 +56,43 @@ const Impostos = () => {
         proximaData = vencimentoDate.toISOString().split('T')[0];
       }
 
-      addImposto({
-        tipo: novoImposto.tipo,
-        descricao: novoImposto.descricao,
-        valor: parseFloat(novoImposto.valor),
-        valorTipo: novoImposto.valorTipo,
-        vencimento: novoImposto.vencimento,
-        pago: false,
-        tipoRecorrencia: novoImposto.tipoRecorrencia,
-        recorrente: novoImposto.tipoRecorrencia === 'recorrente',
-        tipo_recorrencia: novoImposto.tipoRecorrencia === 'recorrente' ? novoImposto.tipo_recorrencia : undefined,
-        proxima_data: proximaData
-      });
-      
-      setNovoImposto({
-        tipo: '',
-        descricao: '',
-        valor: '',
-        valorTipo: 'fixo',
-        vencimento: '',
-        tipoRecorrencia: 'unico',
-        tipo_recorrencia: 'mensal',
-        baseCalculo: ''
-      });
-      setIsDialogOpen(false);
+      try {
+        await addImposto({
+          tipo: novoImposto.tipo,
+          descricao: novoImposto.descricao,
+          valor: parseFloat(novoImposto.valor),
+          valorTipo: novoImposto.valorTipo,
+          vencimento: novoImposto.vencimento,
+          pago: false,
+          tipoRecorrencia: novoImposto.tipoRecorrencia,
+          recorrente: novoImposto.tipoRecorrencia === 'recorrente',
+          tipo_recorrencia: novoImposto.tipoRecorrencia === 'recorrente' ? novoImposto.tipo_recorrencia : undefined,
+          proxima_data: proximaData
+        });
+        toast.success('Imposto adicionado com sucesso!');
+        setNovoImposto({
+          tipo: '',
+          descricao: '',
+          valor: '',
+          valorTipo: 'fixo',
+          vencimento: '',
+          tipoRecorrencia: 'unico',
+          tipo_recorrencia: 'mensal',
+          baseCalculo: ''
+        });
+        setIsDialogOpen(false);
+      } catch {
+        toast.error('Erro ao salvar imposto', { description: 'Verifique sua conexão e tente novamente.' });
+      }
     }
   };
 
-  const togglePago = (id: number, pago: boolean) => {
-    updateImposto(id, { pago: !pago });
+  const togglePago = async (id: number, pago: boolean) => {
+    try {
+      await updateImposto(id, { pago: !pago });
+    } catch {
+      toast.error('Erro ao atualizar imposto.');
+    }
   };
 
   const handleDeleteImposto = (id: number) => {
@@ -94,7 +101,12 @@ const Impostos = () => {
 
   const confirmDeleteImposto = async () => {
     if (deletingId !== null) {
-      await deleteImposto(deletingId);
+      try {
+        await deleteImposto(deletingId);
+        toast.success('Imposto excluído.');
+      } catch {
+        toast.error('Erro ao excluir imposto.');
+      }
       setDeletingId(null);
     }
   };
