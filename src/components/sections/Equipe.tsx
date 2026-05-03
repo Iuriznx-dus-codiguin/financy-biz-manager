@@ -183,10 +183,14 @@ const Equipe = () => {
       status: 'ativo' as const
     };
 
-    await addMembroEquipe(novoMembro);
-    toast.success('Membro adicionado com sucesso!');
-    resetForm();
-    setIsAddDialogOpen(false);
+    try {
+      await addMembroEquipe(novoMembro);
+      toast.success('Membro adicionado com sucesso!');
+      resetForm();
+      setIsAddDialogOpen(false);
+    } catch {
+      toast.error('Erro ao salvar membro', { description: 'Verifique sua conexão e tente novamente.' });
+    }
   };
 
   const handleEdit = (member: MembroEquipe) => {
@@ -209,15 +213,18 @@ const Equipe = () => {
       return;
     }
 
-    await updateMembroEquipe(editingMember.id, {
-      ...formData,
-      status: 'ativo'
-    });
-    
-    toast.success('Membro atualizado com sucesso!');
-    setEditingMember(null);
-    resetForm();
-    setIsEditDialogOpen(false);
+    try {
+      await updateMembroEquipe(editingMember.id, {
+        ...formData,
+        status: 'ativo'
+      });
+      toast.success('Membro atualizado com sucesso!');
+      setEditingMember(null);
+      resetForm();
+      setIsEditDialogOpen(false);
+    } catch {
+      toast.error('Erro ao atualizar membro.');
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -226,8 +233,12 @@ const Equipe = () => {
 
   const confirmDelete = async () => {
     if (deletingId) {
-      await deleteMembroEquipe(deletingId);
-      toast.success('Membro removido com sucesso!');
+      try {
+        await deleteMembroEquipe(deletingId);
+        toast.success('Membro removido com sucesso!');
+      } catch {
+        toast.error('Erro ao remover membro.');
+      }
       setDeletingId(null);
     }
   };
