@@ -38,12 +38,9 @@ export const DeveloperAccessDialog: React.FC<DeveloperAccessDialogProps> = ({
     try {
       // Use secure server-side validation
       const { data: validationResult, error: validationError } = await supabase.functions.invoke(
-        'validate-developer-key', 
+        'validate-developer-key',
         {
-          body: { 
-            key: accessKey.trim(), 
-            userEmail: user.email 
-          }
+          body: { key: accessKey.trim() }
         }
       );
 
