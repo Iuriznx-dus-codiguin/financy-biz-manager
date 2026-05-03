@@ -45,7 +45,7 @@ const Despesas = () => {
     emAndamento: false
   });
 
-  const handleAddDespesa = (e: React.FormEvent) => {
+  const handleAddDespesa = async (e: React.FormEvent) => {
     e.preventDefault();
     if (novaDespesa.descricao && novaDespesa.valor) {
       const despesaData = {
@@ -56,21 +56,26 @@ const Despesas = () => {
         tipo_recorrencia: novaDespesa.recorrente ? novaDespesa.tipoRecorrencia : null,
         status: novaDespesa.emAndamento ? 'pendente' as const : 'paga' as const
       };
-      addDespesa(despesaData);
-      setNovaDespesa({
-        data: '',
-        descricao: '',
-        categoria: '',
-        categoriaPersonalizada: '',
-        fornecedor: '',
-        valor: '',
-        formaPagamento: '',
-        recorrente: false,
-        tipoRecorrencia: '',
-        proximaData: '',
-        emAndamento: false
-      });
-      setIsDialogOpen(false);
+      try {
+        await addDespesa(despesaData);
+        toast.success('Despesa adicionada com sucesso!');
+        setNovaDespesa({
+          data: '',
+          descricao: '',
+          categoria: '',
+          categoriaPersonalizada: '',
+          fornecedor: '',
+          valor: '',
+          formaPagamento: '',
+          recorrente: false,
+          tipoRecorrencia: '',
+          proximaData: '',
+          emAndamento: false
+        });
+        setIsDialogOpen(false);
+      } catch {
+        toast.error('Erro ao salvar despesa', { description: 'Verifique sua conexão e tente novamente.' });
+      }
     }
   };
 
@@ -90,14 +95,24 @@ const Despesas = () => {
 
   const handleDeleteDespesa = async () => {
     if (deleteId !== null) {
-      await deleteDespesa(deleteId);
+      try {
+        await deleteDespesa(deleteId);
+        toast.success('Despesa excluída.');
+      } catch {
+        toast.error('Erro ao excluir despesa.');
+      }
       setDeleteId(null);
     }
   };
 
   const handleMarkAsPaid = async (id: number) => {
-    await updateDespesa(id, { status: 'paga' });
+    try {
+      await updateDespesa(id, { status: 'paga' });
+    } catch {
+      toast.error('Erro ao atualizar despesa.');
+    }
   };
+
 
   // Filtrar despesas por status e busca
   const filteredDespesas = useMemo(() => {
