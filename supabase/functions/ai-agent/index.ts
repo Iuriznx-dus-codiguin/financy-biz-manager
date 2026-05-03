@@ -688,6 +688,17 @@ async function queryFinancialData(supabase: any, userId: string, dashboardId: st
   return { success: false, error: 'Tipo de consulta não suportado' };
 }
 
+const ALLOWED_DIRECT_ACTIONS = new Set([
+  'register_expense',
+  'register_revenue',
+  'delete_transaction',
+  'update_transaction',
+  'query_financial_data',
+]);
+
 async function handleAction(supabase: any, userId: string, dashboardId: string, action: string, data: any) {
+  if (!ALLOWED_DIRECT_ACTIONS.has(action)) {
+    return { success: false, error: `Ação não permitida: ${action}` };
+  }
   return await executeToolCall(supabase, userId, dashboardId, action, data);
 }
