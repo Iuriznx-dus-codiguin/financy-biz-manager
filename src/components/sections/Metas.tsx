@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Target, Plus, TrendingUp, DollarSign, Calendar, Award, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
 import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
 import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
@@ -46,9 +47,14 @@ const Metas = () => {
 
   const handleSubmitMeta = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addMeta(novaMetaForm);
-    setNovaMetaForm(emptyForm);
-    setIsDialogOpen(false);
+    try {
+      await addMeta(novaMetaForm);
+      toast.success('Meta adicionada com sucesso!');
+      setNovaMetaForm(emptyForm);
+      setIsDialogOpen(false);
+    } catch {
+      toast.error('Erro ao salvar meta', { description: 'Verifique sua conexão e tente novamente.' });
+    }
   };
 
   const handleEditMeta = (meta: any) => {
@@ -69,22 +75,32 @@ const Metas = () => {
   const handleUpdateMeta = async (e: React.FormEvent) => {
     e.preventDefault();
     const { id, ...data } = editForm;
-    await updateMeta(id, {
-      titulo: data.titulo,
-      valorMeta: data.valorMeta,
-      valorAtual: data.valorAtual,
-      progresso: data.progresso,
-      prazo: data.prazo,
-      categoria: data.categoria,
-      status: data.status,
-      cor: data.cor,
-    });
-    setIsEditDialogOpen(false);
+    try {
+      await updateMeta(id, {
+        titulo: data.titulo,
+        valorMeta: data.valorMeta,
+        valorAtual: data.valorAtual,
+        progresso: data.progresso,
+        prazo: data.prazo,
+        categoria: data.categoria,
+        status: data.status,
+        cor: data.cor,
+      });
+      toast.success('Meta atualizada.');
+      setIsEditDialogOpen(false);
+    } catch {
+      toast.error('Erro ao atualizar meta.');
+    }
   };
 
   const handleDeleteMeta = async () => {
     if (deleteMetaId) {
-      await deleteMeta(deleteMetaId);
+      try {
+        await deleteMeta(deleteMetaId);
+        toast.success('Meta excluída.');
+      } catch {
+        toast.error('Erro ao excluir meta.');
+      }
       setDeleteMetaId(null);
     }
   };

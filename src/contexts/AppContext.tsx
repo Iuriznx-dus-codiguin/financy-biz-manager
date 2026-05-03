@@ -377,30 +377,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addReceita = async (receita: Omit<Receita, 'id'>) => {
     if (!user || !currentDashboard) return;
-
-    const { data, error } = await supabase
-      .from('receitas')
-      .insert({
-        user_id: user.id,
-        dashboard_id: currentDashboard.id,
-        data: receita.data,
-        descricao: receita.descricao,
-        categoria: receita.categoria,
-        valor: receita.valor,
-        cliente: receita.cliente,
-        forma_pagamento: receita.formaPagamento,
-        status: receita.status || 'paga'
-      })
-      .select()
-      .single();
-
-    if (error) {
-      logger.error('Erro ao adicionar receita:', error);
-      return;
-    }
-
-    if (data) {
-      const novaReceita = {
+    const tempId = Date.now() * -1;
+    const optimistic = { ...receita, id: tempId } as Receita;
+    setReceitas(prev => [optimistic, ...prev]);
+    try {
+      const { data, error } = await supabase
+        .from('receitas')
+        .insert({
+          user_id: user.id,
+          dashboard_id: currentDashboard.id,
+          data: receita.data,
+          descricao: receita.descricao,
+          categoria: receita.categoria,
+          valor: receita.valor,
+          cliente: receita.cliente,
+          forma_pagamento: receita.formaPagamento,
+          status: receita.status || 'paga'
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      setReceitas(prev => prev.map(r => r.id === tempId ? {
         id: data.id,
         data: data.data,
         descricao: data.descricao,
@@ -410,40 +407,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         formaPagamento: data.forma_pagamento,
         dashboard_id: data.dashboard_id,
         status: (data.status || 'paga') as 'paga' | 'pendente'
-      };
-      setReceitas(prev => [novaReceita, ...prev]);
-      
-      // Limpar cache após inserção
+      } : r));
       clearCacheForDashboard(currentDashboard.id);
+    } catch (error) {
+      setReceitas(prev => prev.filter(r => r.id !== tempId));
+      logger.error('Erro ao adicionar receita:', error);
+      throw error;
     }
   };
 
   const addDespesa = async (despesa: Omit<Despesa, 'id'>) => {
     if (!user || !currentDashboard) return;
-
-    const { data, error } = await supabase
-      .from('despesas')
-      .insert({
-        user_id: user.id,
-        dashboard_id: currentDashboard.id,
-        data: despesa.data,
-        descricao: despesa.descricao,
-        categoria: despesa.categoria,
-        valor: despesa.valor,
-        fornecedor: despesa.fornecedor,
-        forma_pagamento: despesa.formaPagamento,
-        status: despesa.status || 'paga'
-      })
-      .select()
-      .single();
-
-    if (error) {
-      logger.error('Erro ao adicionar despesa:', error);
-      return;
-    }
-
-    if (data) {
-      const novaDespesa = {
+    const tempId = Date.now() * -1;
+    const optimistic = { ...despesa, id: tempId } as Despesa;
+    setDespesas(prev => [optimistic, ...prev]);
+    try {
+      const { data, error } = await supabase
+        .from('despesas')
+        .insert({
+          user_id: user.id,
+          dashboard_id: currentDashboard.id,
+          data: despesa.data,
+          descricao: despesa.descricao,
+          categoria: despesa.categoria,
+          valor: despesa.valor,
+          fornecedor: despesa.fornecedor,
+          forma_pagamento: despesa.formaPagamento,
+          status: despesa.status || 'paga'
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      setDespesas(prev => prev.map(d => d.id === tempId ? {
         id: data.id,
         data: data.data,
         descricao: data.descricao,
@@ -453,39 +448,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         formaPagamento: data.forma_pagamento,
         dashboard_id: data.dashboard_id,
         status: (data.status || 'paga') as 'paga' | 'pendente'
-      };
-      setDespesas(prev => [novaDespesa, ...prev]);
-      
-      // Limpar cache após inserção
+      } : d));
       clearCacheForDashboard(currentDashboard.id);
+    } catch (error) {
+      setDespesas(prev => prev.filter(d => d.id !== tempId));
+      logger.error('Erro ao adicionar despesa:', error);
+      throw error;
     }
   };
 
   const addImposto = async (imposto: Omit<Imposto, 'id'>) => {
     if (!user || !currentDashboard) return;
-
-    const { data, error } = await supabase
-      .from('impostos')
-      .insert({
-        user_id: user.id,
-        dashboard_id: currentDashboard.id,
-        descricao: imposto.descricao,
-        tipo: imposto.tipo,
-        valor: imposto.valor,
-        vencimento: imposto.vencimento,
-        pago: imposto.pago || false,
-        recorrente: imposto.tipoRecorrencia === 'recorrente'
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Erro ao adicionar imposto:', error);
-      return;
-    }
-
-    if (data) {
-      const novoImposto = {
+    const tempId = Date.now() * -1;
+    const optimistic = { ...imposto, id: tempId } as Imposto;
+    setImpostos(prev => [optimistic, ...prev]);
+    try {
+      const { data, error } = await supabase
+        .from('impostos')
+        .insert({
+          user_id: user.id,
+          dashboard_id: currentDashboard.id,
+          descricao: imposto.descricao,
+          tipo: imposto.tipo,
+          valor: imposto.valor,
+          vencimento: imposto.vencimento,
+          pago: imposto.pago || false,
+          recorrente: imposto.tipoRecorrencia === 'recorrente'
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      setImpostos(prev => prev.map(i => i.id === tempId ? {
         id: data.id,
         descricao: data.descricao,
         tipo: data.tipo,
@@ -495,38 +488,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         pago: data.pago || false,
         tipoRecorrencia: imposto.tipoRecorrencia,
         dashboard_id: data.dashboard_id
-      };
-      setImpostos(prev => [novoImposto, ...prev]);
+      } : i));
+    } catch (error) {
+      setImpostos(prev => prev.filter(i => i.id !== tempId));
+      console.error('Erro ao adicionar imposto:', error);
+      throw error;
     }
   };
 
   const addMeta = async (meta: Omit<Meta, 'id'>) => {
     if (!user || !currentDashboard) return;
-
-    const { data, error } = await supabase
-      .from('metas')
-      .insert({
-        user_id: user.id,
-        dashboard_id: currentDashboard.id,
-        titulo: meta.titulo,
-        valor_meta: meta.valorMeta,
-        valor_atual: meta.valorAtual,
-        progresso: meta.progresso,
-        prazo: meta.prazo,
-        categoria: meta.categoria,
-        status: meta.status,
-        cor: meta.cor
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Erro ao adicionar meta:', error);
-      return;
-    }
-
-    if (data) {
-      const novaMeta: Meta = {
+    const tempId = `temp-${Date.now()}`;
+    const optimistic = { ...meta, id: tempId } as Meta;
+    setMetas(prev => [optimistic, ...prev]);
+    try {
+      const { data, error } = await supabase
+        .from('metas')
+        .insert({
+          user_id: user.id,
+          dashboard_id: currentDashboard.id,
+          titulo: meta.titulo,
+          valor_meta: meta.valorMeta,
+          valor_atual: meta.valorAtual,
+          progresso: meta.progresso,
+          prazo: meta.prazo,
+          categoria: meta.categoria,
+          status: meta.status,
+          cor: meta.cor
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      setMetas(prev => prev.map(m => m.id === tempId ? {
         id: data.id,
         titulo: data.titulo,
         valorMeta: data.valor_meta,
@@ -537,38 +530,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         status: data.status as 'em_andamento' | 'concluida' | 'atrasada',
         cor: data.cor,
         dashboard_id: data.dashboard_id
-      };
-      setMetas(prev => [novaMeta, ...prev]);
+      } : m));
+    } catch (error) {
+      setMetas(prev => prev.filter(m => m.id !== tempId));
+      console.error('Erro ao adicionar meta:', error);
+      throw error;
     }
   };
 
   const addMembroEquipe = async (membro: Omit<MembroEquipe, 'id'>) => {
     if (!user || !currentDashboard) return;
-
-    const { data, error } = await supabase
-      .from('equipe_membros')
-      .insert({
-        user_id: user.id,
-        dashboard_id: currentDashboard.id,
-        nome: membro.nome,
-        email: membro.email,
-        telefone: membro.telefone || '',
-        cargo: membro.cargo,
-        salario: membro.salario,
-        status: membro.status || 'ativo',
-        periodicidade: membro.periodicidade,
-        data_admissao: membro.dataAdmissao
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Erro ao adicionar membro da equipe:', error);
-      return;
-    }
-
-    if (data) {
-      const novoMembro = {
+    const tempId = `temp-${Date.now()}`;
+    const optimistic = { ...membro, id: tempId } as MembroEquipe;
+    setMembrosEquipe(prev => [optimistic, ...prev]);
+    try {
+      const { data, error } = await supabase
+        .from('equipe_membros')
+        .insert({
+          user_id: user.id,
+          dashboard_id: currentDashboard.id,
+          nome: membro.nome,
+          email: membro.email,
+          telefone: membro.telefone || '',
+          cargo: membro.cargo,
+          salario: membro.salario,
+          status: membro.status || 'ativo',
+          periodicidade: membro.periodicidade,
+          data_admissao: membro.dataAdmissao
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      setMembrosEquipe(prev => prev.map(m => m.id === tempId ? {
         id: data.id,
         nome: data.nome,
         email: data.email,
@@ -579,200 +572,198 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         periodicidade: data.periodicidade as 'mensal' | 'semanal' | 'quinzenal',
         dataAdmissao: data.data_admissao,
         dashboard_id: data.dashboard_id
-      };
-      setMembrosEquipe(prev => [novoMembro, ...prev]);
+      } : m));
+    } catch (error) {
+      setMembrosEquipe(prev => prev.filter(m => m.id !== tempId));
+      console.error('Erro ao adicionar membro da equipe:', error);
+      throw error;
     }
   };
 
   const updateMembroEquipe = async (id: string, membro: Partial<MembroEquipe>) => {
-    const { error } = await supabase
-      .from('equipe_membros')
-      .update({
-        nome: membro.nome,
-        email: membro.email,
-        telefone: membro.telefone,
-        cargo: membro.cargo,
-        salario: membro.salario,
-        status: membro.status,
-        periodicidade: membro.periodicidade,
-        data_admissao: membro.dataAdmissao
-      })
-      .eq('id', id);
-
-    if (error) {
+    const previous = membrosEquipe;
+    setMembrosEquipe(prev => prev.map(m => m.id === id ? { ...m, ...membro } : m));
+    try {
+      const { error } = await supabase
+        .from('equipe_membros')
+        .update({
+          nome: membro.nome,
+          email: membro.email,
+          telefone: membro.telefone,
+          cargo: membro.cargo,
+          salario: membro.salario,
+          status: membro.status,
+          periodicidade: membro.periodicidade,
+          data_admissao: membro.dataAdmissao
+        })
+        .eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      setMembrosEquipe(previous);
       console.error('Erro ao atualizar membro da equipe:', error);
-      return;
+      throw error;
     }
-
-    setMembrosEquipe(prev => 
-      prev.map(m => m.id === id ? { ...m, ...membro } : m)
-    );
   };
 
   const updateReceita = async (id: number, receita: Partial<Receita>) => {
-    const { error } = await supabase
-      .from('receitas')
-      .update({
-        data: receita.data,
-        descricao: receita.descricao,
-        categoria: receita.categoria,
-        valor: receita.valor,
-        cliente: receita.cliente,
-        forma_pagamento: receita.formaPagamento,
-        status: receita.status
-      })
-      .eq('id', id);
-
-    if (error) {
+    const previous = receitas;
+    setReceitas(prev => prev.map(r => r.id === id ? { ...r, ...receita } : r));
+    try {
+      const { error } = await supabase
+        .from('receitas')
+        .update({
+          data: receita.data,
+          descricao: receita.descricao,
+          categoria: receita.categoria,
+          valor: receita.valor,
+          cliente: receita.cliente,
+          forma_pagamento: receita.formaPagamento,
+          status: receita.status
+        })
+        .eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      setReceitas(previous);
       console.error('Erro ao atualizar receita:', error);
-      return;
+      throw error;
     }
-
-    setReceitas(prev => 
-      prev.map(r => r.id === id ? { ...r, ...receita } : r)
-    );
   };
 
   const updateDespesa = async (id: number, despesa: Partial<Despesa>) => {
-    const { error } = await supabase
-      .from('despesas')
-      .update({
-        data: despesa.data,
-        descricao: despesa.descricao,
-        categoria: despesa.categoria,
-        valor: despesa.valor,
-        fornecedor: despesa.fornecedor,
-        forma_pagamento: despesa.formaPagamento,
-        status: despesa.status
-      })
-      .eq('id', id);
-
-    if (error) {
+    const previous = despesas;
+    setDespesas(prev => prev.map(d => d.id === id ? { ...d, ...despesa } : d));
+    try {
+      const { error } = await supabase
+        .from('despesas')
+        .update({
+          data: despesa.data,
+          descricao: despesa.descricao,
+          categoria: despesa.categoria,
+          valor: despesa.valor,
+          fornecedor: despesa.fornecedor,
+          forma_pagamento: despesa.formaPagamento,
+          status: despesa.status
+        })
+        .eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      setDespesas(previous);
       console.error('Erro ao atualizar despesa:', error);
-      return;
+      throw error;
     }
-
-    setDespesas(prev => 
-      prev.map(d => d.id === id ? { ...d, ...despesa } : d)
-    );
   };
 
   const updateMeta = async (id: string, meta: Partial<Meta>) => {
-    const { error } = await supabase
-      .from('metas')
-      .update({
-        titulo: meta.titulo,
-        valor_meta: meta.valorMeta,
-        valor_atual: meta.valorAtual,
-        progresso: meta.progresso,
-        prazo: meta.prazo,
-        categoria: meta.categoria,
-        status: meta.status,
-        cor: meta.cor
-      })
-      .eq('id', id);
-
-    if (error) {
+    const previous = metas;
+    setMetas(prev => prev.map(m => m.id === id ? { ...m, ...meta } : m));
+    try {
+      const { error } = await supabase
+        .from('metas')
+        .update({
+          titulo: meta.titulo,
+          valor_meta: meta.valorMeta,
+          valor_atual: meta.valorAtual,
+          progresso: meta.progresso,
+          prazo: meta.prazo,
+          categoria: meta.categoria,
+          status: meta.status,
+          cor: meta.cor
+        })
+        .eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      setMetas(previous);
       console.error('Erro ao atualizar meta:', error);
-      return;
+      throw error;
     }
-
-    setMetas(prev => 
-      prev.map(m => m.id === id ? { ...m, ...meta } : m)
-    );
   };
 
   const deleteReceita = async (id: number) => {
-    const { error } = await supabase
-      .from('receitas')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Erro ao deletar receita:', error);
-      return;
-    }
-
+    const previous = receitas;
     setReceitas(prev => prev.filter(r => r.id !== id));
+    try {
+      const { error } = await supabase.from('receitas').delete().eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      setReceitas(previous);
+      console.error('Erro ao deletar receita:', error);
+      throw error;
+    }
   };
 
   const deleteDespesa = async (id: number) => {
-    const { error } = await supabase
-      .from('despesas')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Erro ao deletar despesa:', error);
-      return;
-    }
-
+    const previous = despesas;
     setDespesas(prev => prev.filter(d => d.id !== id));
+    try {
+      const { error } = await supabase.from('despesas').delete().eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      setDespesas(previous);
+      console.error('Erro ao deletar despesa:', error);
+      throw error;
+    }
   };
 
   const deleteImposto = async (id: number) => {
-    const { error } = await supabase
-      .from('impostos')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Erro ao deletar imposto:', error);
-      return;
-    }
-
+    const previous = impostos;
     setImpostos(prev => prev.filter(i => i.id !== id));
+    try {
+      const { error } = await supabase.from('impostos').delete().eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      setImpostos(previous);
+      console.error('Erro ao deletar imposto:', error);
+      throw error;
+    }
   };
 
   const deleteMeta = async (id: string) => {
-    const { error } = await supabase
-      .from('metas')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Erro ao deletar meta:', error);
-      return;
-    }
-
+    const previous = metas;
     setMetas(prev => prev.filter(m => m.id !== id));
+    try {
+      const { error } = await supabase.from('metas').delete().eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      setMetas(previous);
+      console.error('Erro ao deletar meta:', error);
+      throw error;
+    }
   };
 
   const deleteMembroEquipe = async (id: string) => {
-    const { error } = await supabase
-      .from('equipe_membros')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Erro ao deletar membro da equipe:', error);
-      return;
-    }
-
+    const previous = membrosEquipe;
     setMembrosEquipe(prev => prev.filter(m => m.id !== id));
+    try {
+      const { error } = await supabase.from('equipe_membros').delete().eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      setMembrosEquipe(previous);
+      console.error('Erro ao deletar membro da equipe:', error);
+      throw error;
+    }
   };
 
   const updateImposto = async (id: number, imposto: Partial<Imposto>) => {
-    const { error } = await supabase
-      .from('impostos')
-      .update({
-        pago: imposto.pago,
-        descricao: imposto.descricao,
-        tipo: imposto.tipo,
-        valor: imposto.valor,
-        vencimento: imposto.vencimento,
-        recorrente: imposto.tipoRecorrencia === 'recorrente'
-      })
-      .eq('id', id);
-
-    if (error) {
+    const previous = impostos;
+    setImpostos(prev => prev.map(i => i.id === id ? { ...i, ...imposto } : i));
+    try {
+      const { error } = await supabase
+        .from('impostos')
+        .update({
+          pago: imposto.pago,
+          descricao: imposto.descricao,
+          tipo: imposto.tipo,
+          valor: imposto.valor,
+          vencimento: imposto.vencimento,
+          recorrente: imposto.tipoRecorrencia === 'recorrente'
+        })
+        .eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      setImpostos(previous);
       console.error('Erro ao atualizar imposto:', error);
-      return;
+      throw error;
     }
-
-    setImpostos(prev => 
-      prev.map(i => i.id === id ? { ...i, ...imposto } : i)
-    );
   };
 
   const updateConfiguracoes = (novasConfiguracoes: Partial<Configuracoes>) => {

@@ -32,17 +32,36 @@ export const useSubscription = () => {
 
   const fetchSubscription = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
-      
-      // 1. Verificar se é desenvolvedor
-      const { data: subscriberData } = await supabase
-        .from('subscribers')
-        .select('subscription_tier, subscribed, subscription_end')
-        .eq('user_id', user.id)
-        .maybeSingle();
 
+      // Buscar todas as fontes de assinatura em paralelo
+      const [subscriberRes, userSubRes, caktoSubRes] = await Promise.all([
+        supabase
+          .from('subscribers')
+          .select('subscription_tier, subscribed, subscription_end')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('user_subscriptions')
+          .select('id, email, status, subscription_type, expires_at')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('customer_subscriptions')
+          .select('id, email, status, plan_type, expires_at')
+          .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+
+      const subscriberData = subscriberRes.data;
+      const userSubData = userSubRes.data;
+      const caktoData = caktoSubRes.data;
+
+      // Prioridade: developer > user_subscriptions > customer_subscriptions > sem assinatura
       if (isDeveloperTier(subscriberData)) {
         logger.success('Acesso de desenvolvedor detectado');
         setSubscription({
@@ -50,40 +69,24 @@ export const useSubscription = () => {
           email: user.email || '',
           subscribed: true,
           subscription_tier: 'developer',
-          subscription_end: undefined
+          subscription_end: undefined,
         });
         return;
       }
-      
-      // 2. Tabela principal: user_subscriptions
-      const { data: userSubData } = await supabase
-        .from('user_subscriptions')
-        .select('id, email, status, subscription_type, expires_at')
-        .eq('user_id', user.id)
-        .maybeSingle();
 
       if (userSubData) {
-        const isActive = userSubData.status === 'active' && 
+        const isActive =
+          userSubData.status === 'active' &&
           (!userSubData.expires_at || new Date(userSubData.expires_at) > new Date());
-        
         setSubscription({
           id: userSubData.id,
           email: userSubData.email,
           subscribed: isActive,
           subscription_tier: userSubData.subscription_type,
-          subscription_end: userSubData.expires_at
+          subscription_end: userSubData.expires_at,
         });
         return;
       }
-      
-      // 3. Fallback: customer_subscriptions (Cakto)
-      const { data: caktoData } = await supabase
-        .from('customer_subscriptions')
-        .select('id, email, status, plan_type, expires_at')
-        .or(`user_id.eq.${user.id},email.eq.${user.email}`)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
 
       if (caktoData) {
         setSubscription({
@@ -91,26 +94,24 @@ export const useSubscription = () => {
           email: caktoData.email,
           subscribed: caktoData.status === 'active',
           subscription_tier: caktoData.plan_type,
-          subscription_end: caktoData.expires_at
+          subscription_end: caktoData.expires_at,
         });
         return;
       }
 
-      // 4. Sem assinatura
       setSubscription({
         id: 'unsubscribed',
         email: user.email || '',
         subscribed: false,
-        subscription_tier: 'unsubscribed'
+        subscription_tier: 'unsubscribed',
       });
-
     } catch (error) {
       logger.error('Erro ao buscar assinatura:', error);
       setSubscription({
         id: 'unsubscribed',
         email: user?.email || '',
         subscribed: false,
-        subscription_tier: 'unsubscribed'
+        subscription_tier: 'unsubscribed',
       });
     } finally {
       setLoading(false);
