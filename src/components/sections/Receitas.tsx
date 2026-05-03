@@ -47,7 +47,7 @@ const Receitas = () => {
     emAndamento: false
   });
 
-  const handleAddReceita = (e: React.FormEvent) => {
+  const handleAddReceita = async (e: React.FormEvent) => {
     e.preventDefault();
     if (novaReceita.descricao && novaReceita.valor) {
       const receitaData = {
@@ -58,21 +58,26 @@ const Receitas = () => {
         tipo_recorrencia: novaReceita.recorrente ? novaReceita.tipoRecorrencia : null,
         status: novaReceita.emAndamento ? 'pendente' as const : 'paga' as const
       };
-      addReceita(receitaData);
-      setNovaReceita({
-        data: '',
-        descricao: '',
-        categoria: '',
-        categoriaPersonalizada: '',
-        cliente: '',
-        valor: '',
-        formaPagamento: '',
-        recorrente: false,
-        tipoRecorrencia: '',
-        proximaData: '',
-        emAndamento: false
-      });
-      setIsDialogOpen(false);
+      try {
+        await addReceita(receitaData);
+        toast.success('Receita adicionada com sucesso!');
+        setNovaReceita({
+          data: '',
+          descricao: '',
+          categoria: '',
+          categoriaPersonalizada: '',
+          cliente: '',
+          valor: '',
+          formaPagamento: '',
+          recorrente: false,
+          tipoRecorrencia: '',
+          proximaData: '',
+          emAndamento: false
+        });
+        setIsDialogOpen(false);
+      } catch (error) {
+        toast.error('Erro ao salvar receita', { description: 'Verifique sua conexão e tente novamente.' });
+      }
     }
   };
 
@@ -80,13 +85,22 @@ const Receitas = () => {
 
   const handleDeleteReceita = async () => {
     if (deleteId !== null) {
-      await deleteReceita(deleteId);
+      try {
+        await deleteReceita(deleteId);
+        toast.success('Receita excluída.');
+      } catch {
+        toast.error('Erro ao excluir receita.');
+      }
       setDeleteId(null);
     }
   };
 
   const handleMarkAsPaid = async (id: number) => {
-    await updateReceita(id, { status: 'paga' });
+    try {
+      await updateReceita(id, { status: 'paga' });
+    } catch {
+      toast.error('Erro ao atualizar receita.');
+    }
   };
 
   const totalReceitas = receitas
