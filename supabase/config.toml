@@ -27,10 +27,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.validate-developer-key]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-main-dashboard]
-verify_jwt = false
+verify_jwt = true
 
 [functions.process-recurring-transactions]
 verify_jwt = false
