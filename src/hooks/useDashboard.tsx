@@ -69,77 +69,55 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const createDefaultDashboard = async () => {
     if (!user) return;
-
     try {
-      // First check if user already has a default dashboard
-      const { data: existingDefault } = await supabase
-        .from('user_dashboards')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('is_default', true)
-        .single();
-
-      if (existingDefault) {
-        // User already has a default dashboard, use it
-        const newDashboard = {
-          id: existingDefault.id,
-          name: 'Dashboard Principal',
-          type: 'business' as 'personal' | 'business',
-          isDefault: true
-        };
-        setDashboards([newDashboard]);
-        setCurrentDashboard(newDashboard);
-        return;
-      }
-
-      // No default dashboard exists, create one
       const { data, error } = await supabase
         .from('user_dashboards')
-        .insert({
-          user_id: user.id,
-          name: 'Dashboard Principal',
-          type: 'business',
-          is_default: true
-        })
+        .upsert(
+          {
+            user_id: user.id,
+            name: 'Dashboard Principal',
+            type: 'business',
+            is_default: true,
+          },
+          {
+            onConflict: 'user_id,is_default',
+            ignoreDuplicates: false,
+          }
+        )
         .select()
         .single();
 
       if (error) {
-        // If error might be due to duplicate, try to get existing default
-        if (error.code === '23505') { // Unique constraint violation
-          const { data: existing } = await supabase
-            .from('user_dashboards')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('is_default', true)
-            .single();
-          
-          if (existing) {
-            const dashboard = {
-              id: existing.id,
-              name: existing.name,
-              type: existing.type as 'personal' | 'business',
-              isDefault: existing.is_default
-            };
-            setDashboards([dashboard]);
-            setCurrentDashboard(dashboard);
-            return;
-          }
+        const { data: existing } = await supabase
+          .from('user_dashboards')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_default', true)
+          .single();
+
+        if (existing) {
+          const newDashboard = {
+            id: existing.id,
+            name: existing.name,
+            type: existing.type as 'personal' | 'business',
+            isDefault: existing.is_default,
+          };
+          setDashboards([newDashboard]);
+          setCurrentDashboard(newDashboard);
         }
-        throw error;
+        return;
       }
 
       const newDashboard = {
         id: data.id,
         name: data.name,
         type: data.type as 'personal' | 'business',
-        isDefault: data.is_default
+        isDefault: data.is_default,
       };
-
       setDashboards([newDashboard]);
       setCurrentDashboard(newDashboard);
     } catch (error) {
-      console.error('Error creating default dashboard:', error);
+      console.error('Erro ao criar dashboard padrão:', error);
     }
   };
 
