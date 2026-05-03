@@ -261,16 +261,21 @@ serve(safeHandler(async (req) => {
     const payload = JSON.parse(rawBody);
     console.log('Payload recebido do Cakto:', JSON.stringify(payload, null, 2));
 
-    // Verificar assinatura do webhook usando HMAC-SHA256
+    // Verificar assinatura do webhook usando HMAC-SHA256 (OBRIGATÓRIO)
     const signature = req.headers.get('x-webhook-signature');
-    if (signature) {
-      const expectedSignature = await generateHmacSha256(envVars.CAKTO_WEBHOOK_SECRET, rawBody);
-      const providedSignature = signature.replace('sha256=', '');
-      
-      if (!constantTimeCompare(expectedSignature, providedSignature)) {
-        console.error('Assinatura do webhook inválida');
-        throw new Error('Unauthorized');
-      }
+    if (!signature) {
+      console.error('Webhook rejeitado: cabeçalho x-webhook-signature ausente');
+      throw new Error('Unauthorized');
+    }
+    if (!signature.startsWith('sha256=')) {
+      console.error('Webhook rejeitado: prefixo de assinatura inválido');
+      throw new Error('Unauthorized');
+    }
+    const expectedSignature = await generateHmacSha256(envVars.CAKTO_WEBHOOK_SECRET, rawBody);
+    const providedSignature = signature.slice('sha256='.length);
+    if (!constantTimeCompare(expectedSignature, providedSignature)) {
+      console.error('Assinatura do webhook inválida');
+      throw new Error('Unauthorized');
     }
 
     const eventType = payload.event;
