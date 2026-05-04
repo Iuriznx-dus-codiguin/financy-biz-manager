@@ -526,7 +526,38 @@ async function executeToolCall(supabase: any, userId: string, dashboardId: strin
         console.error('Error inserting revenue:', error);
         throw new Error(`Erro ao registrar receita: ${error.message}`);
       }
+      await invalidateContextCache(supabase, userId, dashboardId);
       return { success: true, type: 'revenue_created', message: `✅ Receita "${args.descricao}" de R$ ${args.valor.toFixed(2)} registrada com sucesso!`, id: data.id };
+    }
+
+    case 'query_financial_data': {
+      return await queryFinancialData(supabase, userId, dashboardId, args);
+    }
+
+    case 'delete_transaction': {
+      const table = args.type === 'receita' ? 'receitas' : 'despesas';
+      const { error } = await supabase.from(table).delete().eq('id', args.id).eq('user_id', userId);
+      if (error) throw new Error(`Erro ao excluir: ${error.message}`);
+      await invalidateContextCache(supabase, userId, dashboardId);
+      return { success: true, type: 'transaction_deleted', message: `✅ ${args.type === 'receita' ? 'Receita' : 'Despesa'} #${args.id} excluída com sucesso!` };
+    }
+
+    case 'update_transaction': {
+      const table = args.type === 'receita' ? 'receitas' : 'despesas';
+      const updateData: any = {};
+      if (args.descricao) updateData.descricao = args.descricao;
+      if (args.valor) updateData.valor = args.valor;
+      if (args.categoria) updateData.categoria = args.categoria;
+      if (args.data) updateData.data = args.data;
+
+      if (Object.keys(updateData).length === 0) {
+        return { success: false, error: 'Nenhum campo para atualizar' };
+      }
+
+      const { error } = await supabase.from(table).update(updateData).eq('id', args.id).eq('user_id', userId);
+      if (error) throw new Error(`Erro ao atualizar: ${error.message}`);
+      await invalidateContextCache(supabase, userId, dashboardId);
+      return { success: true, type: 'transaction_updated', message: `✅ ${args.type === 'receita' ? 'Receita' : 'Despesa'} #${args.id} atualizada!` };
     }
 
     case 'query_financial_data': {
