@@ -82,6 +82,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_context_cache: {
+        Row: {
+          context_data: Json
+          created_at: string
+          dashboard_id: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          context_data: Json
+          created_at?: string
+          dashboard_id?: string
+          expires_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          context_data?: Json
+          created_at?: string
+          dashboard_id?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_conversations: {
         Row: {
           agent_type: string
@@ -1220,6 +1247,7 @@ export type Database = {
         Args: { p_email: string; p_telefone?: string }
         Returns: boolean
       }
+      cleanup_expired_ai_cache: { Args: never; Returns: undefined }
       encrypt_sensitive_data: {
         Args: { data: string; salt?: string }
         Returns: string
