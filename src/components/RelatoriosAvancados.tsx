@@ -10,7 +10,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
-import * as XLSX from 'xlsx';
+import { downloadXlsx } from '@/utils/excelExport';
 
 interface ReportData {
   tipo: string;
