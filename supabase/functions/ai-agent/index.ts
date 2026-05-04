@@ -560,33 +560,6 @@ async function executeToolCall(supabase: any, userId: string, dashboardId: strin
       return { success: true, type: 'transaction_updated', message: `✅ ${args.type === 'receita' ? 'Receita' : 'Despesa'} #${args.id} atualizada!` };
     }
 
-    case 'query_financial_data': {
-      return await queryFinancialData(supabase, userId, dashboardId, args);
-    }
-
-    case 'delete_transaction': {
-      const table = args.type === 'receita' ? 'receitas' : 'despesas';
-      const { error } = await supabase.from(table).delete().eq('id', args.id).eq('user_id', userId);
-      if (error) throw new Error(`Erro ao excluir: ${error.message}`);
-      return { success: true, type: 'transaction_deleted', message: `✅ ${args.type === 'receita' ? 'Receita' : 'Despesa'} #${args.id} excluída com sucesso!` };
-    }
-
-    case 'update_transaction': {
-      const table = args.type === 'receita' ? 'receitas' : 'despesas';
-      const updateData: any = {};
-      if (args.descricao) updateData.descricao = args.descricao;
-      if (args.valor) updateData.valor = args.valor;
-      if (args.categoria) updateData.categoria = args.categoria;
-      if (args.data) updateData.data = args.data;
-
-      if (Object.keys(updateData).length === 0) {
-        return { success: false, error: 'Nenhum campo para atualizar' };
-      }
-
-      const { error } = await supabase.from(table).update(updateData).eq('id', args.id).eq('user_id', userId);
-      if (error) throw new Error(`Erro ao atualizar: ${error.message}`);
-      return { success: true, type: 'transaction_updated', message: `✅ ${args.type === 'receita' ? 'Receita' : 'Despesa'} #${args.id} atualizada!` };
-    }
 
     default:
       return { success: false, error: `Ferramenta desconhecida: ${fnName}` };
