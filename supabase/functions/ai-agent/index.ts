@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkRateLimit } from '../_shared/utils.ts';
 
@@ -80,8 +80,8 @@ serve(async (req) => {
       });
     }
 
-    // Fetch user financial context - now with ALL data, not just current month
-    const context = await getUserFinancialContext(supabase, user.id, dashboardId);
+    // Fetch user financial context (cached for 10 min)
+    const context = await getCachedOrFreshContext(supabase, user.id, dashboardId);
 
     const isPersonal = dashboardType === 'personal';
     const accountLabel = isPersonal ? 'pessoal' : 'empresarial';
@@ -503,6 +503,7 @@ async function executeToolCall(supabase: any, userId: string, dashboardId: strin
         console.error('Error inserting expense:', error);
         throw new Error(`Erro ao registrar despesa: ${error.message}`);
       }
+      await invalidateContextCache(supabase, userId, dashboardId);
       return { success: true, type: 'expense_created', message: `✅ Despesa "${args.descricao}" de R$ ${args.valor.toFixed(2)} registrada com sucesso!`, id: data.id };
     }
 
@@ -525,6 +526,7 @@ async function executeToolCall(supabase: any, userId: string, dashboardId: strin
         console.error('Error inserting revenue:', error);
         throw new Error(`Erro ao registrar receita: ${error.message}`);
       }
+      await invalidateContextCache(supabase, userId, dashboardId);
       return { success: true, type: 'revenue_created', message: `✅ Receita "${args.descricao}" de R$ ${args.valor.toFixed(2)} registrada com sucesso!`, id: data.id };
     }
 
@@ -536,6 +538,7 @@ async function executeToolCall(supabase: any, userId: string, dashboardId: strin
       const table = args.type === 'receita' ? 'receitas' : 'despesas';
       const { error } = await supabase.from(table).delete().eq('id', args.id).eq('user_id', userId);
       if (error) throw new Error(`Erro ao excluir: ${error.message}`);
+      await invalidateContextCache(supabase, userId, dashboardId);
       return { success: true, type: 'transaction_deleted', message: `✅ ${args.type === 'receita' ? 'Receita' : 'Despesa'} #${args.id} excluída com sucesso!` };
     }
 
@@ -553,8 +556,10 @@ async function executeToolCall(supabase: any, userId: string, dashboardId: strin
 
       const { error } = await supabase.from(table).update(updateData).eq('id', args.id).eq('user_id', userId);
       if (error) throw new Error(`Erro ao atualizar: ${error.message}`);
+      await invalidateContextCache(supabase, userId, dashboardId);
       return { success: true, type: 'transaction_updated', message: `✅ ${args.type === 'receita' ? 'Receita' : 'Despesa'} #${args.id} atualizada!` };
     }
+
 
     default:
       return { success: false, error: `Ferramenta desconhecida: ${fnName}` };
@@ -611,8 +616,22 @@ async function queryFinancialData(supabase: any, userId: string, dashboardId: st
     return q.order('data', { ascending: false }).limit(500);
   };
 
-  // For most query types, fetch both
-  if (['receitas', 'despesas', 'lucro', 'saldo', 'por_categoria', 'por_periodo', 'todas_transacoes'].includes(args.query_type)) {
+  // Lightweight aggregation for totals-only queries (no need to fetch rows)
+  if (['receitas', 'despesas', 'lucro', 'saldo'].includes(args.query_type)) {
+    const totals = await getAggregatedTotals(supabase, userId, dashboardId, startDate, endDate, args.categoria);
+    return {
+      success: true,
+      data: {
+        total_receitas: totals.totalReceitas,
+        total_despesas: totals.totalDespesas,
+        lucro: totals.totalReceitas - totals.totalDespesas,
+        periodo: `${startDate} a ${endDate}`,
+      }
+    };
+  }
+
+  // For richer query types, fetch both
+  if (['por_categoria', 'por_periodo', 'todas_transacoes'].includes(args.query_type)) {
     const [recRes, despRes] = await Promise.all([buildReceitaQuery(), buildDespesaQuery()]);
     const receitas = recRes.data || [];
     const despesas = despRes.data || [];
@@ -701,4 +720,76 @@ async function handleAction(supabase: any, userId: string, dashboardId: string, 
     return { success: false, error: `Ação não permitida: ${action}` };
   }
   return await executeToolCall(supabase, userId, dashboardId, action, data);
+}
+
+// ===== Cache & aggregation helpers =====
+
+async function getCachedOrFreshContext(supabase: any, userId: string, dashboardId?: string) {
+  const cacheKey = dashboardId || 'default';
+
+  const { data: cached } = await supabase
+    .from('ai_context_cache')
+    .select('context_data, expires_at')
+    .eq('user_id', userId)
+    .eq('dashboard_id', cacheKey)
+    .gt('expires_at', new Date().toISOString())
+    .maybeSingle();
+
+  if (cached) return cached.context_data;
+
+  const freshContext = await getUserFinancialContext(supabase, userId, dashboardId);
+
+  await supabase
+    .from('ai_context_cache')
+    .upsert(
+      {
+        user_id: userId,
+        dashboard_id: cacheKey,
+        context_data: freshContext,
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      },
+      { onConflict: 'user_id,dashboard_id' }
+    );
+
+  return freshContext;
+}
+
+async function invalidateContextCache(supabase: any, userId: string, dashboardId?: string) {
+  const cacheKey = dashboardId || 'default';
+  await supabase
+    .from('ai_context_cache')
+    .delete()
+    .eq('user_id', userId)
+    .eq('dashboard_id', cacheKey);
+}
+
+async function getAggregatedTotals(
+  supabase: any,
+  userId: string,
+  dashboardId: string | undefined,
+  startDate: string,
+  endDate: string,
+  categoria?: string
+) {
+  const buildAggQuery = (table: string) => {
+    let q = supabase
+      .from(table)
+      .select('valor.sum()')
+      .eq('user_id', userId)
+      .gte('data', startDate)
+      .lte('data', endDate);
+    if (dashboardId) q = q.eq('dashboard_id', dashboardId);
+    if (categoria) q = q.eq('categoria', categoria);
+    return q.single();
+  };
+
+  const [recRes, despRes] = await Promise.all([
+    buildAggQuery('receitas'),
+    buildAggQuery('despesas'),
+  ]);
+
+  return {
+    totalReceitas: Number(recRes.data?.sum || 0),
+    totalDespesas: Number(despRes.data?.sum || 0),
+  };
 }

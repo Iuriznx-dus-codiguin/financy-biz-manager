@@ -9,7 +9,7 @@ import { TimeFilter } from '@/components/TimeFilter';
 import { isDateInRange, getDateRange } from '@/utils/dateFilters';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
-import * as XLSX from 'xlsx';
+import { downloadXlsx, SheetSpec } from '@/utils/excelExport';
 import { FileText, Download } from 'lucide-react';
 import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
 import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
@@ -367,9 +367,6 @@ import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
   const handleExportExcel = async () => {
     try {
-      const workbook = XLSX.utils.book_new();
-      
-      // Aba de resumo
       const resumoData = [
         ['Relatório Financeiro - Financy'],
         [`Período: ${getTimeFilterLabel(timeFilter)}`],
@@ -379,26 +376,15 @@ import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
         ['Receitas', `R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
         ['Despesas', `R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
         ['Lucro Líquido', `R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
-        ['Margem de Lucro', `${margemLucro.toFixed(1)}%`]
+        ['Margem de Lucro', `${margemLucro.toFixed(1)}%`],
       ];
-      
-      const resumoSheet = XLSX.utils.aoa_to_sheet(resumoData);
-      XLSX.utils.book_append_sheet(workbook, resumoSheet, 'Resumo');
-      
-      // Aba de receitas
-      if (filteredReceitas.length > 0) {
-        const receitasSheet = XLSX.utils.json_to_sheet(filteredReceitas);
-        XLSX.utils.book_append_sheet(workbook, receitasSheet, 'Receitas');
-      }
-      
-      // Aba de despesas
-      if (filteredDespesas.length > 0) {
-        const despesasSheet = XLSX.utils.json_to_sheet(filteredDespesas);
-        XLSX.utils.book_append_sheet(workbook, despesasSheet, 'Despesas');
-      }
-      
+
+      const sheets: SheetSpec[] = [{ name: 'Resumo', aoa: resumoData }];
+      if (filteredReceitas.length > 0) sheets.push({ name: 'Receitas', json: filteredReceitas as any });
+      if (filteredDespesas.length > 0) sheets.push({ name: 'Despesas', json: filteredDespesas as any });
+
       const fileName = `relatorio-${timeFilter}-${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
+      await downloadXlsx(fileName, sheets);
       toast.success(`Relatório Excel exportado: ${fileName}`);
     } catch (error) {
       toast.error('Erro ao exportar Excel');

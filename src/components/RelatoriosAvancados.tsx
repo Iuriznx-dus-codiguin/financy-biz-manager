@@ -10,7 +10,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
-import * as XLSX from 'xlsx';
+import { downloadXlsx } from '@/utils/excelExport';
 
 interface ReportData {
   tipo: string;
@@ -133,10 +133,7 @@ export const RelatoriosAvancados: React.FC = () => {
     doc.save(`relatorio-financy-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
-  const generateExcel = () => {
-    const workbook = XLSX.utils.book_new();
-
-    // Aba de Resumo
+  const generateExcel = async () => {
     const resumoData = [
       ['Relatório Financeiro - Financy'],
       [''],
@@ -148,44 +145,24 @@ export const RelatoriosAvancados: React.FC = () => {
       ['Total de Despesas', `R$ ${reportData.resumo.total_despesas.toFixed(2)}`],
       ['Saldo Líquido', `R$ ${reportData.resumo.saldo.toFixed(2)}`],
       ['Maior Categoria de Gastos', reportData.resumo.categoria_maior_gasto],
-      ['Tendência', reportData.resumo.tendencia]
+      ['Tendência', reportData.resumo.tendencia],
     ];
 
-    const resumoWS = XLSX.utils.aoa_to_sheet(resumoData);
-    XLSX.utils.book_append_sheet(workbook, resumoWS, 'Resumo');
-
-    // Aba de Receitas
     const receitasData = [
       ['Data', 'Descrição', 'Categoria', 'Valor', 'Cliente'],
-      ...reportData.dados.receitas.map(r => [
-        r.data,
-        r.descricao,
-        r.categoria,
-        r.valor,
-        r.cliente || ''
-      ])
+      ...reportData.dados.receitas.map(r => [r.data, r.descricao, r.categoria, r.valor, r.cliente || '']),
     ];
 
-    const receitasWS = XLSX.utils.aoa_to_sheet(receitasData);
-    XLSX.utils.book_append_sheet(workbook, receitasWS, 'Receitas');
-
-    // Aba de Despesas
     const despesasData = [
       ['Data', 'Descrição', 'Categoria', 'Valor', 'Fornecedor'],
-      ...reportData.dados.despesas.map(d => [
-        d.data,
-        d.descricao,
-        d.categoria,
-        d.valor,
-        d.fornecedor || ''
-      ])
+      ...reportData.dados.despesas.map(d => [d.data, d.descricao, d.categoria, d.valor, d.fornecedor || '']),
     ];
 
-    const despesasWS = XLSX.utils.aoa_to_sheet(despesasData);
-    XLSX.utils.book_append_sheet(workbook, despesasWS, 'Despesas');
-
-    // Salvar Excel
-    XLSX.writeFile(workbook, `relatorio-financy-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    await downloadXlsx(`relatorio-financy-${format(new Date(), 'yyyy-MM-dd')}.xlsx`, [
+      { name: 'Resumo', aoa: resumoData },
+      { name: 'Receitas', aoa: receitasData },
+      { name: 'Despesas', aoa: despesasData },
+    ]);
   };
 
   const handleGenerate = async () => {
