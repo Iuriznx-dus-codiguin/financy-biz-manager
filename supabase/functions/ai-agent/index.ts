@@ -616,8 +616,22 @@ async function queryFinancialData(supabase: any, userId: string, dashboardId: st
     return q.order('data', { ascending: false }).limit(500);
   };
 
-  // For most query types, fetch both
-  if (['receitas', 'despesas', 'lucro', 'saldo', 'por_categoria', 'por_periodo', 'todas_transacoes'].includes(args.query_type)) {
+  // Lightweight aggregation for totals-only queries (no need to fetch rows)
+  if (['receitas', 'despesas', 'lucro', 'saldo'].includes(args.query_type)) {
+    const totals = await getAggregatedTotals(supabase, userId, dashboardId, startDate, endDate, args.categoria);
+    return {
+      success: true,
+      data: {
+        total_receitas: totals.totalReceitas,
+        total_despesas: totals.totalDespesas,
+        lucro: totals.totalReceitas - totals.totalDespesas,
+        periodo: `${startDate} a ${endDate}`,
+      }
+    };
+  }
+
+  // For richer query types, fetch both
+  if (['por_categoria', 'por_periodo', 'todas_transacoes'].includes(args.query_type)) {
     const [recRes, despRes] = await Promise.all([buildReceitaQuery(), buildDespesaQuery()]);
     const receitas = recRes.data || [];
     const despesas = despRes.data || [];
