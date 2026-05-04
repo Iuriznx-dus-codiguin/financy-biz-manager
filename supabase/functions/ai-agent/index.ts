@@ -721,3 +721,75 @@ async function handleAction(supabase: any, userId: string, dashboardId: string, 
   }
   return await executeToolCall(supabase, userId, dashboardId, action, data);
 }
+
+// ===== Cache & aggregation helpers =====
+
+async function getCachedOrFreshContext(supabase: any, userId: string, dashboardId?: string) {
+  const cacheKey = dashboardId || 'default';
+
+  const { data: cached } = await supabase
+    .from('ai_context_cache')
+    .select('context_data, expires_at')
+    .eq('user_id', userId)
+    .eq('dashboard_id', cacheKey)
+    .gt('expires_at', new Date().toISOString())
+    .maybeSingle();
+
+  if (cached) return cached.context_data;
+
+  const freshContext = await getUserFinancialContext(supabase, userId, dashboardId);
+
+  await supabase
+    .from('ai_context_cache')
+    .upsert(
+      {
+        user_id: userId,
+        dashboard_id: cacheKey,
+        context_data: freshContext,
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      },
+      { onConflict: 'user_id,dashboard_id' }
+    );
+
+  return freshContext;
+}
+
+async function invalidateContextCache(supabase: any, userId: string, dashboardId?: string) {
+  const cacheKey = dashboardId || 'default';
+  await supabase
+    .from('ai_context_cache')
+    .delete()
+    .eq('user_id', userId)
+    .eq('dashboard_id', cacheKey);
+}
+
+async function getAggregatedTotals(
+  supabase: any,
+  userId: string,
+  dashboardId: string | undefined,
+  startDate: string,
+  endDate: string,
+  categoria?: string
+) {
+  const buildAggQuery = (table: string) => {
+    let q = supabase
+      .from(table)
+      .select('valor.sum()')
+      .eq('user_id', userId)
+      .gte('data', startDate)
+      .lte('data', endDate);
+    if (dashboardId) q = q.eq('dashboard_id', dashboardId);
+    if (categoria) q = q.eq('categoria', categoria);
+    return q.single();
+  };
+
+  const [recRes, despRes] = await Promise.all([
+    buildAggQuery('receitas'),
+    buildAggQuery('despesas'),
+  ]);
+
+  return {
+    totalReceitas: Number(recRes.data?.sum || 0),
+    totalDespesas: Number(despRes.data?.sum || 0),
+  };
+}
