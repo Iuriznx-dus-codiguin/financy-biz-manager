@@ -80,8 +80,8 @@ serve(async (req) => {
       });
     }
 
-    // Fetch user financial context - now with ALL data, not just current month
-    const context = await getUserFinancialContext(supabase, user.id, dashboardId);
+    // Fetch user financial context (cached for 10 min)
+    const context = await getCachedOrFreshContext(supabase, user.id, dashboardId);
 
     const isPersonal = dashboardType === 'personal';
     const accountLabel = isPersonal ? 'pessoal' : 'empresarial';
