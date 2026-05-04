@@ -503,6 +503,7 @@ async function executeToolCall(supabase: any, userId: string, dashboardId: strin
         console.error('Error inserting expense:', error);
         throw new Error(`Erro ao registrar despesa: ${error.message}`);
       }
+      await invalidateContextCache(supabase, userId, dashboardId);
       return { success: true, type: 'expense_created', message: `✅ Despesa "${args.descricao}" de R$ ${args.valor.toFixed(2)} registrada com sucesso!`, id: data.id };
     }
 
