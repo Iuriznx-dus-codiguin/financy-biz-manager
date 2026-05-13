@@ -1,64 +1,84 @@
 
+# Auditoria Funcional Completa — Financy
 
-# Finalizar correções de médio impacto pendentes
+Vou realizar uma verificação profunda em 7 frentes, testando fluxos reais no preview, inspecionando logs, queries no banco e código das edge functions.
 
-## Contexto
-A correção de layout do Agente de IA já está aplicada e funcional. Restam duas tarefas que foram criadas mas não executadas no turno anterior.
+## Escopo da Verificação
 
-## Escopo
+### 1. Autenticação e Onboarding
+- Login / signup / logout / reset de senha
+- Trigger `on_auth_user_created` → criação de profile
+- Webhook `novo-usuario-webhook` (n8n)
+- Fluxo de onboarding (steps 1–8, opcionais 5–8)
+- Coleta de telefone (BrazilianPhoneInput, normalização E.164)
+- AuthGuard e redirecionamentos
 
-### 1. Migrar cores hardcoded para design tokens (Dark Mode consistente)
+### 2. Sistema Multi-Dashboard
+- Criação de dashboard default (upsert atômico recém-implementado)
+- Troca entre Pessoal / Empresarial
+- Isolamento de dados por `dashboard_id` (RLS `user_has_dashboard_access`)
+- `CompactDashboardSelector` e badges visuais
 
-Substituir cores estáticas Tailwind por tokens semânticos do `index.css`/`tailwind.config.ts` em **26 arquivos** com 438 ocorrências.
+### 3. CRUD Financeiro (Receitas, Despesas, Impostos, Metas, Equipe)
+- Inserção, edição, exclusão com optimistic UI + rollback
+- Filtragem por período (TimeFilter)
+- Cálculos em `useFinancialCalculations` (totais, saldo)
+- Categorias personalizadas
+- Transações recorrentes (`useRecurringTransactions`, edge function `process-recurring-transactions`)
+- Validação que o `dashboard_id` correto está sendo persistido
 
-**Mapeamento padrão:**
-- `text-green-600` → `text-success` (financeiro positivo: receitas, lucro, saldo positivo)
-- `text-red-600` → `text-destructive` (financeiro negativo: despesas, saldo negativo)
-- `text-orange-600` → `text-warning` (avisos)
-- `text-blue-600` → `text-primary` (informativo)
-- `bg-green-50 dark:bg-green-900/20` → `bg-success/10`
-- `bg-red-50 dark:bg-red-900/20` → `bg-destructive/10`
-- `bg-orange-50 dark:bg-orange-900/20` → `bg-warning/10`
-- `bg-blue-50 dark:bg-blue-900/20` → `bg-primary/10`
-- `border-green-200` → `border-success/30`, etc.
+### 4. Assinaturas e Pagamentos
+- Tabelas: `subscribers`, `user_subscriptions`, `customer_subscriptions`
+- Webhook `cakto-webhook` (HMAC, mapeamento de planos, ativação)
+- `useSubscription` (Promise.all paralelo)
+- Gating de features (`useFeatureAccess`)
+- Bloqueio de rotas para `pending_payment` (apenas /assinatura, /configuracoes, /ajuda)
+- Notificações de pagamento + confetti
+- Webhooks agendados de renovação (5d, 1d, dia)
 
-**Pré-requisito:** adicionar tokens `--success` e `--warning` ao `src/index.css` (light + dark) e ao `tailwind.config.ts` (cores `success`, `warning`), caso ainda não existam.
+### 5. IA e Chat
+- Edge function `ai-agent` (allowlist de ações, cache de contexto 10min)
+- `FinancyAIChat` (limites: 500 chars, 50 msgs/dia)
+- Persistência em `ai_chat_sessions` / `ai_chat_messages`
+- Invalidação de cache em mutações (register/delete)
+- `ai-financial-insights` para dashboard
+- Outros agents: `ai-financial-agent`, `ai-tax-agent`, `ai-support-agent`
 
-**Arquivos prioritários (alto tráfego visual):**
-- `InteligenciaFinanceiraBasica.tsx`
-- `InteligenciaFinanceiraAprimorada.tsx`
-- `InteligenciaFinanceira.tsx`
-- `InteligenciaFinanceiraIA.tsx`
-- `AnalyticsChart.tsx`
-- `DashboardAvancado.tsx`
-- `OptimizedMetricCard.tsx`
-- `sections/Dashboard.tsx`, `Receitas.tsx`, `Despesas.tsx`, `Metas.tsx`, `Impostos.tsx`
-- `OnboardingFlow.tsx`
-- Demais arquivos da lista de 26
+### 6. Edge Functions e Integrações
+- Status de deploy de todas as functions (Deno std@0.224.0)
+- Logs recentes em busca de erros (já vi `process-recurring-transactions` falhando por falta de `CRON_SECRET_TOKEN`)
+- Webhooks agendados (cron pg_cron 10h UTC)
+- Daily transaction reminder (20h BRT)
+- `get-main-dashboard`, `validate-developer-key`
+- `schedule-user-webhooks`, `process-scheduled-webhooks`
 
-### 2. Adicionar loading skeletons no Dashboard
+### 7. Performance, Segurança e Integridade
+- `supabase--linter` (RLS, search_path em funções)
+- `security--run_security_scan`
+- Verificação de RLS em tabelas críticas
+- React Query cache (staleTime 5min)
+- Excel export (exceljs) em Relatórios
+- Console/network logs do preview
+- Verificação de queries lentas via `supabase--analytics_query`
 
-Substituir estados em branco por placeholders animados durante carregamento de dados.
+## Metodologia
 
-**Onde aplicar:**
-- `src/components/sections/Dashboard.tsx` — enquanto `receitas`/`despesas`/`impostos` estão carregando do `AppContext`, mostrar `<Skeleton>` nos cards de métricas (`OptimizedMetricCard`) e nos gráficos.
-- `src/components/DashboardAvancado.tsx` — skeletons para gráficos avançados.
-- `src/components/InteligenciaFinanceiraIA.tsx` — já tem estado de loading, mas pode ganhar skeleton ao invés de spinner para melhor percepção.
+Para cada frente:
+1. **Code review** — leitura dos arquivos relevantes
+2. **DB inspection** — queries de sanidade (`supabase--read_query`)
+3. **Edge function logs** — últimos eventos por função
+4. **Browser testing** — fluxos críticos no preview (login → CRUD → assinatura → IA)
+5. **Linter/security scan**
 
-**Implementação:**
-- Usar `<Skeleton>` de `@/components/ui/skeleton`.
-- Detectar loading via flag do `useAppContext` (verificar se existe `loading`/`isLoading`; se não, derivar de `receitas === undefined`).
-- Criar componente `DashboardSkeleton` reutilizável para manter consistência.
+## Entregáveis
 
-## Garantias
+Relatório final em chat, organizado por:
+- ✅ **Funcionando corretamente** (com evidência)
+- ⚠️ **Problemas menores / melhorias sugeridas**
+- 🔴 **Bugs críticos** (quebram funcionalidade ou comprometem dados/segurança)
 
-- **Não afetar funcionalidades existentes:** apenas substituições visuais e adição de skeletons condicionais.
-- **Validação:** rodar `tsc --noEmit` ao final.
-- **QA visual:** verificar `/dashboard` em dark mode e light mode após as mudanças.
+Para cada bug: arquivo, linha, descrição do problema, impacto e correção sugerida. Nenhuma alteração de código será feita nesta fase — apenas diagnóstico. Após sua aprovação do relatório, podemos planejar uma "Fase 6 — Correções da Auditoria".
 
-## Tarefas que serão criadas
+## Estimativa de Tempo
 
-1. Adicionar tokens success/warning ao tema
-2. Migrar cores hardcoded para tokens semânticos
-3. Criar e aplicar skeletons no Dashboard
-
+A análise envolverá ~30–50 chamadas de ferramentas (leitura, queries, logs, browser). Posso priorizar uma frente específica se preferir, ou seguir todas em sequência.
