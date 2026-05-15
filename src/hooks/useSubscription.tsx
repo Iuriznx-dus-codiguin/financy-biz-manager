@@ -118,11 +118,17 @@ export const useSubscription = () => {
     }
   };
 
+  /**
+   * Retorna true se o usuário possui qualquer plano pago ativo (incluindo developer).
+   * Não confundir com o tier "Premium" — para verificar features específicas, use useFeatureAccess.
+   */
   const isPremium = () => {
     if (isDeveloperTier(subscription)) return true;
-    return subscription?.subscribed &&
-           subscription?.subscription_tier &&
-           !['unsubscribed', 'pending'].includes(subscription.subscription_tier);
+    if (!subscription?.subscribed) return false;
+    const tier = subscription.subscription_tier;
+    if (!tier) return false;
+    // Qualquer tier exceto não-pagantes
+    return !['unsubscribed', 'pending', 'free_trial', 'free'].includes(tier);
   };
 
   const isSubscriptionExpired = () => {

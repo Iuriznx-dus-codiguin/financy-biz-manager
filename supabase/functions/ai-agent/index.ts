@@ -771,25 +771,32 @@ async function getAggregatedTotals(
   endDate: string,
   categoria?: string
 ) {
-  const buildAggQuery = (table: string) => {
+  // Projetar apenas a coluna `valor` e somar no servidor JS.
+  // Evita depender da extensão pg_aggregations (que retornava 0 silenciosamente
+  // quando .select('valor.sum()') não era suportado).
+  const buildQuery = (table: string) => {
     let q = supabase
       .from(table)
-      .select('valor.sum()')
+      .select('valor')
       .eq('user_id', userId)
       .gte('data', startDate)
       .lte('data', endDate);
     if (dashboardId) q = q.eq('dashboard_id', dashboardId);
     if (categoria) q = q.eq('categoria', categoria);
-    return q.single();
+    // Limite generoso; se exceder, o totalizador ainda funciona porém aproximado.
+    return q.limit(10000);
   };
 
   const [recRes, despRes] = await Promise.all([
-    buildAggQuery('receitas'),
-    buildAggQuery('despesas'),
+    buildQuery('receitas'),
+    buildQuery('despesas'),
   ]);
 
+  const sum = (rows: any[] | null) =>
+    (rows || []).reduce((acc, r) => acc + Number(r.valor || 0), 0);
+
   return {
-    totalReceitas: Number(recRes.data?.sum || 0),
-    totalDespesas: Number(despRes.data?.sum || 0),
+    totalReceitas: sum(recRes.data),
+    totalDespesas: sum(despRes.data),
   };
 }
