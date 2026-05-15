@@ -65,6 +65,7 @@ const Configuracoes = () => {
   const [isCreateDashboardOpen, setIsCreateDashboardOpen] = useState(false);
   const [editingDashboard, setEditingDashboard] = useState<string | null>(null);
   const [newDashboardName, setNewDashboardName] = useState('');
+  const [dashboardToDelete, setDashboardToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isEditingNome, setIsEditingNome] = useState(false);
   const [newNomePreferido, setNewNomePreferido] = useState(onboardingData?.nome_preferido || '');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -295,25 +296,26 @@ const Configuracoes = () => {
     setNewDashboardName('');
   };
 
-  const handleDeleteDashboard = async (dashboardId: string, dashboardName: string) => {
-    const confirmed = window.confirm(
-      `Tem certeza que deseja excluir o dashboard "${dashboardName}"?\n\nTodos os dados salvos (receitas, despesas, metas, etc.) neste dashboard serão apagados permanentemente. Esta ação não pode ser desfeita.`
-    );
-    
-    if (confirmed) {
-      try {
-        await deleteDashboard(dashboardId);
-        toast({
-          title: "Dashboard excluído",
-          description: "Dashboard e todos os dados relacionados foram excluídos permanentemente."
-        });
-      } catch (error) {
-        toast({
-          title: "Erro",
-          description: "Erro ao excluir dashboard. Tente novamente.",
-          variant: "destructive"
-        });
-      }
+  const handleDeleteDashboard = (dashboardId: string, dashboardName: string) => {
+    setDashboardToDelete({ id: dashboardId, name: dashboardName });
+  };
+
+  const confirmDeleteDashboard = async () => {
+    if (!dashboardToDelete) return;
+    try {
+      await deleteDashboard(dashboardToDelete.id);
+      toast({
+        title: "Dashboard excluído",
+        description: "Dashboard e todos os dados relacionados foram excluídos permanentemente."
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir dashboard. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setDashboardToDelete(null);
     }
   };
 
