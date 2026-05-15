@@ -1074,6 +1074,28 @@ const Configuracoes = () => {
         open={isCreateDashboardOpen}
         onOpenChange={setIsCreateDashboardOpen}
       />
+
+      {/* Confirmação de exclusão de dashboard */}
+      <AlertDialog open={!!dashboardToDelete} onOpenChange={(open) => !open && setDashboardToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir dashboard "{dashboardToDelete?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todos os dados salvos (receitas, despesas, metas, impostos) neste dashboard serão apagados permanentemente.
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteDashboard}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
