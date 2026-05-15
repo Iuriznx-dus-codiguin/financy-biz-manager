@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -90,6 +90,11 @@ export const AuthenticatedLayout = () => {
 
   if (user && !isOnboardingComplete) {
     return <OnboardingFlow onComplete={completeOnboarding} />;
+  }
+
+  // Gating render-time: bloqueia o flash de UI antes do redirect via useEffect
+  if (isBlocked && !isSectionAllowedWhenBlocked(activeSection)) {
+    return <Navigate to="/assinatura" replace />;
   }
 
   return (
