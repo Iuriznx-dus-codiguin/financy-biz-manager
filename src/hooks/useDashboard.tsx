@@ -70,52 +70,54 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
   const createDefaultDashboard = async () => {
     if (!user) return;
     try {
+      // Race-safe: select-then-insert (partial unique index enforces 1 default per user)
+      const { data: existing } = await supabase
+        .from('user_dashboards')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_default', true)
+        .maybeSingle();
+
+      const applyDashboard = (row: any) => {
+        const dash = {
+          id: row.id,
+          name: row.name,
+          type: row.type as 'personal' | 'business',
+          isDefault: row.is_default,
+        };
+        setDashboards([dash]);
+        setCurrentDashboard(dash);
+      };
+
+      if (existing) {
+        applyDashboard(existing);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('user_dashboards')
-        .upsert(
-          {
-            user_id: user.id,
-            name: 'Dashboard Principal',
-            type: 'business',
-            is_default: true,
-          },
-          {
-            onConflict: 'user_id,is_default',
-            ignoreDuplicates: false,
-          }
-        )
+        .insert({
+          user_id: user.id,
+          name: 'Dashboard Principal',
+          type: 'business',
+          is_default: true,
+        })
         .select()
         .single();
 
       if (error) {
-        const { data: existing } = await supabase
+        // Concurrent insert race: fetch the winner
+        const { data: raceWinner } = await supabase
           .from('user_dashboards')
           .select('*')
           .eq('user_id', user.id)
           .eq('is_default', true)
-          .single();
-
-        if (existing) {
-          const newDashboard = {
-            id: existing.id,
-            name: existing.name,
-            type: existing.type as 'personal' | 'business',
-            isDefault: existing.is_default,
-          };
-          setDashboards([newDashboard]);
-          setCurrentDashboard(newDashboard);
-        }
+          .maybeSingle();
+        if (raceWinner) applyDashboard(raceWinner);
         return;
       }
 
-      const newDashboard = {
-        id: data.id,
-        name: data.name,
-        type: data.type as 'personal' | 'business',
-        isDefault: data.is_default,
-      };
-      setDashboards([newDashboard]);
-      setCurrentDashboard(newDashboard);
+      applyDashboard(data);
     } catch (error) {
       console.error('Erro ao criar dashboard padrão:', error);
     }
