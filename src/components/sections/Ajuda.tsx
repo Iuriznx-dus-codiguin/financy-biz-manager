@@ -435,7 +435,7 @@ const Ajuda = () => {
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl shadow-sm">
+      <Card id="faq-section" className="rounded-2xl shadow-sm scroll-mt-20">
         <CardHeader>
           <CardTitle>❓ Perguntas Frequentes</CardTitle>
         </CardHeader>
