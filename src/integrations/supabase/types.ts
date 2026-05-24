@@ -1210,7 +1210,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      subscription_status: {
+        Row: {
+          email: string | null
+          expires_at: string | null
+          features: Json | null
+          plan_name: string | null
+          status: string | null
+          tier: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calcular_proxima_data: {
