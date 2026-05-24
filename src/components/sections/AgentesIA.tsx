@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { FinancyAIChat } from '@/components/FinancyAIChat';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const AgentesIA: React.FC = () => {
+  const navigate = useNavigate();
   const { isFeatureAvailable, getFeatureLimitMessage } = useFeatureAccess();
   const hasAccess = isFeatureAvailable('inteligencia_basica');
 
@@ -42,10 +44,7 @@ const AgentesIA: React.FC = () => {
               </li>
             </ul>
             <Button
-              onClick={() => {
-                const event = new CustomEvent('navigate-to-section', { detail: 'assinatura' });
-                window.dispatchEvent(event);
-              }}
+              onClick={() => navigate('/assinatura')}
               className="w-full"
             >
               Ver Planos
