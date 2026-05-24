@@ -1,0 +1,1 @@
+ALTER VIEW public.subscription_status SET (security_invoker = true);
