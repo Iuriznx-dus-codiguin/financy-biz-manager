@@ -59,19 +59,8 @@ export const AuthenticatedLayout = () => {
     navigate(getRouteForSection(section));
   };
 
-  // Listener para navegação customizada dos agentes
-  useEffect(() => {
-    const handleNavigateToSection = (event: CustomEvent<string>) => {
-      const targetSection = event.detail;
-      if (isBlocked && !isSectionAllowedWhenBlocked(targetSection)) return;
-      navigate(getRouteForSection(targetSection));
-    };
 
-    window.addEventListener('navigate-to-section', handleNavigateToSection as EventListener);
-    return () => {
-      window.removeEventListener('navigate-to-section', handleNavigateToSection as EventListener);
-    };
-  }, [isBlocked, navigate]);
+
 
   if (authLoading || onboardingLoading || subscriptionLoading) {
     return (

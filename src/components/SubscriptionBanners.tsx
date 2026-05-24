@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Crown, AlertTriangle, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 export const SubscriptionBanners: React.FC = () => {
   const { subscription, isSubscriptionExpired, isPendingPayment, getDaysUntilExpiration } = useUserSubscription();
   const [dismissed, setDismissed] = useState(false);
+  const navigate = useNavigate();
 
   if (!subscription || dismissed) return null;
 
@@ -15,8 +17,7 @@ export const SubscriptionBanners: React.FC = () => {
   const daysRemaining = getDaysUntilExpiration();
 
   const handleNavigateToSubscription = () => {
-    const event = new CustomEvent('navigate-to-section', { detail: 'assinatura' });
-    window.dispatchEvent(event);
+    navigate('/assinatura');
   };
 
   // Mostrar banner apenas para: pending_payment, expirado, ou últimos 3 dias

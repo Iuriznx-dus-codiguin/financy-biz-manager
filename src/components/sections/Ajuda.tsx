@@ -1,21 +1,22 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Download, BarChart3, TrendingUp, TrendingDown, FolderOpen, FileText, Users, Target, DollarSign, Calendar } from 'lucide-react';
+import { Download, BarChart3, TrendingUp, TrendingDown, FolderOpen, FileText, Users, Target, DollarSign, Calendar, HelpCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
-import FlappyFinancyGame from '@/components/FlappyFinancyGame';
 import { useSectionTutorials } from '@/hooks/useSectionTutorials';
+import { getRouteForSection } from '@/constants/routes';
 
 const Ajuda = () => {
+  const navigate = useNavigate();
   const { resetTutorials } = useSectionTutorials();
-  
+
   const restartTutorial = async (section: string) => {
     await resetTutorials();
-    // Recarregar a página para a seção específica
-    window.location.hash = section;
-    window.location.reload();
+    navigate(getRouteForSection(section));
   };
+
 
   const generatePDF = (guideType: string) => {
     const doc = new jsPDF();
@@ -239,7 +240,21 @@ const Ajuda = () => {
           </CardContent>
         </Card>
         
-        <FlappyFinancyGame />
+        <Card className="rounded-2xl shadow-sm border-warning/30">
+          <CardContent className="p-6 text-center">
+            <div className="text-4xl mb-4">❓</div>
+            <h3 className="font-bold mb-2">Perguntas Frequentes</h3>
+            <p className="text-sm text-muted-foreground mb-4">Confira respostas para dúvidas comuns abaixo</p>
+            <Button
+              variant="outline"
+              className="w-full rounded-xl"
+              onClick={() => document.getElementById('faq-section')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              <HelpCircle className="mr-2 h-4 w-4" />
+              Ver FAQ
+            </Button>
+          </CardContent>
+        </Card>
         
         <Card className="rounded-2xl shadow-sm border-destructive/30">
           <CardContent className="p-6 text-center">
@@ -420,7 +435,7 @@ const Ajuda = () => {
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl shadow-sm">
+      <Card id="faq-section" className="rounded-2xl shadow-sm scroll-mt-20">
         <CardHeader>
           <CardTitle>❓ Perguntas Frequentes</CardTitle>
         </CardHeader>

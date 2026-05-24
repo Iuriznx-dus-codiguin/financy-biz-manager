@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Send, Bot, User, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,7 @@ interface AIAgentChatProps {
 }
 
 export const AIAgentChat = ({ agentType, title, description, requiredFeature }: AIAgentChatProps) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -193,12 +195,8 @@ export const AIAgentChat = ({ agentType, title, description, requiredFeature }: 
             <div className="text-muted-foreground mb-4">
               {getFeatureLimitMessage(requiredFeature)}
             </div>
-            <Button 
-              onClick={() => {
-                // Trigger navigation to subscription section
-                const event = new CustomEvent('navigate-to-section', { detail: 'assinatura' });
-                window.dispatchEvent(event);
-              }} 
+            <Button
+              onClick={() => navigate('/assinatura')}
               variant="default"
             >
               Ver Planos
