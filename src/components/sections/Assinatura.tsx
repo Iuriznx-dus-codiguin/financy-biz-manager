@@ -22,7 +22,7 @@ import {
   TrendingUp,
   Shield,
   Zap,
-  Code2,
+  
   ArrowRight,
   CheckCircle2
 } from 'lucide-react';
