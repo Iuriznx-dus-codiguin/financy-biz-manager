@@ -532,19 +532,8 @@ const Assinatura: React.FC = () => {
             </p>
           </div>
 
-          <div className="pt-2 border-t border-border/50">
-            <div className="text-center">
-              <Button
-                onClick={handleDeveloperAccess}
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground hover:text-primary"
-              >
-                <Code2 className="h-3 w-3 mr-1" />
-                Acesso Desenvolvedor
-              </Button>
-            </div>
-          </div>
+          {/* Acesso Desenvolvedor removido da página pública — disponível em Configurações */}
+
         </CardContent>
       </Card>
 
@@ -602,6 +591,7 @@ const Assinatura: React.FC = () => {
         isOpen={isDeveloperDialogOpen}
         onClose={() => setIsDeveloperDialogOpen(false)}
       />
+
     </div>
   );
 };
