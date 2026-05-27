@@ -122,55 +122,41 @@ const Configuracoes = () => {
 
   const getSubscriptionStatus = () => {
     if (subscriptionLoading) return { status: 'Carregando...', variant: 'secondary' };
-    
+
     if (!user) return { status: 'Não autenticado', variant: 'destructive' };
-    
-    if (!subscriptionData) {
-      // Usuário sem registro = teste gratuito
-      const signUpDate = new Date(user.created_at || Date.now());
-      const trialEndDate = new Date(signUpDate.getTime() + (7 * 24 * 60 * 60 * 1000));
-      const today = new Date();
-      const diffTime = trialEndDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays > 0) {
-        return { 
-          status: `Teste Grátis (${diffDays} dias restantes)`, 
-          variant: 'default',
-          endDate: trialEndDate.toLocaleDateString('pt-BR')
-        };
-      } else {
-        return { 
-          status: 'Teste Grátis Expirado', 
-          variant: 'destructive',
-          endDate: trialEndDate.toLocaleDateString('pt-BR')
-        };
-      }
+
+    // Plataforma sem teste grátis: usuário sem assinatura ativa = pagamento pendente
+    if (!subscriptionData || !subscriptionData.subscribed) {
+      return {
+        status: 'Aguardando Pagamento',
+        variant: 'destructive',
+        endDate: 'N/A'
+      };
     }
 
-    if (subscriptionData.subscribed && subscriptionData.subscription_end) {
+    if (subscriptionData.subscription_end) {
       const endDate = new Date(subscriptionData.subscription_end);
       const today = new Date();
       const diffTime = endDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
+
       if (diffDays > 0) {
-        return { 
-          status: `${subscriptionData.subscription_tier || 'Premium'} (${diffDays} dias restantes)`, 
+        return {
+          status: `${subscriptionData.subscription_tier || 'Premium'} (${diffDays} dias restantes)`,
           variant: 'default',
           endDate: formatSubscriptionEnd(subscriptionData.subscription_end)
         };
-      } else {
-        return { 
-          status: 'Assinatura Expirada', 
-          variant: 'destructive',
-          endDate: formatSubscriptionEnd(subscriptionData.subscription_end)
-        };
       }
+      return {
+        status: 'Assinatura Expirada',
+        variant: 'destructive',
+        endDate: formatSubscriptionEnd(subscriptionData.subscription_end)
+      };
     }
 
     return { status: 'Sem Assinatura', variant: 'secondary' };
   };
+
 
 
   const handleDeleteAllData = async () => {
@@ -183,7 +169,6 @@ const Configuracoes = () => {
       // APAGAR TODOS OS DADOS DO USUÁRIO
       // ============================================
       // MANTIDOS (não apagar):
-      // - free_trial_history (histórico de teste gratuito)
       // - security_audit_logs (logs de auditoria)
       // - profiles (perfil básico do usuário)
       // - user_subscriptions (assinatura atual)
@@ -191,6 +176,7 @@ const Configuracoes = () => {
       // - customer_subscriptions (dados Cakto)
       // - auth_rate_limits (segurança)
       // ============================================
+
       
       // Deletar na ordem correta para evitar problemas com RLS e foreign keys
       // 1. Primeiro: dados financeiros (ANTES de deletar dashboards ou membros)
@@ -238,8 +224,9 @@ const Configuracoes = () => {
       
       toast({
         title: "Dados apagados com sucesso",
-        description: "Todos os seus dados foram permanentemente apagados. Sua assinatura e histórico de teste gratuito foram preservados.",
+        description: "Todos os seus dados foram permanentemente apagados. Sua assinatura foi preservada.",
       });
+
 
       // Recarregar página
       if (typeof window !== 'undefined') {

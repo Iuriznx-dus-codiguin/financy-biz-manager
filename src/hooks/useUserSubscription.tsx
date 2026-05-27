@@ -189,9 +189,10 @@ export const useUserSubscription = () => {
   };
 
   const isFreeTrial = (): boolean => {
-    // free_trial ainda é suportado para usuários antigos
-    return subscription?.subscription_type === 'free_trial';
+    // Teste grátis foi removido da plataforma; mantido como no-op para compat.
+    return false;
   };
+
 
   const isPendingPayment = (): boolean => {
     return subscription?.status === 'pending_payment' || subscription?.subscription_type === 'pending';
