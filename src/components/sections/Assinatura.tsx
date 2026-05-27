@@ -22,12 +22,12 @@ import {
   TrendingUp,
   Shield,
   Zap,
-  Code2,
+  
   ArrowRight,
   CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { DeveloperAccessDialog } from '@/components/DeveloperAccessDialog';
+
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -35,7 +35,7 @@ import { ptBR } from 'date-fns/locale';
 const Assinatura: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [planType, setPlanType] = useState<'personal' | 'business'>('personal');
-  const [isDeveloperDialogOpen, setIsDeveloperDialogOpen] = useState(false);
+  
   const { user } = useAuth();
   const { subscription, loading, isPremium } = useUserSubscription();
 
@@ -179,9 +179,6 @@ const Assinatura: React.FC = () => {
 
   const currentPlans = planType === 'personal' ? personalPlans : businessPlans;
 
-  const handleDeveloperAccess = () => {
-    setIsDeveloperDialogOpen(true);
-  };
 
   const isPersonalPlan = subscription?.plan_name?.toLowerCase().includes('pessoal') || 
                          subscription?.plan_name?.toLowerCase().includes('plus') ||
@@ -351,10 +348,6 @@ const Assinatura: React.FC = () => {
           </CardContent>
         </Card>
 
-        <DeveloperAccessDialog 
-          isOpen={isDeveloperDialogOpen}
-          onClose={() => setIsDeveloperDialogOpen(false)}
-        />
       </div>
     );
   }
@@ -532,19 +525,8 @@ const Assinatura: React.FC = () => {
             </p>
           </div>
 
-          <div className="pt-2 border-t border-border/50">
-            <div className="text-center">
-              <Button
-                onClick={handleDeveloperAccess}
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground hover:text-primary"
-              >
-                <Code2 className="h-3 w-3 mr-1" />
-                Acesso Desenvolvedor
-              </Button>
-            </div>
-          </div>
+          {/* Acesso Desenvolvedor removido da página pública — disponível em Configurações */}
+
         </CardContent>
       </Card>
 
@@ -598,10 +580,7 @@ const Assinatura: React.FC = () => {
         </CardContent>
       </Card>
 
-      <DeveloperAccessDialog
-        isOpen={isDeveloperDialogOpen}
-        onClose={() => setIsDeveloperDialogOpen(false)}
-      />
+
     </div>
   );
 };

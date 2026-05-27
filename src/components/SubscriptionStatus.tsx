@@ -8,14 +8,13 @@ import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { motion } from 'framer-motion';
 
 export const SubscriptionStatus: React.FC = () => {
-  const { 
-    subscription, 
-    loading, 
-    error, 
-    isSubscriptionExpired, 
-    isFreeTrial, 
+  const {
+    subscription,
+    loading,
+    error,
+    isSubscriptionExpired,
     isPremium,
-    getDaysUntilExpiration 
+    getDaysUntilExpiration
   } = useUserSubscription();
 
   if (loading) {
@@ -47,23 +46,21 @@ export const SubscriptionStatus: React.FC = () => {
 
   const daysUntilExpiration = getDaysUntilExpiration();
   const isExpired = isSubscriptionExpired();
-  const isTrialUser = isFreeTrial();
   const isPremiumUser = isPremium();
 
   const getStatusColor = () => {
     if (isExpired) return 'destructive';
-    if (isTrialUser) return 'secondary';
     if (isPremiumUser) return 'default';
     return 'outline';
   };
 
   const getStatusIcon = () => {
     if (isPremiumUser) return Crown;
-    if (isTrialUser) return Clock;
     return CreditCard;
   };
 
   const StatusIcon = getStatusIcon();
+
 
   return (
     <motion.div
@@ -74,7 +71,6 @@ export const SubscriptionStatus: React.FC = () => {
       <Card className="relative overflow-hidden">
         <div className={`absolute top-0 left-0 right-0 h-1 ${
           isPremiumUser ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-          isTrialUser ? 'bg-gradient-to-r from-blue-400 to-blue-600' :
           'bg-gray-300'
         }`} />
         
@@ -83,7 +79,6 @@ export const SubscriptionStatus: React.FC = () => {
             <CardTitle className="flex items-center gap-2">
               <StatusIcon className={`h-5 w-5 ${
                 isPremiumUser ? 'text-yellow-600' :
-                isTrialUser ? 'text-primary' :
                 'text-gray-600'
               }`} />
               Status da Assinatura
@@ -93,6 +88,7 @@ export const SubscriptionStatus: React.FC = () => {
             </Badge>
           </div>
         </CardHeader>
+
 
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -186,20 +182,12 @@ export const SubscriptionStatus: React.FC = () => {
             </Alert>
           )}
 
-          {isTrialUser && daysUntilExpiration !== null && daysUntilExpiration <= 7 && (
-            <Alert className="border-yellow-200 bg-warning/10">
-              <Clock className="h-4 w-4" />
-              <AlertDescription>
-                Sua assinatura expira em {daysUntilExpiration} dias. Renove para continuar.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {(isExpired || (isTrialUser && daysUntilExpiration !== null && daysUntilExpiration <= 3)) && (
+          {isExpired && (
             <Button className="w-full" size="sm">
-              {isExpired ? 'Renovar Assinatura' : 'Renovar Agora'}
+              Renovar Assinatura
             </Button>
           )}
+
         </CardContent>
       </Card>
     </motion.div>
