@@ -27,7 +27,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { DeveloperAccessDialog } from '@/components/DeveloperAccessDialog';
+
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -35,7 +35,7 @@ import { ptBR } from 'date-fns/locale';
 const Assinatura: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [planType, setPlanType] = useState<'personal' | 'business'>('personal');
-  const [isDeveloperDialogOpen, setIsDeveloperDialogOpen] = useState(false);
+  
   const { user } = useAuth();
   const { subscription, loading, isPremium } = useUserSubscription();
 
@@ -179,9 +179,6 @@ const Assinatura: React.FC = () => {
 
   const currentPlans = planType === 'personal' ? personalPlans : businessPlans;
 
-  const handleDeveloperAccess = () => {
-    setIsDeveloperDialogOpen(true);
-  };
 
   const isPersonalPlan = subscription?.plan_name?.toLowerCase().includes('pessoal') || 
                          subscription?.plan_name?.toLowerCase().includes('plus') ||
@@ -351,10 +348,6 @@ const Assinatura: React.FC = () => {
           </CardContent>
         </Card>
 
-        <DeveloperAccessDialog 
-          isOpen={isDeveloperDialogOpen}
-          onClose={() => setIsDeveloperDialogOpen(false)}
-        />
       </div>
     );
   }
@@ -587,10 +580,6 @@ const Assinatura: React.FC = () => {
         </CardContent>
       </Card>
 
-      <DeveloperAccessDialog
-        isOpen={isDeveloperDialogOpen}
-        onClose={() => setIsDeveloperDialogOpen(false)}
-      />
 
     </div>
   );
