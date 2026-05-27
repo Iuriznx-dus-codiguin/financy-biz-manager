@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import financyLogoLight from '@/assets/financy-logo-light.png';
 import iconLogoLight from '@/assets/financy-icon-light.png';
-import financyLogoDark from '@/assets/financy-logo-dark.png';
+import financyLogoDark from '@/assets/financy-logo-new-dark.png';
 import iconLogoDark from '@/assets/financy-icon-dark.png';
 import {
   Layout, TrendingUp, TrendingDown, Receipt, PieChart, Settings, HelpCircle,

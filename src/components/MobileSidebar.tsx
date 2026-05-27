@@ -15,7 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/constants/routes';
 
 import financyLogoLight from '@/assets/financy-logo-light.png';
-import financyLogoDark from '@/assets/financy-logo-dark.png';
+import financyLogoDark from '@/assets/financy-logo-new-dark.png';
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   'painel': Layout, 'receitas': TrendingUp, 'despesas': TrendingDown,
