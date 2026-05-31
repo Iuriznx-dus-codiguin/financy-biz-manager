@@ -14,9 +14,6 @@ import { isDateInRange } from '@/utils/dateFilters';
 import { Crown, Sparkles } from 'lucide-react';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { FloatingDashboardInfo } from '@/components/FloatingDashboardInfo';
-import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
-import { InteractiveTutorial } from '@/components/tutorials/InteractiveTutorial';
-import { getTutorialSteps } from '@/config/tutorialSteps';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useDashboard } from '@/hooks/useDashboard';
 import { RecurringTransactions } from '@/components/RecurringTransactions';
@@ -30,11 +27,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const [timeFilter, setTimeFilter] = React.useState('este-mes');
   const { receitas, despesas, impostos, membrosEquipe, loading } = useAppContext();
   const { onboardingData } = useOnboarding();
-  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('painel');
   const { currentDashboard } = useDashboard();
   
-  // Tutorial adaptativo
-  const tutorialSteps = getTutorialSteps('painel', onboardingData?.user_type as 'pessoal' | 'empresarial');
   
   const { isFeatureAvailable } = useFeatureAccess();
   const hasBasicIntelligence = isFeatureAvailable('inteligencia_basica');
@@ -75,12 +69,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   if (hasAdvancedDashboard) {
     return (
       <section id="painel" className="space-y-6">
-        <InteractiveTutorial
-          section="painel"
-          steps={tutorialSteps}
-          isOpen={showTutorial}
-          onClose={(completed) => closeTutorial(completed)}
-        />
 
         <FloatingDashboardInfo
           timeFilter={timeFilter} 

@@ -13,6 +13,7 @@ import { SubscriptionBanners } from '@/components/SubscriptionBanners';
 import { FloatingWhatsAppButton } from '@/components/FloatingWhatsAppButton';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
+import { ProductTour } from '@/components/onboarding/ProductTour';
 import {
   ROUTE_TO_SECTION,
   SECTION_TO_ROUTE,
@@ -120,6 +121,7 @@ export const AuthenticatedLayout = () => {
         </div>
       </SidebarProvider>
       <FloatingWhatsAppButton />
+      <ProductTour />
     </div>
   );
 };

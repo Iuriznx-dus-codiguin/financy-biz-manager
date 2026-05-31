@@ -22,15 +22,12 @@ import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-rea
 import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
 import { CategorySelector } from '@/components/CategorySelector';
-import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
-import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
 const Despesas = () => {
   const { despesas, addDespesa, deleteDespesa, updateDespesa } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todas');
-  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('despesas');
   const [novaDespesa, setNovaDespesa] = useState({
     data: '',
     descricao: '',
@@ -159,11 +156,6 @@ const Despesas = () => {
 
   return (
     <section className="space-y-8">
-      <SectionTutorial 
-        section="despesas"
-        isOpen={showTutorial}
-        onClose={(completed) => closeTutorial(completed)}
-      />
 
       <div className="flex justify-between items-center">
         <div>
