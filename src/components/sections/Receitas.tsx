@@ -23,8 +23,6 @@ import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { CategorySelector } from '@/components/CategorySelector';
-import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
-import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
 const Receitas = () => {
   const { receitas, addReceita, deleteReceita, updateReceita } = useAppContext();
@@ -32,7 +30,6 @@ const Receitas = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todas');
-  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('receitas');
   const [novaReceita, setNovaReceita] = useState({
     data: '',
     descricao: '',
@@ -152,11 +149,6 @@ const Receitas = () => {
 
   return (
     <section className="space-y-8">
-      <SectionTutorial 
-        section="receitas"
-        isOpen={showTutorial}
-        onClose={(completed) => closeTutorial(completed)}
-      />
 
       <div className="flex justify-between items-center">
         <div>

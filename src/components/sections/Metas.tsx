@@ -21,15 +21,12 @@ import {
 import { Target, Plus, TrendingUp, DollarSign, Calendar, Award, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
-import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
-import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 
 const Metas = () => {
   const { metas, addMeta, updateMeta, deleteMeta } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteMetaId, setDeleteMetaId] = useState<string | null>(null);
-  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('metas');
   
   const emptyForm = {
     titulo: '',
@@ -180,11 +177,6 @@ const Metas = () => {
 
   return (
     <div className="space-y-6">
-      <SectionTutorial 
-        section="metas"
-        isOpen={showTutorial}
-        onClose={(completed) => closeTutorial(completed)}
-      />
 
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">

@@ -4,8 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, TrendingUp, TrendingDown, DollarSign, Search, Filter, ArrowUpCircle, ArrowDownCircle, FileText, Users, Calendar } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
-import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
-import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +34,6 @@ const Fechamento = () => {
   const [statusFilter, setStatusFilter] = useState<'todas' | 'paga' | 'pendente' | 'recorrente'>('todas');
   const [tipoFilter, setTipoFilter] = useState<'todas' | 'entradas' | 'saidas'>('todas');
   const [transacaoSelecionada, setTransacaoSelecionada] = useState<TransacaoFluxoCaixa | null>(null);
-  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('fechamento');
 
   // Calcular valores reais baseados na data selecionada
   const calcularValoresDia = (data: string) => {
@@ -216,11 +213,6 @@ const Fechamento = () => {
 
   return (
     <section className="space-y-8">
-      <SectionTutorial 
-        section="fechamento"
-        isOpen={showTutorial}
-        onClose={(completed) => closeTutorial(completed)}
-      />
 
       <div>
         <h2 className="text-3xl font-bold text-foreground">Fechamento de Caixa</h2>

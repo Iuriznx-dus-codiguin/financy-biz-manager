@@ -13,15 +13,12 @@ import {
 import { Plus, Filter, Search, CheckCircle, XCircle, Trash2, Calendar, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
-import { useSectionTutorialTrigger } from '@/hooks/useSectionTutorialTrigger';
-import { SectionTutorial } from '@/components/tutorials/SectionTutorial';
 import { Badge } from '@/components/ui/badge';
 
 const Impostos = () => {
   const { impostos, addImposto, updateImposto, deleteImposto, receitas } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const { showTutorial, closeTutorial } = useSectionTutorialTrigger('impostos');
   const [novoImposto, setNovoImposto] = useState({
     tipo: '',
     descricao: '',
@@ -128,11 +125,6 @@ const Impostos = () => {
 
   return (
     <section className="space-y-8">
-      <SectionTutorial 
-        section="impostos"
-        isOpen={showTutorial}
-        onClose={(completed) => closeTutorial(completed)}
-      />
 
       <div className="flex justify-between items-center">
         <div>
