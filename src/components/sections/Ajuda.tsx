@@ -1,21 +1,20 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Download, BarChart3, TrendingUp, TrendingDown, FolderOpen, FileText, Users, Target, DollarSign, Calendar, HelpCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
-import { useSectionTutorials } from '@/hooks/useSectionTutorials';
-import { getRouteForSection } from '@/constants/routes';
+import { useProductTour } from '@/hooks/useProductTour';
+import { TourId } from '@/config/tourSteps';
 
 const Ajuda = () => {
-  const navigate = useNavigate();
-  const { resetTutorials } = useSectionTutorials();
+  const { startTour } = useProductTour();
 
-  const restartTutorial = async (section: string) => {
-    await resetTutorials();
-    navigate(getRouteForSection(section));
+  const restartTutorial = (tourId: TourId) => {
+    startTour(tourId);
   };
+
+
 
 
   const generatePDF = (guideType: string) => {
