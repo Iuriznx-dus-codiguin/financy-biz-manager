@@ -16,6 +16,7 @@ import { ExpenseSheetStep } from './ExpenseSheetStep';
 import { FinancialGoalStep } from './FinancialGoalStep';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
+import { requestGeneralTour } from '@/components/onboarding/ProductTour';
 
 import { validateAndNormalizePhone, savePhoneCorrection, type CorrectionType } from '@/utils/evolutionPhoneValidation';
 import { checkPhoneDuplicate } from '@/utils/phoneValidation';
