@@ -614,7 +614,7 @@ export type Database = {
       onboarding_data: {
         Row: {
           created_at: string
-          how_did_you_know: string
+          how_did_you_know: string | null
           id: string
           nome_preferido: string | null
           revenue_range: string | null
@@ -625,7 +625,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          how_did_you_know: string
+          how_did_you_know?: string | null
           id?: string
           nome_preferido?: string | null
           revenue_range?: string | null
@@ -636,7 +636,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          how_did_you_know?: string
+          how_did_you_know?: string | null
           id?: string
           nome_preferido?: string | null
           revenue_range?: string | null

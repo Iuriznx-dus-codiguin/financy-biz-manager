@@ -1,0 +1,1 @@
+ALTER TABLE public.onboarding_data ALTER COLUMN how_did_you_know DROP NOT NULL;
