@@ -171,6 +171,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skip
         
         
         triggerConfetti();
+        requestGeneralTour();
         toast({
           title: "🎉 Bem-vindo ao Financy!",
           description: `Olá ${data.nome_preferido}! Sua plataforma foi personalizada com sucesso.`,
