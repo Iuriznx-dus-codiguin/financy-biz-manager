@@ -121,6 +121,7 @@ export const AuthenticatedLayout = () => {
         </div>
       </SidebarProvider>
       <FloatingWhatsAppButton />
+      <ProductTour />
     </div>
   );
 };
