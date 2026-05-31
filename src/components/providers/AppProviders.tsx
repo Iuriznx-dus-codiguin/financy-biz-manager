@@ -5,7 +5,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/hooks/useAuth';
 import { SettingsProvider } from '@/hooks/useSettings';
 import { OnboardingProvider } from '@/hooks/useOnboarding';
-import { SectionTutorialsProvider } from '@/hooks/useSectionTutorials';
+import { ProductTourProvider } from '@/hooks/useProductTour';
 import { DashboardProvider } from '@/hooks/useDashboard';
 import { UserContextProvider } from '@/hooks/useUserContext';
 import { AppProvider } from '@/contexts/AppContext';
@@ -36,13 +36,13 @@ export const AppProviders = ({ children }: { children: ReactNode }) => (
         <AuthProvider>
           <SettingsProvider>
             <OnboardingProvider>
-              <SectionTutorialsProvider>
+              <ProductTourProvider>
                 <DashboardProvider>
                   <UserContextProvider>
                     <AppProvider>{children}</AppProvider>
                   </UserContextProvider>
                 </DashboardProvider>
-              </SectionTutorialsProvider>
+              </ProductTourProvider>
             </OnboardingProvider>
           </SettingsProvider>
         </AuthProvider>
