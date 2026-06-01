@@ -82,13 +82,13 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
       </div>
       
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" onClick={handleThemeToggle} className="h-10 w-10">
+        <Button variant="ghost" size="icon" onClick={handleThemeToggle} className="h-10 w-10" data-tutorial="mobile-theme-toggle">
           {isDarkTheme ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
         
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-10 w-10">
+            <Button variant="ghost" size="icon" className="h-10 w-10" data-tutorial="mobile-menu-trigger">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
