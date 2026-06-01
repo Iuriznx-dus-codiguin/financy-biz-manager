@@ -25,6 +25,7 @@ const ProductTourContext = createContext<ProductTourContextType | undefined>(und
 
 export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [seenTours, setSeenTours] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [currentTourId, setCurrentTourId] = useState<TourId | null>(null);
