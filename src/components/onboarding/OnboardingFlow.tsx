@@ -23,6 +23,7 @@ import financyLogo from '@/assets/financy-logo-new-dark.png';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>;
+  /** @deprecated mantido por compatibilidade; o telefone agora é opcional na etapa 2. */
   skipPhoneStep?: boolean;
 }
 
