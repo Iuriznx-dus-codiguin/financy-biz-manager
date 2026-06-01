@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getTourSteps, TourId, TourStep } from '@/config/tourSteps';
+import { useIsMobile } from './use-mobile';
+
 
 interface ProductTourContextType {
   isActive: boolean;
