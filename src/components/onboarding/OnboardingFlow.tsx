@@ -1,40 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { BrazilianPhoneInput } from '@/components/ui/BrazilianPhoneInput';
-import { ChevronLeft, ChevronRight, User, Building, Star, PartyPopper, Sparkles, Target, TrendingUp, Phone, MessageCircle, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  ChevronLeft, ChevronRight, User, Building, Sparkles, MessageCircle,
+  AlertCircle, ShieldCheck, Wallet, TrendingUp, CheckCircle2
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingData } from '@/types/onboarding';
-import { FinancialDataStep } from './FinancialDataStep';
-import { ExpenseSheetStep } from './ExpenseSheetStep';
-import { FinancialGoalStep } from './FinancialGoalStep';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { requestGeneralTour } from '@/components/onboarding/ProductTour';
-
 import { validateAndNormalizePhone, savePhoneCorrection, type CorrectionType } from '@/utils/evolutionPhoneValidation';
 import { checkPhoneDuplicate } from '@/utils/phoneValidation';
 import { useAuth } from '@/hooks/useAuth';
+import financyLogo from '@/assets/financy-logo-new-dark.png';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>;
   skipPhoneStep?: boolean;
 }
 
-export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skipPhoneStep = false }) => {
-  const [currentStep, setCurrentStep] = useState(skipPhoneStep ? 2 : 1);
+const PREFER_NOT_SAY = 'prefer_not_say';
+
+const SALARY_RANGES = [
+  { value: '0-2000', label: 'Até R$ 2.000' },
+  { value: '2000-5000', label: 'R$ 2.000 – R$ 5.000' },
+  { value: '5000-10000', label: 'R$ 5.000 – R$ 10.000' },
+  { value: '10000-20000', label: 'R$ 10.000 – R$ 20.000' },
+  { value: '20000+', label: 'Acima de R$ 20.000' },
+  { value: PREFER_NOT_SAY, label: 'Prefiro não informar' },
+];
+
+const REVENUE_RANGES = [
+  { value: '0-10000', label: 'Até R$ 10.000/mês' },
+  { value: '10000-50000', label: 'R$ 10.000 – R$ 50.000/mês' },
+  { value: '50000-200000', label: 'R$ 50.000 – R$ 200.000/mês' },
+  { value: '200000-1000000', label: 'R$ 200.000 – R$ 1Mi/mês' },
+  { value: '1000000+', label: 'Acima de R$ 1Mi/mês' },
+  { value: PREFER_NOT_SAY, label: 'Prefiro não informar' },
+];
+
+const TOTAL_STEPS = 4;
+
+export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [whatsappE164, setWhatsappE164] = useState('');
-  const [isPhoneValid, setIsPhoneValid] = useState(false);
-  const [phoneError, setPhoneError] = useState<string | null>(null);
-  const [phoneCorrections, setPhoneCorrections] = useState<CorrectionType[]>([]);
-  const [phoneWarning, setPhoneWarning] = useState<string | null>(null);
+
   const [data, setData] = useState<OnboardingData>({
     whatsapp: '',
     user_type: '',
@@ -44,227 +63,34 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skip
     nome_preferido: '',
     nome_empresa: '',
     termos_aceitos: false,
-    gastos_iniciais: []
+    gastos_iniciais: [],
   });
-  const { toast } = useToast();
-  const { user } = useAuth();
+
+  // Phone state
+  const [whatsappE164, setWhatsappE164] = useState('');
+  const [isPhoneValid, setIsPhoneValid] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [phoneCorrections, setPhoneCorrections] = useState<CorrectionType[]>([]);
+  const [phoneWarning, setPhoneWarning] = useState<string | null>(null);
 
   const triggerConfetti = () => {
-    const duration = 3 * 1000;
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-    function randomInRange(min: number, max: number) {
-      return Math.random() * (max - min) + min;
-    }
-
-    const interval: NodeJS.Timeout = setInterval(function() {
-      const timeLeft = animationEnd - Date.now();
-
-      if (timeLeft <= 0) {
-        return clearInterval(interval);
-      }
-
-      const particleCount = 50 * (timeLeft / duration);
-
-      confetti({
-        ...defaults,
-        particleCount,
-        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-      });
-      confetti({
-        ...defaults,
-        particleCount,
-        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-      });
-    }, 250);
-  };
-
-  const howDidYouKnowOptions = [
-    { id: 'google', label: 'Pesquisa no Google', icon: '🔍' },
-    { id: 'social', label: 'Redes sociais', icon: '📱' },
-    { id: 'friend', label: 'Indicação de amigo', icon: '👥' },
-    { id: 'youtube', label: 'YouTube', icon: '📺' },
-    { id: 'blog', label: 'Blog ou artigo', icon: '📰' },
-    { id: 'influencer', label: 'Influenciador', icon: '⭐' },
-    { id: 'advertisement', label: 'Anúncio', icon: '📢' },
-    { id: 'other', label: 'Outro', icon: '💡' }
-  ];
-
-  const salaryRanges = [
-    { value: '0-2000', label: 'Até R$ 2.000', color: 'from-red-400 to-red-500' },
-    { value: '2000-5000', label: 'R$ 2.000 - R$ 5.000', color: 'from-orange-400 to-orange-500' },
-    { value: '5000-10000', label: 'R$ 5.000 - R$ 10.000', color: 'from-yellow-400 to-yellow-500' },
-    { value: '10000-20000', label: 'R$ 10.000 - R$ 20.000', color: 'from-green-400 to-green-500' },
-    { value: '20000+', label: 'Acima de R$ 20.000', color: 'from-blue-400 to-blue-500' }
-  ];
-
-  const revenueRanges = [
-    { value: '0-10000', label: 'Até R$ 10.000/mês', color: 'from-red-400 to-red-500' },
-    { value: '10000-50000', label: 'R$ 10.000 - R$ 50.000/mês', color: 'from-orange-400 to-orange-500' },
-    { value: '50000-200000', label: 'R$ 50.000 - R$ 200.000/mês', color: 'from-yellow-400 to-yellow-500' },
-    { value: '200000-1000000', label: 'R$ 200.000 - R$ 1.000.000/mês', color: 'from-green-400 to-green-500' },
-    { value: '1000000+', label: 'Acima de R$ 1.000.000/mês', color: 'from-blue-400 to-blue-500' }
-  ];
-
-  const handleNext = async () => {
-    if (currentStep < 9) {
-      // Validação especial para step 1 (telefone)
-      if (currentStep === 1 && whatsappE164) {
-        setLoading(true);
-        try {
-          // Verificar duplicata antes de avançar
-          const { isDuplicate, error } = await checkPhoneDuplicate(whatsappE164);
-          
-          if (error) {
-            toast({
-              title: "⚠️ Erro",
-              description: error,
-              variant: "destructive"
-            });
-            setLoading(false);
-            return;
-          }
-          
-          if (isDuplicate) {
-            setPhoneError('Este número já está cadastrado em outra conta');
-            toast({
-              title: "⚠️ Número já cadastrado",
-              description: "Este número de telefone já está sendo usado em outra conta",
-              variant: "destructive"
-            });
-            setLoading(false);
-            return;
-          }
-        } catch (error) {
-          console.error('Erro ao validar telefone:', error);
-          toast({
-            title: "⚠️ Erro",
-            description: "Erro ao validar telefone. Tente novamente.",
-            variant: "destructive"
-          });
-          setLoading(false);
-          return;
-        } finally {
-          setLoading(false);
-        }
-      }
-      
-      setCurrentStep(currentStep + 1);
-    } else {
-      setLoading(true);
-      try {
-        // Usar o número no formato Evolution API (+55DDDNÚMERO)
-        const finalData = { ...data, whatsapp: whatsappE164 || data.whatsapp };
-        await onComplete(finalData);
-        
-        // Salvar auditoria de correção se houver
-        if (user && phoneCorrections.length > 0) {
-          await savePhoneCorrection(
-            user.id,
-            data.whatsapp,
-            whatsappE164,
-            phoneCorrections,
-            'onboarding'
-          );
-        }
-        
-        
-        triggerConfetti();
-        requestGeneralTour();
-        toast({
-          title: "🎉 Bem-vindo ao Financy!",
-          description: `Olá ${data.nome_preferido}! Sua plataforma foi personalizada com sucesso.`,
-        });
-      } catch (error: any) {
-        console.error('Erro ao completar onboarding:', error);
-        
-        // Mensagem de erro específica para telefone duplicado
-        const errorMessage = error?.message?.includes('telefone') 
-          ? error.message
-          : "Houve um erro ao salvar suas preferências. Tente novamente.";
-        
-        toast({
-          title: "❌ Erro",
-          description: errorMessage,
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
-  const handleBack = () => {
-    const minStep = skipPhoneStep ? 2 : 1;
-    if (currentStep > minStep) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const canProceed = () => {
-    switch (currentStep) {
-      case 1: 
-        // Usar a validação internacional
-        return isPhoneValid && whatsappE164.length > 0;
-      case 2: return data.user_type !== '';
-      case 3: return data.user_type === 'pessoal' ? data.salary_range !== '' : data.revenue_range !== '';
-      case 4: 
-        if (data.user_type === 'empresarial') {
-          return data.nome_empresa !== '' && data.nome_preferido !== '';
-        }
-        return data.nome_preferido !== '';
-      case 5: return true; // Opcional
-      case 6: return true; // Opcional
-      case 7: return true; // Opcional
-      case 8: return true; // Opcional
-      case 9: return data.termos_aceitos === true;
-      default: return false;
-    }
-  };
-
-  const getStepTitle = () => {
-    const titles = {
-      1: 'Cadastre seu WhatsApp',
-      2: 'Escolha seu perfil',
-      3: 'Situação financeira',
-      4: 'Como devemos te chamar?',
-      5: 'Como nos conheceu? (Opcional)',
-      6: 'Dados financeiros básicos (Opcional)',
-      7: 'Seus gastos principais (Opcional)',
-      8: 'Defina uma meta (Opcional)',
-      9: 'Termos e condições'
+    const end = Date.now() + 2000;
+    const tick = () => {
+      confetti({ particleCount: 40, spread: 80, origin: { y: 0.6 } });
+      if (Date.now() < end) requestAnimationFrame(tick);
     };
-    return titles[currentStep as keyof typeof titles];
-  };
-
-  const getStepIcon = () => {
-    const icons = {
-      1: MessageCircle,
-      2: User,
-      3: TrendingUp,
-      4: Sparkles,
-      5: Star,
-      6: Target,
-      7: Building,
-      8: Target,
-      9: PartyPopper
-    };
-    const Icon = icons[currentStep as keyof typeof icons];
-    return <Icon className="w-6 h-6" />;
+    tick();
   };
 
   const handlePhoneChange = (formatted: string, isValid: boolean, normalized: string) => {
-    setData({ ...data, whatsapp: formatted });
-    setIsPhoneValid(isValid);
+    setData((d) => ({ ...d, whatsapp: formatted }));
     setWhatsappE164(normalized);
+    setIsPhoneValid(isValid);
     setPhoneError(null);
     setPhoneWarning(null);
 
-    // Executar validação Evolution API
     if (formatted && formatted.length > 5) {
       const result = validateAndNormalizePhone(formatted);
-      
       if (!result.isValid) {
         setIsPhoneValid(false);
         setPhoneError(result.error || 'Número inválido');
@@ -273,481 +99,467 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, skip
         setIsPhoneValid(true);
         setWhatsappE164(result.normalized!);
         setPhoneCorrections(result.corrections);
-        
-        // Exibir warnings se houver
-        if (result.warning) {
-          setPhoneWarning(result.warning);
-        }
-        
-        // Exibir mensagens de correção
         if (result.corrections.length > 0) {
-          const correctionMsg = result.corrections.map(c => c.message).join('\n');
-          setPhoneWarning(correctionMsg);
+          setPhoneWarning(result.corrections.map((c) => c.message).join('\n'));
+        } else if (result.warning) {
+          setPhoneWarning(result.warning);
         }
       }
     }
   };
 
-  const renderStep1 = () => (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div className="text-center space-y-2">
-        <div className="w-16 h-16 mx-auto bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-4">
-          <MessageCircle className="w-8 h-8 text-white" />
-        </div>
-        <h2 className="text-2xl font-bold">Cadastre seu WhatsApp</h2>
-        <p className="text-muted-foreground">Para receber insights financeiros e suporte via IA</p>
-      </div>
+  const canProceed = (): boolean => {
+    switch (step) {
+      case 1:
+        return data.user_type === 'pessoal' || data.user_type === 'empresarial';
+      case 2:
+        if (!data.nome_preferido?.trim()) return false;
+        if (data.user_type === 'empresarial' && !data.nome_empresa?.trim()) return false;
+        // WhatsApp opcional, mas se preenchido tem que ser válido
+        if (data.whatsapp && data.whatsapp.length > 3 && !isPhoneValid) return false;
+        return true;
+      case 3:
+        if (data.user_type === 'pessoal') return !!data.salary_range;
+        return !!data.revenue_range;
+      case 4:
+        return !!data.termos_aceitos;
+      default:
+        return false;
+    }
+  };
 
-      <div className="max-w-md mx-auto space-y-6">
-        <BrazilianPhoneInput
-          label="Número do WhatsApp"
-          value={data.whatsapp}
-          onChange={handlePhoneChange}
-          placeholder="Digite seu número"
-          error={phoneError || undefined}
-          showValidationFeedback={true}
-        />
+  const goNext = async () => {
+    if (!canProceed()) return;
 
-        {/* Warning de correções aplicadas */}
-        {phoneWarning && isPhoneValid && (
-          <div className="bg-warning/10 border border-warning/20 rounded-lg p-3">
-            <div className="flex items-start gap-2 text-sm text-warning">
-              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="font-medium mb-1">Correção aplicada</p>
-                <p className="text-xs whitespace-pre-line">{phoneWarning}</p>
-              </div>
-            </div>
-          </div>
-        )}
+    // Step 2: valida duplicata se telefone foi informado
+    if (step === 2 && whatsappE164) {
+      setLoading(true);
+      try {
+        const { isDuplicate, error } = await checkPhoneDuplicate(whatsappE164);
+        if (error) {
+          toast({ title: 'Erro', description: error, variant: 'destructive' });
+          return;
+        }
+        if (isDuplicate) {
+          setPhoneError('Este número já está cadastrado em outra conta');
+          toast({
+            title: 'Número já cadastrado',
+            description: 'Este número está sendo usado em outra conta.',
+            variant: 'destructive',
+          });
+          return;
+        }
+      } catch (e) {
+        console.error(e);
+        toast({ title: 'Erro', description: 'Falha ao validar telefone.', variant: 'destructive' });
+        return;
+      } finally {
+        setLoading(false);
+      }
+    }
 
-        <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
-          <div className="space-y-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <span className="text-success">✓</span>
-              <span>Receba insights financeiros automáticos</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-success">✓</span>
-              <span>Alertas de vencimentos e metas</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-success">✓</span>
-              <span>Suporte personalizado via IA</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
+    if (step < TOTAL_STEPS) {
+      setStep(step + 1);
+      return;
+    }
 
-  const renderStep2 = () => (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Para qual uso você irá destinar a Financy?</h2>
-        <p className="text-muted-foreground">Isso nos ajudará a personalizar sua experiência.</p>
-      </div>
+    // Finalize
+    setLoading(true);
+    try {
+      const finalData: OnboardingData = {
+        ...data,
+        whatsapp: whatsappE164 || '',
+        how_did_you_know: '',
+        gastos_iniciais: [],
+      };
+      await onComplete(finalData);
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className={`relative cursor-pointer transition-all duration-300 ${
-            data.user_type === 'pessoal' 
-              ? 'ring-2 ring-primary bg-primary/5 shadow-lg' 
-              : 'hover:bg-muted/50 hover:shadow-md'
-          }`}
-          onClick={() => setData({ ...data, user_type: 'pessoal' })}
-        >
-          <div className="flex flex-col items-center space-y-4 p-8 rounded-xl border border-border">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center">
-              <User className="w-8 h-8 text-white" />
-            </div>
-            <div className="text-center">
-              <h3 className="font-semibold text-lg">Pessoal</h3>
-              <p className="text-sm text-muted-foreground">Para controle das suas finanças pessoais</p>
-            </div>
-            {data.user_type === 'pessoal' && (
-              <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center"
-              >
-                <span className="text-white text-xs">✓</span>
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
+      if (user && phoneCorrections.length > 0 && whatsappE164) {
+        await savePhoneCorrection(
+          user.id,
+          data.whatsapp,
+          whatsappE164,
+          phoneCorrections,
+          'onboarding'
+        );
+      }
 
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className={`relative cursor-pointer transition-all duration-300 ${
-            data.user_type === 'empresarial' 
-              ? 'ring-2 ring-primary bg-primary/5 shadow-lg' 
-              : 'hover:bg-muted/50 hover:shadow-md'
-          }`}
-          onClick={() => setData({ ...data, user_type: 'empresarial' })}
-        >
-          <div className="flex flex-col items-center space-y-4 p-8 rounded-xl border border-border">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center">
-              <Building className="w-8 h-8 text-white" />
-            </div>
-            <div className="text-center">
-              <h3 className="font-semibold text-lg">Empresarial</h3>
-              <p className="text-sm text-muted-foreground">Para gestão financeira da sua empresa</p>
-            </div>
-            {data.user_type === 'empresarial' && (
-              <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center"
-              >
-                <span className="text-white text-xs">✓</span>
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
+      triggerConfetti();
+      requestGeneralTour();
+      toast({
+        title: '🎉 Bem-vindo ao Financy!',
+        description: `Olá ${data.nome_preferido}! Vamos começar.`,
+      });
+    } catch (error: any) {
+      console.error('Erro ao completar onboarding:', error);
+      toast({
+        title: 'Erro',
+        description: error?.message || 'Houve um erro ao salvar. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const renderStep3 = () => (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">
-          {data.user_type === 'pessoal' 
-            ? 'Qual sua faixa salarial?' 
-            : 'Qual seu faturamento mensal?'
-          }
-        </h2>
-        <p className="text-muted-foreground">
-          {data.user_type === 'pessoal' 
-            ? 'Isso nos ajudará a personalizar suas metas financeiras.' 
-            : 'Isso nos ajudará a configurar os recursos adequados para seu negócio.'
-          }
-        </p>
-      </div>
+  const goBack = () => {
+    if (step > 1) setStep(step - 1);
+  };
 
-      <div className="max-w-md mx-auto space-y-4">
-        <div className="grid gap-3">
-          {(data.user_type === 'pessoal' ? salaryRanges : revenueRanges).map((range) => (
-            <motion.div
-              key={range.value}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className={`relative cursor-pointer transition-all duration-300 ${
-                (data.user_type === 'pessoal' ? data.salary_range : data.revenue_range) === range.value
-                  ? 'ring-2 ring-primary bg-primary/5 shadow-lg'
-                  : 'hover:bg-muted/50 hover:shadow-md'
-              }`}
-              onClick={() => {
-                if (data.user_type === 'pessoal') {
-                  setData({ ...data, salary_range: range.value });
-                } else {
-                  setData({ ...data, revenue_range: range.value });
-                }
-              }}
-            >
-              <div className="flex items-center space-x-4 p-4 rounded-lg border border-border">
-                <div className={`w-4 h-4 bg-gradient-to-r ${range.color} rounded-full`} />
-                <div className="flex-1">
-                  <p className="font-medium">{range.label}</p>
-                </div>
-                {((data.user_type === 'pessoal' ? data.salary_range : data.revenue_range) === range.value) && (
-                  <motion.div 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="w-5 h-5 bg-primary rounded-full flex items-center justify-center"
-                  >
-                    <span className="text-white text-xs">✓</span>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-
-  const renderStep4 = () => (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">
-          {data.user_type === 'empresarial' ? 'Dados da Empresa e Usuário' : 'Como você quer que nos te chamemos?'}
-        </h2>
-        <p className="text-muted-foreground">
-          {data.user_type === 'empresarial' 
-            ? 'Estes dados aparecerão no seletor e na sua dashboard.' 
-            : 'Este nome aparecerá na sua dashboard personalizada.'
-          }
-        </p>
-      </div>
-
-      <div className="max-w-md mx-auto space-y-6">
-        {data.user_type === 'empresarial' && (
-          <div className="relative">
-            <Label htmlFor="nome_empresa" className="text-sm font-medium mb-2 block">
-              Nome da Empresa
-            </Label>
-            <Input
-              id="nome_empresa"
-              type="text"
-              placeholder="Ex: Garota Pink"
-              value={data.nome_empresa}
-              onChange={(e) => setData({ ...data, nome_empresa: e.target.value })}
-              className="h-14 text-center text-lg border-2 focus:ring-2 focus:ring-primary/20"
-            />
-            <Building className="absolute right-4 bottom-1/2 translate-y-1/2 w-5 h-5 text-primary" />
-          </div>
-        )}
-
-        <div className="relative">
-          <Label htmlFor="nome_preferido" className="text-sm font-medium mb-2 block">
-            {data.user_type === 'empresarial' ? 'Seu Nome ou Apelido' : 'Nome Preferido'}
-          </Label>
-          <Input
-            id="nome_preferido"
-            type="text"
-            placeholder={data.user_type === 'empresarial' ? 'Digite seu nome' : 'Digite seu nome preferido'}
-            value={data.nome_preferido}
-            onChange={(e) => setData({ ...data, nome_preferido: e.target.value })}
-            className="h-14 text-center text-lg border-2 focus:ring-2 focus:ring-primary/20"
-          />
-          <Sparkles className="absolute right-4 bottom-1/2 translate-y-1/2 w-5 h-5 text-primary" />
-        </div>
-
-        <AnimatePresence>
-          {data.nome_preferido && (data.user_type === 'pessoal' || data.nome_empresa) && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="text-center p-6 bg-gradient-to-r from-primary/10 to-blue-500/10 rounded-xl border border-primary/20"
-            >
-              <p className="text-sm text-muted-foreground mb-1">Prévia:</p>
-              {data.user_type === 'empresarial' ? (
-                <>
-                  <p className="text-lg font-semibold text-muted-foreground">Empresa: {data.nome_empresa}</p>
-                  <p className="text-xl font-semibold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                    Olá, {data.nome_preferido}! 👋
-                  </p>
-                </>
-              ) : (
-                <p className="text-xl font-semibold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                  Olá, {data.nome_preferido}! 👋
-                </p>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.div>
-  );
-
-  const renderStep5 = () => (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div className="text-center space-y-2">
-        <div className="flex items-center justify-center gap-2">
-          <h2 className="text-2xl font-bold">Como você conheceu a Financy?</h2>
-          <Badge variant="secondary">Opcional</Badge>
-        </div>
-        <p className="text-muted-foreground">Queremos entender como você chegou até nós.</p>
-        <p className="text-xs text-muted-foreground mt-2">
-          💡 Preencher estes dados nos ajuda a melhorar nosso serviço
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
-        {howDidYouKnowOptions.map((option) => (
-          <motion.div
-            key={option.id}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className={`relative cursor-pointer transition-all duration-300 ${
-              data.how_did_you_know === option.id 
-                ? 'ring-2 ring-primary bg-primary/5 shadow-lg' 
-                : 'hover:bg-muted/50 hover:shadow-md'
-            }`}
-            onClick={() => setData({ ...data, how_did_you_know: option.id })}
-          >
-            <div className="flex items-center space-x-3 p-4 rounded-lg border border-border">
-              <span className="text-2xl">{option.icon}</span>
-              <div className="flex-1">
-                <h3 className="font-medium">{option.label}</h3>
-              </div>
-              {data.how_did_you_know === option.id && (
-                <motion.div 
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="w-5 h-5 bg-primary rounded-full flex items-center justify-center"
-                >
-                  <span className="text-white text-xs">✓</span>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </motion.div>
-  );
-
-  const renderStep9 = () => (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Termos de Uso e Privacidade</h2>
-        <p className="text-muted-foreground">Por favor, leia e aceite nossos termos para finalizar.</p>
-      </div>
-
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="bg-muted/30 rounded-xl p-6 max-h-64 overflow-y-auto border border-border">
-          <h3 className="font-semibold mb-4 text-lg">📋 Termos de Uso da Financy</h3>
-          <div className="space-y-3 text-sm text-muted-foreground">
-            <p><strong>🔐 Privacidade Total:</strong> Seus dados financeiros são criptografados end-to-end e nunca compartilhados.</p>
-            <p><strong>🛡️ Segurança Avançada:</strong> Utilizamos as melhores práticas de segurança para proteger suas informações.</p>
-            <p><strong>🎯 Uso Responsável:</strong> A plataforma deve ser utilizada apenas para fins legais de gestão financeira.</p>
-            <p><strong>📊 Inteligência Artificial:</strong> Nossos algoritmos analisam seus dados para fornecer insights personalizados.</p>
-            <p><strong>🔄 Atualizações Automáticas:</strong> Melhorias constantes na plataforma para sua melhor experiência.</p>
-            <p><strong>🎧 Suporte 24/7:</strong> Nossa equipe está disponível para auxiliar quando precisar.</p>
-          </div>
-        </div>
-
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className={`flex items-start space-x-4 p-4 rounded-lg border-2 cursor-pointer transition-all duration-300 ${
-            data.termos_aceitos 
-              ? 'border-primary bg-primary/5' 
-              : 'border-border hover:border-primary/50'
-          }`}
-          onClick={() => setData({ ...data, termos_aceitos: !data.termos_aceitos })}
-        >
-          <Checkbox
-            id="termos"
-            checked={data.termos_aceitos}
-            className="mt-0.5"
-          />
-          <Label htmlFor="termos" className="text-sm leading-relaxed cursor-pointer">
-            <strong>✅ Li e aceito</strong> os termos de uso da Financy e autorizo o processamento dos meus dados para uma experiência personalizada e inteligente.
-          </Label>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
+  const progress = (step / TOTAL_STEPS) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl rounded-3xl shadow-2xl border-0 overflow-hidden">
-        <CardHeader className="text-center space-y-6 px-8 py-8 bg-gradient-to-r from-primary/5 to-blue-500/5">
-          <div className="flex justify-center items-center w-full">
-            {/* Logo and Progress */}
-            <div className="flex flex-col items-center space-y-4">
-              <motion.div 
-                className="w-16 h-16 bg-gradient-to-br from-primary to-blue-600 rounded-3xl flex items-center justify-center shadow-lg"
-                whileHover={{ scale: 1.05 }}
+    <div className="min-h-screen w-full bg-gradient-to-br from-background via-background to-primary/5 flex flex-col">
+      {/* Top bar com logo + progresso */}
+      <header className="w-full px-4 sm:px-6 pt-5 pb-3 max-w-3xl mx-auto">
+        <div className="flex items-center justify-between mb-3">
+          <img src={financyLogo} alt="Financy" className="h-8 sm:h-10 object-contain" />
+          <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+            Etapa {step} de {TOTAL_STEPS} · {Math.round(progress)}%
+          </span>
+        </div>
+        <Progress value={progress} className="h-1.5" />
+      </header>
+
+      {/* Conteúdo */}
+      <main className="flex-1 w-full px-4 sm:px-6 py-4 sm:py-8 max-w-3xl mx-auto w-full">
+        <Card className="border-border/60 shadow-lg rounded-2xl overflow-hidden">
+          <CardContent className="p-5 sm:p-8 md:p-10">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 24 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -24 }}
+                transition={{ duration: 0.25 }}
               >
-                {getStepIcon()}
-              </motion.div>
-              
-              {/* Progress Dots */}
-              <div className="flex items-center space-x-2">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((step) => (
-                  <motion.div
-                    key={step}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      step <= currentStep 
-                        ? 'bg-primary shadow-lg' 
-                        : 'bg-muted'
-                    }`}
-                    animate={{ scale: step === currentStep ? 1.2 : 1 }}
+                {step === 1 && (
+                  <WelcomeAccountStep
+                    value={data.user_type}
+                    onChange={(v) => setData({ ...data, user_type: v })}
                   />
-                ))}
-              </div>
-              
-              <div className="text-center">
-                <h1 className="text-lg font-semibold">{getStepTitle()}</h1>
-                <p className="text-sm text-muted-foreground">Passo {currentStep} de 9</p>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
+                )}
+                {step === 2 && (
+                  <IdentityStep
+                    data={data}
+                    setData={setData}
+                    onPhoneChange={handlePhoneChange}
+                    isPhoneValid={isPhoneValid}
+                    phoneError={phoneError}
+                    phoneWarning={phoneWarning}
+                  />
+                )}
+                {step === 3 && (
+                  <FinancialContextStep
+                    userType={data.user_type}
+                    salaryRange={data.salary_range || ''}
+                    revenueRange={data.revenue_range || ''}
+                    onSelectSalary={(v) => setData({ ...data, salary_range: v })}
+                    onSelectRevenue={(v) => setData({ ...data, revenue_range: v })}
+                  />
+                )}
+                {step === 4 && (
+                  <TermsCompleteStep
+                    accepted={!!data.termos_aceitos}
+                    onToggle={() => setData({ ...data, termos_aceitos: !data.termos_aceitos })}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
 
-        <CardContent className="px-8 py-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {currentStep === 1 && renderStep1()}
-              {currentStep === 2 && renderStep2()}
-              {currentStep === 3 && renderStep3()}
-              {currentStep === 4 && renderStep4()}
-              {currentStep === 5 && renderStep5()}
-              {currentStep === 6 && <FinancialDataStep data={data} setData={setData} />}
-              {currentStep === 7 && <ExpenseSheetStep data={data} setData={setData} />}
-              {currentStep === 8 && <FinancialGoalStep data={data} setData={setData} />}
-              {currentStep === 9 && renderStep9()}
-            </motion.div>
-          </AnimatePresence>
+            {/* Nav */}
+            <div className="flex items-center justify-between gap-3 pt-6 mt-6 sm:pt-8 sm:mt-8 border-t border-border/60">
+              {step > 1 ? (
+                <Button variant="ghost" onClick={goBack} disabled={loading} className="px-3 sm:px-5">
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Voltar
+                </Button>
+              ) : (
+                <div />
+              )}
 
-          {/* Navigation */}
-          <div className="flex justify-between items-center pt-8 mt-8 border-t border-border">
-            {currentStep > (skipPhoneStep ? 2 : 1) ? (
-              <Button 
-                variant="outline" 
-                onClick={handleBack} 
-                disabled={loading}
-                className="flex items-center space-x-2 px-6"
+              <Button
+                onClick={goNext}
+                disabled={!canProceed() || loading}
+                size="lg"
+                className="flex-1 sm:flex-none sm:min-w-[180px]"
               >
-                <ChevronLeft className="w-4 h-4" />
-                <span>Voltar</span>
+                {step === TOTAL_STEPS
+                  ? (loading ? 'Finalizando...' : 'Começar a usar')
+                  : 'Continuar'}
+                {step < TOTAL_STEPS && <ChevronRight className="w-4 h-4 ml-1" />}
               </Button>
-            ) : (
-              <div />
-            )}
+            </div>
+          </CardContent>
+        </Card>
 
-            <Button 
-              onClick={handleNext} 
-              disabled={!canProceed() || loading}
-              className="flex items-center space-x-2 px-8 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
-              size="lg"
-            >
-              <span>
-                {currentStep === 9 ? (loading ? 'Finalizando...' : '🎉 Finalizar') : 'Continuar'}
-              </span>
-              {currentStep < 9 && <ChevronRight className="w-4 h-4" />}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <p className="text-center text-xs text-muted-foreground mt-4 sm:mt-6 px-4">
+          Suas informações são criptografadas e usadas apenas para personalizar sua experiência.
+        </p>
+      </main>
     </div>
   );
 };
+
+// ───────────────────────────────────────────────────────────
+// Step 1 — Welcome + tipo de conta
+// ───────────────────────────────────────────────────────────
+const WelcomeAccountStep: React.FC<{
+  value: string;
+  onChange: (v: string) => void;
+}> = ({ value, onChange }) => (
+  <div className="space-y-6 sm:space-y-8">
+    <div className="text-center space-y-2 sm:space-y-3">
+      <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 mb-1">
+        <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
+      </div>
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Bem-vindo ao Financy</h1>
+      <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
+        Vamos personalizar sua experiência em 4 etapas rápidas. Para começar, escolha o tipo de conta:
+      </p>
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <AccountCard
+        active={value === 'pessoal'}
+        onClick={() => onChange('pessoal')}
+        icon={<User className="w-6 h-6 sm:w-7 sm:h-7" />}
+        title="Pessoal"
+        description="Controle suas finanças do dia a dia"
+      />
+      <AccountCard
+        active={value === 'empresarial'}
+        onClick={() => onChange('empresarial')}
+        icon={<Building className="w-6 h-6 sm:w-7 sm:h-7" />}
+        title="Empresarial"
+        description="Gerencie as finanças do seu negócio"
+      />
+    </div>
+  </div>
+);
+
+const AccountCard: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}> = ({ active, onClick, icon, title, description }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`relative text-left p-5 sm:p-6 rounded-xl border-2 transition-all duration-200 active:scale-[0.98]
+      ${active
+        ? 'border-primary bg-primary/5 shadow-md'
+        : 'border-border hover:border-primary/40 hover:bg-muted/40'
+      }`}
+  >
+    <div className="flex items-start gap-3 sm:gap-4">
+      <div className={`flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-xl shrink-0
+        ${active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-semibold text-base sm:text-lg">{title}</h3>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{description}</p>
+      </div>
+    </div>
+    {active && (
+      <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+        <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />
+      </div>
+    )}
+  </button>
+);
+
+// ───────────────────────────────────────────────────────────
+// Step 2 — Identidade (nome + empresa + WhatsApp opcional)
+// ───────────────────────────────────────────────────────────
+const IdentityStep: React.FC<{
+  data: OnboardingData;
+  setData: React.Dispatch<React.SetStateAction<OnboardingData>>;
+  onPhoneChange: (formatted: string, isValid: boolean, normalized: string) => void;
+  isPhoneValid: boolean;
+  phoneError: string | null;
+  phoneWarning: string | null;
+}> = ({ data, setData, onPhoneChange, isPhoneValid, phoneError, phoneWarning }) => {
+  const isBusiness = data.user_type === 'empresarial';
+  return (
+    <div className="space-y-5 sm:space-y-6">
+      <div className="text-center space-y-1.5">
+        <h2 className="text-xl sm:text-2xl font-bold">Como devemos te chamar?</h2>
+        <p className="text-sm text-muted-foreground">Este nome aparecerá em sua dashboard.</p>
+      </div>
+
+      <div className="space-y-4 max-w-md mx-auto">
+        {isBusiness && (
+          <div>
+            <Label htmlFor="empresa" className="text-sm font-medium">
+              Nome da empresa <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="empresa"
+              value={data.nome_empresa || ''}
+              onChange={(e) => setData((d) => ({ ...d, nome_empresa: e.target.value }))}
+              placeholder="Ex: Minha Empresa LTDA"
+              className="h-11 sm:h-12 mt-1.5"
+            />
+          </div>
+        )}
+
+        <div>
+          <Label htmlFor="nome" className="text-sm font-medium">
+            Seu nome preferido <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="nome"
+            value={data.nome_preferido || ''}
+            onChange={(e) => setData((d) => ({ ...d, nome_preferido: e.target.value }))}
+            placeholder="Como podemos te chamar?"
+            className="h-11 sm:h-12 mt-1.5"
+          />
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <Label htmlFor="whatsapp" className="text-sm font-medium flex items-center gap-2">
+              <MessageCircle className="w-4 h-4 text-success" />
+              WhatsApp
+            </Label>
+            <Badge variant="secondary" className="text-[10px] h-5">Opcional</Badge>
+          </div>
+          <BrazilianPhoneInput
+            value={data.whatsapp}
+            onChange={onPhoneChange}
+            placeholder="Digite seu número (opcional)"
+            error={phoneError || undefined}
+            showValidationFeedback={!!data.whatsapp && data.whatsapp.length > 3}
+          />
+          {phoneWarning && isPhoneValid && (
+            <div className="mt-2 flex items-start gap-2 text-xs text-warning bg-warning/10 border border-warning/20 rounded-md p-2">
+              <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span className="whitespace-pre-line">{phoneWarning}</span>
+            </div>
+          )}
+          <p className="text-[11px] text-muted-foreground mt-1.5">
+            Receba insights e alertas via WhatsApp. Você pode adicionar depois.
+          </p>
+        </div>
+
+        {data.nome_preferido && (!isBusiness || data.nome_empresa) && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center p-3.5 rounded-xl bg-gradient-to-r from-primary/8 to-primary/4 border border-primary/15"
+          >
+            <p className="text-xs text-muted-foreground">Prévia</p>
+            <p className="text-base sm:text-lg font-semibold text-foreground mt-0.5">
+              Olá, {data.nome_preferido}! 👋
+            </p>
+            {isBusiness && (
+              <p className="text-xs text-muted-foreground mt-0.5">{data.nome_empresa}</p>
+            )}
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ───────────────────────────────────────────────────────────
+// Step 3 — Contexto financeiro
+// ───────────────────────────────────────────────────────────
+const FinancialContextStep: React.FC<{
+  userType: string;
+  salaryRange: string;
+  revenueRange: string;
+  onSelectSalary: (v: string) => void;
+  onSelectRevenue: (v: string) => void;
+}> = ({ userType, salaryRange, revenueRange, onSelectSalary, onSelectRevenue }) => {
+  const isBusiness = userType === 'empresarial';
+  const ranges = isBusiness ? REVENUE_RANGES : SALARY_RANGES;
+  const selected = isBusiness ? revenueRange : salaryRange;
+  const onSelect = isBusiness ? onSelectRevenue : onSelectSalary;
+  const Icon = isBusiness ? TrendingUp : Wallet;
+
+  return (
+    <div className="space-y-5 sm:space-y-6">
+      <div className="text-center space-y-2">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-1">
+          <Icon className="w-6 h-6 text-primary" />
+        </div>
+        <h2 className="text-xl sm:text-2xl font-bold">
+          {isBusiness ? 'Qual o faturamento da empresa?' : 'Qual sua faixa de renda?'}
+        </h2>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          Usamos isso apenas para personalizar metas e sugestões da IA.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 max-w-md mx-auto">
+        {ranges.map((r) => {
+          const isSelected = selected === r.value;
+          const isPrefer = r.value === PREFER_NOT_SAY;
+          return (
+            <button
+              key={r.value}
+              type="button"
+              onClick={() => onSelect(r.value)}
+              className={`flex items-center justify-between p-3.5 sm:p-4 rounded-lg border-2 transition-all text-left active:scale-[0.99]
+                ${isSelected
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/40 hover:bg-muted/40'}
+                ${isPrefer ? 'mt-1' : ''}`}
+            >
+              <span className={`text-sm sm:text-base font-medium ${isPrefer ? 'text-muted-foreground italic' : ''}`}>
+                {r.label}
+              </span>
+              {isSelected && (
+                <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ───────────────────────────────────────────────────────────
+// Step 4 — Termos
+// ───────────────────────────────────────────────────────────
+const TermsCompleteStep: React.FC<{
+  accepted: boolean;
+  onToggle: () => void;
+}> = ({ accepted, onToggle }) => (
+  <div className="space-y-5 sm:space-y-6">
+    <div className="text-center space-y-2">
+      <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-1">
+        <ShieldCheck className="w-6 h-6 text-primary" />
+      </div>
+      <h2 className="text-xl sm:text-2xl font-bold">Quase lá!</h2>
+      <p className="text-sm text-muted-foreground">Aceite os termos para começar a usar.</p>
+    </div>
+
+    <div className="max-w-md mx-auto space-y-4">
+      <div className="bg-muted/40 rounded-xl p-4 sm:p-5 text-sm space-y-2 text-muted-foreground max-h-48 overflow-y-auto border border-border/50">
+        <p><strong className="text-foreground">🔐 Privacidade:</strong> Seus dados financeiros são criptografados e nunca compartilhados.</p>
+        <p><strong className="text-foreground">🛡️ Segurança:</strong> Seguimos as melhores práticas para proteger suas informações.</p>
+        <p><strong className="text-foreground">🤖 IA personalizada:</strong> Usamos seus dados apenas para gerar insights para você.</p>
+        <p><strong className="text-foreground">✋ Controle:</strong> Você pode exportar ou excluir seus dados a qualquer momento.</p>
+      </div>
+
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`w-full flex items-start gap-3 p-3.5 sm:p-4 rounded-lg border-2 cursor-pointer transition-all text-left
+          ${accepted ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}
+      >
+        <Checkbox checked={accepted} className="mt-0.5 pointer-events-none" />
+        <span className="text-sm leading-relaxed">
+          <strong>Li e aceito</strong> os termos de uso da Financy e a Política de Privacidade.
+        </span>
+      </button>
+    </div>
+  </div>
+);
