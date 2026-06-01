@@ -94,7 +94,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
                 const isAllowed = !disabled || isSectionAllowedWhenBlocked(item.id);
                 
                 return (
-                  <SidebarMenuItem key={item.id}>
+                  <SidebarMenuItem key={item.id} data-tutorial={`nav-${item.id}`}>
                     <SidebarMenuButton
                       onClick={() => {
                         if (isAllowed) {

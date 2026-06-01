@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getTourSteps, TourId, TourStep } from '@/config/tourSteps';
+import { useIsMobile } from './use-mobile';
+
 
 interface ProductTourContextType {
   isActive: boolean;
@@ -23,6 +25,7 @@ const ProductTourContext = createContext<ProductTourContextType | undefined>(und
 
 export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [seenTours, setSeenTours] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [currentTourId, setCurrentTourId] = useState<TourId | null>(null);
@@ -76,7 +79,7 @@ export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ c
   );
 
   const startTour = useCallback((tourId: TourId) => {
-    const steps = getTourSteps(tourId);
+    const steps = getTourSteps(tourId, isMobile);
     if (!steps.length) return;
     setCurrentTourId(tourId);
     setCurrentStep(0);
@@ -91,7 +94,7 @@ export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const next = useCallback(() => {
     if (!currentTourId) return;
-    const steps = getTourSteps(currentTourId);
+    const steps = getTourSteps(currentTourId, isMobile);
     if (currentStep < steps.length - 1) {
       setCurrentStep((s) => s + 1);
     } else {
@@ -126,7 +129,7 @@ export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return () => window.removeEventListener('keydown', handler);
   }, [currentTourId, next, prev, skip]);
 
-  const steps = currentTourId ? getTourSteps(currentTourId) : [];
+  const steps = currentTourId ? getTourSteps(currentTourId, isMobile) : [];
   const currentStepData = steps[currentStep] || null;
 
   return (
