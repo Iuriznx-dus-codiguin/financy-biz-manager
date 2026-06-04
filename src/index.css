@@ -253,6 +253,22 @@ body:has(.loading-screen) {
   background: #000 !important;
 }
 
+/* Evita scrollbar duplo na tela de login: html/body não rolam,
+   apenas o container .auth-page rola internamente. */
+html:has(.auth-page),
+body:has(.auth-page) {
+  overflow: hidden !important;
+  height: 100% !important;
+}
+
 .auth-page, .loading-screen {
   color-scheme: dark !important;
 }
+
+.auth-page {
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
