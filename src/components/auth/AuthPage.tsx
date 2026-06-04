@@ -34,34 +34,42 @@ export const AuthPage = () => {
     setMessage(null);
 
     try {
+      const trimmedEmail = formData.email.trim().toLowerCase();
+
+      if (!isValidEmail(trimmedEmail)) {
+        setError('Informe um email válido.');
+        return;
+      }
+
       if (activeTab === 'login') {
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
+          email: trimmedEmail,
           password: formData.password,
         });
 
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
             setError('Email ou senha incorretos');
+          } else if (error.message.toLowerCase().includes('email not confirmed')) {
+            setError('Confirme seu email antes de fazer login. Verifique sua caixa de entrada (e spam).');
           } else {
             setError(error.message);
           }
           return;
         }
 
-        if (data.user) {
-          if (typeof window !== 'undefined') {
-            window.location.replace('/');
-          }
+        if (data.session) {
+          // Vai direto para /dashboard (AuthenticatedLayout cuida de gating de assinatura)
+          window.location.replace('/dashboard');
         }
       } else {
         const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
+          email: trimmedEmail,
           password: formData.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/dashboard`,
             data: {
-              nome_completo: formData.nomeCompleto
+              nome_completo: formData.nomeCompleto.trim()
             }
           }
         });
@@ -75,8 +83,14 @@ export const AuthPage = () => {
           return;
         }
 
+        // Se confirmação de email estiver desativada, já vem sessão — manda pro app.
+        if (data.session) {
+          window.location.replace('/dashboard');
+          return;
+        }
+
         if (data.user) {
-          setMessage('Conta criada com sucesso! Verifique seu email para confirmar.');
+          setMessage('Conta criada! Enviamos um link de confirmação para seu email. Clique nele para entrar no app.');
         }
       }
     } catch (err) {
