@@ -1,6 +1,18 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+
+/**
+ * Redireciona "/" para "/dashboard" preservando o hash da URL.
+ * Crítico para fluxos de verificação de e-mail / OAuth do Supabase,
+ * que retornam tokens em `window.location.hash` (#access_token=...).
+ * Sem isso, o <Navigate> remove o hash antes do supabase-js processá-lo
+ * e a sessão nunca é criada — usuário cai de volta no login.
+ */
+const RootRedirect = () => {
+  const { hash, search } = useLocation();
+  return <Navigate to={`/dashboard${search}${hash}`} replace />;
+};
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { AuthenticatedLayout } from "@/components/layouts/AuthenticatedLayout";
