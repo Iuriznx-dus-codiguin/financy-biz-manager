@@ -270,5 +270,9 @@ body:has(.auth-page) {
   height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Quando o conteúdo é maior que a viewport, "safe center" evita
+     que o flex centralizado corte o topo, caindo para flex-start. */
+  align-items: safe center !important;
+  justify-content: safe center !important;
 }
 
