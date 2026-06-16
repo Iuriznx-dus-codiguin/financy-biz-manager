@@ -68,7 +68,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   // Dashboard avançado para planos premium
   if (hasAdvancedDashboard) {
     return (
-      <section id="painel" className="space-y-6">
+      <section id="painel" className="space-y-6 sm:space-y-8 pb-6">
 
         <FloatingDashboardInfo
           timeFilter={timeFilter} 
