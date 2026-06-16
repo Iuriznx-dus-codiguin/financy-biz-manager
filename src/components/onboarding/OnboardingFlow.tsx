@@ -314,7 +314,7 @@ const WelcomeAccountStep: React.FC<{
       <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 mb-1">
         <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
       </div>
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Bem-vindo ao Financy</h1>
+      <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight">Bem-vindo ao Financy</h1>
       <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
         Vamos personalizar sua experiência em 4 etapas rápidas. Para começar, escolha o tipo de conta:
       </p>
@@ -388,7 +388,7 @@ const IdentityStep: React.FC<{
   return (
     <div className="space-y-5 sm:space-y-6">
       <div className="text-center space-y-1.5">
-        <h2 className="text-xl sm:text-2xl font-bold">Como devemos te chamar?</h2>
+        <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight">Como devemos te chamar?</h2>
         <p className="text-sm text-muted-foreground">Este nome aparecerá em sua dashboard.</p>
       </div>
 
@@ -489,7 +489,7 @@ const FinancialContextStep: React.FC<{
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-1">
           <Icon className="w-6 h-6 text-primary" />
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold">
+        <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight">
           {isBusiness ? 'Qual o faturamento da empresa?' : 'Qual sua faixa de renda?'}
         </h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
@@ -538,7 +538,7 @@ const TermsCompleteStep: React.FC<{
       <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-1">
         <ShieldCheck className="w-6 h-6 text-primary" />
       </div>
-      <h2 className="text-xl sm:text-2xl font-bold">Quase lá!</h2>
+      <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight">Quase lá!</h2>
       <p className="text-sm text-muted-foreground">Aceite os termos para começar a usar.</p>
     </div>
 
