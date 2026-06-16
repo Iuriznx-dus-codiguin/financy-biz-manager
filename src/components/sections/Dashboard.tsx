@@ -68,7 +68,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   // Dashboard avançado para planos premium
   if (hasAdvancedDashboard) {
     return (
-      <section id="painel" className="space-y-6">
+      <section id="painel" className="space-y-6 sm:space-y-8 pb-6">
 
         <FloatingDashboardInfo
           timeFilter={timeFilter} 
@@ -102,7 +102,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
 
   // Dashboard básico
   return (
-    <section id="painel" className="space-y-6">
+    <section id="painel" className="space-y-6 sm:space-y-8 pb-6">
       <FloatingDashboardInfo
         timeFilter={timeFilter} 
         setTimeFilter={setTimeFilter}
@@ -117,40 +117,40 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         dismissible={true}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3" data-tutorial="metric-cards">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4" data-tutorial="metric-cards">
         <OptimizedMetricCard
           title="Total de Receitas"
           value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitle={`${filteredReceitas.length} transações`}
-          valueClassName="text-2xl font-bold text-success"
+          valueClassName="text-xl sm:text-2xl font-bold text-success font-display tracking-tight"
         />
 
         <OptimizedMetricCard
           title="Total de Despesas"
           value={`R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitle={`${filteredDespesas.length} transações`}
-          valueClassName="text-2xl font-bold text-destructive"
+          valueClassName="text-xl sm:text-2xl font-bold text-destructive font-display tracking-tight"
         />
 
         <OptimizedMetricCard
           title="Saldo"
           value={`R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitle="Receitas - Despesas"
-          valueClassName={`text-2xl font-bold ${saldo >= 0 ? 'text-success' : 'text-destructive'}`}
+          valueClassName={`text-xl sm:text-2xl font-bold font-display tracking-tight ${saldo >= 0 ? 'text-success' : 'text-destructive'}`}
         />
 
         <OptimizedMetricCard
           title="Total de Impostos"
           value={`R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitle={`${filteredImpostos.filter(i => i.tipo === 'imposto').length} impostos`}
-          valueClassName="text-2xl font-bold text-primary"
+          valueClassName="text-xl sm:text-2xl font-bold text-primary font-display tracking-tight"
         />
 
         <OptimizedMetricCard
           title="Total de Taxas"
           value={`R$ ${totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitle={`${filteredImpostos.filter(i => i.tipo === 'taxa').length} taxas`}
-          valueClassName="text-2xl font-bold text-warning"
+          valueClassName="text-xl sm:text-2xl font-bold text-warning font-display tracking-tight"
         />
       </div>
 
