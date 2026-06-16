@@ -102,7 +102,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
 
   // Dashboard básico
   return (
-    <section id="painel" className="space-y-6">
+    <section id="painel" className="space-y-6 sm:space-y-8 pb-6">
       <FloatingDashboardInfo
         timeFilter={timeFilter} 
         setTimeFilter={setTimeFilter}
@@ -117,7 +117,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         dismissible={true}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3" data-tutorial="metric-cards">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4" data-tutorial="metric-cards">
         <OptimizedMetricCard
           title="Total de Receitas"
           value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
