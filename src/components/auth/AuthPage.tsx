@@ -135,13 +135,13 @@ export const AuthPage = () => {
           <img
             src={financyLogoDark}
             alt="Financy"
-            className="mx-auto w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-lg"
+            className="mx-auto w-28 h-28 sm:w-36 sm:h-36 object-contain drop-shadow-xl"
           />
-          <h1 className="font-display text-xl sm:text-2xl font-semibold text-foreground mt-4 tracking-tight">
+          <h1 className="font-display text-xl sm:text-2xl font-semibold text-foreground mt-2 tracking-tight">
             Bem-vindo de volta
           </h1>
           <p className="text-sm text-muted-foreground mt-1.5">
-            Gestão financeira inteligente para o seu negócio
+            Gestão financeira inteligente para pessoas e negócios
           </p>
         </div>
 
