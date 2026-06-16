@@ -97,7 +97,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
             <div className="px-4 pt-5 pb-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground truncate">{userName}</p>
+                  <p className="font-display text-sm font-semibold text-foreground truncate tracking-tight">{userName}</p>
                   <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -131,7 +131,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
 
                 return (
                   <div key={group.label} className="px-3 mb-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-3 py-2">
+                    <p className="font-display text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-2">
                       {group.label}
                     </p>
                     {groupItems.map((item) => {

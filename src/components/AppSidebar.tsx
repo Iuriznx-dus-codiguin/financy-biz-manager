@@ -84,7 +84,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupLabel className="font-display text-[11px] uppercase tracking-wider text-muted-foreground/70">Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
