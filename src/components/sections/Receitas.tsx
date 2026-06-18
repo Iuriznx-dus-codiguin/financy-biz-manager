@@ -152,7 +152,7 @@ const Receitas = () => {
 
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Receitas</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Receitas</h2>
           <p className="text-muted-foreground">Controle completo das suas entradas de dinheiro</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -384,7 +384,7 @@ const Receitas = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Média por Transação</p>
-                <p className="text-2xl font-bold">R$ {receitas.length > 0 ? (totalReceitas / receitas.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}</p>
+                <p className="text-2xl sm:text-3xl font-bold font-display tracking-tight">R$ {receitas.length > 0 ? (totalReceitas / receitas.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}</p>
               </div>
               <div className="text-purple-600 text-2xl">📈</div>
             </div>

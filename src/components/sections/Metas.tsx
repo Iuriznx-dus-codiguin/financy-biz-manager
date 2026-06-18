@@ -181,7 +181,7 @@ const Metas = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Target className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">Metas Financeiras</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold font-display tracking-tight">Metas Financeiras</h2>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>

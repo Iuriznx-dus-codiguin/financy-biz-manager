@@ -215,7 +215,7 @@ const Fechamento = () => {
     <section className="space-y-8">
 
       <div>
-        <h2 className="text-3xl font-bold text-foreground">Fechamento de Caixa</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Fechamento de Caixa</h2>
         <p className="text-muted-foreground">Controle diário do fluxo de caixa e transações</p>
       </div>
 
