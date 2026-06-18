@@ -218,7 +218,7 @@ const Assinatura: React.FC = () => {
             <div className="grid md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Plano Atual</p>
-                <p className="text-2xl font-bold text-foreground">{subscription.plan_name}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">{subscription.plan_name}</p>
                 <Badge variant="outline" className="mt-2">
                   {subscription.billing_period === 'yearly' ? 'Anual' : 'Mensal'}
                 </Badge>
@@ -239,7 +239,7 @@ const Assinatura: React.FC = () => {
               
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Valor</p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">
                   R$ {subscription.amount ? subscription.amount.toFixed(2) : '0,00'}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -464,7 +464,7 @@ const Assinatura: React.FC = () => {
                       R$ {plan.monthlyPrice.toFixed(2)}/mês
                     </div>
                   )}
-                  <div className="text-3xl font-bold text-foreground">
+                  <div className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">
                     R$ {isAnnual ? pricing.monthlyEquivalent.toFixed(2) : pricing.price.toFixed(2)}
                   </div>
                   <div className="text-sm text-muted-foreground">

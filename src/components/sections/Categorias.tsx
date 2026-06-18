@@ -133,7 +133,7 @@ export function Categorias() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Categorias</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Categorias</h1>
           <p className="text-muted-foreground">Gerencie suas categorias personalizadas de receitas e despesas</p>
         </div>
         

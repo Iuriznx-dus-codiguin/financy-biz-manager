@@ -484,7 +484,7 @@ import { FileText, Download } from 'lucide-react';
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">📊 Relatórios Financeiros</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">📊 Relatórios Financeiros</h2>
           <p className="text-muted-foreground mt-1">Visualize e analise suas finanças pessoais</p>
         </div>
         <div className="flex flex-wrap gap-3">

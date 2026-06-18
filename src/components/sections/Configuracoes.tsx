@@ -495,7 +495,7 @@ const Configuracoes = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-2 mb-6">
         <User className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">Configurações</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight">Configurações</h1>
       </div>
 
       {/* Tema */}

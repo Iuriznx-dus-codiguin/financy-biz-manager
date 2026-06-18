@@ -269,7 +269,7 @@ const Equipe = () => {
     <section className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Gestão de Equipe</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Gestão de Equipe</h2>
           <p className="text-muted-foreground">Gerencie os membros da sua equipe com segurança e controle de acesso</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

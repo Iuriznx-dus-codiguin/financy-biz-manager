@@ -212,7 +212,7 @@ const Ajuda = () => {
   return (
     <section className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold text-foreground">Ajuda e Suporte</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Ajuda e Suporte</h2>
         <p className="text-muted-foreground">Central de instruções e suporte para o Financy</p>
       </div>
 
