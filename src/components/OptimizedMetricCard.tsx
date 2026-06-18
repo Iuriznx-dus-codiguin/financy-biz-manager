@@ -16,9 +16,9 @@ export const OptimizedMetricCard = memo<OptimizedMetricCardProps>(({
   title,
   value,
   subtitle,
-  className = "hover:shadow-lg transition-shadow",
-  titleClassName = "text-sm font-medium text-muted-foreground",
-  valueClassName = "text-2xl font-bold",
+  className = "hover:shadow-md transition-all hover:-translate-y-0.5",
+  titleClassName = "text-xs sm:text-sm font-medium text-muted-foreground",
+  valueClassName = "text-xl sm:text-2xl font-bold font-display tracking-tight",
   icon: Icon
 }) => {
   return (
