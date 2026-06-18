@@ -48,7 +48,7 @@ export const UpgradeCard: React.FC<UpgradeCardProps> = ({
         </div>
         
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-foreground">
+          <h3 className="text-sm font-semibold text-foreground font-display tracking-tight">
             {feature}
           </h3>
           <p className="text-xs text-muted-foreground">
