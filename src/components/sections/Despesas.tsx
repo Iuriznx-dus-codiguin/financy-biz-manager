@@ -22,6 +22,8 @@ import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-rea
 import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
 import { CategorySelector } from '@/components/CategorySelector';
+import { SpreadsheetImportExport } from '@/components/SpreadsheetImportExport';
+import { parseNumber, parseDate } from '@/utils/spreadsheetIO';
 
 const Despesas = () => {
   const { despesas, addDespesa, deleteDespesa, updateDespesa } = useAppContext();
@@ -157,11 +159,63 @@ const Despesas = () => {
   return (
     <section className="space-y-8">
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Despesas</h2>
           <p className="text-muted-foreground">Controle completo das suas saídas de dinheiro</p>
         </div>
+        <div className="flex items-center gap-2">
+          <SpreadsheetImportExport
+            entityLabel="Despesas"
+            fileBaseName="despesas"
+            templateColumns={[
+              { key: 'data', header: 'data', example: '2026-06-19' },
+              { key: 'descricao', header: 'descricao', example: 'Aluguel sede' },
+              { key: 'categoria', header: 'categoria', example: 'aluguel' },
+              { key: 'fornecedor', header: 'fornecedor', example: 'Imobiliária ABC' },
+              { key: 'valor', header: 'valor', example: 3500.0 },
+              { key: 'formaPagamento', header: 'formaPagamento', example: 'boleto' },
+              { key: 'status', header: 'status', example: 'paga' },
+            ]}
+            getExportRows={() =>
+              despesas.map((d) => ({
+                data: d.data,
+                descricao: d.descricao,
+                categoria: d.categoria,
+                fornecedor: d.fornecedor ?? '',
+                valor: d.valor,
+                formaPagamento: d.formaPagamento,
+                status: d.status,
+              }))
+            }
+            onImport={async (rows) => {
+              let inserted = 0;
+              let skipped = 0;
+              for (const row of rows) {
+                const descricao = String(row.descricao ?? '').trim();
+                const valor = parseNumber(row.valor);
+                if (!descricao || valor <= 0) {
+                  skipped++;
+                  continue;
+                }
+                try {
+                  await addDespesa({
+                    data: parseDate(row.data),
+                    descricao,
+                    categoria: String(row.categoria ?? 'outros').trim() || 'outros',
+                    valor,
+                    fornecedor: row.fornecedor ? String(row.fornecedor) : undefined,
+                    formaPagamento: String(row.formaPagamento ?? 'pix').trim() || 'pix',
+                    status: String(row.status ?? 'paga').trim() === 'pendente' ? 'pendente' : 'paga',
+                  });
+                  inserted++;
+                } catch {
+                  skipped++;
+                }
+              }
+              return { inserted, skipped };
+            }}
+          />
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="rounded-xl">
@@ -362,6 +416,7 @@ const Despesas = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
