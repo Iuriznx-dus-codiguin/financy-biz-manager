@@ -3,9 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Plus, Upload, Download } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { OnboardingData, GastoInicial } from '@/types/onboarding';
 import { useToast } from '@/hooks/use-toast';
+import { SpreadsheetImportExport } from '@/components/SpreadsheetImportExport';
+import { parseNumber } from '@/utils/spreadsheetIO';
 
 interface ExpenseSheetStepProps {
   data: OnboardingData;
