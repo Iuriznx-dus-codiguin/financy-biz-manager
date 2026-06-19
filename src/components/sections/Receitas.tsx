@@ -23,6 +23,8 @@ import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { CategorySelector } from '@/components/CategorySelector';
+import { SpreadsheetImportExport } from '@/components/SpreadsheetImportExport';
+import { parseNumber, parseDate } from '@/utils/spreadsheetIO';
 
 const Receitas = () => {
   const { receitas, addReceita, deleteReceita, updateReceita } = useAppContext();
@@ -150,11 +152,63 @@ const Receitas = () => {
   return (
     <section className="space-y-8">
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Receitas</h2>
           <p className="text-muted-foreground">Controle completo das suas entradas de dinheiro</p>
         </div>
+        <div className="flex items-center gap-2">
+          <SpreadsheetImportExport
+            entityLabel="Receitas"
+            fileBaseName="receitas"
+            templateColumns={[
+              { key: 'data', header: 'data', example: '2026-06-19' },
+              { key: 'descricao', header: 'descricao', example: 'Venda produto X' },
+              { key: 'categoria', header: 'categoria', example: 'vendas' },
+              { key: 'cliente', header: 'cliente', example: 'Cliente Exemplo' },
+              { key: 'valor', header: 'valor', example: 1500.0 },
+              { key: 'formaPagamento', header: 'formaPagamento', example: 'pix' },
+              { key: 'status', header: 'status', example: 'paga' },
+            ]}
+            getExportRows={() =>
+              receitas.map((r) => ({
+                data: r.data,
+                descricao: r.descricao,
+                categoria: r.categoria,
+                cliente: r.cliente ?? '',
+                valor: r.valor,
+                formaPagamento: r.formaPagamento,
+                status: r.status,
+              }))
+            }
+            onImport={async (rows) => {
+              let inserted = 0;
+              let skipped = 0;
+              for (const row of rows) {
+                const descricao = String(row.descricao ?? '').trim();
+                const valor = parseNumber(row.valor);
+                if (!descricao || valor <= 0) {
+                  skipped++;
+                  continue;
+                }
+                try {
+                  await addReceita({
+                    data: parseDate(row.data),
+                    descricao,
+                    categoria: String(row.categoria ?? 'outros').trim() || 'outros',
+                    valor,
+                    cliente: row.cliente ? String(row.cliente) : undefined,
+                    formaPagamento: String(row.formaPagamento ?? 'pix').trim() || 'pix',
+                    status: String(row.status ?? 'paga').trim() === 'pendente' ? 'pendente' : 'paga',
+                  });
+                  inserted++;
+                } catch {
+                  skipped++;
+                }
+              }
+              return { inserted, skipped };
+            }}
+          />
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="rounded-xl">
