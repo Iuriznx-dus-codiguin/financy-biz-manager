@@ -137,42 +137,27 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
   };
 
 
-  const importarCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const importarPlanilha = async (rows: Record<string, any>[]) => {
+    const importados: GastoInicial[] = rows
+      .map((row, index) => {
+        const categoria = String(row.categoria ?? row.Categoria ?? 'Outros').trim() || 'Outros';
+        const descricao = String(row.descricao ?? row.Descrição ?? row.Descricao ?? '').trim();
+        const valor = parseNumber(row.valor_mensal ?? row.valor ?? row.Valor);
+        const forma = String(
+          row.forma_pagamento ?? row.formaPagamento ?? row['Forma de Pagamento'] ?? (isEmpresarial ? 'PIX' : 'Dinheiro')
+        ).trim();
+        return {
+          id: `imported-${Date.now()}-${index}`,
+          categoria,
+          descricao,
+          valor_mensal: valor,
+          forma_pagamento: forma,
+        } as GastoInicial;
+      })
+      .filter((g) => g.descricao || g.valor_mensal > 0);
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const lines = text.split('\n');
-      
-      // Pula o cabeçalho
-      const gastosImportados: GastoInicial[] = lines.slice(1)
-        .filter(line => line.trim())
-        .map((line, index) => {
-          const [categoria, descricao, valor, forma] = line.split(',');
-          return {
-            id: `imported-${index}`,
-            categoria: categoria || 'Outros',
-            descricao: descricao || '',
-            valor_mensal: Number(valor) || 0,
-            forma_pagamento: forma || 'Dinheiro'
-          };
-        });
-
-      setData({
-        ...data,
-        gastos_iniciais: [...gastos, ...gastosImportados]
-      });
-
-      toast({
-        title: "Dados importados!",
-        description: `${gastosImportados.length} gastos foram adicionados.`
-      });
-    };
-
-    reader.readAsText(file);
-    event.target.value = '';
+    setData({ ...data, gastos_iniciais: [...gastos, ...importados] });
+    return { inserted: importados.length, skipped: rows.length - importados.length };
   };
 
   const totalGastos = gastos.reduce((total, gasto) => total + gasto.valor_mensal, 0);
@@ -190,34 +175,52 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
           }
         </p>
         <p className="text-xs text-muted-foreground">
-          💡 Preencher estes dados nos ajuda a personalizar melhor sua experiência
+          💡 Use Excel ou Google Sheets — baixe o modelo, preencha e importe de volta (.xlsx ou .csv).
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2 justify-center">
+      <div className="flex flex-wrap gap-2 justify-center items-center">
         <Button onClick={gerarGastosPadrao} variant="outline" size="sm">
           <Plus className="w-4 h-4 mr-2" />
           Gerar Categorias Padrão
         </Button>
-        
+
         <Button onClick={adicionarGasto} size="sm">
           <Plus className="w-4 h-4 mr-2" />
           {isEmpresarial ? 'Adicionar Custo' : 'Adicionar Gasto'}
         </Button>
 
-        <div className="relative">
-          <input
-            type="file"
-            accept=".csv"
-            onChange={importarCSV}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          />
-          <Button variant="outline" size="sm">
-            <Upload className="w-4 h-4 mr-2" />
-            Importar CSV
-          </Button>
-        </div>
-
+        <SpreadsheetImportExport
+          entityLabel={isEmpresarial ? 'Custos' : 'Gastos'}
+          fileBaseName={isEmpresarial ? 'custos-operacionais' : 'gastos-iniciais'}
+          templateColumns={[
+            { key: 'categoria', header: 'categoria', example: categorias[0] },
+            {
+              key: 'descricao',
+              header: 'descricao',
+              example: isEmpresarial ? 'Salário equipe' : 'Supermercado',
+            },
+            { key: 'valor_mensal', header: 'valor_mensal', example: 1200 },
+            {
+              key: 'forma_pagamento',
+              header: 'forma_pagamento',
+              example: isEmpresarial ? 'Transferência' : 'Cartão de Débito',
+            },
+          ]}
+          getExportRows={
+            gastos.length > 0
+              ? () =>
+                  gastos.map((g) => ({
+                    categoria: g.categoria,
+                    descricao: g.descricao,
+                    valor_mensal: g.valor_mensal,
+                    forma_pagamento: g.forma_pagamento,
+                  }))
+              : undefined
+          }
+          onImport={importarPlanilha}
+          compact={false}
+        />
       </div>
 
       {gastos.length > 0 && (
