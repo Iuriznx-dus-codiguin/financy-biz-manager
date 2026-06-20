@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getTourSteps, TourId, TourStep } from '@/config/tourSteps';
-import { useIsMobile } from './use-mobile';
+import { useIsBelowLg, isBelowLgNow } from './use-mobile';
 
 
 interface ProductTourContextType {
@@ -25,7 +25,7 @@ const ProductTourContext = createContext<ProductTourContextType | undefined>(und
 
 export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
+  const isMobile = useIsBelowLg();
   const [seenTours, setSeenTours] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [currentTourId, setCurrentTourId] = useState<TourId | null>(null);
@@ -79,7 +79,11 @@ export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ c
   );
 
   const startTour = useCallback((tourId: TourId) => {
-    const steps = getTourSteps(tourId, isMobile);
+    // Re-evaluate viewport at the moment the tour starts (not at mount time),
+    // so rotating the device or resizing the window before opening a tour
+    // still picks the correct mobile/desktop step set.
+    const mobileNow = isBelowLgNow();
+    const steps = getTourSteps(tourId, mobileNow);
     if (!steps.length) return;
     setCurrentTourId(tourId);
     setCurrentStep(0);
