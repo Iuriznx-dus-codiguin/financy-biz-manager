@@ -139,7 +139,11 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           salary_range: data.salary_range,
           revenue_range: data.revenue_range,
           nome_preferido: data.nome_preferido,
-          termos_aceitos: data.termos_aceitos
+          termos_aceitos: data.termos_aceitos,
+          saldo_conta: data.saldo_conta ?? null,
+          saldo_carteira: data.saldo_carteira ?? null,
+          dividas_atuais: data.dividas_atuais ?? null,
+          receita_extra: data.receita_extra ?? null,
         }, {
           onConflict: 'user_id'
         });
