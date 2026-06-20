@@ -143,7 +143,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           saldo_conta: data.saldo_conta ?? null,
           saldo_carteira: data.saldo_carteira ?? null,
           dividas_atuais: data.dividas_atuais ?? null,
-          receita_extra: data.receita_extra ?? null,
+          receita_extra: data.receita_mensal ?? null,
         }, {
           onConflict: 'user_id'
         });
