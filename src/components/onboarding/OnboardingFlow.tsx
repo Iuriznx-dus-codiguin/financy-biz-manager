@@ -52,7 +52,17 @@ const REVENUE_RANGES = [
   { value: PREFER_NOT_SAY, label: 'Prefiro não informar' },
 ];
 
-const TOTAL_STEPS = 4;
+const HOW_DID_YOU_KNOW_OPTIONS = [
+  { value: 'redes_sociais', label: 'Redes sociais (Instagram, TikTok, etc.)', icon: Instagram },
+  { value: 'indicacao', label: 'Indicação de amigo', icon: UsersIcon },
+  { value: 'busca_google', label: 'Busca no Google', icon: SearchIcon },
+  { value: 'anuncio', label: 'Anúncio', icon: Megaphone },
+  { value: 'outro', label: 'Outro', icon: MoreHorizontal },
+];
+
+const TOTAL_STEPS = 7;
+// Etapas opcionais — usuário pode pular sem preencher.
+const OPTIONAL_STEPS = new Set([4, 5, 6]);
 
 export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const { toast } = useToast();
