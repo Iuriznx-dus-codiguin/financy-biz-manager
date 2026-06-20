@@ -9,7 +9,9 @@ import { Progress } from '@/components/ui/progress';
 import { BrazilianPhoneInput } from '@/components/ui/BrazilianPhoneInput';
 import {
   ChevronLeft, ChevronRight, User, Building, Sparkles, MessageCircle,
-  AlertCircle, ShieldCheck, Wallet, TrendingUp, CheckCircle2
+  AlertCircle, ShieldCheck, Wallet, TrendingUp, CheckCircle2,
+  Instagram, Users as UsersIcon, Search as SearchIcon, Megaphone, MoreHorizontal,
+  PiggyBank, ListChecks, Target
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingData } from '@/types/onboarding';
@@ -20,6 +22,9 @@ import { validateAndNormalizePhone, savePhoneCorrection, type CorrectionType } f
 import { checkPhoneDuplicate } from '@/utils/phoneValidation';
 import { useAuth } from '@/hooks/useAuth';
 import financyLogo from '@/assets/financy-logo-new-dark.png';
+import { FinancialDataStep } from './FinancialDataStep';
+import { ExpenseSheetStep } from './ExpenseSheetStep';
+import { FinancialGoalStep } from './FinancialGoalStep';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>;
