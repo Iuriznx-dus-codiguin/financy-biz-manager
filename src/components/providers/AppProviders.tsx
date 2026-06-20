@@ -36,13 +36,13 @@ export const AppProviders = ({ children }: { children: ReactNode }) => (
         <AuthProvider>
           <SettingsProvider>
             <OnboardingProvider>
-              <ProductTourProvider>
-                <DashboardProvider>
+              <DashboardProvider>
+                <ProductTourProvider>
                   <UserContextProvider>
                     <AppProvider>{children}</AppProvider>
                   </UserContextProvider>
-                </DashboardProvider>
-              </ProductTourProvider>
+                </ProductTourProvider>
+              </DashboardProvider>
             </OnboardingProvider>
           </SettingsProvider>
         </AuthProvider>
