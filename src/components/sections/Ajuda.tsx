@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Download, BarChart3, TrendingUp, TrendingDown, FolderOpen, FileText, Users, Target, DollarSign, Calendar, HelpCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { useProductTour } from '@/hooks/useProductTour';
-import { BUSINESS_ONLY_TOURS, TourId } from '@/config/tourSteps';
+import { TourId } from '@/config/tourSteps';
 import { useDashboard } from '@/hooks/useDashboard';
 import { getRouteForSection } from '@/constants/routes';
 
