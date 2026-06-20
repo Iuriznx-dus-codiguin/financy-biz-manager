@@ -280,6 +280,30 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   />
                 )}
                 {step === 4 && (
+                  <OptionalStepWrapper
+                    icon={<PiggyBank className="w-6 h-6 text-primary" />}
+                    eyebrow="Etapa opcional"
+                  >
+                    <FinancialDataStep data={data} setData={setData} />
+                  </OptionalStepWrapper>
+                )}
+                {step === 5 && (
+                  <OptionalStepWrapper
+                    icon={<ListChecks className="w-6 h-6 text-primary" />}
+                    eyebrow="Etapa opcional"
+                  >
+                    <ExpenseSheetStep data={data} setData={setData} />
+                  </OptionalStepWrapper>
+                )}
+                {step === 6 && (
+                  <OptionalStepWrapper
+                    icon={<Target className="w-6 h-6 text-primary" />}
+                    eyebrow="Etapa opcional"
+                  >
+                    <FinancialGoalStep data={data} setData={setData} />
+                  </OptionalStepWrapper>
+                )}
+                {step === 7 && (
                   <TermsCompleteStep
                     accepted={!!data.termos_aceitos}
                     onToggle={() => setData({ ...data, termos_aceitos: !data.termos_aceitos })}
@@ -289,7 +313,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             </AnimatePresence>
 
             {/* Nav */}
-            <div className="flex items-center justify-between gap-3 pt-6 mt-6 sm:pt-8 sm:mt-8 border-t border-border/60">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 pt-6 mt-6 sm:pt-8 sm:mt-8 border-t border-border/60">
               {step > 1 ? (
                 <Button variant="ghost" onClick={goBack} disabled={loading} className="px-3 sm:px-5">
                   <ChevronLeft className="w-4 h-4 mr-1" />
@@ -299,17 +323,29 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 <div />
               )}
 
-              <Button
-                onClick={goNext}
-                disabled={!canProceed() || loading}
-                size="lg"
-                className="flex-1 sm:flex-none sm:min-w-[180px]"
-              >
-                {step === TOTAL_STEPS
-                  ? (loading ? 'Finalizando...' : 'Começar a usar')
-                  : 'Continuar'}
-                {step < TOTAL_STEPS && <ChevronRight className="w-4 h-4 ml-1" />}
-              </Button>
+              <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+                {OPTIONAL_STEPS.has(step) && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => setStep(step + 1)}
+                    disabled={loading}
+                    className="text-muted-foreground"
+                  >
+                    Pular etapa
+                  </Button>
+                )}
+                <Button
+                  onClick={goNext}
+                  disabled={!canProceed() || loading}
+                  size="lg"
+                  className="min-w-[160px] sm:min-w-[180px]"
+                >
+                  {step === TOTAL_STEPS
+                    ? (loading ? 'Finalizando...' : 'Começar a usar')
+                    : 'Continuar'}
+                  {step < TOTAL_STEPS && <ChevronRight className="w-4 h-4 ml-1" />}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
