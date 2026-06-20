@@ -137,7 +137,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       case 3:
         if (data.user_type === 'pessoal') return !!data.salary_range;
         return !!data.revenue_range;
+      // Etapas 4, 5, 6 são totalmente opcionais — sempre pode avançar.
       case 4:
+      case 5:
+      case 6:
+        return true;
+      case 7:
         return !!data.termos_aceitos;
       default:
         return false;
