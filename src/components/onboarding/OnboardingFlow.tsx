@@ -503,6 +503,31 @@ const IdentityStep: React.FC<{
           </p>
         </div>
 
+        <div>
+          <Label className="text-sm font-medium">
+            Como você conheceu a Financy? <span className="text-muted-foreground font-normal">(opcional)</span>
+          </Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1.5">
+            {HOW_DID_YOU_KNOW_OPTIONS.map((opt) => {
+              const Icon = opt.icon;
+              const selected = data.how_did_you_know === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setData((d) => ({ ...d, how_did_you_know: opt.value }))}
+                  className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-left text-xs sm:text-sm transition-all active:scale-[0.99]
+                    ${selected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40 hover:bg-muted/40'}`}
+                >
+                  <Icon className={`w-4 h-4 shrink-0 ${selected ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <span className="leading-tight">{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+
         {data.nome_preferido && (!isBusiness || data.nome_empresa) && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
