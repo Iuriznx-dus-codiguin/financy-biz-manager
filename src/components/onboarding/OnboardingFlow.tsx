@@ -187,11 +187,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     // Finalize
     setLoading(true);
     try {
+      // Envia os dados completos — incluindo etapas opcionais 4-6 (dados financeiros,
+      // planilha de gastos iniciais, meta financeira) e o canal de aquisição.
       const finalData: OnboardingData = {
         ...data,
         whatsapp: whatsappE164 || '',
-        how_did_you_know: '',
-        gastos_iniciais: [],
       };
       await onComplete(finalData);
 
