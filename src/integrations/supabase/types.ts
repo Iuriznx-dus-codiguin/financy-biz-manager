@@ -614,33 +614,45 @@ export type Database = {
       onboarding_data: {
         Row: {
           created_at: string
+          dividas_atuais: number | null
           how_did_you_know: string | null
           id: string
           nome_preferido: string | null
+          receita_extra: number | null
           revenue_range: string | null
           salary_range: string | null
+          saldo_carteira: number | null
+          saldo_conta: number | null
           termos_aceitos: boolean | null
           user_id: string
           user_type: string
         }
         Insert: {
           created_at?: string
+          dividas_atuais?: number | null
           how_did_you_know?: string | null
           id?: string
           nome_preferido?: string | null
+          receita_extra?: number | null
           revenue_range?: string | null
           salary_range?: string | null
+          saldo_carteira?: number | null
+          saldo_conta?: number | null
           termos_aceitos?: boolean | null
           user_id: string
           user_type: string
         }
         Update: {
           created_at?: string
+          dividas_atuais?: number | null
           how_did_you_know?: string | null
           id?: string
           nome_preferido?: string | null
+          receita_extra?: number | null
           revenue_range?: string | null
           salary_range?: string | null
+          saldo_carteira?: number | null
+          saldo_conta?: number | null
           termos_aceitos?: boolean | null
           user_id?: string
           user_type?: string
