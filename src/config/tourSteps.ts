@@ -387,7 +387,34 @@ const sectionTours: Record<Exclude<TourId, 'general'>, TourStep[]> = {
   ],
 };
 
-export function getTourSteps(tourId: TourId, isMobile = false): TourStep[] {
-  if (tourId === 'general') return isMobile ? generalMobile : generalDesktop;
-  return sectionTours[tourId] || [];
+export interface TourContext {
+  hasAdvancedIA?: boolean;
+  hasBasicIA?: boolean;
+  hasMultiDashboard?: boolean;
+}
+
+function applyContext(steps: TourStep[], ctx?: TourContext): TourStep[] {
+  if (!ctx) return steps;
+  return steps.map((s) => {
+    // IA step: marca como recurso de upgrade quando o plano não inclui IA avançada
+    if ((s.id === 'g-ia' || s.id === 'gm-ia') && ctx.hasAdvancedIA === false) {
+      const upgradeNote = ctx.hasBasicIA
+        ? ' (a versão avançada com análises preditivas é um recurso do plano Pro ou superior).'
+        : ' (disponível em qualquer plano pago — faça upgrade para liberar).';
+      return {
+        ...s,
+        badge: 'Upgrade',
+        content: s.content.replace(/\.$/, '') + upgradeNote,
+      };
+    }
+    // Assinatura: tom neutro já é adequado
+    return s;
+  });
+}
+
+export function getTourSteps(tourId: TourId, isMobile = false, ctx?: TourContext): TourStep[] {
+  const base = tourId === 'general'
+    ? (isMobile ? generalMobile : generalDesktop)
+    : (sectionTours[tourId] || []);
+  return applyContext(base, ctx);
 }
