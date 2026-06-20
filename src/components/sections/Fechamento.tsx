@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, TrendingUp, TrendingDown, DollarSign, Search, Filter, ArrowUpCircle, ArrowDownCircle, FileText, Users, Calendar } from 'lucide-react';
@@ -215,7 +216,7 @@ const Fechamento = () => {
     <section className="space-y-8">
 
       <div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Fechamento de Caixa</h2>
+        <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Fechamento de Caixa</h2><SectionTourTrigger tourId="fechamento" /></div>
         <p className="text-muted-foreground">Controle diário do fluxo de caixa e transações</p>
       </div>
 

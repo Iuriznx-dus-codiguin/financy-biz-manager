@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -269,12 +270,12 @@ const Equipe = () => {
     <section className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Gestão de Equipe</h2>
+          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Gestão de Equipe</h2><SectionTourTrigger tourId="equipe" /></div>
           <p className="text-muted-foreground">Gerencie os membros da sua equipe com segurança e controle de acesso</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl">
+            <Button className="rounded-xl" data-tutorial="add-membro-btn">
               <UserPlus className="mr-2 h-4 w-4" />
               Adicionar Membro
             </Button>

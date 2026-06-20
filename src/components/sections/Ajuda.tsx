@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -6,12 +7,46 @@ import { Download, BarChart3, TrendingUp, TrendingDown, FolderOpen, FileText, Us
 import jsPDF from 'jspdf';
 import { useProductTour } from '@/hooks/useProductTour';
 import { TourId } from '@/config/tourSteps';
+import { useDashboard } from '@/hooks/useDashboard';
+import { getRouteForSection } from '@/constants/routes';
 
 const Ajuda = () => {
   const { startTour } = useProductTour();
+  const navigate = useNavigate();
+  const { currentDashboard } = useDashboard();
+  const isPersonalDashboard = currentDashboard?.type === 'personal';
+
+  // Map a tour id to the route that actually renders the elements the tour
+  // needs to highlight. Reopening a section tour from the Help center must
+  // first navigate to that page; otherwise the spotlight has nothing to find
+  // and falls back to the centered "floating box" mode.
+  const tourRouteSection: Record<Exclude<TourId, 'general'>, string> = {
+    dashboard: 'dashboard',
+    receitas: 'receitas',
+    despesas: 'despesas',
+    categorias: 'categorias',
+    metas: 'metas',
+    relatorios: 'relatorios',
+    'agentes-ia': 'agentes-ia',
+    impostos: 'impostos',
+    equipe: 'equipe',
+    fechamento: 'fechamento',
+  };
 
   const restartTutorial = (tourId: TourId) => {
-    startTour(tourId);
+    if (tourId === 'general') {
+      startTour(tourId);
+      return;
+    }
+    const section = tourRouteSection[tourId];
+    const target = section ? getRouteForSection(section) : null;
+    if (target && window.location.pathname !== target) {
+      navigate(target);
+      // Wait for the destination page to mount before opening the tour.
+      window.setTimeout(() => startTour(tourId), 350);
+    } else {
+      startTour(tourId);
+    }
   };
 
 
@@ -403,33 +438,37 @@ const Ajuda = () => {
               </div>
             </Button>
 
-            <Button 
-              variant="outline" 
-              className="w-full justify-start h-auto py-4"
-              onClick={() => restartTutorial('equipe')}
-            >
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5 text-indigo-600" />
-                <div className="text-left">
-                  <div className="font-semibold">Equipe</div>
-                  <div className="text-xs text-muted-foreground">Gerenciar membros</div>
+            {!isPersonalDashboard && (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start h-auto py-4"
+                onClick={() => restartTutorial('equipe')}
+              >
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-indigo-600" />
+                  <div className="text-left">
+                    <div className="font-semibold">Equipe</div>
+                    <div className="text-xs text-muted-foreground">Gerenciar membros</div>
+                  </div>
                 </div>
-              </div>
-            </Button>
+              </Button>
+            )}
 
-            <Button 
-              variant="outline" 
-              className="w-full justify-start h-auto py-4"
-              onClick={() => restartTutorial('fechamento')}
-            >
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-teal-600" />
-                <div className="text-left">
-                  <div className="font-semibold">Fechamento</div>
-                  <div className="text-xs text-muted-foreground">Fechar período</div>
+            {!isPersonalDashboard && (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start h-auto py-4"
+                onClick={() => restartTutorial('fechamento')}
+              >
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-teal-600" />
+                  <div className="text-left">
+                    <div className="font-semibold">Fechamento</div>
+                    <div className="text-xs text-muted-foreground">Fechar período</div>
+                  </div>
                 </div>
-              </div>
-            </Button>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

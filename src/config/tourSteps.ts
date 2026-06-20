@@ -22,7 +22,9 @@ export type TourId =
   | 'equipe'
   | 'fechamento';
 
-export const BUSINESS_ONLY_TOURS: TourId[] = ['impostos', 'equipe', 'fechamento'];
+// Tours that should only appear for business-type dashboards. Must mirror the
+// menu-level access rules (only Equipe and Fechamento are business-exclusive).
+export const BUSINESS_ONLY_TOURS: TourId[] = ['equipe', 'fechamento'];
 
 // ─────────────────────────────────────────────────────────────────
 // General tour — adaptativo (desktop destaca itens da sidebar,
@@ -123,7 +125,7 @@ const generalDesktop: TourStep[] = [
     target: null,
     title: 'Pronto para começar! 🎉',
     content:
-      'Em cada seção um mini-guia aparece na primeira visita. Você pode rever qualquer tour a qualquer momento clicando no botão "Guia rápido" no topo das páginas ou em Ajuda.',
+      'Em cada seção um mini-guia aparece na primeira visita. Para rever qualquer tour, clique no ícone de ajuda (?) ao lado do título da página, ou abra a Central de Ajuda.',
     position: 'center',
   },
 ];
@@ -199,7 +201,7 @@ const generalMobile: TourStep[] = [
     target: null,
     title: 'Pronto! 🎉',
     content:
-      'Em cada seção um mini-guia aparece na primeira visita. Você pode rever qualquer tour pelo botão "Guia rápido" no topo da página ou em Ajuda.',
+      'Em cada seção um mini-guia aparece na primeira visita. Para rever um tour, toque no ícone de ajuda (?) ao lado do título da página ou abra a Central de Ajuda.',
     position: 'center',
   },
 ];
@@ -329,9 +331,9 @@ const sectionTours: Record<Exclude<TourId, 'general'>, TourStep[]> = {
   'agentes-ia': [
     {
       id: 'ia-input',
-      target: 'textarea',
+      target: '[data-tutorial="ai-input"]',
       title: 'Converse em português',
-      content: 'Pergunte: "Qual meu saldo?", "Registra R$200 de supermercado" ou "Quais meus maiores gastos?".',
+      content: 'Digite aqui sua pergunta ou comando. Ex.: "Qual meu saldo?", "Registra R$200 de supermercado" ou "Quais meus maiores gastos?".',
       position: 'top',
     },
     {

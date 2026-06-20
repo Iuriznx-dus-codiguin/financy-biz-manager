@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -161,7 +162,7 @@ const Despesas = () => {
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Despesas</h2>
+          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Despesas</h2><SectionTourTrigger tourId="despesas" /></div>
           <p className="text-muted-foreground">Controle completo das suas saídas de dinheiro</p>
         </div>
         <div className="flex items-center gap-2">
@@ -218,7 +219,7 @@ const Despesas = () => {
           />
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl">
+            <Button className="rounded-xl" data-tutorial="add-despesa-btn">
               <Plus className="mr-2 h-4 w-4" />
               Nova Despesa
             </Button>
@@ -462,7 +463,7 @@ const Despesas = () => {
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <CardTitle>Transações Recentes</CardTitle>
             <div className="flex flex-col md:flex-row gap-2">
-              <div className="flex gap-2">
+              <div className="flex gap-2" data-tutorial="filter-despesas">
                 <Button 
                   variant={statusFilter === 'todas' ? 'default' : 'outline'} 
                   size="sm" 

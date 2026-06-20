@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -484,7 +485,7 @@ import { FileText, Download } from 'lucide-react';
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">📊 Relatórios Financeiros</h2>
+          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">📊 Relatórios Financeiros</h2><SectionTourTrigger tourId="relatorios" /></div>
           <p className="text-muted-foreground mt-1">Visualize e analise suas finanças pessoais</p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -691,6 +692,7 @@ import { FileText, Download } from 'lucide-react';
         </CardHeader>
         <CardContent>
           {dadosRelatorio.length > 0 ? (
+            <div data-tutorial="charts">
             <ResponsiveContainer width="100%" height={400}>
               {selectedReport === 'categoria-receitas' || selectedReport === 'categoria-despesas' ? (
                 <BarChart data={dadosRelatorio}>
@@ -768,6 +770,7 @@ import { FileText, Download } from 'lucide-react';
                 </LineChart>
               )}
             </ResponsiveContainer>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-[400px] text-center">
               <p className="text-muted-foreground text-lg">📊 Nenhum dado disponível</p>
