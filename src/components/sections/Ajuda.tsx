@@ -1,17 +1,52 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Download, BarChart3, TrendingUp, TrendingDown, FolderOpen, FileText, Users, Target, DollarSign, Calendar, HelpCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { useProductTour } from '@/hooks/useProductTour';
-import { TourId } from '@/config/tourSteps';
+import { BUSINESS_ONLY_TOURS, TourId } from '@/config/tourSteps';
+import { useDashboard } from '@/hooks/useDashboard';
+import { getRouteForSection } from '@/constants/routes';
 
 const Ajuda = () => {
   const { startTour } = useProductTour();
+  const navigate = useNavigate();
+  const { currentDashboard } = useDashboard();
+  const isPersonalDashboard = currentDashboard?.type === 'personal';
+
+  // Map a tour id to the route that actually renders the elements the tour
+  // needs to highlight. Reopening a section tour from the Help center must
+  // first navigate to that page; otherwise the spotlight has nothing to find
+  // and falls back to the centered "floating box" mode.
+  const tourRouteSection: Record<Exclude<TourId, 'general'>, string> = {
+    dashboard: 'dashboard',
+    receitas: 'receitas',
+    despesas: 'despesas',
+    categorias: 'categorias',
+    metas: 'metas',
+    relatorios: 'relatorios',
+    'agentes-ia': 'agentes-ia',
+    impostos: 'impostos',
+    equipe: 'equipe',
+    fechamento: 'fechamento',
+  };
 
   const restartTutorial = (tourId: TourId) => {
-    startTour(tourId);
+    if (tourId === 'general') {
+      startTour(tourId);
+      return;
+    }
+    const section = tourRouteSection[tourId];
+    const target = section ? getRouteForSection(section) : null;
+    if (target && window.location.pathname !== target) {
+      navigate(target);
+      // Wait for the destination page to mount before opening the tour.
+      window.setTimeout(() => startTour(tourId), 350);
+    } else {
+      startTour(tourId);
+    }
   };
 
 
