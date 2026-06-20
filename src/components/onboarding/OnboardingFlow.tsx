@@ -645,3 +645,27 @@ const TermsCompleteStep: React.FC<{
     </div>
   </div>
 );
+
+// ───────────────────────────────────────────────────────────
+// Wrapper visual para as etapas opcionais reaproveitadas
+// (mantém o padrão tipográfico/espaçamento das demais etapas)
+// ───────────────────────────────────────────────────────────
+const OptionalStepWrapper: React.FC<{
+  icon: React.ReactNode;
+  eyebrow?: string;
+  children: React.ReactNode;
+}> = ({ icon, eyebrow, children }) => (
+  <div className="space-y-5 sm:space-y-6">
+    <div className="text-center space-y-2">
+      <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-1">
+        {icon}
+      </div>
+      {eyebrow && (
+        <span className="inline-block text-[10px] uppercase tracking-wider font-medium text-primary bg-primary/10 rounded-full px-2.5 py-0.5">
+          {eyebrow}
+        </span>
+      )}
+    </div>
+    <div className="onboarding-optional-step">{children}</div>
+  </div>
+);
