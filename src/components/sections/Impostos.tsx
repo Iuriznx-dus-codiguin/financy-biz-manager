@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -128,7 +129,7 @@ const Impostos = () => {
 
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Impostos e Taxas</h2>
+          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Impostos e Taxas</h2><SectionTourTrigger tourId="impostos" /></div>
           <p className="text-muted-foreground">Gerencie seus impostos e taxas de forma simples</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

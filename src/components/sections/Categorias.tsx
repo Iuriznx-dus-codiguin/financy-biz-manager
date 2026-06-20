@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -133,7 +134,7 @@ export function Categorias() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Categorias</h1>
+          <div className="flex items-center gap-1"><h1 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Categorias</h1><SectionTourTrigger tourId="categorias" /></div>
           <p className="text-muted-foreground">Gerencie suas categorias personalizadas de receitas e despesas</p>
         </div>
         

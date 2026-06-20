@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -154,7 +155,7 @@ const Receitas = () => {
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Receitas</h2>
+          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Receitas</h2><SectionTourTrigger tourId="receitas" /></div>
           <p className="text-muted-foreground">Controle completo das suas entradas de dinheiro</p>
         </div>
         <div className="flex items-center gap-2">
