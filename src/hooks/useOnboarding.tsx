@@ -65,13 +65,15 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!user) return;
 
     try {
-      // 1. Obter ou criar dashboard principal
+      // 1. Obter ou criar dashboard principal.
+      // Uso de `.maybeSingle()` para tratar a ausência de dashboard como resultado
+      // esperado (caso normal para usuário novo), sem gerar erro PGRST116 nos logs.
       const { data: existingDashboards } = await supabase
         .from('user_dashboards')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_default', true)
-        .single();
+        .maybeSingle();
 
       let mainDashboardId = existingDashboards?.id;
 
@@ -104,25 +106,11 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           .eq('id', mainDashboardId);
       }
 
-      // 2. Atualizar o perfil com o telefone se fornecido
+      // 2. Atualizar o perfil com o telefone se fornecido.
+      // A checagem de duplicata principal é feita no fluxo da UI (etapa 2 do onboarding).
+      // Aqui mantemos apenas a proteção contra condição de corrida via constraint de
+      // unicidade no banco — sem nova chamada de rede de verificação prévia.
       if (data.whatsapp) {
-        // Verificar se o telefone já está cadastrado em outra conta
-        const { data: existingPhone, error: checkError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('telefone', data.whatsapp)
-          .neq('id', user.id)
-          .maybeSingle();
-
-        if (checkError && checkError.code !== 'PGRST116') {
-          console.error('Erro ao verificar telefone:', checkError);
-          throw new Error('Erro ao verificar telefone');
-        }
-
-        if (existingPhone) {
-          throw new Error('Este número de telefone já está cadastrado em outra conta');
-        }
-
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
@@ -132,13 +120,11 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           .eq('id', user.id);
 
         if (profileError) {
-          console.error('Erro ao salvar telefone no perfil:', profileError);
-          
-          // Verificar se é erro de constraint de unicidade
+          // Race-condition: alguém cadastrou esse telefone entre a etapa 2 e aqui
           if (profileError.code === '23505') {
             throw new Error('Este número de telefone já está cadastrado');
           }
-          
+          console.error('Erro ao salvar telefone no perfil:', profileError);
           throw new Error('Erro ao salvar telefone');
         }
       }
