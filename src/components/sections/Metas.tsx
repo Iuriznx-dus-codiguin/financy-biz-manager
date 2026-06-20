@@ -185,7 +185,7 @@ const Metas = () => {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Nova Meta</Button>
+            <Button data-tutorial="add-meta-btn"><Plus className="h-4 w-4 mr-2" />Nova Meta</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

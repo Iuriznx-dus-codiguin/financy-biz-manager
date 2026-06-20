@@ -133,7 +133,7 @@ const Impostos = () => {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl">
+            <Button className="rounded-xl" data-tutorial="add-imposto-btn">
               <Plus className="mr-2 h-4 w-4" />
               Adicionar Imposto/Taxa
             </Button>

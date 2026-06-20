@@ -211,7 +211,7 @@ const Receitas = () => {
           />
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl">
+            <Button className="rounded-xl" data-tutorial="add-receita-btn">
               <Plus className="mr-2 h-4 w-4" />
               Nova Receita
             </Button>
@@ -452,7 +452,7 @@ const Receitas = () => {
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <CardTitle>Transações Recentes</CardTitle>
             <div className="flex flex-col md:flex-row gap-2">
-              <div className="flex gap-2">
+              <div className="flex gap-2" data-tutorial="filter-receitas">
                 <Button 
                   variant={statusFilter === 'todas' ? 'default' : 'outline'} 
                   size="sm" 

@@ -532,6 +532,7 @@ export const FinancyAIChat = () => {
           <div className="max-w-3xl mx-auto px-4 py-3">
             <div className="relative flex items-end gap-2 rounded-2xl border border-border bg-muted/30 px-3 py-2 focus-within:ring-2 focus-within:ring-ring focus-within:border-transparent transition-all">
               <textarea
+                data-tutorial="ai-input"
                 ref={inputRef}
                 value={input}
                 onChange={handleInputChange}

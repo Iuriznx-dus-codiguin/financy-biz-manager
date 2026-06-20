@@ -691,6 +691,7 @@ import { FileText, Download } from 'lucide-react';
         </CardHeader>
         <CardContent>
           {dadosRelatorio.length > 0 ? (
+            <div data-tutorial="charts">
             <ResponsiveContainer width="100%" height={400}>
               {selectedReport === 'categoria-receitas' || selectedReport === 'categoria-despesas' ? (
                 <BarChart data={dadosRelatorio}>

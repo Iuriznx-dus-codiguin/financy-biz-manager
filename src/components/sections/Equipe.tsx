@@ -274,7 +274,7 @@ const Equipe = () => {
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl">
+            <Button className="rounded-xl" data-tutorial="add-membro-btn">
               <UserPlus className="mr-2 h-4 w-4" />
               Adicionar Membro
             </Button>
