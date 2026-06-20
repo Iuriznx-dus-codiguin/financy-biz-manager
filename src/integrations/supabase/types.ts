@@ -1277,32 +1277,6 @@ export type Database = {
         }
         Returns: Json
       }
-      get_despesas_masked: {
-        Args: never
-        Returns: {
-          categoria: string
-          data: string
-          forma_pagamento: string
-          fornecedor_mascarado: string
-          id: number
-          status: string
-          user_id: string
-          valor_mascarado: string
-        }[]
-      }
-      get_receitas_masked: {
-        Args: never
-        Returns: {
-          categoria: string
-          cliente_mascarado: string
-          data: string
-          forma_pagamento: string
-          id: number
-          status: string
-          user_id: string
-          valor_mascarado: string
-        }[]
-      }
       get_user_main_dashboard: { Args: { p_user_id: string }; Returns: string }
       get_user_profile_data: {
         Args: { user_id: string }
