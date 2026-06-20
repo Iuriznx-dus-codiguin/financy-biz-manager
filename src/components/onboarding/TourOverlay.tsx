@@ -208,6 +208,20 @@ export const TourOverlay: React.FC = () => {
             stroke="hsl(var(--primary))"
             strokeWidth={2}
             style={{ pointerEvents: 'none' }}
+            className="tour-spotlight-pulse"
+          />
+          <rect
+            x={targetRect.left - 12}
+            y={targetRect.top - 12}
+            width={targetRect.width + 24}
+            height={targetRect.height + 24}
+            rx={10}
+            fill="none"
+            stroke="hsl(var(--primary))"
+            strokeWidth={2}
+            opacity={0.5}
+            style={{ pointerEvents: 'none' }}
+            className="tour-spotlight-pulse-outer"
           />
         </svg>
       ) : (

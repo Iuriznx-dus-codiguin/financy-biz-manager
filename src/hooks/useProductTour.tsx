@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { getTourSteps, TourId, TourStep } from '@/config/tourSteps';
+import { getTourSteps, TourId, TourStep, TourContext as TourCtx } from '@/config/tourSteps';
 import { useIsBelowLg, isBelowLgNow } from './use-mobile';
+import { useDashboard } from './useDashboard';
+import { useFeatureAccess } from './useFeatureAccess';
 
 
 interface ProductTourContextType {
@@ -23,14 +25,30 @@ interface ProductTourContextType {
 
 const ProductTourContext = createContext<ProductTourContextType | undefined>(undefined);
 
+// Escopo de "tour visto" por contexto (usuário + tipo de dashboard).
+// O tour 'general' é único por usuário; tours de seção variam por contexto pessoal/empresarial.
+const scopeKey = (tourId: TourId, dashboardType: 'personal' | 'business' | null | undefined): string => {
+  if (tourId === 'general') return tourId;
+  const prefix = dashboardType === 'business' ? 'business' : dashboardType === 'personal' ? 'personal' : 'global';
+  return `${prefix}:${tourId}`;
+};
+
 export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const isMobile = useIsBelowLg();
+  const { currentDashboard } = useDashboard();
+  const { isFeatureAvailable } = useFeatureAccess();
   const [seenTours, setSeenTours] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [currentTourId, setCurrentTourId] = useState<TourId | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const persistingRef = useRef(false);
+
+  const tourCtx: TourCtx = useMemo(() => ({
+    hasAdvancedIA: isFeatureAvailable('inteligencia_avancada'),
+    hasBasicIA: isFeatureAvailable('inteligencia_basica'),
+    hasMultiDashboard: isFeatureAvailable('multi_dashboard'),
+  }), [isFeatureAvailable]);
 
   useEffect(() => {
     if (!user) {
@@ -56,12 +74,13 @@ export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ c
     async (tourId: TourId, skipped: boolean) => {
       if (!user || persistingRef.current) return;
       persistingRef.current = true;
-      setSeenTours((prev) => new Set(prev).add(tourId));
+      const key = scopeKey(tourId, currentDashboard?.type);
+      setSeenTours((prev) => new Set(prev).add(key));
       try {
         await supabase.from('section_tutorials').upsert(
           {
             user_id: user.id,
-            section_name: tourId,
+            section_name: key,
             viewed_at: new Date().toISOString(),
             last_viewed: new Date().toISOString(),
             skipped,
@@ -75,21 +94,25 @@ export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ c
         persistingRef.current = false;
       }
     },
-    [user]
+    [user, currentDashboard]
   );
 
   const startTour = useCallback((tourId: TourId) => {
-    // Re-evaluate viewport at the moment the tour starts (not at mount time),
-    // so rotating the device or resizing the window before opening a tour
-    // still picks the correct mobile/desktop step set.
     const mobileNow = isBelowLgNow();
-    const steps = getTourSteps(tourId, mobileNow);
+    const steps = getTourSteps(tourId, mobileNow, tourCtx);
     if (!steps.length) return;
     setCurrentTourId(tourId);
     setCurrentStep(0);
-  }, []);
+  }, [tourCtx]);
 
-  const hasTourBeenSeen = useCallback((tourId: TourId) => seenTours.has(tourId), [seenTours]);
+  const hasTourBeenSeen = useCallback(
+    (tourId: TourId) => {
+      const key = scopeKey(tourId, currentDashboard?.type);
+      // Compatibilidade retro: rows antigas usavam apenas o tourId puro.
+      return seenTours.has(key) || seenTours.has(tourId);
+    },
+    [seenTours, currentDashboard]
+  );
 
   const close = useCallback(() => {
     setCurrentTourId(null);
@@ -98,14 +121,14 @@ export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const next = useCallback(() => {
     if (!currentTourId) return;
-    const steps = getTourSteps(currentTourId, isMobile);
+    const steps = getTourSteps(currentTourId, isMobile, tourCtx);
     if (currentStep < steps.length - 1) {
       setCurrentStep((s) => s + 1);
     } else {
       persistSeen(currentTourId, false);
       close();
     }
-  }, [currentTourId, currentStep, persistSeen, close]);
+  }, [currentTourId, currentStep, persistSeen, close, isMobile, tourCtx]);
 
   const prev = useCallback(() => {
     setCurrentStep((s) => Math.max(0, s - 1));
@@ -121,7 +144,6 @@ export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ c
     close();
   }, [currentTourId, persistSeen, close]);
 
-  // Keyboard
   useEffect(() => {
     if (!currentTourId) return;
     const handler = (e: KeyboardEvent) => {
@@ -133,7 +155,7 @@ export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return () => window.removeEventListener('keydown', handler);
   }, [currentTourId, next, prev, skip]);
 
-  const steps = currentTourId ? getTourSteps(currentTourId, isMobile) : [];
+  const steps = currentTourId ? getTourSteps(currentTourId, isMobile, tourCtx) : [];
   const currentStepData = steps[currentStep] || null;
 
   return (

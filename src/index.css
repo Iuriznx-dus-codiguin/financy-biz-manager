@@ -284,3 +284,22 @@ body:has(.auth-page) {
   justify-content: safe center !important;
 }
 
+
+/* Tour spotlight pulse — leve animação para guiar o olhar até o elemento destacado */
+@keyframes tour-spotlight-pulse {
+  0%, 100% { opacity: 1; stroke-width: 2; }
+  50%      { opacity: 0.6; stroke-width: 3; }
+}
+@keyframes tour-spotlight-pulse-outer {
+  0%, 100% { opacity: 0; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(1.015); }
+}
+.tour-spotlight-pulse {
+  animation: tour-spotlight-pulse 1.8s ease-in-out 0s 3;
+  transform-origin: center;
+}
+.tour-spotlight-pulse-outer {
+  animation: tour-spotlight-pulse-outer 1.8s ease-in-out 0s 3;
+  transform-origin: center;
+  transform-box: fill-box;
+}
