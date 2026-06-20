@@ -9,7 +9,9 @@ import { Progress } from '@/components/ui/progress';
 import { BrazilianPhoneInput } from '@/components/ui/BrazilianPhoneInput';
 import {
   ChevronLeft, ChevronRight, User, Building, Sparkles, MessageCircle,
-  AlertCircle, ShieldCheck, Wallet, TrendingUp, CheckCircle2
+  AlertCircle, ShieldCheck, Wallet, TrendingUp, CheckCircle2,
+  Instagram, Users as UsersIcon, Search as SearchIcon, Megaphone, MoreHorizontal,
+  PiggyBank, ListChecks, Target
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingData } from '@/types/onboarding';
@@ -20,6 +22,9 @@ import { validateAndNormalizePhone, savePhoneCorrection, type CorrectionType } f
 import { checkPhoneDuplicate } from '@/utils/phoneValidation';
 import { useAuth } from '@/hooks/useAuth';
 import financyLogo from '@/assets/financy-logo-new-dark.png';
+import { FinancialDataStep } from './FinancialDataStep';
+import { ExpenseSheetStep } from './ExpenseSheetStep';
+import { FinancialGoalStep } from './FinancialGoalStep';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>;
@@ -47,7 +52,17 @@ const REVENUE_RANGES = [
   { value: PREFER_NOT_SAY, label: 'Prefiro não informar' },
 ];
 
-const TOTAL_STEPS = 4;
+const HOW_DID_YOU_KNOW_OPTIONS = [
+  { value: 'redes_sociais', label: 'Redes sociais (Instagram, TikTok, etc.)', icon: Instagram },
+  { value: 'indicacao', label: 'Indicação de amigo', icon: UsersIcon },
+  { value: 'busca_google', label: 'Busca no Google', icon: SearchIcon },
+  { value: 'anuncio', label: 'Anúncio', icon: Megaphone },
+  { value: 'outro', label: 'Outro', icon: MoreHorizontal },
+];
+
+const TOTAL_STEPS = 7;
+// Etapas opcionais — usuário pode pular sem preencher.
+const OPTIONAL_STEPS = new Set([4, 5, 6]);
 
 export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const { toast } = useToast();
@@ -122,7 +137,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       case 3:
         if (data.user_type === 'pessoal') return !!data.salary_range;
         return !!data.revenue_range;
+      // Etapas 4, 5, 6 são totalmente opcionais — sempre pode avançar.
       case 4:
+      case 5:
+      case 6:
+        return true;
+      case 7:
         return !!data.termos_aceitos;
       default:
         return false;
@@ -167,11 +187,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     // Finalize
     setLoading(true);
     try {
+      // Envia os dados completos — incluindo etapas opcionais 4-6 (dados financeiros,
+      // planilha de gastos iniciais, meta financeira) e o canal de aquisição.
       const finalData: OnboardingData = {
         ...data,
         whatsapp: whatsappE164 || '',
-        how_did_you_know: '',
-        gastos_iniciais: [],
       };
       await onComplete(finalData);
 
@@ -260,6 +280,30 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                   />
                 )}
                 {step === 4 && (
+                  <OptionalStepWrapper
+                    icon={<PiggyBank className="w-6 h-6 text-primary" />}
+                    eyebrow="Etapa opcional"
+                  >
+                    <FinancialDataStep data={data} setData={setData} />
+                  </OptionalStepWrapper>
+                )}
+                {step === 5 && (
+                  <OptionalStepWrapper
+                    icon={<ListChecks className="w-6 h-6 text-primary" />}
+                    eyebrow="Etapa opcional"
+                  >
+                    <ExpenseSheetStep data={data} setData={setData} />
+                  </OptionalStepWrapper>
+                )}
+                {step === 6 && (
+                  <OptionalStepWrapper
+                    icon={<Target className="w-6 h-6 text-primary" />}
+                    eyebrow="Etapa opcional"
+                  >
+                    <FinancialGoalStep data={data} setData={setData} />
+                  </OptionalStepWrapper>
+                )}
+                {step === 7 && (
                   <TermsCompleteStep
                     accepted={!!data.termos_aceitos}
                     onToggle={() => setData({ ...data, termos_aceitos: !data.termos_aceitos })}
@@ -269,7 +313,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             </AnimatePresence>
 
             {/* Nav */}
-            <div className="flex items-center justify-between gap-3 pt-6 mt-6 sm:pt-8 sm:mt-8 border-t border-border/60">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 pt-6 mt-6 sm:pt-8 sm:mt-8 border-t border-border/60">
               {step > 1 ? (
                 <Button variant="ghost" onClick={goBack} disabled={loading} className="px-3 sm:px-5">
                   <ChevronLeft className="w-4 h-4 mr-1" />
@@ -279,17 +323,29 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 <div />
               )}
 
-              <Button
-                onClick={goNext}
-                disabled={!canProceed() || loading}
-                size="lg"
-                className="flex-1 sm:flex-none sm:min-w-[180px]"
-              >
-                {step === TOTAL_STEPS
-                  ? (loading ? 'Finalizando...' : 'Começar a usar')
-                  : 'Continuar'}
-                {step < TOTAL_STEPS && <ChevronRight className="w-4 h-4 ml-1" />}
-              </Button>
+              <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+                {OPTIONAL_STEPS.has(step) && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => setStep(step + 1)}
+                    disabled={loading}
+                    className="text-muted-foreground"
+                  >
+                    Pular etapa
+                  </Button>
+                )}
+                <Button
+                  onClick={goNext}
+                  disabled={!canProceed() || loading}
+                  size="lg"
+                  className="min-w-[160px] sm:min-w-[180px]"
+                >
+                  {step === TOTAL_STEPS
+                    ? (loading ? 'Finalizando...' : 'Começar a usar')
+                    : 'Continuar'}
+                  {step < TOTAL_STEPS && <ChevronRight className="w-4 h-4 ml-1" />}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -447,6 +503,31 @@ const IdentityStep: React.FC<{
           </p>
         </div>
 
+        <div>
+          <Label className="text-sm font-medium">
+            Como você conheceu a Financy? <span className="text-muted-foreground font-normal">(opcional)</span>
+          </Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1.5">
+            {HOW_DID_YOU_KNOW_OPTIONS.map((opt) => {
+              const Icon = opt.icon;
+              const selected = data.how_did_you_know === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setData((d) => ({ ...d, how_did_you_know: opt.value }))}
+                  className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-left text-xs sm:text-sm transition-all active:scale-[0.99]
+                    ${selected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40 hover:bg-muted/40'}`}
+                >
+                  <Icon className={`w-4 h-4 shrink-0 ${selected ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <span className="leading-tight">{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+
         {data.nome_preferido && (!isBusiness || data.nome_empresa) && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -562,5 +643,29 @@ const TermsCompleteStep: React.FC<{
         </span>
       </button>
     </div>
+  </div>
+);
+
+// ───────────────────────────────────────────────────────────
+// Wrapper visual para as etapas opcionais reaproveitadas
+// (mantém o padrão tipográfico/espaçamento das demais etapas)
+// ───────────────────────────────────────────────────────────
+const OptionalStepWrapper: React.FC<{
+  icon: React.ReactNode;
+  eyebrow?: string;
+  children: React.ReactNode;
+}> = ({ icon, eyebrow, children }) => (
+  <div className="space-y-5 sm:space-y-6">
+    <div className="text-center space-y-2">
+      <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-1">
+        {icon}
+      </div>
+      {eyebrow && (
+        <span className="inline-block text-[10px] uppercase tracking-wider font-medium text-primary bg-primary/10 rounded-full px-2.5 py-0.5">
+          {eyebrow}
+        </span>
+      )}
+    </div>
+    <div className="onboarding-optional-step">{children}</div>
   </div>
 );
