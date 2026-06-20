@@ -438,33 +438,37 @@ const Ajuda = () => {
               </div>
             </Button>
 
-            <Button 
-              variant="outline" 
-              className="w-full justify-start h-auto py-4"
-              onClick={() => restartTutorial('equipe')}
-            >
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5 text-indigo-600" />
-                <div className="text-left">
-                  <div className="font-semibold">Equipe</div>
-                  <div className="text-xs text-muted-foreground">Gerenciar membros</div>
+            {!isPersonalDashboard && (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start h-auto py-4"
+                onClick={() => restartTutorial('equipe')}
+              >
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-indigo-600" />
+                  <div className="text-left">
+                    <div className="font-semibold">Equipe</div>
+                    <div className="text-xs text-muted-foreground">Gerenciar membros</div>
+                  </div>
                 </div>
-              </div>
-            </Button>
+              </Button>
+            )}
 
-            <Button 
-              variant="outline" 
-              className="w-full justify-start h-auto py-4"
-              onClick={() => restartTutorial('fechamento')}
-            >
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-teal-600" />
-                <div className="text-left">
-                  <div className="font-semibold">Fechamento</div>
-                  <div className="text-xs text-muted-foreground">Fechar período</div>
+            {!isPersonalDashboard && (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start h-auto py-4"
+                onClick={() => restartTutorial('fechamento')}
+              >
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-teal-600" />
+                  <div className="text-left">
+                    <div className="font-semibold">Fechamento</div>
+                    <div className="text-xs text-muted-foreground">Fechar período</div>
+                  </div>
                 </div>
-              </div>
-            </Button>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
