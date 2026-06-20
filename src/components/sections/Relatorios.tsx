@@ -769,6 +769,7 @@ import { FileText, Download } from 'lucide-react';
                 </LineChart>
               )}
             </ResponsiveContainer>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-[400px] text-center">
               <p className="text-muted-foreground text-lg">📊 Nenhum dado disponível</p>
