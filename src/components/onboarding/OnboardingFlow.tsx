@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingData } from '@/types/onboarding';
-import confetti from 'canvas-confetti';
+// confetti removido: agora é disparado pelo AuthenticatedLayout via flag em sessionStorage
 import { motion, AnimatePresence } from 'framer-motion';
 import { requestGeneralTour } from '@/components/onboarding/ProductTour';
 import { validateAndNormalizePhone, savePhoneCorrection, type CorrectionType } from '@/utils/evolutionPhoneValidation';
