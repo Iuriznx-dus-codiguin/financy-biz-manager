@@ -64,13 +64,34 @@ const TOTAL_STEPS = 7;
 // Etapas opcionais — usuário pode pular sem preencher.
 const OPTIONAL_STEPS = new Set([4, 5, 6]);
 
+// Rascunho do onboarding em localStorage para sobreviver a fechar/abrir a aba.
+const DRAFT_KEY = 'financy-onboarding-draft';
+const CELEBRATE_FLAG = 'financy-onboarding-celebrate';
+
+interface OnboardingDraft {
+  step: number;
+  data: OnboardingData;
+  whatsappE164?: string;
+}
+
+function loadDraft(): OnboardingDraft | null {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem(DRAFT_KEY) : null;
+    if (!raw) return null;
+    return JSON.parse(raw) as OnboardingDraft;
+  } catch {
+    return null;
+  }
+}
+
 export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [step, setStep] = useState(1);
+  const draft = React.useMemo(() => loadDraft(), []);
+  const [step, setStep] = useState<number>(draft?.step ?? 1);
   const [loading, setLoading] = useState(false);
 
-  const [data, setData] = useState<OnboardingData>({
+  const [data, setData] = useState<OnboardingData>(draft?.data ?? {
     whatsapp: '',
     user_type: '',
     how_did_you_know: '',
@@ -83,20 +104,21 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   });
 
   // Phone state
-  const [whatsappE164, setWhatsappE164] = useState('');
+  const [whatsappE164, setWhatsappE164] = useState(draft?.whatsappE164 ?? '');
   const [isPhoneValid, setIsPhoneValid] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [phoneCorrections, setPhoneCorrections] = useState<CorrectionType[]>([]);
   const [phoneWarning, setPhoneWarning] = useState<string | null>(null);
 
-  const triggerConfetti = () => {
-    const end = Date.now() + 2000;
-    const tick = () => {
-      confetti({ particleCount: 40, spread: 80, origin: { y: 0.6 } });
-      if (Date.now() < end) requestAnimationFrame(tick);
-    };
-    tick();
-  };
+  // Persistir rascunho a cada mudança de step/data
+  React.useEffect(() => {
+    try {
+      const payload: OnboardingDraft = { step, data, whatsappE164 };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
+    } catch {
+      /* storage cheio/desabilitado — ignorar */
+    }
+  }, [step, data, whatsappE164]);
 
   const handlePhoneChange = (formatted: string, isValid: boolean, normalized: string) => {
     setData((d) => ({ ...d, whatsapp: formatted }));
