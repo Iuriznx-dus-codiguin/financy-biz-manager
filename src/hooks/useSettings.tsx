@@ -42,13 +42,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      
+
+      // Se o usuário já tem um tema definido manualmente em localStorage, não sobrescrever.
+      const userPickedTheme = !!localStorage.getItem('financy-ui-theme');
+
       const localSettings = localStorage.getItem('financy-settings');
       if (localSettings) {
         const parsed = JSON.parse(localSettings);
         const mergedSettings = { ...defaultSettings, ...parsed };
         setSettings(mergedSettings);
-        if (mergedSettings.tema !== theme) setTheme(mergedSettings.tema);
+        if (!userPickedTheme && mergedSettings.tema !== theme) setTheme(mergedSettings.tema);
       } else {
         setSettings({ ...defaultSettings, tema: theme });
       }
@@ -61,14 +64,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
 
         if (profile?.settings) {
-          // settings é jsonb no Supabase - pode ser objeto diretamente
           const remoteSettings = typeof profile.settings === 'string' 
             ? JSON.parse(profile.settings) 
             : profile.settings;
           const finalSettings = { ...defaultSettings, ...remoteSettings };
           setSettings(finalSettings);
           localStorage.setItem('financy-settings', JSON.stringify(finalSettings));
-          if (finalSettings.tema !== theme) setTheme(finalSettings.tema);
+          // Só aplicar tema remoto se o usuário ainda não tiver escolhido manualmente.
+          if (!userPickedTheme && finalSettings.tema !== theme) setTheme(finalSettings.tema);
         }
       }
     } catch (error) {

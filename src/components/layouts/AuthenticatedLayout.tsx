@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -10,27 +11,22 @@ import { MobileSidebar } from '@/components/MobileSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { SubscriptionBanners } from '@/components/SubscriptionBanners';
-import { FloatingWhatsAppButton } from '@/components/FloatingWhatsAppButton';
-import { LoadingScreen } from '@/components/LoadingScreen';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { ProductTour } from '@/components/onboarding/ProductTour';
 import {
-  ROUTE_TO_SECTION,
-  SECTION_TO_ROUTE,
-  ALLOWED_SECTIONS_WHEN_BLOCKED,
-  BUSINESS_ONLY_SECTIONS,
   isSectionAllowedWhenBlocked,
   isBusinessOnlySection,
   getRouteForSection,
   getSectionForRoute,
 } from '@/constants/routes';
 
+const CELEBRATE_FLAG = 'financy-onboarding-celebrate';
+
 export const AuthenticatedLayout = () => {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
   const { subscription, isSubscriptionExpired, loading: subscriptionLoading } = useUserSubscription();
   const { currentDashboard } = useDashboard();
-  const [showLoading, setShowLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -51,6 +47,44 @@ export const AuthenticatedLayout = () => {
     }
   }, [currentDashboard, activeSection, navigate]);
 
+  // Confetes pós-onboarding: a página já atualizou; agora soltamos o efeito
+  // de forma equilibrada em duas rajadas laterais, sem perder volume.
+  useEffect(() => {
+    if (authLoading || onboardingLoading) return;
+    if (!isOnboardingComplete) return;
+    if (typeof window === 'undefined') return;
+    if (sessionStorage.getItem(CELEBRATE_FLAG) !== '1') return;
+
+    sessionStorage.removeItem(CELEBRATE_FLAG);
+
+    const timer = window.setTimeout(() => {
+      const end = Date.now() + 1400;
+      const colors = ['#22c55e', '#10b981', '#14b8a6', '#facc15'];
+      const frame = () => {
+        confetti({
+          particleCount: 6,
+          angle: 60,
+          spread: 70,
+          startVelocity: 55,
+          origin: { x: 0.05, y: 0.7 },
+          colors,
+        });
+        confetti({
+          particleCount: 6,
+          angle: 120,
+          spread: 70,
+          startVelocity: 55,
+          origin: { x: 0.95, y: 0.7 },
+          colors,
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      };
+      frame();
+    }, 220);
+
+    return () => window.clearTimeout(timer);
+  }, [authLoading, onboardingLoading, isOnboardingComplete]);
+
   const handleSectionChange = (section: string) => {
     if (isBlocked && !isSectionAllowedWhenBlocked(section)) return;
     if (currentDashboard?.type === 'personal' && isBusinessOnlySection(section)) {
@@ -59,9 +93,6 @@ export const AuthenticatedLayout = () => {
     }
     navigate(getRouteForSection(section));
   };
-
-
-
 
   if (authLoading || onboardingLoading || subscriptionLoading) {
     return (
@@ -72,10 +103,6 @@ export const AuthenticatedLayout = () => {
         </div>
       </div>
     );
-  }
-
-  if (showLoading && user) {
-    return <LoadingScreen onComplete={() => setShowLoading(false)} />;
   }
 
   if (user && !isOnboardingComplete) {
@@ -120,7 +147,6 @@ export const AuthenticatedLayout = () => {
           </div>
         </div>
       </SidebarProvider>
-      <FloatingWhatsAppButton />
       <ProductTour />
     </div>
   );
