@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Building, User, AlertTriangle } from 'lucide-react';
+import { Building, User, AlertTriangle, Sparkles } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
@@ -19,64 +22,99 @@ interface DashboardCreateDialogProps {
   dashboardType?: 'personal' | 'business' | null;
 }
 
+interface FinalidadePreset {
+  value: string;
+  label: string;
+  /** Sugestão de nome para o dashboard ao escolher esta finalidade. */
+  suggestedName: string;
+}
+
+const PERSONAL_PRESETS: FinalidadePreset[] = [
+  { value: 'eu',       label: 'Eu',          suggestedName: 'Meu Perfil' },
+  { value: 'familia',  label: 'Família',     suggestedName: 'Família' },
+  { value: 'filho',    label: 'Filho(a)',    suggestedName: 'Filho(a)' },
+  { value: 'casa',     label: 'Casa',        suggestedName: 'Casa' },
+  { value: 'viagens',  label: 'Viagens',     suggestedName: 'Viagens' },
+  { value: 'outro',    label: 'Outro',       suggestedName: '' },
+];
+
+const BUSINESS_PRESETS: FinalidadePreset[] = [
+  { value: 'vendas',      label: 'Setor de Vendas',     suggestedName: 'Vendas' },
+  { value: 'transporte',  label: 'Setor de Transporte', suggestedName: 'Transporte' },
+  { value: 'marketing',   label: 'Marketing',           suggestedName: 'Marketing' },
+  { value: 'operacional', label: 'Operacional',         suggestedName: 'Operacional' },
+  { value: 'filial',      label: 'Filial',              suggestedName: 'Filial' },
+  { value: 'pessoal',     label: 'Pessoal do sócio',    suggestedName: 'Pessoal do sócio' },
+  { value: 'outro',       label: 'Outro',               suggestedName: '' },
+];
+
 export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ open, onOpenChange, dashboardType = null }) => {
-  const { dashboards, createDashboard } = useDashboard();
+  const { dashboards, createDashboard, setCurrentDashboard } = useDashboard();
   const { getLimits, subscriptionTier } = useFeatureAccess();
   const { user } = useAuth();
   const { toast } = useToast();
   const { isBusinessPlan } = useUserSubscription();
+  const navigate = useNavigate();
+
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [selectedType, setSelectedType] = useState<'personal' | 'business'>('personal');
+  const [selectedType, setSelectedType] = useState<'personal' | 'business'>(dashboardType ?? 'personal');
+  const [finalidade, setFinalidade] = useState<string>('');
+  const [nomeDashboard, setNomeDashboard] = useState<string>('');
 
   const limits = getLimits();
   const dashboardsRestantes = limits.maxProfiles === -1 ? 999 : limits.maxProfiles - dashboards.length;
   const isAtLimit = limits.maxProfiles !== -1 && dashboards.length >= limits.maxProfiles;
-  
-  // Planos empresariais podem criar perfis e empresas
-  // Planos pessoais só podem criar perfis
   const canCreateBusiness = isBusinessPlan();
+
+  const presets = useMemo(
+    () => (selectedType === 'business' ? BUSINESS_PRESETS : PERSONAL_PRESETS),
+    [selectedType]
+  );
+
+  // Quando muda tipo ou finalidade, sugere automaticamente o nome (sem sobrescrever
+  // se o usuário já digitou algo diferente da sugestão anterior).
+  useEffect(() => {
+    if (!finalidade) return;
+    const preset = presets.find(p => p.value === finalidade);
+    if (preset?.suggestedName) {
+      setNomeDashboard(prev => (prev && prev.trim().length > 0 ? prev : preset.suggestedName));
+    }
+  }, [finalidade, presets]);
+
+  // Reset ao fechar
+  useEffect(() => {
+    if (!open) {
+      setShowOnboarding(false);
+      setFinalidade('');
+      setNomeDashboard('');
+    }
+  }, [open]);
 
   const handleOnboardingComplete = async (data: OnboardingData) => {
     if (!user) return;
 
     try {
-      // Para empresas, usar nome_empresa; para perfis pessoais, usar nome_preferido
-      const dashboardName = selectedType === 'business' && data.nome_empresa
-        ? data.nome_empresa
-        : data.nome_preferido || `${selectedType === 'personal' ? 'Perfil' : 'Empresa'} ${dashboards.length + 1}`;
-      
+      const dashboardName =
+        (nomeDashboard && nomeDashboard.trim()) ||
+        (selectedType === 'business' && data.nome_empresa) ||
+        data.nome_preferido ||
+        `${selectedType === 'personal' ? 'Perfil' : 'Empresa'} ${dashboards.length + 1}`;
+
       // Criar o dashboard com o tipo selecionado
       await createDashboard(dashboardName, selectedType);
-      
-      // Buscar o dashboard recém-criado
+
+      // Buscar o dashboard recém-criado para popular dados auxiliares (despesas iniciais, meta)
       const { data: newDashboardData } = await supabase
         .from('user_dashboards')
         .select('*')
         .eq('user_id', user.id)
         .eq('name', dashboardName)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (newDashboardData) {
-        // Salvar dados do onboarding com o dashboard_id correto (usar upsert para evitar duplicatas)
-        const { error: onboardingError } = await supabase
-          .from('onboarding_data')
-          .upsert({
-            user_id: user.id,
-            user_type: data.user_type,
-            how_did_you_know: data.how_did_you_know,
-            salary_range: data.salary_range,
-            revenue_range: data.revenue_range,
-            nome_preferido: data.nome_preferido,
-            termos_aceitos: data.termos_aceitos
-          }, {
-            onConflict: 'user_id'
-          });
-
-        if (onboardingError) {
-          console.error('Erro ao salvar dados do onboarding:', onboardingError);
-        }
-
-        // Se tem gastos iniciais, criar despesas com o dashboard_id correto
+        // Se tem gastos iniciais, criar despesas vinculadas a este dashboard
         if (data.gastos_iniciais && data.gastos_iniciais.length > 0) {
           const despesas = data.gastos_iniciais.map(gasto => ({
             user_id: user.id,
@@ -89,55 +127,48 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
             fornecedor: ''
           }));
 
-          const { error: despesasError } = await supabase
-            .from('despesas')
-            .insert(despesas);
-
-          if (despesasError) {
-            console.error('Erro ao salvar despesas iniciais:', despesasError);
-          }
+          const { error: despesasError } = await supabase.from('despesas').insert(despesas);
+          if (despesasError) console.error('Erro ao salvar despesas iniciais:', despesasError);
         }
 
-        // Se tem meta financeira, criar meta com o dashboard_id correto
         if (data.meta_financeira && data.valor_meta) {
-          const { error: metaError } = await supabase
-            .from('metas')
-            .insert({
-              user_id: user.id,
-              dashboard_id: newDashboardData.id,
-              titulo: data.meta_financeira,
-              valor_meta: data.valor_meta,
-              valor_atual: 0,
-              progresso: 0,
-              prazo: data.prazo_meta || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-              categoria: 'financeira',
-              status: 'em_andamento',
-              cor: 'bg-blue-500'
-            });
-
-          if (metaError) {
-            console.error('Erro ao salvar meta financeira:', metaError);
-          }
+          const { error: metaError } = await supabase.from('metas').insert({
+            user_id: user.id,
+            dashboard_id: newDashboardData.id,
+            titulo: data.meta_financeira,
+            valor_meta: data.valor_meta,
+            valor_atual: 0,
+            progresso: 0,
+            prazo: data.prazo_meta || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            categoria: 'financeira',
+            status: 'em_andamento',
+            cor: 'bg-blue-500'
+          });
+          if (metaError) console.error('Erro ao salvar meta financeira:', metaError);
         }
 
-        // Recarregar dashboards usando método mais seguro
-        if (typeof window !== 'undefined') {
-          window.location.replace(window.location.pathname);
-        }
+        // Trocar para o novo dashboard sem reload — preserva o estado da app
+        setCurrentDashboard({
+          id: newDashboardData.id,
+          name: newDashboardData.name,
+          type: newDashboardData.type as 'personal' | 'business',
+          isDefault: newDashboardData.is_default,
+        });
       }
 
       setShowOnboarding(false);
       onOpenChange(false);
+      navigate('/dashboard');
       toast({
-        title: "Dashboard criado com sucesso!",
-        description: `${dashboardName} foi configurado e está pronto para uso.`,
+        title: 'Dashboard criado com sucesso!',
+        description: `${dashboardName} já está ativo e pronto para uso.`,
       });
     } catch (error) {
       console.error('Erro ao completar onboarding do novo dashboard:', error);
       toast({
-        title: "Erro",
-        description: "Houve um erro ao criar o novo dashboard. Tente novamente.",
-        variant: "destructive"
+        title: 'Erro',
+        description: 'Houve um erro ao criar o novo dashboard. Tente novamente.',
+        variant: 'destructive',
       });
     }
   };
@@ -147,25 +178,14 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
       <div
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
+          top: 0, left: 0,
+          width: '100vw', height: '100vh',
           backgroundColor: 'rgba(0, 0, 0, 0.8)',
           zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}
       >
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'hsl(var(--background))',
-            overflow: 'auto'
-          }}
-        >
+        <div style={{ width: '100%', height: '100%', backgroundColor: 'hsl(var(--background))', overflow: 'auto' }}>
           <OnboardingFlow onComplete={handleOnboardingComplete} skipPhoneStep={true} />
         </div>
       </div>,
@@ -179,57 +199,42 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building className="h-5 w-5" />
-            Criar Novo Dashboard
+            Criar novo dashboard
           </DialogTitle>
           <DialogDescription>
-            Crie um novo dashboard para organizar suas informações financeiras de forma separada.
+            Separe finanças por contexto — família, setores do negócio ou pessoal/empresarial — em um único plano.
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="space-y-4">
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Tem certeza que deseja criar mais um dashboard? Você poderá configurar todas as configurações iniciais novamente.
-            </AlertDescription>
-          </Alert>
 
-          <div className="bg-muted/50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Dashboards restantes:</span>
-              <span className="text-lg font-bold text-primary">{dashboardsRestantes}</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Baseado no seu plano atual
-            </p>
+        <div className="space-y-4">
+          <div className="bg-muted/50 p-3 rounded-lg flex items-center justify-between">
+            <span className="text-sm font-medium">Dashboards restantes</span>
+            <span className="text-lg font-bold text-primary">{dashboardsRestantes}</span>
           </div>
 
           {isAtLimit ? (
-            <div className="space-y-4">
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg dark:bg-amber-950/50 dark:border-amber-900">
-                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                  <AlertTriangle className="h-5 w-5" />
-                  <div>
-                    <p className="text-sm font-medium">Limite de perfis/empresas atingido</p>
-                    <p className="text-xs">
-                      Você atingiu o limite de {limits.maxProfiles} perfil/empresa para seu plano {subscriptionTier}. 
-                      Faça upgrade para criar mais perfis/empresas.
-                    </p>
-                  </div>
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg dark:bg-amber-950/50 dark:border-amber-900">
+              <div className="flex items-start gap-2 text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Limite atingido</p>
+                  <p className="text-xs">
+                    Seu plano {subscriptionTier} permite {limits.maxProfiles} dashboard(s). Faça upgrade para criar mais.
+                  </p>
                 </div>
               </div>
             </div>
           ) : (
             <>
-              {/* Seleção de tipo */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Tipo de {canCreateBusiness ? 'Perfil/Empresa' : 'Perfil'}</label>
+              {/* Tipo */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tipo</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <Button
                     variant={selectedType === 'personal' ? 'default' : 'outline'}
                     size="lg"
                     className="h-16 flex-col gap-1"
-                    onClick={() => setSelectedType('personal')}
+                    onClick={() => { setSelectedType('personal'); setFinalidade(''); }}
                   >
                     <User className="h-5 w-5" />
                     <span className="text-sm">Perfil</span>
@@ -240,7 +245,7 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
                       variant={selectedType === 'business' ? 'default' : 'outline'}
                       size="lg"
                       className="h-16 flex-col gap-1"
-                      onClick={() => setSelectedType('business')}
+                      onClick={() => { setSelectedType('business'); setFinalidade(''); }}
                     >
                       <Building className="h-5 w-5" />
                       <span className="text-sm">Empresa</span>
@@ -255,33 +260,70 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
                     >
                       <Building className="h-5 w-5" />
                       <span className="text-sm">Empresa</span>
-                      <span className="text-xs text-muted-foreground">Plano Empresarial</span>
+                      <span className="text-[10px] text-muted-foreground">Plano Empresarial</span>
                     </Button>
                   )}
                 </div>
-                
-                {!canCreateBusiness && (
-                  <p className="text-xs text-muted-foreground">
-                    💡 Empresas estão disponíveis apenas em planos empresariais. Faça upgrade para desbloquear!
-                  </p>
-                )}
               </div>
 
-              {/* Botão de criação com onboarding */}
+              {/* Finalidade — chips adaptativos */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  Finalidade <span className="text-muted-foreground font-normal">(opcional)</span>
+                </Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {presets.map(p => {
+                    const active = finalidade === p.value;
+                    return (
+                      <button
+                        key={p.value}
+                        type="button"
+                        onClick={() => setFinalidade(active ? '' : p.value)}
+                        className={`px-2.5 py-1 text-xs rounded-full border transition-colors
+                          ${active
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'}`}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {selectedType === 'business'
+                    ? 'Ex.: separar transporte de vendas, ou pessoal do sócio do operacional.'
+                    : 'Ex.: separar finanças da casa, da família ou das viagens.'}
+                </p>
+              </div>
+
+              {/* Nome */}
+              <div className="space-y-2">
+                <Label htmlFor="dashboard-name" className="text-sm font-medium">
+                  Nome do dashboard
+                </Label>
+                <Input
+                  id="dashboard-name"
+                  value={nomeDashboard}
+                  onChange={(e) => setNomeDashboard(e.target.value)}
+                  placeholder={selectedType === 'business' ? 'Ex: Setor de Vendas' : 'Ex: Família'}
+                  className="h-10"
+                />
+              </div>
+
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  Você fará uma configuração rápida em seguida. As finanças do novo dashboard ficam isoladas das demais.
+                </AlertDescription>
+              </Alert>
+
               <Button
                 size="lg"
-                className="w-full h-16"
-                onClick={() => {
-                  setShowOnboarding(true);
-                }}
+                className="w-full"
+                onClick={() => setShowOnboarding(true)}
               >
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  <div className="text-left">
-                    <div className="text-sm font-medium">Criar {selectedType === 'personal' ? 'Perfil' : 'Empresa'}</div>
-                    <div className="text-xs opacity-90">Configuração completa</div>
-                  </div>
-                </div>
+                Continuar configuração
               </Button>
             </>
           )}

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingData } from '@/types/onboarding';
-import confetti from 'canvas-confetti';
+// confetti removido: agora é disparado pelo AuthenticatedLayout via flag em sessionStorage
 import { motion, AnimatePresence } from 'framer-motion';
 import { requestGeneralTour } from '@/components/onboarding/ProductTour';
 import { validateAndNormalizePhone, savePhoneCorrection, type CorrectionType } from '@/utils/evolutionPhoneValidation';
@@ -64,13 +64,34 @@ const TOTAL_STEPS = 7;
 // Etapas opcionais — usuário pode pular sem preencher.
 const OPTIONAL_STEPS = new Set([4, 5, 6]);
 
+// Rascunho do onboarding em localStorage para sobreviver a fechar/abrir a aba.
+const DRAFT_KEY = 'financy-onboarding-draft';
+const CELEBRATE_FLAG = 'financy-onboarding-celebrate';
+
+interface OnboardingDraft {
+  step: number;
+  data: OnboardingData;
+  whatsappE164?: string;
+}
+
+function loadDraft(): OnboardingDraft | null {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem(DRAFT_KEY) : null;
+    if (!raw) return null;
+    return JSON.parse(raw) as OnboardingDraft;
+  } catch {
+    return null;
+  }
+}
+
 export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [step, setStep] = useState(1);
+  const draft = React.useMemo(() => loadDraft(), []);
+  const [step, setStep] = useState<number>(draft?.step ?? 1);
   const [loading, setLoading] = useState(false);
 
-  const [data, setData] = useState<OnboardingData>({
+  const [data, setData] = useState<OnboardingData>(draft?.data ?? {
     whatsapp: '',
     user_type: '',
     how_did_you_know: '',
@@ -83,20 +104,21 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
   });
 
   // Phone state
-  const [whatsappE164, setWhatsappE164] = useState('');
+  const [whatsappE164, setWhatsappE164] = useState(draft?.whatsappE164 ?? '');
   const [isPhoneValid, setIsPhoneValid] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [phoneCorrections, setPhoneCorrections] = useState<CorrectionType[]>([]);
   const [phoneWarning, setPhoneWarning] = useState<string | null>(null);
 
-  const triggerConfetti = () => {
-    const end = Date.now() + 2000;
-    const tick = () => {
-      confetti({ particleCount: 40, spread: 80, origin: { y: 0.6 } });
-      if (Date.now() < end) requestAnimationFrame(tick);
-    };
-    tick();
-  };
+  // Persistir rascunho a cada mudança de step/data
+  React.useEffect(() => {
+    try {
+      const payload: OnboardingDraft = { step, data, whatsappE164 };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
+    } catch {
+      /* storage cheio/desabilitado — ignorar */
+    }
+  }, [step, data, whatsappE164]);
 
   const handlePhoneChange = (formatted: string, isValid: boolean, normalized: string) => {
     setData((d) => ({ ...d, whatsapp: formatted }));
@@ -187,12 +209,14 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     // Finalize
     setLoading(true);
     try {
-      // Envia os dados completos — incluindo etapas opcionais 4-6 (dados financeiros,
-      // planilha de gastos iniciais, meta financeira) e o canal de aquisição.
       const finalData: OnboardingData = {
         ...data,
         whatsapp: whatsappE164 || '',
       };
+
+      // Sinalizar para o layout disparar os confetes APÓS a página atualizar.
+      try { sessionStorage.setItem(CELEBRATE_FLAG, '1'); } catch { /* ignore */ }
+
       await onComplete(finalData);
 
       if (user && phoneCorrections.length > 0 && whatsappE164) {
@@ -205,7 +229,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         );
       }
 
-      triggerConfetti();
+      // Limpar rascunho — onboarding concluído com sucesso.
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+
       requestGeneralTour();
       toast({
         title: '🎉 Bem-vindo ao Financy!',
@@ -244,8 +270,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
       {/* Conteúdo */}
       <main className="flex-1 w-full px-4 sm:px-6 py-4 sm:py-8 max-w-3xl mx-auto w-full">
-        <Card className="border-border/60 shadow-lg rounded-2xl overflow-hidden">
-          <CardContent className="p-5 sm:p-8 md:p-10">
+        <Card className="border-border/60 shadow-lg rounded-2xl overflow-visible">
+          <CardContent className="p-5 sm:p-8 md:p-10 overflow-visible">
             <AnimatePresence mode="wait">
               <motion.div
                 key={step}
@@ -253,6 +279,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -24 }}
                 transition={{ duration: 0.25 }}
+                style={{ pointerEvents: 'auto' }}
               >
                 {step === 1 && (
                   <WelcomeAccountStep

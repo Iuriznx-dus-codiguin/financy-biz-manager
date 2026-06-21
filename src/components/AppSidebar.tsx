@@ -35,7 +35,7 @@ interface AppSidebarProps {
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActiveSection, disabled = false }) => {
   const { state, setOpen } = useSidebar();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, toggleTheme } = useTheme();
   const { currentDashboard } = useDashboard();
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
   const shouldShowExpanded = isCollapsed && isHovered;
   
   const currentSection = getSectionForRoute(location.pathname);
-  const isDarkTheme = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDarkTheme = resolvedTheme === 'dark';
   const financyLogo = isDarkTheme ? financyLogoDark : financyLogoLight;
   const iconLogo = isDarkTheme ? iconLogoDark : iconLogoLight;
   const currentLogo = shouldShowExpanded ? financyLogo : (isCollapsed ? iconLogo : financyLogo);
@@ -56,7 +56,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
     return true;
   });
 
-  const handleThemeToggle = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+  const handleThemeToggle = () => toggleTheme();
   const handleMouseEnter = () => { setIsHovered(true); setOpen(true); };
   const handleMouseLeave = () => { setIsHovered(false); setTimeout(() => setOpen(false), 100); };
 
@@ -124,10 +124,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
           onClick={handleThemeToggle}
           className="w-full transition-all duration-300"
         >
-          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {isDarkTheme ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           {(shouldShowExpanded || !isCollapsed) && (
             <span className="ml-2 transition-opacity duration-300">
-              {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+              {isDarkTheme ? 'Modo Claro' : 'Modo Escuro'}
             </span>
           )}
         </Button>

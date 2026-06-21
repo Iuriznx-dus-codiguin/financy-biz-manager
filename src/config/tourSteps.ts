@@ -40,6 +40,15 @@ const generalDesktop: TourStep[] = [
     position: 'center',
   },
   {
+    id: 'g-dashboard-selector',
+    target: '[data-tutorial="dashboard-selector"]',
+    title: '🗂️ Seletor de Dashboards',
+    content:
+      'Aqui você troca entre seus perfis e empresas — e cria novos. Útil para separar finanças da família, setores do negócio (vendas, transporte, marketing…) ou misturar pessoal e empresarial num só plano.',
+    position: 'bottom',
+    badge: 'Importante',
+  },
+  {
     id: 'g-painel',
     target: '[data-tutorial="nav-painel"]',
     title: '📊 Painel',
@@ -92,7 +101,7 @@ const generalDesktop: TourStep[] = [
     target: '[data-tutorial="nav-agentes-ia"]',
     title: '🤖 IA Financeira',
     content:
-      'Seu assistente em português. Pergunte "quanto gastei este mês?" ou peça "registra R$150 em alimentação".',
+      'Seu assistente em português. Pergunte "quanto gastei este mês?" ou peça "registra R$150 em alimentação". Ele também substitui o suporte por WhatsApp para dúvidas do dia a dia.',
     position: 'right',
     badge: 'Destaque',
   },
@@ -111,14 +120,6 @@ const generalDesktop: TourStep[] = [
     content:
       'Perfil, preferências, notificações e gerenciamento da conta.',
     position: 'right',
-  },
-  {
-    id: 'g-whatsapp',
-    target: '[data-tutorial="whatsapp-button"]',
-    title: '💬 Suporte por WhatsApp',
-    content:
-      'Precisa de ajuda? Fale direto com nosso time pelo botão flutuante.',
-    position: 'left',
   },
   {
     id: 'g-finish',
@@ -184,17 +185,18 @@ const generalMobile: TourStep[] = [
     target: null,
     title: '🤖 IA Financeira',
     content:
-      'No menu acesse "IA Financeira". Pergunte em português: "quanto gastei este mês?" ou peça "registra R$150 em alimentação".',
+      'No menu acesse "IA Financeira". Pergunte em português: "quanto gastei este mês?" ou peça "registra R$150 em alimentação". Também é seu canal de suporte do dia a dia.',
     position: 'center',
     badge: 'Destaque',
   },
   {
-    id: 'gm-whatsapp',
-    target: '[data-tutorial="whatsapp-button"]',
-    title: '💬 Suporte',
+    id: 'gm-dashboard-selector',
+    target: '[data-tutorial="dashboard-selector"]',
+    title: '🗂️ Seletor de Dashboards',
     content:
-      'Use o botão flutuante para falar com nosso time pelo WhatsApp.',
-    position: 'top',
+      'Toque aqui para alternar entre perfis e empresas — ou criar novos. Ideal para família, setores do negócio ou misturar pessoal e empresarial.',
+    position: 'bottom',
+    badge: 'Importante',
   },
   {
     id: 'gm-finish',
