@@ -209,12 +209,14 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     // Finalize
     setLoading(true);
     try {
-      // Envia os dados completos — incluindo etapas opcionais 4-6 (dados financeiros,
-      // planilha de gastos iniciais, meta financeira) e o canal de aquisição.
       const finalData: OnboardingData = {
         ...data,
         whatsapp: whatsappE164 || '',
       };
+
+      // Sinalizar para o layout disparar os confetes APÓS a página atualizar.
+      try { sessionStorage.setItem(CELEBRATE_FLAG, '1'); } catch { /* ignore */ }
+
       await onComplete(finalData);
 
       if (user && phoneCorrections.length > 0 && whatsappE164) {
@@ -227,7 +229,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         );
       }
 
-      triggerConfetti();
+      // Limpar rascunho — onboarding concluído com sucesso.
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+
       requestGeneralTour();
       toast({
         title: '🎉 Bem-vindo ao Financy!',
