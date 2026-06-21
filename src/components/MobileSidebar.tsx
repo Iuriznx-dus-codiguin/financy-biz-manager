@@ -41,7 +41,7 @@ interface MobileSidebarProps {
 }
 
 export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, setActiveSection, disabled = false }) => {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, toggleTheme } = useTheme();
   const { currentDashboard } = useDashboard();
   const { subscriptionTier } = useSubscription();
   const { user, signOut } = useAuth();
@@ -49,7 +49,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
   const navigate = useNavigate();
   const location = useLocation();
   
-  const isDarkTheme = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDarkTheme = resolvedTheme === 'dark';
   const financyLogo = isDarkTheme ? financyLogoDark : financyLogoLight;
   const currentSection = getSectionForRoute(location.pathname);
 
@@ -63,7 +63,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
       .map(item => item.id)
   );
 
-  const handleThemeToggle = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+  const handleThemeToggle = () => toggleTheme();
 
   const handleMenuClick = (section: string) => {
     if (disabled && !isSectionAllowedWhenBlocked(section)) return;
