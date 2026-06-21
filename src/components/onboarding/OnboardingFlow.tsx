@@ -270,8 +270,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
       {/* Conteúdo */}
       <main className="flex-1 w-full px-4 sm:px-6 py-4 sm:py-8 max-w-3xl mx-auto w-full">
-        <Card className="border-border/60 shadow-lg rounded-2xl overflow-hidden">
-          <CardContent className="p-5 sm:p-8 md:p-10">
+        <Card className="border-border/60 shadow-lg rounded-2xl overflow-visible">
+          <CardContent className="p-5 sm:p-8 md:p-10 overflow-visible">
             <AnimatePresence mode="wait">
               <motion.div
                 key={step}
@@ -279,6 +279,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -24 }}
                 transition={{ duration: 0.25 }}
+                style={{ pointerEvents: 'auto' }}
               >
                 {step === 1 && (
                   <WelcomeAccountStep
