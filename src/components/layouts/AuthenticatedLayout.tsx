@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import confetti from 'canvas-confetti';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -13,6 +12,7 @@ import Footer from '@/components/Footer';
 import { SubscriptionBanners } from '@/components/SubscriptionBanners';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { ProductTour } from '@/components/onboarding/ProductTour';
+import { celebrate } from '@/utils/celebration';
 import {
   isSectionAllowedWhenBlocked,
   isBusinessOnlySection,
