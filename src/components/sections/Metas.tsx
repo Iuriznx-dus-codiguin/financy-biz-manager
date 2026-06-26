@@ -179,16 +179,16 @@ const Metas = () => {
   return (
     <div className="space-y-6">
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Target className="h-6 w-6 text-primary" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center space-x-2 min-w-0">
+          <Target className="h-6 w-6 text-primary shrink-0" />
           <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold font-display tracking-tight">Metas Financeiras</h2><SectionTourTrigger tourId="metas" /></div>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button data-tutorial="add-meta-btn"><Plus className="h-4 w-4 mr-2" />Nova Meta</Button>
+            <Button data-tutorial="add-meta-btn" className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Nova Meta</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Criar Nova Meta</DialogTitle>
               <DialogDescription>Defina uma nova meta financeira com valor, prazo e categoria.</DialogDescription>
