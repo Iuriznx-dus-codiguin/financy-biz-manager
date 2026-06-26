@@ -142,6 +142,32 @@ export const useCategoriasPersonalizadas = () => {
     }
   };
 
+  /**
+   * Conta quantas transações (receitas + despesas) ainda referenciam a categoria.
+   * Útil para alertar o usuário antes de remover.
+   */
+  const contarUsoCategoria = async (categoriaNome: string): Promise<number> => {
+    if (!user) return 0;
+    try {
+      const [{ count: receitasCount }, { count: despesasCount }] = await Promise.all([
+        supabase
+          .from('receitas')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('categoria', categoriaNome),
+        supabase
+          .from('despesas')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('categoria', categoriaNome),
+      ]);
+      return (receitasCount || 0) + (despesasCount || 0);
+    } catch (e) {
+      console.error('Erro ao contar uso de categoria:', e);
+      return 0;
+    }
+  };
+
   const removerCategoria = async (id: string) => {
     if (!user) return;
 
@@ -153,7 +179,7 @@ export const useCategoriasPersonalizadas = () => {
         .eq('user_id', user.id);
 
       if (error) throw error;
-      
+
       setCategorias(prev => prev.filter(cat => cat.id !== id));
       toast({
         title: "Sucesso",
@@ -193,6 +219,7 @@ export const useCategoriasPersonalizadas = () => {
     adicionarCategoria,
     atualizarCategoria,
     removerCategoria,
+    contarUsoCategoria,
     getCategoriasParaTipo,
     getCategoriasPorCor,
     refetch: fetchCategorias

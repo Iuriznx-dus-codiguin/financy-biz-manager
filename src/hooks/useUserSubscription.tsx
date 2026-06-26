@@ -188,6 +188,22 @@ export const useUserSubscription = () => {
     return isExpired;
   };
 
+  /**
+   * Helper centralizado: indica se o acesso do usuário deve estar bloqueado
+   * (sem assinatura ativa, expirada, pendente ou cancelada). Usado pelo
+   * layout, sidebar e guards para evitar lógica duplicada.
+   */
+  const isBlocked = (): boolean => {
+    if (!subscription) return true;
+    if (isDeveloperTier(subscription)) return false;
+    if (isSubscriptionExpired()) return true;
+    if (!subscription.subscription_type) return true;
+    if (subscription.status === 'pending_payment') return true;
+    if (subscription.status === 'cancelled') return true;
+    if (subscription.status !== 'active') return true;
+    return false;
+  };
+
   const isFreeTrial = (): boolean => {
     // Teste grátis foi removido da plataforma; mantido como no-op para compat.
     return false;
@@ -295,6 +311,7 @@ export const useUserSubscription = () => {
     hasFeature,
     getFeatureLimit,
     isSubscriptionExpired,
+    isBlocked,
     isFreeTrial,
     isPendingPayment,
     isPremium,

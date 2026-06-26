@@ -125,21 +125,21 @@ const Impostos = () => {
   const impostosVencidos = impostos.filter(imposto => !imposto.pago && new Date(imposto.vencimento) < new Date());
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-6 sm:space-y-8">
 
-      <div className="flex justify-between items-center">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <div className="min-w-0">
           <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Impostos e Taxas</h2><SectionTourTrigger tourId="impostos" /></div>
           <p className="text-muted-foreground">Gerencie seus impostos e taxas de forma simples</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl" data-tutorial="add-imposto-btn">
+            <Button className="rounded-xl w-full sm:w-auto" data-tutorial="add-imposto-btn">
               <Plus className="mr-2 h-4 w-4" />
               Adicionar Imposto/Taxa
             </Button>
           </DialogTrigger>
-          <DialogContent className="rounded-2xl">
+          <DialogContent className="rounded-2xl max-w-[95vw] sm:max-w-lg max-h-[90dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Adicionar Novo Imposto ou Taxa</DialogTitle>
             </DialogHeader>
@@ -260,7 +260,7 @@ const Impostos = () => {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -338,98 +338,100 @@ const Impostos = () => {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Recorrência</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="text-right">Valor Calculado</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-center">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {impostos.map((imposto) => {
-                  const valorCalculado = imposto.valorTipo === 'porcentagem' 
-                    ? totalReceitas * (imposto.valor / 100)
-                    : imposto.valor;
-                  
-                  return (
-                    <TableRow key={imposto.id}>
-                      <TableCell className="capitalize">{imposto.tipo}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span>{imposto.descricao}</span>
-                          {imposto.recorrente && imposto.tipo_recorrencia && (
-                            <Badge variant="secondary" className="w-fit mt-1 text-xs">
-                              <Repeat className="h-3 w-3 mr-1" />
-                              {imposto.tipo_recorrencia}
+            <div className="w-full overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Recorrência</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Valor Calculado</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead className="text-center">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {impostos.map((imposto) => {
+                    const valorCalculado = imposto.valorTipo === 'porcentagem'
+                      ? totalReceitas * (imposto.valor / 100)
+                      : imposto.valor;
+
+                    return (
+                      <TableRow key={imposto.id}>
+                        <TableCell className="capitalize">{imposto.tipo}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span>{imposto.descricao}</span>
+                            {imposto.recorrente && imposto.tipo_recorrencia && (
+                              <Badge variant="secondary" className="w-fit mt-1 text-xs">
+                                <Repeat className="h-3 w-3 mr-1" />
+                                {imposto.tipo_recorrencia}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span>{new Date(imposto.vencimento).toLocaleDateString('pt-BR')}</span>
+                            {imposto.proxima_data && (
+                              <span className="text-xs text-muted-foreground">
+                                Próx: {new Date(imposto.proxima_data).toLocaleDateString('pt-BR')}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="capitalize">
+                          {imposto.recorrente ? (
+                            <Badge variant="outline" className="text-xs">
+                              Recorrente
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs">
+                              Único
                             </Badge>
                           )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span>{new Date(imposto.vencimento).toLocaleDateString('pt-BR')}</span>
-                          {imposto.proxima_data && (
-                            <span className="text-xs text-muted-foreground">
-                              Próx: {new Date(imposto.proxima_data).toLocaleDateString('pt-BR')}
-                            </span>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {imposto.valorTipo === 'porcentagem' ? `${imposto.valor}%` : `R$ ${imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                        </TableCell>
+                        <TableCell className="text-right font-bold">
+                          R$ {valorCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {imposto.pago ? (
+                            <CheckCircle className="h-5 w-5 text-success mx-auto" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-destructive mx-auto" />
                           )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="capitalize">
-                        {imposto.recorrente ? (
-                          <Badge variant="outline" className="text-xs">
-                            Recorrente
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">
-                            Único
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {imposto.valorTipo === 'porcentagem' ? `${imposto.valor}%` : `R$ ${imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                      </TableCell>
-                      <TableCell className="text-right font-bold">
-                        R$ {valorCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {imposto.pago ? (
-                          <CheckCircle className="h-5 w-5 text-success mx-auto" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-destructive mx-auto" />
-                        )}
-                      </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex justify-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => togglePago(imposto.id, imposto.pago)}
-                          className="rounded-lg"
-                        >
-                          {imposto.pago ? 'Marcar Pendente' : 'Marcar Pago'}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteImposto(imposto.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => togglePago(imposto.id, imposto.pago)}
+                              className="rounded-lg whitespace-nowrap"
+                            >
+                              {imposto.pago ? 'Marcar Pendente' : 'Marcar Pago'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteImposto(imposto.id)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

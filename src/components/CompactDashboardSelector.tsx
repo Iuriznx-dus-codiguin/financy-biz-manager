@@ -32,10 +32,16 @@ export const CompactDashboardSelector = () => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2 h-8 px-3 text-xs" data-tutorial="dashboard-selector">
-            <Briefcase className="h-3 w-3" />
-            {currentDashboard.name}
-            <ChevronDown className="h-3 w-3" />
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 h-8 px-3 text-xs max-w-[180px] sm:max-w-[240px]"
+            data-tutorial="dashboard-selector"
+            title={currentDashboard.name}
+          >
+            <Briefcase className="h-3 w-3 shrink-0" />
+            <span className="truncate">{currentDashboard.name}</span>
+            <ChevronDown className="h-3 w-3 shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64 p-2">

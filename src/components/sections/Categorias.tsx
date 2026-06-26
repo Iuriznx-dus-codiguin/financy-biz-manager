@@ -31,11 +31,12 @@ const coresDisponiveis = [
 ];
 
 export function Categorias() {
-  const { categorias, loading, adicionarCategoria, atualizarCategoria, removerCategoria } = useCategoriasPersonalizadas();
+  const { categorias, loading, adicionarCategoria, atualizarCategoria, removerCategoria, contarUsoCategoria } = useCategoriasPersonalizadas();
   const { despesas, receitas } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState<CategoriaPersonalizada | null>(null);
   const [deletingCategoria, setDeletingCategoria] = useState<CategoriaPersonalizada | null>(null);
+  const [deletingUsageCount, setDeletingUsageCount] = useState<number | null>(null);
   const [novaCategoria, setNovaCategoria] = useState({
     nome: '',
     tipo: 'despesa' as 'receita' | 'despesa' | 'ambos',
@@ -109,14 +110,18 @@ export function Categorias() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (categoria: CategoriaPersonalizada) => {
+  const handleDelete = async (categoria: CategoriaPersonalizada) => {
     setDeletingCategoria(categoria);
+    setDeletingUsageCount(null);
+    const count = await contarUsoCategoria(categoria.nome);
+    setDeletingUsageCount(count);
   };
 
   const confirmDelete = async () => {
     if (deletingCategoria) {
       await removerCategoria(deletingCategoria.id);
       setDeletingCategoria(null);
+      setDeletingUsageCount(null);
     }
   };
 
@@ -130,10 +135,10 @@ export function Categorias() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-4 lg:p-6 space-y-6">
 
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
           <div className="flex items-center gap-1"><h1 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Categorias</h1><SectionTourTrigger tourId="categorias" /></div>
           <p className="text-muted-foreground">Gerencie suas categorias personalizadas de receitas e despesas</p>
         </div>
@@ -358,17 +363,34 @@ export function Categorias() {
         </Card>
       )}
 
-      <AlertDialog open={!!deletingCategoria} onOpenChange={(open) => !open && setDeletingCategoria(null)}>
+      <AlertDialog open={!!deletingCategoria} onOpenChange={(open) => { if (!open) { setDeletingCategoria(null); setDeletingUsageCount(null); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remover categoria?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover a categoria "{deletingCategoria?.nome}"? Esta ação não pode ser desfeita.
+              {deletingUsageCount === null && (
+                <>Verificando uso da categoria "{deletingCategoria?.nome}"...</>
+              )}
+              {deletingUsageCount !== null && deletingUsageCount > 0 && (
+                <>
+                  A categoria <strong>"{deletingCategoria?.nome}"</strong> está vinculada a{' '}
+                  <strong>{deletingUsageCount}</strong> transação(ões). Ao remover, as transações
+                  permanecem com o nome da categoria salvo, mas ela deixa de aparecer no seletor.
+                  Esta ação não pode ser desfeita.
+                </>
+              )}
+              {deletingUsageCount === 0 && (
+                <>Tem certeza que deseja remover a categoria "{deletingCategoria?.nome}"? Esta ação não pode ser desfeita.</>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deletingUsageCount === null}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Remover
             </AlertDialogAction>
           </AlertDialogFooter>
