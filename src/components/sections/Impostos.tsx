@@ -125,21 +125,21 @@ const Impostos = () => {
   const impostosVencidos = impostos.filter(imposto => !imposto.pago && new Date(imposto.vencimento) < new Date());
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-6 sm:space-y-8">
 
-      <div className="flex justify-between items-center">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <div className="min-w-0">
           <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Impostos e Taxas</h2><SectionTourTrigger tourId="impostos" /></div>
           <p className="text-muted-foreground">Gerencie seus impostos e taxas de forma simples</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl" data-tutorial="add-imposto-btn">
+            <Button className="rounded-xl w-full sm:w-auto" data-tutorial="add-imposto-btn">
               <Plus className="mr-2 h-4 w-4" />
               Adicionar Imposto/Taxa
             </Button>
           </DialogTrigger>
-          <DialogContent className="rounded-2xl">
+          <DialogContent className="rounded-2xl max-w-[95vw] sm:max-w-lg max-h-[90dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Adicionar Novo Imposto ou Taxa</DialogTitle>
             </DialogHeader>
