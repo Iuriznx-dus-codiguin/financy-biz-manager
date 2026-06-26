@@ -110,14 +110,18 @@ export function Categorias() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (categoria: CategoriaPersonalizada) => {
+  const handleDelete = async (categoria: CategoriaPersonalizada) => {
     setDeletingCategoria(categoria);
+    setDeletingUsageCount(null);
+    const count = await contarUsoCategoria(categoria.nome);
+    setDeletingUsageCount(count);
   };
 
   const confirmDelete = async () => {
     if (deletingCategoria) {
       await removerCategoria(deletingCategoria.id);
       setDeletingCategoria(null);
+      setDeletingUsageCount(null);
     }
   };
 
