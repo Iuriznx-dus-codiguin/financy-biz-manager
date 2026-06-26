@@ -363,17 +363,34 @@ export function Categorias() {
         </Card>
       )}
 
-      <AlertDialog open={!!deletingCategoria} onOpenChange={(open) => !open && setDeletingCategoria(null)}>
+      <AlertDialog open={!!deletingCategoria} onOpenChange={(open) => { if (!open) { setDeletingCategoria(null); setDeletingUsageCount(null); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remover categoria?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover a categoria "{deletingCategoria?.nome}"? Esta ação não pode ser desfeita.
+              {deletingUsageCount === null && (
+                <>Verificando uso da categoria "{deletingCategoria?.nome}"...</>
+              )}
+              {deletingUsageCount !== null && deletingUsageCount > 0 && (
+                <>
+                  A categoria <strong>"{deletingCategoria?.nome}"</strong> está vinculada a{' '}
+                  <strong>{deletingUsageCount}</strong> transação(ões). Ao remover, as transações
+                  permanecem com o nome da categoria salvo, mas ela deixa de aparecer no seletor.
+                  Esta ação não pode ser desfeita.
+                </>
+              )}
+              {deletingUsageCount === 0 && (
+                <>Tem certeza que deseja remover a categoria "{deletingCategoria?.nome}"? Esta ação não pode ser desfeita.</>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deletingUsageCount === null}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Remover
             </AlertDialogAction>
           </AlertDialogFooter>
