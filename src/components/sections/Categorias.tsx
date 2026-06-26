@@ -31,11 +31,12 @@ const coresDisponiveis = [
 ];
 
 export function Categorias() {
-  const { categorias, loading, adicionarCategoria, atualizarCategoria, removerCategoria } = useCategoriasPersonalizadas();
+  const { categorias, loading, adicionarCategoria, atualizarCategoria, removerCategoria, contarUsoCategoria } = useCategoriasPersonalizadas();
   const { despesas, receitas } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState<CategoriaPersonalizada | null>(null);
   const [deletingCategoria, setDeletingCategoria] = useState<CategoriaPersonalizada | null>(null);
+  const [deletingUsageCount, setDeletingUsageCount] = useState<number | null>(null);
   const [novaCategoria, setNovaCategoria] = useState({
     nome: '',
     tipo: 'despesa' as 'receita' | 'despesa' | 'ambos',
