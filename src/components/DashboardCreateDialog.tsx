@@ -1,20 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Building, User, AlertTriangle, Sparkles } from 'lucide-react';
+import { Building, User, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
-import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
-import { OnboardingData } from '@/types/onboarding';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { celebrate } from '@/utils/celebration';
 
 interface DashboardCreateDialogProps {
   open: boolean;
@@ -48,18 +44,30 @@ const BUSINESS_PRESETS: FinalidadePreset[] = [
   { value: 'outro',       label: 'Outro',               suggestedName: '' },
 ];
 
+const NAME_MAX = 40;
+
+/** Gera nome único acrescentando " 2", " 3"... quando já existe um igual (case-insensitive). */
+function ensureUniqueName(desired: string, existing: string[]): string {
+  const norm = (s: string) => s.trim().toLowerCase();
+  const taken = new Set(existing.map(norm));
+  if (!taken.has(norm(desired))) return desired.trim();
+
+  let i = 2;
+  while (taken.has(norm(`${desired} ${i}`))) i++;
+  return `${desired.trim()} ${i}`;
+}
+
 export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ open, onOpenChange, dashboardType = null }) => {
-  const { dashboards, createDashboard, setCurrentDashboard } = useDashboard();
+  const { dashboards, createDashboard } = useDashboard();
   const { getLimits, subscriptionTier } = useFeatureAccess();
-  const { user } = useAuth();
   const { toast } = useToast();
   const { isBusinessPlan } = useUserSubscription();
   const navigate = useNavigate();
 
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedType, setSelectedType] = useState<'personal' | 'business'>(dashboardType ?? 'personal');
   const [finalidade, setFinalidade] = useState<string>('');
   const [nomeDashboard, setNomeDashboard] = useState<string>('');
+  const [submitting, setSubmitting] = useState(false);
 
   const limits = getLimits();
   const dashboardsRestantes = limits.maxProfiles === -1 ? 999 : limits.maxProfiles - dashboards.length;
@@ -71,8 +79,7 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
     [selectedType]
   );
 
-  // Quando muda tipo ou finalidade, sugere automaticamente o nome (sem sobrescrever
-  // se o usuário já digitou algo diferente da sugestão anterior).
+  // Sugere nome ao escolher uma finalidade (sem sobrescrever o que o usuário já digitou).
   useEffect(() => {
     if (!finalidade) return;
     const preset = presets.find(p => p.value === finalidade);
@@ -81,117 +88,73 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
     }
   }, [finalidade, presets]);
 
-  // Reset ao fechar
+  // Reset ao fechar / sincroniza com prop dashboardType ao abrir
   useEffect(() => {
     if (!open) {
-      setShowOnboarding(false);
       setFinalidade('');
       setNomeDashboard('');
+      setSubmitting(false);
+      return;
     }
-  }, [open]);
+    if (dashboardType) setSelectedType(dashboardType);
+  }, [open, dashboardType]);
 
-  const handleOnboardingComplete = async (data: OnboardingData) => {
-    if (!user) return;
+  const fallbackName = () =>
+    selectedType === 'personal'
+      ? `Perfil ${dashboards.length + 1}`
+      : `Empresa ${dashboards.length + 1}`;
 
-    try {
-      const dashboardName =
-        (nomeDashboard && nomeDashboard.trim()) ||
-        (selectedType === 'business' && data.nome_empresa) ||
-        data.nome_preferido ||
-        `${selectedType === 'personal' ? 'Perfil' : 'Empresa'} ${dashboards.length + 1}`;
+  const handleCreate = async () => {
+    if (submitting || isAtLimit) return;
 
-      // Criar o dashboard com o tipo selecionado
-      await createDashboard(dashboardName, selectedType);
-
-      // Buscar o dashboard recém-criado para popular dados auxiliares (despesas iniciais, meta)
-      const { data: newDashboardData } = await supabase
-        .from('user_dashboards')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('name', dashboardName)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (newDashboardData) {
-        // Se tem gastos iniciais, criar despesas vinculadas a este dashboard
-        if (data.gastos_iniciais && data.gastos_iniciais.length > 0) {
-          const despesas = data.gastos_iniciais.map(gasto => ({
-            user_id: user.id,
-            dashboard_id: newDashboardData.id,
-            descricao: gasto.descricao,
-            categoria: gasto.categoria,
-            valor: gasto.valor_mensal,
-            data: new Date().toISOString().split('T')[0],
-            forma_pagamento: gasto.forma_pagamento || 'dinheiro',
-            fornecedor: ''
-          }));
-
-          const { error: despesasError } = await supabase.from('despesas').insert(despesas);
-          if (despesasError) console.error('Erro ao salvar despesas iniciais:', despesasError);
-        }
-
-        if (data.meta_financeira && data.valor_meta) {
-          const { error: metaError } = await supabase.from('metas').insert({
-            user_id: user.id,
-            dashboard_id: newDashboardData.id,
-            titulo: data.meta_financeira,
-            valor_meta: data.valor_meta,
-            valor_atual: 0,
-            progresso: 0,
-            prazo: data.prazo_meta || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            categoria: 'financeira',
-            status: 'em_andamento',
-            cor: 'bg-blue-500'
-          });
-          if (metaError) console.error('Erro ao salvar meta financeira:', metaError);
-        }
-
-        // Trocar para o novo dashboard sem reload — preserva o estado da app
-        setCurrentDashboard({
-          id: newDashboardData.id,
-          name: newDashboardData.name,
-          type: newDashboardData.type as 'personal' | 'business',
-          isDefault: newDashboardData.is_default,
-        });
-      }
-
-      setShowOnboarding(false);
-      onOpenChange(false);
-      navigate('/dashboard');
+    const trimmed = (nomeDashboard || '').trim();
+    if (trimmed.length > NAME_MAX) {
       toast({
-        title: 'Dashboard criado com sucesso!',
-        description: `${dashboardName} já está ativo e pronto para uso.`,
-      });
-    } catch (error) {
-      console.error('Erro ao completar onboarding do novo dashboard:', error);
-      toast({
-        title: 'Erro',
-        description: 'Houve um erro ao criar o novo dashboard. Tente novamente.',
+        title: 'Nome muito longo',
+        description: `Use no máximo ${NAME_MAX} caracteres.`,
         variant: 'destructive',
       });
+      return;
+    }
+
+    const baseName = trimmed.length > 0 ? trimmed : fallbackName();
+    const finalName = ensureUniqueName(baseName, dashboards.map(d => d.name));
+    const renamed = finalName !== baseName;
+
+    if (selectedType === 'business' && !canCreateBusiness) {
+      toast({
+        title: 'Plano Empresarial necessário',
+        description: 'Faça upgrade para criar dashboards empresariais.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await createDashboard(finalName, selectedType);
+
+      celebrate({ dedupeKey: `dashboard-created:${finalName}:${Date.now()}`, delay: 250 });
+      toast({
+        title: 'Dashboard criado!',
+        description: renamed
+          ? `Já existia um "${baseName}", então criamos "${finalName}".`
+          : `"${finalName}" já está ativo e pronto para uso.`,
+      });
+
+      onOpenChange(false);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Erro ao criar dashboard:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível criar o dashboard. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
-
-  if (showOnboarding) {
-    return createPortal(
-      <div
-        style={{
-          position: 'fixed',
-          top: 0, left: 0,
-          width: '100vw', height: '100vh',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}
-      >
-        <div style={{ width: '100%', height: '100%', backgroundColor: 'hsl(var(--background))', overflow: 'auto' }}>
-          <OnboardingFlow onComplete={handleOnboardingComplete} skipPhoneStep={true} />
-        </div>
-      </div>,
-      document.body
-    );
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -305,31 +268,43 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
                 <Input
                   id="dashboard-name"
                   value={nomeDashboard}
-                  onChange={(e) => setNomeDashboard(e.target.value)}
+                  onChange={(e) => setNomeDashboard(e.target.value.slice(0, NAME_MAX))}
                   placeholder={selectedType === 'business' ? 'Ex: Setor de Vendas' : 'Ex: Família'}
                   className="h-10"
+                  maxLength={NAME_MAX}
                 />
+                <p className="text-[11px] text-muted-foreground">
+                  Se ficar vazio, usaremos <strong>{fallbackName()}</strong>. Nomes duplicados recebem um sufixo automático.
+                </p>
               </div>
 
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  Você fará uma configuração rápida em seguida. As finanças do novo dashboard ficam isoladas das demais.
+                  As finanças do novo dashboard ficam <strong>totalmente isoladas</strong> das demais — ideal para família, filiais ou setores.
                 </AlertDescription>
               </Alert>
 
               <Button
                 size="lg"
                 className="w-full"
-                onClick={() => setShowOnboarding(true)}
+                onClick={handleCreate}
+                disabled={submitting}
               >
-                Continuar configuração
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  'Criar dashboard'
+                )}
               </Button>
             </>
           )}
 
           <div className="flex justify-end">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
               Cancelar
             </Button>
           </div>
