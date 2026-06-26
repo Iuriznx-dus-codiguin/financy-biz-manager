@@ -15,7 +15,10 @@ import { FileText, Download } from 'lucide-react';
 
   const Relatorios = () => {
   const [selectedReport, setSelectedReport] = useState('mensal');
-  const [timeFilter, setTimeFilter] = useState('este-mes');
+  const [timeFilter, setTimeFilter] = useState(() => {
+    if (typeof window === 'undefined') return 'este-mes';
+    try { return window.localStorage.getItem('financy-filter:relatorios') || 'este-mes'; } catch { return 'este-mes'; }
+  });
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportKey, setReportKey] = useState(0); // Para forçar atualização
   const { receitas, despesas, impostos } = useAppContext();
