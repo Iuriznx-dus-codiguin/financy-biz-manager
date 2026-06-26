@@ -25,7 +25,7 @@ const CELEBRATE_FLAG = 'financy-onboarding-celebrate';
 export const AuthenticatedLayout = () => {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
-  const { subscription, isSubscriptionExpired, loading: subscriptionLoading } = useUserSubscription();
+  const { isBlocked: isSubscriptionBlocked, loading: subscriptionLoading } = useUserSubscription();
   const { currentDashboard } = useDashboard();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,12 +33,7 @@ export const AuthenticatedLayout = () => {
   usePaymentSuccess();
 
   const activeSection = getSectionForRoute(location.pathname);
-  const isBlocked = !!(user && subscription && (
-    isSubscriptionExpired() ||
-    !subscription.subscription_type ||
-    subscription.status === 'pending_payment' ||
-    subscription.status === 'cancelled'
-  ));
+  const isBlocked = !!user && isSubscriptionBlocked();
 
   // Bloquear navegação para seções empresariais se dashboard é pessoal
   useEffect(() => {
