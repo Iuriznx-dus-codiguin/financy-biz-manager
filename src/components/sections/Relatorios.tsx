@@ -626,7 +626,7 @@ import { FileText, Download } from 'lucide-react';
               </SelectContent>
             </Select>
             
-            <TimeFilter value={timeFilter} onChange={setTimeFilter} showIcon={false} />
+            <TimeFilter value={timeFilter} onChange={setTimeFilter} showIcon={false} persistKey="relatorios" />
             
             <Button 
               className="rounded-xl" 
