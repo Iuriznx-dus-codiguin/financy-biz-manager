@@ -2,6 +2,8 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { celebrate } from '@/utils/celebration';
+import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -18,15 +20,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Detecta confirmação de email via hash do Supabase (#type=signup&access_token=...)
+    const rawHash = typeof window !== 'undefined' ? window.location.hash : '';
+    const hashParams = new URLSearchParams(rawHash.startsWith('#') ? rawHash.slice(1) : rawHash);
+    const justConfirmedEmail = hashParams.get('type') === 'signup';
+
     // Configurar listener de mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // Auth state changed - logging removed for security
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        if (event === 'SIGNED_IN' && session?.user && justConfirmedEmail) {
+          celebrate({ dedupeKey: `email-confirmed:${session.user.id}`, delay: 600 });
+          toast({
+            title: '✅ Email confirmado!',
+            description: 'Bem-vindo(a) ao Financy. Vamos configurar sua conta.',
+            duration: 6000,
+          });
+        }
       }
     );
+
 
     // Verificar sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {

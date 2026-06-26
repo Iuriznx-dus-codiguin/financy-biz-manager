@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import confetti from 'canvas-confetti';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -13,6 +12,7 @@ import Footer from '@/components/Footer';
 import { SubscriptionBanners } from '@/components/SubscriptionBanners';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { ProductTour } from '@/components/onboarding/ProductTour';
+import { celebrate } from '@/utils/celebration';
 import {
   isSectionAllowedWhenBlocked,
   isBusinessOnlySection,
@@ -48,7 +48,7 @@ export const AuthenticatedLayout = () => {
   }, [currentDashboard, activeSection, navigate]);
 
   // Confetes pós-onboarding: a página já atualizou; agora soltamos o efeito
-  // de forma equilibrada em duas rajadas laterais, sem perder volume.
+  // de forma equilibrada — duas rajadas laterais simétricas, dispara uma única vez.
   useEffect(() => {
     if (authLoading || onboardingLoading) return;
     if (!isOnboardingComplete) return;
@@ -56,34 +56,8 @@ export const AuthenticatedLayout = () => {
     if (sessionStorage.getItem(CELEBRATE_FLAG) !== '1') return;
 
     sessionStorage.removeItem(CELEBRATE_FLAG);
-
-    const timer = window.setTimeout(() => {
-      const end = Date.now() + 1400;
-      const colors = ['#22c55e', '#10b981', '#14b8a6', '#facc15'];
-      const frame = () => {
-        confetti({
-          particleCount: 6,
-          angle: 60,
-          spread: 70,
-          startVelocity: 55,
-          origin: { x: 0.05, y: 0.7 },
-          colors,
-        });
-        confetti({
-          particleCount: 6,
-          angle: 120,
-          spread: 70,
-          startVelocity: 55,
-          origin: { x: 0.95, y: 0.7 },
-          colors,
-        });
-        if (Date.now() < end) requestAnimationFrame(frame);
-      };
-      frame();
-    }, 220);
-
-    return () => window.clearTimeout(timer);
-  }, [authLoading, onboardingLoading, isOnboardingComplete]);
+    celebrate({ dedupeKey: `onboarding:${user?.id ?? 'anon'}`, delay: 240 });
+  }, [authLoading, onboardingLoading, isOnboardingComplete, user?.id]);
 
   const handleSectionChange = (section: string) => {
     if (isBlocked && !isSectionAllowedWhenBlocked(section)) return;
