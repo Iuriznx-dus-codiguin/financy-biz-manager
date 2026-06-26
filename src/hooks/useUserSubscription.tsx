@@ -311,6 +311,7 @@ export const useUserSubscription = () => {
     hasFeature,
     getFeatureLimit,
     isSubscriptionExpired,
+    isBlocked,
     isFreeTrial,
     isPendingPayment,
     isPremium,
