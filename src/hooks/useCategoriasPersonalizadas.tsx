@@ -219,6 +219,7 @@ export const useCategoriasPersonalizadas = () => {
     adicionarCategoria,
     atualizarCategoria,
     removerCategoria,
+    contarUsoCategoria,
     getCategoriasParaTipo,
     getCategoriasPorCor,
     refetch: fetchCategorias
