@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
 
 const Metas = () => {
-  const { metas, addMeta, updateMeta, deleteMeta } = useAppContext();
+  const { metas, addMeta, updateMeta, deleteMeta, loading } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteMetaId, setDeleteMetaId] = useState<string | null>(null);

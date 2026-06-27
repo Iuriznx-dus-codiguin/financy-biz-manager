@@ -17,7 +17,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { Badge } from '@/components/ui/badge';
 
 const Impostos = () => {
-  const { impostos, addImposto, updateImposto, deleteImposto, receitas } = useAppContext();
+  const { impostos, addImposto, updateImposto, deleteImposto, receitas, loading } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [novoImposto, setNovoImposto] = useState({

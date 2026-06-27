@@ -21,7 +21,7 @@ import { FileText, Download } from 'lucide-react';
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportKey, setReportKey] = useState(0); // Para forçar atualização
-  const { receitas, despesas, impostos } = useAppContext();
+  const { receitas, despesas, impostos, loading } = useAppContext();
 
   // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
