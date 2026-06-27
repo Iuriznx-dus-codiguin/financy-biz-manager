@@ -120,7 +120,6 @@ export function Categorias() {
   const confirmDelete = async () => {
     if (!deletingCategoria) return;
     if (deletingUsageCount && deletingUsageCount > 0) {
-      // Bloqueio: não permitir excluir categorias em uso
       const { toast: sonnerToast } = await import('sonner');
       sonnerToast.error('Não é possível remover esta categoria', {
         description: `Existem ${deletingUsageCount} transação(ões) vinculadas. Reatribua-as antes de remover.`,
