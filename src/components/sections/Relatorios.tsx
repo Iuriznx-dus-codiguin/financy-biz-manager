@@ -484,9 +484,9 @@ import { FileText, Download } from 'lucide-react';
   };
 
   if (loading) {
-    const { SectionSkeleton } = require('@/components/ui/section-skeleton');
     return <SectionSkeleton rows={6} />;
   }
+
 
   return (
     <section id="relatorios" className="space-y-8">

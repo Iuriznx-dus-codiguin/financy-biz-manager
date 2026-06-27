@@ -177,9 +177,9 @@ const Metas = () => {
   );
 
   if (loading) {
-    const { SectionSkeleton } = require('@/components/ui/section-skeleton');
     return <SectionSkeleton rows={4} />;
   }
+
 
   return (
     <div className="space-y-6">

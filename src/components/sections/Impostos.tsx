@@ -125,9 +125,9 @@ const Impostos = () => {
   const impostosVencidos = impostos.filter(imposto => !imposto.pago && new Date(imposto.vencimento) < new Date());
 
   if (loading) {
-    const { SectionSkeleton } = require('@/components/ui/section-skeleton');
     return <SectionSkeleton rows={6} />;
   }
+
 
   return (
     <section className="space-y-6 sm:space-y-8">
