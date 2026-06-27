@@ -1,3 +1,4 @@
+import { SectionSkeleton } from '@/components/ui/section-skeleton';
 
 import React, { useState } from 'react';
 import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
