@@ -1,3 +1,4 @@
+import { SectionSkeleton } from '@/components/ui/section-skeleton';
 
 import React, { useState, useMemo } from 'react';
 import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
@@ -21,7 +22,7 @@ import { FileText, Download } from 'lucide-react';
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportKey, setReportKey] = useState(0); // Para forçar atualização
-  const { receitas, despesas, impostos } = useAppContext();
+  const { receitas, despesas, impostos, loading } = useAppContext();
 
   // Filtrar dados baseado no filtro de tempo
   const filteredReceitas = receitas.filter(r => isDateInRange(r.data, timeFilter));
@@ -483,6 +484,11 @@ import { FileText, Download } from 'lucide-react';
     }
   };
 
+  if (loading) {
+    return <SectionSkeleton rows={6} />;
+  }
+
+
   return (
     <section id="relatorios" className="space-y-8">
 
@@ -740,21 +746,23 @@ import { FileText, Download } from 'lucide-react';
                   <Line type="monotone" dataKey="liquido" stroke="#3B82F6" strokeWidth={3} name="Saldo" dot={{ r: 4 }} />
                 </LineChart>
               ) : selectedReport === 'analise-impostos' ? (
-                <div className="space-y-3">
-                  {dadosRelatorio.map((imposto: any, index: number) => (
-                    <div key={index} className="flex justify-between items-center p-4 border-2 rounded-xl hover:shadow-md transition-all">
-                      <div className="flex-1">
-                        <p className="font-bold text-base">{imposto.tipo}</p>
-                        <p className="text-sm text-muted-foreground mt-1">📅 Vencimento: {new Date(imposto.vencimento).toLocaleDateString('pt-BR')}</p>
+                <div className="overflow-x-auto">
+                  <div className="space-y-3 min-w-[480px]">
+                    {dadosRelatorio.map((imposto: any, index: number) => (
+                      <div key={index} className="flex justify-between items-center gap-3 p-4 border-2 rounded-xl hover:shadow-md transition-all">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-base truncate">{imposto.tipo}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">📅 Vencimento: {new Date(imposto.vencimento).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold text-base sm:text-lg whitespace-nowrap">R$ {imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          <p className={`text-xs sm:text-sm font-semibold mt-1 ${imposto.status === 'Pago' ? 'text-success' : 'text-warning'}`}>
+                            {imposto.status === 'Pago' ? '✅ Pago' : '⏰ Pendente'}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-lg">R$ {imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                        <p className={`text-sm font-semibold mt-1 ${imposto.status === 'Pago' ? 'text-success' : 'text-warning'}`}>
-                          {imposto.status === 'Pago' ? '✅ Pago' : '⏰ Pendente'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <LineChart data={dadosRelatorio}>

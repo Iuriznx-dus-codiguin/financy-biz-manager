@@ -1,3 +1,4 @@
+import { SectionSkeleton } from '@/components/ui/section-skeleton';
 import React, { useState } from 'react';
 import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +18,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { Badge } from '@/components/ui/badge';
 
 const Impostos = () => {
-  const { impostos, addImposto, updateImposto, deleteImposto, receitas } = useAppContext();
+  const { impostos, addImposto, updateImposto, deleteImposto, receitas, loading } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [novoImposto, setNovoImposto] = useState({
@@ -123,6 +124,11 @@ const Impostos = () => {
   
   const impostosPagos = impostos.filter(imposto => imposto.pago);
   const impostosVencidos = impostos.filter(imposto => !imposto.pago && new Date(imposto.vencimento) < new Date());
+
+  if (loading) {
+    return <SectionSkeleton rows={6} />;
+  }
+
 
   return (
     <section className="space-y-6 sm:space-y-8">

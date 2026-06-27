@@ -1,3 +1,4 @@
+import { SectionSkeleton } from '@/components/ui/section-skeleton';
 
 import React, { useState } from 'react';
 import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
@@ -24,7 +25,7 @@ import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
 
 const Metas = () => {
-  const { metas, addMeta, updateMeta, deleteMeta } = useAppContext();
+  const { metas, addMeta, updateMeta, deleteMeta, loading } = useAppContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteMetaId, setDeleteMetaId] = useState<string | null>(null);
@@ -175,6 +176,11 @@ const Metas = () => {
       </div>
     </div>
   );
+
+  if (loading) {
+    return <SectionSkeleton rows={4} />;
+  }
+
 
   return (
     <div className="space-y-6">

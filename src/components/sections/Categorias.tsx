@@ -118,11 +118,17 @@ export function Categorias() {
   };
 
   const confirmDelete = async () => {
-    if (deletingCategoria) {
-      await removerCategoria(deletingCategoria.id);
-      setDeletingCategoria(null);
-      setDeletingUsageCount(null);
+    if (!deletingCategoria) return;
+    if (deletingUsageCount && deletingUsageCount > 0) {
+      const { toast: sonnerToast } = await import('sonner');
+      sonnerToast.error('Não é possível remover esta categoria', {
+        description: `Existem ${deletingUsageCount} transação(ões) vinculadas. Reatribua-as antes de remover.`,
+      });
+      return;
     }
+    await removerCategoria(deletingCategoria.id);
+    setDeletingCategoria(null);
+    setDeletingUsageCount(null);
   };
 
   const getIcon = (iconName: string) => {
@@ -131,7 +137,16 @@ export function Categorias() {
   };
 
   if (loading) {
-    return <div className="p-6">Carregando categorias...</div>;
+    return (
+      <div className="p-3 sm:p-4 lg:p-6 space-y-6">
+        <div className="h-8 w-48 rounded-md bg-muted animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-32 rounded-xl bg-muted animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -372,12 +387,11 @@ export function Categorias() {
                 <>Verificando uso da categoria "{deletingCategoria?.nome}"...</>
               )}
               {deletingUsageCount !== null && deletingUsageCount > 0 && (
-                <>
-                  A categoria <strong>"{deletingCategoria?.nome}"</strong> está vinculada a{' '}
-                  <strong>{deletingUsageCount}</strong> transação(ões). Ao remover, as transações
-                  permanecem com o nome da categoria salvo, mas ela deixa de aparecer no seletor.
-                  Esta ação não pode ser desfeita.
-                </>
+                <span className="text-destructive">
+                  Esta categoria está vinculada a <strong>{deletingUsageCount}</strong> transação(ões)
+                  e <strong>não pode ser removida</strong>. Reatribua ou exclua as transações
+                  associadas antes de tentar novamente.
+                </span>
               )}
               {deletingUsageCount === 0 && (
                 <>Tem certeza que deseja remover a categoria "{deletingCategoria?.nome}"? Esta ação não pode ser desfeita.</>
@@ -388,7 +402,7 @@ export function Categorias() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              disabled={deletingUsageCount === null}
+              disabled={deletingUsageCount === null || (deletingUsageCount ?? 0) > 0}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remover
