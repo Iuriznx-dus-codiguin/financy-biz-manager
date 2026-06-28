@@ -808,6 +808,7 @@ export type Database = {
       }
       receitas: {
         Row: {
+          cakto_transaction_id: string | null
           categoria: string
           categoria_personalizada: string | null
           cliente: string | null
@@ -826,6 +827,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          cakto_transaction_id?: string | null
           categoria: string
           categoria_personalizada?: string | null
           cliente?: string | null
@@ -844,6 +846,7 @@ export type Database = {
           valor: number
         }
         Update: {
+          cakto_transaction_id?: string | null
           categoria?: string
           categoria_personalizada?: string | null
           cliente?: string | null
