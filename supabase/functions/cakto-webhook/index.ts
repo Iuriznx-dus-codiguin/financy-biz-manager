@@ -159,8 +159,16 @@ const PLAN_ALIASES: Record<string, string> = {
 };
 
 const APPROVED_STATUSES = new Set(['approved', 'paid', 'completed', 'success', 'active', 'payment_approved', 'purchase_approved']);
-const APPROVED_EVENTS = new Set(['purchase_approved', 'payment.approved', 'payment_approved', 'order.paid', 'subscription.renewed', 'subscription_renewed']);
-const CANCELLATION_EVENTS = new Set(['subscription.cancelled', 'subscription_canceled', 'subscription.cancelled', 'subscription_canceled', 'purchase_refunded', 'payment.refunded', 'refund.approved', 'chargeback.created', 'subscription.expired']);
+const APPROVED_EVENTS = new Set(['purchase_approved', 'payment_approved', 'order_paid', 'subscription_renewed']);
+const CANCELLATION_EVENTS = new Set([
+  'subscription_cancelled',
+  'subscription_canceled',
+  'purchase_refunded',
+  'payment_refunded',
+  'refund_approved',
+  'chargeback_created',
+  'subscription_expired',
+]);
 const CANCELLATION_STATUSES = new Set(['cancelled', 'canceled', 'refunded', 'chargeback', 'expired', 'inactive']);
 
 function jsonResponse(body: JsonObject, status = 200): Response {
