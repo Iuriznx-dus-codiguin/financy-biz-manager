@@ -1,109 +1,61 @@
-# Sprint de aprimoramentos MVP
+## Diagnóstico atual
 
-**Escopo**: responsividade mobile/tablet + ferramentas/funcionalidades + lógica/consistência de dados.
-**Profundidade**: polish + refinos de lógica (sem refatoração estrutural).
-**Intocáveis**: Onboarding, Auth/Login, Tour/Tutorial.
+A função `cakto-webhook` está publicada e os segredos obrigatórios existem. O teste sem autenticação retorna 401 corretamente, então o endpoint está ativo. O erro 500 informado indica que a requisição autenticada chega na função, mas alguma etapa interna está falhando e hoje o `safeHandler` mascara a causa como `Erro interno do servidor`.
 
----
+Pontos frágeis encontrados no código atual:
+- O plano é identificado usando o `payload` raiz, mas os dados reais do produto podem estar dentro de `payload.data`; isso pode gerar `Plano não identificado` e virar 500.
+- A busca de usuário usa `.single()` em `profiles`; se o cliente pagar antes de existir perfil, se houver email com capitalização diferente ou se o email vier em outro campo do payload, o webhook falha com 500.
+- O insert em `receitas` não envia `dashboard_id`; triggers não aparecem ativos na leitura atual, então a receita pode falhar se alguma regra/índice depender disso.
+- A função não é idempotente: retries do Cakto podem duplicar receita/notificação ou falhar em conflitos.
+- Eventos diferentes de pagamento aprovado são tratados genericamente; cancelamento, reembolso, chargeback e renovação podem não atualizar a assinatura corretamente.
+- Os logs atuais não expõem um código de erro operacional seguro para saber exatamente qual etapa falhou sem depender de stack trace.
 
-## 1. Responsividade mobile/tablet
+## Plano de correção
 
-**Tabelas e listas** (Receitas, Despesas, Impostos, Equipe, Metas, Categorias)
-- Padronizar wrappers com `overflow-x-auto` + `min-w-` interno, evitando scroll horizontal da página inteira.
-- Em telas <640px, converter linhas longas para cards empilhados (padrão já existe em algumas seções; replicar).
-- Ajustar paddings (`p-3 sm:p-4 lg:p-6`) e remover larguras fixas que estouram em 360px.
+1. **Fortalecer parsing do payload Cakto**
+   - Normalizar o payload para um objeto interno único com: evento, status, email, valor, transação, produto e metadados.
+   - Procurar dados tanto no objeto raiz quanto em `data`, `customer`, `product`, `offer`, `payment`, `subscription` e variações comuns.
+   - Normalizar email em lowercase/trim.
 
-**Headers de seção**
-- Padronizar: título + descrição + ações (botões/dropdowns) com `flex-col sm:flex-row` e `gap-3`.
-- `SectionTourTrigger` sempre alinhado à direita do título.
+2. **Corrigir identificação do plano**
+   - Fazer `identifyPlan` receber os dados normalizados, não apenas o payload raiz.
+   - Usar `metadata.plan_id`, `product.name`, `offer.name`, `product_name` e possíveis slugs/códigos.
+   - Para plano não identificado, retornar erro 422 com mensagem operacional segura, não 500.
 
-**Diálogos e Sheets**
-- Garantir `max-h-[90dvh] overflow-y-auto` em todos os Dialogs com formulários longos.
-- Em mobile, trocar Dialogs grandes (Despesas/Receitas) por Sheet `side="bottom"` quando viewport <640px.
+3. **Evitar falhas quando o usuário ainda não tem perfil**
+   - Buscar perfil por email normalizado.
+   - Se não existir perfil, não quebrar com 500: registrar o evento como recebido/não aplicado e responder 202/200 com motivo claro, para o Cakto não considerar falha técnica.
+   - Se existir mais de um perfil por email, escolher de forma determinística e registrar log de alerta.
 
-**Filtros e seletores**
-- `TimeFilter` e `CategorySelector`: largura `w-full sm:w-auto`, evitar quebra de chips.
-- `CompactDashboardSelector` no header mobile: truncar nomes longos com tooltip.
+4. **Garantir dashboard para registros financeiros**
+   - Antes de inserir receita de assinatura, chamar a função `get_user_main_dashboard(user_id)` para obter/criar dashboard principal.
+   - Inserir a receita com `dashboard_id` preenchido.
 
-**Dashboard**
-- Grids de cards: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`; revisar `InteligenciaFinanceira*` para não estourar.
-- `RelatoriosAvancados`/`DashboardAvancado`: charts com `ResponsiveContainer` e altura mínima em mobile.
+5. **Adicionar idempotência no processamento**
+   - Usar `transaction_id`/`cakto_subscription_id` para impedir duplicidade de receita e notificação em retries.
+   - Atualizar assinatura via upsert por `user_id`, mas preservar dados úteis já existentes.
+   - Se o mesmo evento chegar novamente, responder sucesso sem duplicar efeitos colaterais.
 
----
+6. **Tratar eventos de ciclo de assinatura**
+   - Pagamento aprovado/pago: ativar assinatura e registrar receita.
+   - Cancelamento/reembolso/chargeback/assinatura expirada: atualizar status da assinatura de forma segura sem apagar histórico.
+   - Eventos desconhecidos: responder 200 como recebido e ignorado, com log claro.
 
-## 2. Ferramentas e funcionalidades
+7. **Melhorar respostas e logs**
+   - Separar erros de autenticação (401), payload inválido (400), plano não identificado (422), usuário não encontrado (202/200 controlado) e erro inesperado (500).
+   - Incluir nos logs somente dados não sensíveis: evento, status, email mascarado, transaction_id, etapa e código do erro.
+   - Nunca logar segredo recebido no payload.
 
-**Import/export de planilhas** (já existe em Receitas/Despesas)
-- Estender `SpreadsheetImportExport` para **Metas** e **Impostos** (template + import + export).
-- Validação no import: linhas inválidas listadas em toast com contagem; commit apenas das válidas.
-- Adicionar coluna `dashboard_id` no template para usuários multi-dashboard (default = atual).
+8. **Validar ponta a ponta**
+   - Testar chamada sem secret: deve retornar 401.
+   - Testar payload aprovado com secret: deve retornar sucesso controlado ou usuário pendente, sem 500.
+   - Testar retry do mesmo transaction_id: não deve duplicar receita/notificação.
+   - Testar evento ignorado/cancelado: deve responder 200 e atualizar status quando aplicável.
+   - Conferir logs da Edge Function após os testes.
 
-**Filtros globais**
-- Adicionar busca textual em Receitas/Despesas (descrição/categoria) com debounce 250ms.
-- Persistir `TimeFilter` selecionado por seção em `localStorage` (`financy-filter-{section}`).
+## Arquivos previstos
 
-**Notificações**
-- `notificacoes`: marcar lidas em lote ("marcar todas como lidas") e badge no header.
-- Limpar notificações com mais de 30 dias automaticamente no client (já no fetch).
+- `supabase/functions/cakto-webhook/index.ts`
+  - Refatoração do parsing, autenticação, identificação de plano, idempotência, status e respostas.
 
-**Recorrentes**
-- Botão "Processar agora" em Receitas/Despesas para forçar `useRecurringTransactions` (útil quando usuário entra após várias datas).
-- Indicador visual (badge "Recorrente") nas linhas geradas.
-
-**IA / Chat**
-- Manter como está (recém-revisado); apenas garantir que `data-tutorial` não conflite com mobile.
-
----
-
-## 3. Lógica e consistência de dados
-
-**`useDashboard`**
-- Garantir que toda mutação (criar/excluir/renomear) invalide caches dependentes (`useFinancialCalculations`, `query_cache`).
-- `switchDashboard`: prevenir corrida quando usuário troca durante fetch em andamento (AbortController ou guard por id).
-
-**`useFinancialCalculations`**
-- Auditar filtros por `dashboard_id`: confirmar que todas as queries (receitas, despesas, impostos, metas) escopam pelo dashboard atual — relatos de totais "vazando" entre contas.
-- Memoizar resultados pesados (`useMemo` com deps explícitas) para reduzir re-render.
-
-**`useUserSubscription` / gating**
-- Centralizar `isBlocked` em um único helper exportado (hoje calculado em `AuthenticatedLayout` e replicado em sidebar).
-- Edge case: `subscription.status === 'active'` com `expires_at` no passado — tratar como expirado.
-
-**Categorias personalizadas**
-- Ao excluir categoria com transações vinculadas: confirmar via `AlertDialog` e mover transações para "Outros" em vez de deixar órfãs.
-
-**Metas**
-- Recalcular `progresso` no client a partir das transações reais quando `dashboard_id` muda (hoje pode ficar stale).
-
-**Datas / fuso**
-- Padronizar uso de `date-fns` com timezone BRT em todos os agregados (alguns lugares usam `new Date()` direto).
-
----
-
-## Detalhes técnicos
-
-**Arquivos editados** (lista não-exaustiva):
-- `src/components/sections/{Receitas,Despesas,Impostos,Equipe,Metas,Categorias,Relatorios,Fechamento}.tsx`: padronização de header, responsividade de tabelas/cards, integração de busca/filtro persistido.
-- `src/components/SpreadsheetImportExport.tsx`: suporte a Metas/Impostos + validação de linhas.
-- `src/components/CompactDashboardSelector.tsx`: truncamento + tooltip.
-- `src/components/TimeFilter.tsx`: persistência por seção.
-- `src/hooks/useDashboard.tsx`: invalidação de cache, guard de corrida em `switchDashboard`.
-- `src/hooks/useFinancialCalculations.tsx`: auditoria de `dashboard_id`, memoização.
-- `src/hooks/useUserSubscription.tsx`: helper `isBlocked` centralizado; tratamento de expiração.
-- `src/hooks/useCategoriasPersonalizadas.tsx`: fluxo de exclusão com reatribuição.
-- `src/hooks/useRecurringTransactions.tsx`: expor `runNow()`.
-- `src/components/sections/Dashboard.tsx`: grids responsivos.
-- `src/utils/dateFilters.ts`: padronização BRT.
-
-**Sem alterações de schema**. Nenhuma migração necessária — todas as melhorias usam tabelas/colunas existentes.
-
-**Não tocar**: `OnboardingFlow.tsx`, `tourSteps.ts`, `ProductTour.tsx`, `TourOverlay.tsx`, `AuthPage.tsx`, `RootRedirect`.
-
----
-
-## Validação manual sugerida
-1. Mobile 360–414px: abrir cada seção, verificar ausência de scroll horizontal e Dialogs acessíveis.
-2. Trocar de dashboard em sequência rápida e conferir totais corretos no Dashboard/Relatórios.
-3. Importar planilha de Metas com 2 linhas válidas + 1 inválida — confirmar toast e persistência apenas das válidas.
-4. Excluir categoria com transações — confirmar reatribuição para "Outros".
-5. Expirar assinatura manualmente (via SQL) — confirmar bloqueio consistente em sidebar e rotas.
+Possível ajuste de banco somente se a validação mostrar ausência de índice/constraint confiável para idempotência em `payment_notifications` ou `receitas`. Se necessário, será criada uma migration pequena e segura.
