@@ -678,6 +678,12 @@ serve(async (req) => {
 
     if (isApprovedEvent(event)) return await processApprovedPayment(supabase, event);
     if (isCancellationEvent(event)) return await processSubscriptionStop(supabase, event);
+    if (PENDING_PAYMENT_EVENTS.has(event.eventType)) return await processPendingPayment(supabase, event);
+    if (FAILED_PAYMENT_EVENTS.has(event.eventType)) return await processFailedPayment(supabase, event);
+    if (FUNNEL_EVENTS.has(event.eventType) || event.eventType === 'subscription_created') {
+      console.log('Webhook Cakto: evento de funil/criação registrado', { event: event.eventType, email: event.email ? maskEmail(event.email) : null });
+      return jsonResponse({ success: true, message: 'Evento de funil registrado', event: event.eventType });
+    }
 
     return jsonResponse({ success: true, ignored: true, message: 'Evento recebido mas não processado', event: event.eventType || event.status || 'unknown' });
   } catch (error) {
