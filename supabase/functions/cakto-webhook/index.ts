@@ -165,7 +165,7 @@ const APPROVED_EVENTS = new Set([
   'payment_approved',
   'order_paid',
   'subscription_renewed',
-  'subscription_created', // ativa apenas se o status indicar pagamento confirmado
+  // subscription_created NÃO ativa por si só — aguardamos purchase_approved/subscription_renewed
 ]);
 const CANCELLATION_EVENTS = new Set([
   'subscription_canceled',
