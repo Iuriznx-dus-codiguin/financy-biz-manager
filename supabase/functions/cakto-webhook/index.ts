@@ -158,18 +158,45 @@ const PLAN_ALIASES: Record<string, string> = {
   business_enterprise_annual: 'empresarial_enterprise_anual',
 };
 
+// Eventos oficiais da Cakto (https://docs.cakto.com.br/api-reference/webhooks/create.md)
 const APPROVED_STATUSES = new Set(['approved', 'paid', 'completed', 'success', 'active', 'payment_approved', 'purchase_approved']);
-const APPROVED_EVENTS = new Set(['purchase_approved', 'payment_approved', 'order_paid', 'subscription_renewed']);
+const APPROVED_EVENTS = new Set([
+  'purchase_approved',
+  'payment_approved',
+  'order_paid',
+  'subscription_renewed',
+  'subscription_created', // ativa apenas se o status indicar pagamento confirmado
+]);
 const CANCELLATION_EVENTS = new Set([
-  'subscription_cancelled',
   'subscription_canceled',
+  'subscription_cancelled', // tolerância a variação ortográfica
+  'refund',
+  'chargeback',
+  'subscription_expired',
+  // Aliases tolerados de integrações antigas
   'purchase_refunded',
   'payment_refunded',
   'refund_approved',
   'chargeback_created',
-  'subscription_expired',
 ]);
 const CANCELLATION_STATUSES = new Set(['cancelled', 'canceled', 'refunded', 'chargeback', 'expired', 'inactive']);
+// Eventos de pagamento pendente: PIX/boleto/picpay/openfinance gerados — apenas registrar
+const PENDING_PAYMENT_EVENTS = new Set([
+  'pix_gerado',
+  'boleto_gerado',
+  'picpay_gerado',
+  'openfinance_nubank_gerado',
+]);
+// Eventos de falha de cobrança: recusa de compra ou de renovação
+const FAILED_PAYMENT_EVENTS = new Set([
+  'purchase_refused',
+  'subscription_renewal_refused',
+]);
+// Eventos de funil (apenas log)
+const FUNNEL_EVENTS = new Set([
+  'initiate_checkout',
+  'checkout_abandonment',
+]);
 
 function jsonResponse(body: JsonObject, status = 200): Response {
   return new Response(JSON.stringify({ ...body, timestamp: new Date().toISOString() }), {
