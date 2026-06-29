@@ -158,18 +158,45 @@ const PLAN_ALIASES: Record<string, string> = {
   business_enterprise_annual: 'empresarial_enterprise_anual',
 };
 
+// Eventos oficiais da Cakto (https://docs.cakto.com.br/api-reference/webhooks/create.md)
 const APPROVED_STATUSES = new Set(['approved', 'paid', 'completed', 'success', 'active', 'payment_approved', 'purchase_approved']);
-const APPROVED_EVENTS = new Set(['purchase_approved', 'payment_approved', 'order_paid', 'subscription_renewed']);
+const APPROVED_EVENTS = new Set([
+  'purchase_approved',
+  'payment_approved',
+  'order_paid',
+  'subscription_renewed',
+  // subscription_created NÃO ativa por si só — aguardamos purchase_approved/subscription_renewed
+]);
 const CANCELLATION_EVENTS = new Set([
-  'subscription_cancelled',
   'subscription_canceled',
+  'subscription_cancelled', // tolerância a variação ortográfica
+  'refund',
+  'chargeback',
+  'subscription_expired',
+  // Aliases tolerados de integrações antigas
   'purchase_refunded',
   'payment_refunded',
   'refund_approved',
   'chargeback_created',
-  'subscription_expired',
 ]);
 const CANCELLATION_STATUSES = new Set(['cancelled', 'canceled', 'refunded', 'chargeback', 'expired', 'inactive']);
+// Eventos de pagamento pendente: PIX/boleto/picpay/openfinance gerados — apenas registrar
+const PENDING_PAYMENT_EVENTS = new Set([
+  'pix_gerado',
+  'boleto_gerado',
+  'picpay_gerado',
+  'openfinance_nubank_gerado',
+]);
+// Eventos de falha de cobrança: recusa de compra ou de renovação
+const FAILED_PAYMENT_EVENTS = new Set([
+  'purchase_refused',
+  'subscription_renewal_refused',
+]);
+// Eventos de funil (apenas log)
+const FUNNEL_EVENTS = new Set([
+  'initiate_checkout',
+  'checkout_abandonment',
+]);
 
 function jsonResponse(body: JsonObject, status = 200): Response {
   return new Response(JSON.stringify({ ...body, timestamp: new Date().toISOString() }), {
@@ -555,6 +582,72 @@ async function processSubscriptionStop(supabase: any, event: NormalizedCaktoPayl
   return jsonResponse({ success: true, message: 'Evento de assinatura atualizado' });
 }
 
+async function processPendingPayment(supabase: any, event: NormalizedCaktoPayload) {
+  // PIX/boleto/picpay/openfinance gerados: NÃO ativam assinatura, mas se houver perfil registramos a intenção
+  if (!event.email) {
+    return jsonResponse({ success: true, ignored: true, code: 'missing_email', message: 'Cobrança pendente recebida sem email' });
+  }
+  const profile = await findProfileByEmail(supabase, event.email);
+  if (!profile) {
+    return jsonResponse({ success: true, pending: true, code: 'profile_not_found', message: 'Cobrança pendente registrada' }, 202);
+  }
+  // Marca a assinatura como aguardando pagamento sem sobrescrever planos ativos
+  const { data: current } = await supabase
+    .from('user_subscriptions')
+    .select('status')
+    .eq('user_id', profile.id)
+    .maybeSingle();
+
+  if (!current || current.status === 'pending_payment' || current.status === 'inactive') {
+    await supabase.from('user_subscriptions').upsert({
+      user_id: profile.id,
+      email: event.email,
+      status: 'pending_payment',
+      subscription_type: 'pending',
+      plan_name: 'Aguardando Pagamento',
+      payment_method: event.paymentMethod || event.eventType,
+      metadata: { last_event: event.eventType, transaction_id: event.transactionId, generated_at: new Date().toISOString() },
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' });
+  }
+  console.log('Webhook Cakto: cobrança pendente registrada', { email: maskEmail(event.email), event: event.eventType });
+  return jsonResponse({ success: true, message: 'Cobrança pendente registrada', event: event.eventType });
+}
+
+async function processFailedPayment(supabase: any, event: NormalizedCaktoPayload) {
+  if (!event.email) {
+    return jsonResponse({ success: true, ignored: true, code: 'missing_email', message: 'Falha de pagamento sem email' });
+  }
+  const profile = await findProfileByEmail(supabase, event.email);
+  if (!profile) {
+    return jsonResponse({ success: true, pending: true, code: 'profile_not_found', message: 'Falha registrada' }, 202);
+  }
+  const now = new Date().toISOString();
+  // Para renovação recusada: marca past_due preservando dados do plano.
+  // Para compra recusada inicial: mantém pending_payment.
+  const isRenewal = event.eventType === 'subscription_renewal_refused';
+  const newStatus = isRenewal ? 'past_due' : 'pending_payment';
+
+  const { error } = await supabase
+    .from('user_subscriptions')
+    .update({
+      status: newStatus,
+      updated_at: now,
+      metadata: { last_event: event.eventType, transaction_id: event.transactionId, failed_at: now },
+    })
+    .eq('user_id', profile.id);
+
+  if (error) console.warn('Webhook Cakto: erro não crítico ao registrar falha', { code: error.code, message: error.message });
+
+  console.log('Webhook Cakto: falha de pagamento registrada', {
+    email: maskEmail(event.email),
+    event: event.eventType,
+    new_status: newStatus,
+  });
+  return jsonResponse({ success: true, message: 'Falha de pagamento registrada', new_status: newStatus });
+}
+
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -585,6 +678,12 @@ serve(async (req) => {
 
     if (isApprovedEvent(event)) return await processApprovedPayment(supabase, event);
     if (isCancellationEvent(event)) return await processSubscriptionStop(supabase, event);
+    if (PENDING_PAYMENT_EVENTS.has(event.eventType)) return await processPendingPayment(supabase, event);
+    if (FAILED_PAYMENT_EVENTS.has(event.eventType)) return await processFailedPayment(supabase, event);
+    if (FUNNEL_EVENTS.has(event.eventType) || event.eventType === 'subscription_created') {
+      console.log('Webhook Cakto: evento de funil/criação registrado', { event: event.eventType, email: event.email ? maskEmail(event.email) : null });
+      return jsonResponse({ success: true, message: 'Evento de funil registrado', event: event.eventType });
+    }
 
     return jsonResponse({ success: true, ignored: true, message: 'Evento recebido mas não processado', event: event.eventType || event.status || 'unknown' });
   } catch (error) {
