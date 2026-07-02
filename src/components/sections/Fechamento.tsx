@@ -130,43 +130,33 @@ const Fechamento = () => {
         });
       });
 
-    // Custos da equipe (proporcionais por dia)
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    
+    // Custos da equipe — entrada única agregada por membro para o período
+    // Usando meio-dia para evitar bugs de DST/fuso-horário (UTC-3 Brasil)
+    const start = new Date(startDate + 'T12:00:00');
+    const end = new Date(endDate + 'T12:00:00');
+    const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
     membrosEquipe
       .filter(m => m.status === 'ativo')
       .forEach(m => {
         let custoDiario = 0;
         switch (m.periodicidade) {
-          case 'mensal':
-            custoDiario = m.salario / 30;
-            break;
-          case 'semanal':
-            custoDiario = m.salario / 7;
-            break;
-          case 'quinzenal':
-            custoDiario = m.salario / 15;
-            break;
+          case 'mensal':   custoDiario = m.salario / 30;  break;
+          case 'semanal':  custoDiario = m.salario / 7;   break;
+          case 'quinzenal': custoDiario = m.salario / 15; break;
         }
-        
-        for (let i = 0; i < days; i++) {
-          const currentDate = new Date(start);
-          currentDate.setDate(start.getDate() + i);
-          const dateStr = currentDate.toISOString().split('T')[0];
-          
-          transacoes.push({
-            id: `equipe-${m.id}-${dateStr}`,
-            tipo: 'equipe',
-            descricao: `Custo proporcional - ${m.nome}`,
-            categoria: 'Folha de Pagamento',
-            valor: custoDiario,
-            data: dateStr,
-            status: 'automático',
-            origem: m.nome
-          });
-        }
+        const custoTotal = custoDiario * days;
+        transacoes.push({
+          id: `equipe-${m.id}-${startDate}-${endDate}`,
+          tipo: 'equipe',
+          descricao: `Custo proporcional - ${m.nome} (${days} dias)`,
+          categoria: 'Folha de Pagamento',
+          valor: custoTotal,
+          data: startDate,
+          status: 'automático',
+          origem: m.nome,
+          isRecorrente: true
+        });
       });
 
     return transacoes.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
@@ -187,7 +177,7 @@ const Fechamento = () => {
 
       // Filtro de status
       if (statusFilter !== 'todas') {
-        if (statusFilter === 'recorrente' && !t.isRecorrente) return false;
+        if (statusFilter === 'recorrente' && !t.isRecorrente && t.tipo !== 'equipe') return false;
         if (statusFilter !== 'recorrente' && t.status !== statusFilter) return false;
       }
 
@@ -691,3 +681,4 @@ const Fechamento = () => {
 };
 
 export default Fechamento;
+
