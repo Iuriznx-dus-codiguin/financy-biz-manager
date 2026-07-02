@@ -92,6 +92,7 @@ interface DashboardCache {
     despesas: Despesa[];
     impostos: Imposto[];
     metas: Meta[];
+    membrosEquipe: MembroEquipe[];
     timestamp: number;
   };
 }
@@ -229,6 +230,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setDespesas(cached.despesas);
       setImpostos(cached.impostos);
       setMetas(cached.metas);
+      setMembrosEquipe(cached.membrosEquipe ?? []);
       setLoading(false);
       return;
     }
@@ -364,6 +366,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           despesas: despesasFormatadas,
           impostos: impostosFormatados,
           metas: metasFormatadas,
+          membrosEquipe: membrosFormatados,
           timestamp: Date.now()
         }
       }));
@@ -620,7 +623,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           forma_pagamento: receita.formaPagamento,
           status: receita.status
         })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user!.id);
       if (error) throw error;
     } catch (error) {
       setReceitas(previous);
@@ -644,7 +648,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           forma_pagamento: despesa.formaPagamento,
           status: despesa.status
         })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user!.id);
       if (error) throw error;
     } catch (error) {
       setDespesas(previous);
@@ -669,7 +674,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           status: meta.status,
           cor: meta.cor
         })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user!.id);
       if (error) throw error;
     } catch (error) {
       setMetas(previous);
@@ -682,7 +688,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const previous = receitas;
     setReceitas(prev => prev.filter(r => r.id !== id));
     try {
-      const { error } = await supabase.from('receitas').delete().eq('id', id);
+      const { error } = await supabase.from('receitas').delete().eq('id', id).eq('user_id', user!.id);
       if (error) throw error;
     } catch (error) {
       setReceitas(previous);
@@ -695,7 +701,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const previous = despesas;
     setDespesas(prev => prev.filter(d => d.id !== id));
     try {
-      const { error } = await supabase.from('despesas').delete().eq('id', id);
+      const { error } = await supabase.from('despesas').delete().eq('id', id).eq('user_id', user!.id);
       if (error) throw error;
     } catch (error) {
       setDespesas(previous);
@@ -708,7 +714,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const previous = impostos;
     setImpostos(prev => prev.filter(i => i.id !== id));
     try {
-      const { error } = await supabase.from('impostos').delete().eq('id', id);
+      const { error } = await supabase.from('impostos').delete().eq('id', id).eq('user_id', user!.id);
       if (error) throw error;
     } catch (error) {
       setImpostos(previous);
@@ -721,7 +727,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const previous = metas;
     setMetas(prev => prev.filter(m => m.id !== id));
     try {
-      const { error } = await supabase.from('metas').delete().eq('id', id);
+      const { error } = await supabase.from('metas').delete().eq('id', id).eq('user_id', user!.id);
       if (error) throw error;
     } catch (error) {
       setMetas(previous);
@@ -757,7 +763,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           vencimento: imposto.vencimento,
           recorrente: imposto.tipoRecorrencia === 'recorrente'
         })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user!.id);
       if (error) throw error;
     } catch (error) {
       setImpostos(previous);
@@ -822,3 +829,4 @@ export const useAppContext = () => {
   }
   return context;
 };
+
