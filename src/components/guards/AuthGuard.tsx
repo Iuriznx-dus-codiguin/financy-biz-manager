@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -11,11 +12,12 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando...</p>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <div className="flex items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="text-xl font-semibold text-foreground font-display">Financy</span>
         </div>
+        <p className="text-sm text-muted-foreground">Verificando autenticação...</p>
       </div>
     );
   }
@@ -27,3 +29,4 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
 
   return <>{children}</>;
 };
+
