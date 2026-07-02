@@ -37,7 +37,7 @@ const Assinatura: React.FC = () => {
   const [planType, setPlanType] = useState<'personal' | 'business'>('personal');
   
   const { user } = useAuth();
-  const { subscription, loading, isPremium } = useUserSubscription();
+  const { subscription, loading, isPremium, isPersonalPlan } = useUserSubscription();
 
   const paymentUrls: Record<string, string> = {
     // Planos Pessoais - Mensal
@@ -180,9 +180,7 @@ const Assinatura: React.FC = () => {
   const currentPlans = planType === 'personal' ? personalPlans : businessPlans;
 
 
-  const isPersonalPlan = subscription?.plan_name?.toLowerCase().includes('pessoal') || 
-                         subscription?.plan_name?.toLowerCase().includes('plus') ||
-                         subscription?.plan_name?.toLowerCase().includes('pro');
+  // isPersonalPlan vem do hook useUserSubscription (usa lógica isBusinessPlan correta)
 
   if (loading) {
     return (
@@ -301,7 +299,7 @@ const Assinatura: React.FC = () => {
           </CardContent>
         </Card>
 
-        {isPersonalPlan && (
+        {isPersonalPlan() && (
           <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-50/50 via-purple-50/50 to-blue-50/50 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-blue-950/20">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -341,7 +339,7 @@ const Assinatura: React.FC = () => {
             <p className="text-muted-foreground mb-4">
               Entre em contato com nosso suporte para dúvidas sobre sua assinatura.
             </p>
-            <Button variant="outline" className="w-full" onClick={() => window.open('https://wa.me/5511999999999', '_blank')}>
+            <Button variant="outline" className="w-full" onClick={() => window.open('https://wa.me/5587999083662', '_blank')}>
               <MessageCircle className="mr-2 h-4 w-4" />
               Falar com Suporte
             </Button>
@@ -363,7 +361,7 @@ const Assinatura: React.FC = () => {
         </p>
 
         {/* Banner de Desconto Anual */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 rounded-2xl p-6 shadow-2xl animate-pulse max-w-4xl mx-auto">
+        <div className="relative overflow-hidden bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 rounded-2xl p-6 shadow-2xl max-w-4xl mx-auto">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-4">
             <div className="flex items-center gap-3">
@@ -586,3 +584,4 @@ const Assinatura: React.FC = () => {
 };
 
 export default Assinatura;
+
