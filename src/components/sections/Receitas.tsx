@@ -34,7 +34,7 @@ const Receitas = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todas');
   const [novaReceita, setNovaReceita] = useState({
-    data: '',
+    data: new Date().toISOString().split('T')[0],
     descricao: '',
     categoria: '',
     categoriaPersonalizada: '',
@@ -62,7 +62,7 @@ const Receitas = () => {
         await addReceita(receitaData);
         toast.success('Receita adicionada com sucesso!');
         setNovaReceita({
-          data: '',
+          data: new Date().toISOString().split('T')[0],
           descricao: '',
           categoria: '',
           categoriaPersonalizada: '',
@@ -440,7 +440,7 @@ const Receitas = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Média por Transação</p>
-                <p className="text-2xl sm:text-3xl font-bold font-display tracking-tight">R$ {receitas.length > 0 ? (totalReceitas / receitas.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}</p>
+                <p className="text-2xl sm:text-3xl font-bold font-display tracking-tight">R$ {receitasPagas > 0 ? (totalReceitas / receitasPagas).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}</p>
               </div>
               <div className="text-purple-600 text-2xl">📈</div>
             </div>
@@ -597,3 +597,4 @@ const Receitas = () => {
 };
 
 export default Receitas;
+
