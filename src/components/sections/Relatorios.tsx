@@ -1,5 +1,3 @@
-import { SectionSkeleton } from '@/components/ui/section-skeleton';
-
 import React, { useState, useMemo } from 'react';
 import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +11,7 @@ import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import { downloadXlsx, SheetSpec } from '@/utils/excelExport';
 import { FileText, Download } from 'lucide-react';
+import { SectionSkeleton } from '@/components/ui/section-skeleton';
 
   const Relatorios = () => {
   const [selectedReport, setSelectedReport] = useState('mensal');
@@ -21,7 +20,6 @@ import { FileText, Download } from 'lucide-react';
     try { return window.localStorage.getItem('financy-filter:relatorios') || 'este-mes'; } catch { return 'este-mes'; }
   });
   const [isGenerating, setIsGenerating] = useState(false);
-  const [reportKey, setReportKey] = useState(0); // Para forçar atualização
   const { receitas, despesas, impostos, loading } = useAppContext();
 
   // Filtrar dados baseado no filtro de tempo
@@ -50,15 +48,13 @@ import { FileText, Download } from 'lucide-react';
       gastosCategorizados[categoria] = (gastosCategorizados[categoria] || 0) + d.valor;
     });
     
-    // Adicionar impostos E taxas pagos como categorias separadas
+    // Adicionar impostos E taxas pagos como categorias separadas (usando valores já calculados no escopo)
     const totalImpostosPagosCalc = filteredImpostos.filter(i => i.pago && i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
-    const totalTaxasPagasCalc = filteredImpostos.filter(i => i.pago && i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
-    
     if (totalImpostosPagosCalc > 0) {
       gastosCategorizados['Impostos'] = totalImpostosPagosCalc;
     }
-    if (totalTaxasPagasCalc > 0) {
-      gastosCategorizados['Taxas'] = totalTaxasPagasCalc;
+    if (totalTaxasPagas > 0) {
+      gastosCategorizados['Taxas'] = totalTaxasPagas;
     }
 
     return Object.entries(gastosCategorizados)
@@ -200,20 +196,6 @@ import { FileText, Download } from 'lucide-react';
     return fluxoPorMes;
   };
 
-  const gerarDadosRentabilidade = () => {
-    const categorias = filteredReceitas.reduce((acc, receita) => {
-      acc[receita.categoria] = (acc[receita.categoria] || 0) + receita.valor;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return Object.entries(categorias).map(([categoria, valor]) => ({
-      categoria,
-      receita: valor,
-      margem: totalReceitas > 0 ? ((valor / totalReceitas) * 100).toFixed(1) : '0'
-    }));
-  };
-
-
   const gerarDadosMensais = () => {
     const dados = [];
     const { start, end } = getDateRange(timeFilter);
@@ -309,9 +291,6 @@ import { FileText, Download } from 'lucide-react';
   const handleGerarRelatorio = async () => {
     setIsGenerating(true);
     try {
-      // Forçar re-cálculo dos dados do relatório
-      setReportKey(prev => prev + 1);
-      
       // Pequeno delay para feedback visual
       await new Promise(resolve => setTimeout(resolve, 500));
       
@@ -396,7 +375,7 @@ import { FileText, Download } from 'lucide-react';
   // Usar useMemo para recalcular dados quando filtros mudam
   const dadosRelatorio = useMemo(() => {
     return gerarDadosRelatorio();
-  }, [selectedReport, timeFilter, reportKey, receitas, despesas, impostos]);
+  }, [selectedReport, timeFilter, receitas, despesas, impostos]);
 
   const gerarInsights = () => {
     const insights = [];
@@ -795,3 +774,4 @@ import { FileText, Download } from 'lucide-react';
 };
 
 export default Relatorios;
+
