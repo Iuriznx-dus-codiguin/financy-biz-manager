@@ -345,10 +345,10 @@ const Configuracoes = () => {
   };
 
   const handleChangePassword = async () => {
-    if (!passwords.new || !passwords.confirm) {
+    if (!passwords.current || !passwords.new || !passwords.confirm) {
       toast({
         title: "Erro",
-        description: "Preencha todos os campos.",
+        description: "Preencha todos os campos, incluindo a senha atual.",
         variant: "destructive"
       });
       return;
@@ -363,16 +363,41 @@ const Configuracoes = () => {
       return;
     }
 
-    if (passwords.new.length < 6) {
+    if (passwords.new.length < 8) {
       toast({
-        title: "Erro", 
-        description: "A nova senha deve ter pelo menos 6 caracteres.",
+        title: "Erro",
+        description: "A nova senha deve ter pelo menos 8 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!/\d/.test(passwords.new)) {
+      toast({
+        title: "Erro",
+        description: "A nova senha deve conter pelo menos um número.",
         variant: "destructive"
       });
       return;
     }
 
     try {
+      // Verificar senha atual via reautenticação
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email ?? '',
+        password: passwords.current
+      });
+
+      if (signInError) {
+        toast({
+          title: "Senha atual incorreta",
+          description: "A senha atual informada não confere. Tente novamente.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Atualizar para nova senha
       const { error } = await supabase.auth.updateUser({
         password: passwords.new
       });
@@ -619,6 +644,32 @@ const Configuracoes = () => {
             <Label>Alterar Senha</Label>
             {isChangingPassword ? (
               <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="current-password">Senha Atual</Label>
+                  <div className="relative">
+                    <Input
+                      id="current-password"
+                      type={showPasswords.current ? "text" : "password"}
+                      value={passwords.current}
+                      onChange={(e) => setPasswords(prev => ({ ...prev, current: e.target.value }))}
+                      placeholder="Digite sua senha atual"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => togglePasswordVisibility('current')}
+                    >
+                      {showPasswords.current ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="new-password">Nova Senha</Label>
                   <div className="relative">
