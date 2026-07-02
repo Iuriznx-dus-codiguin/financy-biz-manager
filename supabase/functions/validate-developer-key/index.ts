@@ -2,10 +2,22 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { safeHandler, checkEnv, constantTimeCompare } from '../_shared/utils.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const allowedOrigins = [
+  'https://app.financy.site',
+  'https://financy.site',
+  'http://localhost:8080',
+  'http://localhost:3000',
+  'http://localhost:5173',
+];
+
+function getCorsHeaders(origin: string) {
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+}
 
 function getValidKeys(): string[] {
   const raw = Deno.env.get('DEVELOPER_VALID_KEYS') || '';
@@ -26,6 +38,9 @@ function compareAgainstAny(provided: string, candidates: string[]): boolean {
 }
 
 serve(safeHandler(async (req) => {
+  const origin = req.headers.get('Origin') || '';
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -115,3 +130,4 @@ serve(safeHandler(async (req) => {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }));
+
