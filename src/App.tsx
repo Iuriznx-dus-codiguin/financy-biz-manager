@@ -61,6 +61,7 @@ const App = () => (
             <Route path="/assinatura" element={<AssinaturaPage />} />
             <Route path="/configuracoes" element={<ConfiguracoesPage />} />
             <Route path="/ajuda" element={<AjudaPage />} />
+            <Route path="/auditoria/webhooks-cakto" element={<AuditoriaWebhooksPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
