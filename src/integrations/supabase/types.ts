@@ -216,6 +216,84 @@ export type Database = {
         }
         Relationships: []
       }
+      cakto_webhook_logs: {
+        Row: {
+          amount: number | null
+          attempt_count: number
+          category: string
+          created_at: string
+          duration_ms: number | null
+          email_masked: string | null
+          error_code: string | null
+          error_message: string | null
+          event_type: string | null
+          http_status: number | null
+          id: string
+          is_retry: boolean
+          payload: Json | null
+          payment_method: string | null
+          plan_id: string | null
+          plan_name: string | null
+          response: Json | null
+          status: string
+          subscription_id: string | null
+          subscription_type: string | null
+          transaction_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          attempt_count?: number
+          category?: string
+          created_at?: string
+          duration_ms?: number | null
+          email_masked?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          event_type?: string | null
+          http_status?: number | null
+          id?: string
+          is_retry?: boolean
+          payload?: Json | null
+          payment_method?: string | null
+          plan_id?: string | null
+          plan_name?: string | null
+          response?: Json | null
+          status?: string
+          subscription_id?: string | null
+          subscription_type?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          attempt_count?: number
+          category?: string
+          created_at?: string
+          duration_ms?: number | null
+          email_masked?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          event_type?: string | null
+          http_status?: number | null
+          id?: string
+          is_retry?: boolean
+          payload?: Json | null
+          payment_method?: string | null
+          plan_id?: string | null
+          plan_name?: string | null
+          response?: Json | null
+          status?: string
+          subscription_id?: string | null
+          subscription_type?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       categorias_personalizadas: {
         Row: {
           ativo: boolean
