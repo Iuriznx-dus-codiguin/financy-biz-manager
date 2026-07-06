@@ -198,12 +198,118 @@ const FUNNEL_EVENTS = new Set([
   'checkout_abandonment',
 ]);
 
+const CATEGORY_LABELS = {
+  approved: 'approved',
+  cancellation: 'cancellation',
+  pending: 'pending',
+  failed: 'failed',
+  funnel: 'funnel',
+  unknown: 'unknown',
+} as const;
+
+type Category = keyof typeof CATEGORY_LABELS;
+
 function jsonResponse(body: JsonObject, status = 200): Response {
   return new Response(JSON.stringify({ ...body, timestamp: new Date().toISOString() }), {
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
+
+function categoryFor(event: NormalizedCaktoPayload): Category {
+  if (isApprovedEvent(event)) return 'approved';
+  if (isCancellationEvent(event)) return 'cancellation';
+  if (PENDING_PAYMENT_EVENTS.has(event.eventType)) return 'pending';
+  if (FAILED_PAYMENT_EVENTS.has(event.eventType)) return 'failed';
+  if (FUNNEL_EVENTS.has(event.eventType) || event.eventType === 'subscription_created') return 'funnel';
+  return 'unknown';
+}
+
+function redactPayload(payload: JsonObject): JsonObject {
+  try {
+    const clone = JSON.parse(JSON.stringify(payload ?? {}));
+    if (typeof clone?.secret === 'string') clone.secret = '***';
+    if (clone?.customer && typeof clone.customer === 'object') {
+      if (clone.customer.document) clone.customer.document = '***';
+      if (clone.customer.cpf) clone.customer.cpf = '***';
+      if (clone.customer.cnpj) clone.customer.cnpj = '***';
+    }
+    if (clone?.card && typeof clone.card === 'object') clone.card = '***';
+    return clone;
+  } catch {
+    return {};
+  }
+}
+
+async function recordWebhookLog(
+  supabase: any,
+  params: {
+    event: NormalizedCaktoPayload | null;
+    payload: JsonObject;
+    responseBody: JsonObject;
+    httpStatus: number;
+    status: 'success' | 'failed' | 'ignored' | 'pending';
+    errorCode?: string | null;
+    errorMessage?: string | null;
+    durationMs: number;
+  },
+): Promise<void> {
+  try {
+    const { event, payload, responseBody, httpStatus, status, errorCode, errorMessage, durationMs } = params;
+    const transactionId = event?.transactionId || null;
+    const category: Category = event ? categoryFor(event) : 'unknown';
+    const planConfig = event && category === 'approved' ? identifyPlan(event) : null;
+
+    let attemptCount = 1;
+    let isRetry = false;
+    if (transactionId) {
+      const { count } = await supabase
+        .from('cakto_webhook_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('transaction_id', transactionId);
+      if (typeof count === 'number' && count > 0) {
+        attemptCount = count + 1;
+        isRetry = true;
+      }
+    }
+
+    let userId: string | null = null;
+    if (event?.email) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .ilike('email', event.email)
+        .limit(1);
+      userId = data?.[0]?.id ?? null;
+    }
+
+    await supabase.from('cakto_webhook_logs').insert({
+      event_type: event?.eventType || null,
+      category,
+      status,
+      http_status: httpStatus,
+      attempt_count: attemptCount,
+      is_retry: isRetry,
+      email_masked: event?.email ? maskEmail(event.email) : null,
+      user_id: userId,
+      subscription_type: planConfig?.subscription_type ?? (event?.eventType?.includes('subscription') ? 'unknown' : null),
+      plan_id: planConfig?.plan_id ?? null,
+      plan_name: planConfig?.plan_name ?? event?.productName ?? event?.offerName ?? null,
+      transaction_id: transactionId,
+      subscription_id: event?.subscriptionId || null,
+      amount: event?.amount || null,
+      payment_method: event?.paymentMethod || null,
+      duration_ms: durationMs,
+      error_code: errorCode ?? null,
+      error_message: errorMessage ?? null,
+      payload: redactPayload(payload),
+      response: responseBody,
+    });
+  } catch (err) {
+    console.warn('Webhook Cakto: falha ao registrar log de auditoria', err);
+  }
+}
+
 
 function getValue(source: JsonObject, paths: string[]): any {
   for (const path of paths) {
