@@ -38,6 +38,9 @@ import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
 import { DashboardPersonalization } from '@/components/DashboardPersonalization';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { supabase } from '@/integrations/supabase/client';
+import { Link } from 'react-router-dom';
+import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { isDeveloperTier } from '@/utils/subscriptionHelpers';
 import {
   AlertDialog,
   AlertDialogAction,
