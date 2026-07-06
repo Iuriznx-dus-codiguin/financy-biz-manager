@@ -38,6 +38,9 @@ import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
 import { DashboardPersonalization } from '@/components/DashboardPersonalization';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { supabase } from '@/integrations/supabase/client';
+import { Link } from 'react-router-dom';
+import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { isDeveloperTier } from '@/utils/subscriptionHelpers';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +58,8 @@ const Configuracoes = () => {
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { subscriptionData, subscriptionTier, loading: subscriptionLoading } = useSubscription();
+  const { subscription: userSubscription } = useUserSubscription();
+  const isDeveloper = isDeveloperTier(userSubscription);
   const { formatCurrency } = useCurrency();
   const { dashboards, currentDashboard, createDashboard, deleteDashboard, updateDashboardName } = useDashboard();
   const { getLimits } = useFeatureAccess();
@@ -1134,6 +1139,25 @@ const Configuracoes = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {isDeveloper && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Shield className="h-4 w-4 text-primary" />
+              Ferramentas de desenvolvedor
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Acompanhe eventos processados pelo webhook da Cakto, erros e reenvios com filtros por assinatura, categoria e status.
+            </p>
+            <Button asChild variant="default" size="sm">
+              <Link to="/auditoria/webhooks-cakto">Abrir auditoria de webhooks</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

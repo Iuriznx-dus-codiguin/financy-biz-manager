@@ -32,6 +32,7 @@ import AgentesIAPage from "./pages/AgentesIAPage";
 import AssinaturaPage from "./pages/AssinaturaPage";
 import ConfiguracoesPage from "./pages/ConfiguracoesPage";
 import AjudaPage from "./pages/AjudaPage";
+import AuditoriaWebhooksPage from "./pages/AuditoriaWebhooksPage";
 
 const App = () => (
   <ErrorBoundary>
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/assinatura" element={<AssinaturaPage />} />
             <Route path="/configuracoes" element={<ConfiguracoesPage />} />
             <Route path="/ajuda" element={<AjudaPage />} />
+            <Route path="/auditoria/webhooks-cakto" element={<AuditoriaWebhooksPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -198,12 +198,118 @@ const FUNNEL_EVENTS = new Set([
   'checkout_abandonment',
 ]);
 
+const CATEGORY_LABELS = {
+  approved: 'approved',
+  cancellation: 'cancellation',
+  pending: 'pending',
+  failed: 'failed',
+  funnel: 'funnel',
+  unknown: 'unknown',
+} as const;
+
+type Category = keyof typeof CATEGORY_LABELS;
+
 function jsonResponse(body: JsonObject, status = 200): Response {
   return new Response(JSON.stringify({ ...body, timestamp: new Date().toISOString() }), {
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
+
+function categoryFor(event: NormalizedCaktoPayload): Category {
+  if (isApprovedEvent(event)) return 'approved';
+  if (isCancellationEvent(event)) return 'cancellation';
+  if (PENDING_PAYMENT_EVENTS.has(event.eventType)) return 'pending';
+  if (FAILED_PAYMENT_EVENTS.has(event.eventType)) return 'failed';
+  if (FUNNEL_EVENTS.has(event.eventType) || event.eventType === 'subscription_created') return 'funnel';
+  return 'unknown';
+}
+
+function redactPayload(payload: JsonObject): JsonObject {
+  try {
+    const clone = JSON.parse(JSON.stringify(payload ?? {}));
+    if (typeof clone?.secret === 'string') clone.secret = '***';
+    if (clone?.customer && typeof clone.customer === 'object') {
+      if (clone.customer.document) clone.customer.document = '***';
+      if (clone.customer.cpf) clone.customer.cpf = '***';
+      if (clone.customer.cnpj) clone.customer.cnpj = '***';
+    }
+    if (clone?.card && typeof clone.card === 'object') clone.card = '***';
+    return clone;
+  } catch {
+    return {};
+  }
+}
+
+async function recordWebhookLog(
+  supabase: any,
+  params: {
+    event: NormalizedCaktoPayload | null;
+    payload: JsonObject;
+    responseBody: JsonObject;
+    httpStatus: number;
+    status: 'success' | 'failed' | 'ignored' | 'pending';
+    errorCode?: string | null;
+    errorMessage?: string | null;
+    durationMs: number;
+  },
+): Promise<void> {
+  try {
+    const { event, payload, responseBody, httpStatus, status, errorCode, errorMessage, durationMs } = params;
+    const transactionId = event?.transactionId || null;
+    const category: Category = event ? categoryFor(event) : 'unknown';
+    const planConfig = event && category === 'approved' ? identifyPlan(event) : null;
+
+    let attemptCount = 1;
+    let isRetry = false;
+    if (transactionId) {
+      const { count } = await supabase
+        .from('cakto_webhook_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('transaction_id', transactionId);
+      if (typeof count === 'number' && count > 0) {
+        attemptCount = count + 1;
+        isRetry = true;
+      }
+    }
+
+    let userId: string | null = null;
+    if (event?.email) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .ilike('email', event.email)
+        .limit(1);
+      userId = data?.[0]?.id ?? null;
+    }
+
+    await supabase.from('cakto_webhook_logs').insert({
+      event_type: event?.eventType || null,
+      category,
+      status,
+      http_status: httpStatus,
+      attempt_count: attemptCount,
+      is_retry: isRetry,
+      email_masked: event?.email ? maskEmail(event.email) : null,
+      user_id: userId,
+      subscription_type: planConfig?.subscription_type ?? (event?.eventType?.includes('subscription') ? 'unknown' : null),
+      plan_id: planConfig?.plan_id ?? null,
+      plan_name: planConfig?.plan_name ?? event?.productName ?? event?.offerName ?? null,
+      transaction_id: transactionId,
+      subscription_id: event?.subscriptionId || null,
+      amount: event?.amount || null,
+      payment_method: event?.paymentMethod || null,
+      duration_ms: durationMs,
+      error_code: errorCode ?? null,
+      error_message: errorMessage ?? null,
+      payload: redactPayload(payload),
+      response: responseBody,
+    });
+  } catch (err) {
+    console.warn('Webhook Cakto: falha ao registrar log de auditoria', err);
+  }
+}
+
 
 function getValue(source: JsonObject, paths: string[]): any {
   for (const path of paths) {
@@ -648,17 +754,39 @@ async function processFailedPayment(supabase: any, event: NormalizedCaktoPayload
 }
 
 
+function statusFromResponseBody(body: JsonObject): 'success' | 'failed' | 'ignored' | 'pending' {
+  if (body?.error) return 'failed';
+  if (body?.ignored) return 'ignored';
+  if (body?.pending) return 'pending';
+  return 'success';
+}
+
+async function captureResponse(res: Response): Promise<{ res: Response; body: JsonObject; status: number }> {
+  const cloned = res.clone();
+  let body: JsonObject = {};
+  try {
+    body = await cloned.json();
+  } catch {
+    body = {};
+  }
+  return { res, body, status: res.status };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  const startedAt = Date.now();
+  let supabase: any = null;
+  let payload: JsonObject = {};
+  let event: NormalizedCaktoPayload | null = null;
 
   try {
     if (req.method !== 'POST') throw new WebhookError(405, 'method_not_allowed', 'Método não permitido');
 
     const envVars = checkEnv(['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'CAKTO_WEBHOOK_SECRET']);
-    const supabase = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_SERVICE_ROLE_KEY);
+    supabase = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_SERVICE_ROLE_KEY);
     const rawBody = await req.text();
 
-    let payload: JsonObject;
     try {
       payload = JSON.parse(rawBody || '{}');
     } catch {
@@ -667,7 +795,7 @@ serve(async (req) => {
 
     await authenticateWebhook(req, rawBody, payload, envVars.CAKTO_WEBHOOK_SECRET);
 
-    const event = normalizePayload(payload);
+    event = normalizePayload(payload);
     console.log('Webhook Cakto autenticado', {
       event: event.eventType,
       status: event.status,
@@ -676,23 +804,58 @@ serve(async (req) => {
       product: event.productName || event.offerName || null,
     });
 
-    if (isApprovedEvent(event)) return await processApprovedPayment(supabase, event);
-    if (isCancellationEvent(event)) return await processSubscriptionStop(supabase, event);
-    if (PENDING_PAYMENT_EVENTS.has(event.eventType)) return await processPendingPayment(supabase, event);
-    if (FAILED_PAYMENT_EVENTS.has(event.eventType)) return await processFailedPayment(supabase, event);
-    if (FUNNEL_EVENTS.has(event.eventType) || event.eventType === 'subscription_created') {
+    let handlerResponse: Response;
+    if (isApprovedEvent(event)) {
+      handlerResponse = await processApprovedPayment(supabase, event);
+    } else if (isCancellationEvent(event)) {
+      handlerResponse = await processSubscriptionStop(supabase, event);
+    } else if (PENDING_PAYMENT_EVENTS.has(event.eventType)) {
+      handlerResponse = await processPendingPayment(supabase, event);
+    } else if (FAILED_PAYMENT_EVENTS.has(event.eventType)) {
+      handlerResponse = await processFailedPayment(supabase, event);
+    } else if (FUNNEL_EVENTS.has(event.eventType) || event.eventType === 'subscription_created') {
       console.log('Webhook Cakto: evento de funil/criação registrado', { event: event.eventType, email: event.email ? maskEmail(event.email) : null });
-      return jsonResponse({ success: true, message: 'Evento de funil registrado', event: event.eventType });
+      handlerResponse = jsonResponse({ success: true, message: 'Evento de funil registrado', event: event.eventType });
+    } else {
+      handlerResponse = jsonResponse({ success: true, ignored: true, message: 'Evento recebido mas não processado', event: event.eventType || event.status || 'unknown' });
     }
 
-    return jsonResponse({ success: true, ignored: true, message: 'Evento recebido mas não processado', event: event.eventType || event.status || 'unknown' });
+    const captured = await captureResponse(handlerResponse);
+    await recordWebhookLog(supabase, {
+      event,
+      payload,
+      responseBody: captured.body,
+      httpStatus: captured.status,
+      status: statusFromResponseBody(captured.body),
+      durationMs: Date.now() - startedAt,
+    });
+    return captured.res;
   } catch (error) {
-    if (error instanceof WebhookError) {
-      console.error('Webhook Cakto erro controlado', { code: error.code, status: error.status, message: error.message });
-      return jsonResponse({ error: error.message, code: error.code }, error.status);
+    const durationMs = Date.now() - startedAt;
+    const isControlled = error instanceof WebhookError;
+    const httpStatus = isControlled ? (error as WebhookError).status : 500;
+    const errorCode = isControlled ? (error as WebhookError).code : 'internal_error';
+    const errorMessage = isControlled ? (error as WebhookError).message : 'Erro interno do servidor';
+
+    if (isControlled) {
+      console.error('Webhook Cakto erro controlado', { code: errorCode, status: httpStatus, message: errorMessage });
+    } else {
+      console.error('Webhook Cakto erro inesperado', error);
     }
 
-    console.error('Webhook Cakto erro inesperado', error);
-    return jsonResponse({ error: 'Erro interno do servidor', code: 'internal_error' }, 500);
+    const responseBody = { error: errorMessage, code: errorCode };
+    if (supabase) {
+      await recordWebhookLog(supabase, {
+        event,
+        payload,
+        responseBody,
+        httpStatus,
+        status: 'failed',
+        errorCode,
+        errorMessage,
+        durationMs,
+      });
+    }
+    return jsonResponse(responseBody, httpStatus);
   }
 });
