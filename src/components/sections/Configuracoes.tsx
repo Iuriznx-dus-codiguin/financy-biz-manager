@@ -58,6 +58,8 @@ const Configuracoes = () => {
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { subscriptionData, subscriptionTier, loading: subscriptionLoading } = useSubscription();
+  const { subscription: userSubscription } = useUserSubscription();
+  const isDeveloper = isDeveloperTier(userSubscription);
   const { formatCurrency } = useCurrency();
   const { dashboards, currentDashboard, createDashboard, deleteDashboard, updateDashboardName } = useDashboard();
   const { getLimits } = useFeatureAccess();
