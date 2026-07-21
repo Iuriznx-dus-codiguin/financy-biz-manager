@@ -89,12 +89,12 @@ export async function logError(input: LogErrorInput): Promise<string | null> {
     const { data, error } = await supabase
       .from('error_occurrences')
       .insert({
-        user_id: user?.id ?? null,
+        user_id: user?.id ?? undefined,
         session_id: getSessionId(),
-        error_code: input.errorCode ?? null,
-        route: route ?? null,
-        context,
-        stack_hash: stackHash,
+        error_code: input.errorCode ?? undefined,
+        route: route ?? undefined,
+        context: context as never,
+        stack_hash: stackHash ?? undefined,
         uncatalogued: !input.errorCode,
       })
       .select('id')
