@@ -86,6 +86,12 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="text-muted-foreground">
                 Detectamos um erro inesperado na aplicação. Por favor, tente recarregar a página.
               </p>
+
+              {this.state.occurrenceId && (
+                <p className="text-xs text-muted-foreground">
+                  Código de ocorrência: <span className="font-mono">{this.state.occurrenceId.slice(0, 8)}</span>
+                </p>
+              )}
               
               {this.state.error && (
                 <details className="text-sm">
