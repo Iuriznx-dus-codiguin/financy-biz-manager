@@ -59,10 +59,9 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
+      occurrenceId: null,
     });
-    
-    // Reload the page to reset the application state
     window.location.reload();
   };
 
