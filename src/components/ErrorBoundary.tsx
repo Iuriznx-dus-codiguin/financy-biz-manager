@@ -14,6 +14,7 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  occurrenceId: string | null;
 }
 
 /**
@@ -26,7 +27,8 @@ export class ErrorBoundary extends Component<Props, State> {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
+      occurrenceId: null,
     };
   }
 
@@ -34,17 +36,23 @@ export class ErrorBoundary extends Component<Props, State> {
     return {
       hasError: true,
       error,
-      errorInfo: null
+      errorInfo: null,
+      occurrenceId: null,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.error('Error caught by boundary:', { error, errorInfo });
-    
-    this.setState({
+    this.setState({ error, errorInfo });
+
+    // Registra ocorrência (não bloqueia UI)
+    logError({
+      errorCode: guessErrorCode(error) ?? 'UI-001',
       error,
-      errorInfo
-    });
+      context: { componentStack: errorInfo.componentStack?.slice(0, 1000) },
+    })
+      .then((id) => id && this.setState({ occurrenceId: id }))
+      .catch(() => {});
   }
 
   handleReset = () => {
