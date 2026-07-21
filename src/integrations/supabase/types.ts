@@ -539,6 +539,116 @@ export type Database = {
         }
         Relationships: []
       }
+      error_catalog: {
+        Row: {
+          ai_resolvable: boolean
+          changelog: Json
+          code: string
+          created_at: string
+          flow: string | null
+          module: string
+          probable_causes: Json
+          related_codes: string[]
+          resolution_steps: Json
+          severity: string
+          tech_description: string
+          title: string
+          updated_at: string
+          user_description: string
+          version: number
+        }
+        Insert: {
+          ai_resolvable?: boolean
+          changelog?: Json
+          code: string
+          created_at?: string
+          flow?: string | null
+          module: string
+          probable_causes?: Json
+          related_codes?: string[]
+          resolution_steps?: Json
+          severity: string
+          tech_description: string
+          title: string
+          updated_at?: string
+          user_description: string
+          version?: number
+        }
+        Update: {
+          ai_resolvable?: boolean
+          changelog?: Json
+          code?: string
+          created_at?: string
+          flow?: string | null
+          module?: string
+          probable_causes?: Json
+          related_codes?: string[]
+          resolution_steps?: Json
+          severity?: string
+          tech_description?: string
+          title?: string
+          updated_at?: string
+          user_description?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      error_occurrences: {
+        Row: {
+          context: Json
+          conversation_id: string | null
+          created_at: string
+          error_code: string | null
+          id: string
+          route: string | null
+          session_id: string | null
+          stack_hash: string | null
+          status: string
+          ticket_id: string | null
+          uncatalogued: boolean
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json
+          conversation_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          route?: string | null
+          session_id?: string | null
+          stack_hash?: string | null
+          status?: string
+          ticket_id?: string | null
+          uncatalogued?: boolean
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json
+          conversation_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          route?: string | null
+          session_id?: string | null
+          stack_hash?: string | null
+          status?: string
+          ticket_id?: string | null
+          uncatalogued?: boolean
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_occurrences_error_code_fkey"
+            columns: ["error_code"]
+            isOneToOne: false
+            referencedRelation: "error_catalog"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       free_trial_history: {
         Row: {
           created_at: string | null
@@ -1124,6 +1234,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           amount: number | null
@@ -1384,6 +1515,13 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       log_bulk_financial_query: {
         Args: { p_query_type: string; p_table_name: string; p_user_id: string }
         Returns: undefined
@@ -1452,7 +1590,7 @@ export type Database = {
       verificar_usuarios_sem_transacao: { Args: never; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1579,6 +1717,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

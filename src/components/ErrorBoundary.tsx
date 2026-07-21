@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { logger } from '@/utils/logger';
+import { logError, guessErrorCode } from '@/utils/errorLogger';
 
 interface Props {
   children: ReactNode;
@@ -13,6 +14,7 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  occurrenceId: string | null;
 }
 
 /**
@@ -25,7 +27,8 @@ export class ErrorBoundary extends Component<Props, State> {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
+      occurrenceId: null,
     };
   }
 
@@ -33,27 +36,32 @@ export class ErrorBoundary extends Component<Props, State> {
     return {
       hasError: true,
       error,
-      errorInfo: null
+      errorInfo: null,
+      occurrenceId: null,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.error('Error caught by boundary:', { error, errorInfo });
-    
-    this.setState({
+    this.setState({ error, errorInfo });
+
+    // Registra ocorrência (não bloqueia UI)
+    logError({
+      errorCode: guessErrorCode(error) ?? 'UI-001',
       error,
-      errorInfo
-    });
+      context: { componentStack: errorInfo.componentStack?.slice(0, 1000) },
+    })
+      .then((id) => id && this.setState({ occurrenceId: id }))
+      .catch(() => {});
   }
 
   handleReset = () => {
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
+      occurrenceId: null,
     });
-    
-    // Reload the page to reset the application state
     window.location.reload();
   };
 
@@ -78,6 +86,12 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="text-muted-foreground">
                 Detectamos um erro inesperado na aplicação. Por favor, tente recarregar a página.
               </p>
+
+              {this.state.occurrenceId && (
+                <p className="text-xs text-muted-foreground">
+                  Código de ocorrência: <span className="font-mono">{this.state.occurrenceId.slice(0, 8)}</span>
+                </p>
+              )}
               
               {this.state.error && (
                 <details className="text-sm">
