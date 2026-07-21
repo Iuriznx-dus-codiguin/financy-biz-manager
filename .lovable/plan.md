@@ -1,61 +1,96 @@
-## Diagnóstico atual
+# Sistema de Suporte Inteligente — Plano de Execução
 
-A função `cakto-webhook` está publicada e os segredos obrigatórios existem. O teste sem autenticação retorna 401 corretamente, então o endpoint está ativo. O erro 500 informado indica que a requisição autenticada chega na função, mas alguma etapa interna está falhando e hoje o `safeHandler` mascara a causa como `Erro interno do servidor`.
+Escopo: 8 fases descritas. Sprint dividido em 4 entregas incrementais para manter a plataforma estável a cada passo.
 
-Pontos frágeis encontrados no código atual:
-- O plano é identificado usando o `payload` raiz, mas os dados reais do produto podem estar dentro de `payload.data`; isso pode gerar `Plano não identificado` e virar 500.
-- A busca de usuário usa `.single()` em `profiles`; se o cliente pagar antes de existir perfil, se houver email com capitalização diferente ou se o email vier em outro campo do payload, o webhook falha com 500.
-- O insert em `receitas` não envia `dashboard_id`; triggers não aparecem ativos na leitura atual, então a receita pode falhar se alguma regra/índice depender disso.
-- A função não é idempotente: retries do Cakto podem duplicar receita/notificação ou falhar em conflitos.
-- Eventos diferentes de pagamento aprovado são tratados genericamente; cancelamento, reembolso, chargeback e renovação podem não atualizar a assinatura corretamente.
-- Os logs atuais não expõem um código de erro operacional seguro para saber exatamente qual etapa falhou sem depender de stack trace.
+---
 
-## Plano de correção
+## Entrega 1 — Fundação: Catálogo + Captura + Logs
 
-1. **Fortalecer parsing do payload Cakto**
-   - Normalizar o payload para um objeto interno único com: evento, status, email, valor, transação, produto e metadados.
-   - Procurar dados tanto no objeto raiz quanto em `data`, `customer`, `product`, `offer`, `payment`, `subscription` e variações comuns.
-   - Normalizar email em lowercase/trim.
+**Fase 1 (auditoria)** — mapeada inline durante a implementação, refletida nas categorias do catálogo. Módulos identificados na base atual: `AUTH` (login/signup/reset), `SUB` (assinatura/Cakto), `DB` (Supabase/RLS), `WBH` (webhooks recebidos e agendados), `AI` (edge functions ai-agent, ai-financial-insights, ai-support-agent), `INT` (Google Sheets/Excel), `UI` (renderização/ErrorBoundary), `NET` (fetch/functions.invoke), `SEC` (rate-limit/permissões), `INF` (env/secrets).
 
-2. **Corrigir identificação do plano**
-   - Fazer `identifyPlan` receber os dados normalizados, não apenas o payload raiz.
-   - Usar `metadata.plan_id`, `product.name`, `offer.name`, `product_name` e possíveis slugs/códigos.
-   - Para plano não identificado, retornar erro 422 com mensagem operacional segura, não 500.
+**Fase 2 (taxonomia)** — tabela `error_catalog`:
+- `code` (ex.: `AUTH-001`, `WBH-014`) — PK estável
+- `title`, `tech_description`, `user_description`
+- `severity` (critical|high|medium|low|info)
+- `module`, `flow`
+- `probable_causes` (jsonb), `resolution_steps` (jsonb)
+- `ai_resolvable` (bool), `related_codes` (text[])
+- `version`, `created_at`, `updated_at`, `changelog` (jsonb)
 
-3. **Evitar falhas quando o usuário ainda não tem perfil**
-   - Buscar perfil por email normalizado.
-   - Se não existir perfil, não quebrar com 500: registrar o evento como recebido/não aplicado e responder 202/200 com motivo claro, para o Cakto não considerar falha técnica.
-   - Se existir mais de um perfil por email, escolher de forma determinística e registrar log de alerta.
+Seed inicial com ~40 códigos cobrindo os fluxos auditados (login, refresh token — já visto no console —, RLS violations, webhook 401/500 do Cakto, rate-limit IA, falhas de importação de planilha, etc.).
 
-4. **Garantir dashboard para registros financeiros**
-   - Antes de inserir receita de assinatura, chamar a função `get_user_main_dashboard(user_id)` para obter/criar dashboard principal.
-   - Inserir a receita com `dashboard_id` preenchido.
+**Fase 3 (captura)**:
+- Tabela `error_occurrences`: `id`, `user_id`, `session_id`, `conversation_id?`, `ticket_id?`, `error_code?`, `route`, `context` (jsonb sanitizado), `stack_hash`, `created_at`, `status` (open|investigating|resolved|reopened).
+- RLS: usuário só vê as próprias; admin vê todas via `has_role`.
+- Frontend: extensão do `ErrorBoundary` já existente + interceptor no cliente Supabase (`src/integrations/supabase/client.ts`) + helper `logError(code, ctx)` em `src/utils/errorLogger.ts`.
+- Backend: helper compartilhado em `supabase/functions/_shared/errorLogger.ts` para uso uniforme em todas as edge functions.
+- Sanitização: strip de tokens/emails/senhas antes de persistir.
 
-5. **Adicionar idempotência no processamento**
-   - Usar `transaction_id`/`cakto_subscription_id` para impedir duplicidade de receita e notificação em retries.
-   - Atualizar assinatura via upsert por `user_id`, mas preservar dados úteis já existentes.
-   - Se o mesmo evento chegar novamente, responder sucesso sem duplicar efeitos colaterais.
+**Deliverables:**
+- Migração criando `error_catalog`, `error_occurrences`, roles `admin` (via padrão `user_roles` + `has_role`), grants e RLS.
+- Seed do catálogo.
+- `errorLogger` frontend + backend.
+- Hook no `ErrorBoundary` + interceptor Supabase.
 
-6. **Tratar eventos de ciclo de assinatura**
-   - Pagamento aprovado/pago: ativar assinatura e registrar receita.
-   - Cancelamento/reembolso/chargeback/assinatura expirada: atualizar status da assinatura de forma segura sem apagar histórico.
-   - Eventos desconhecidos: responder 200 como recebido e ignorado, com log claro.
+---
 
-7. **Melhorar respostas e logs**
-   - Separar erros de autenticação (401), payload inválido (400), plano não identificado (422), usuário não encontrado (202/200 controlado) e erro inesperado (500).
-   - Incluir nos logs somente dados não sensíveis: evento, status, email mascarado, transaction_id, etapa e código do erro.
-   - Nunca logar segredo recebido no payload.
+## Entrega 2 — Chat de Suporte com IA (diagnóstico + geral)
 
-8. **Validar ponta a ponta**
-   - Testar chamada sem secret: deve retornar 401.
-   - Testar payload aprovado com secret: deve retornar sucesso controlado ou usuário pendente, sem 500.
-   - Testar retry do mesmo transaction_id: não deve duplicar receita/notificação.
-   - Testar evento ignorado/cancelado: deve responder 200 e atualizar status quando aplicável.
-   - Conferir logs da Edge Function após os testes.
+**Fase 5 + 6:**
+- Tabelas `support_conversations` (`id`, `user_id`, `state`, `ticket_id?`, `created_at`, `updated_at`, `rating?`) e `support_messages` (`id`, `conversation_id`, `role`, `content`, `matched_code?`, `created_at`). RLS por `user_id`.
+- Nova edge function `support-agent`:
+  - Recebe histórico + mensagem do usuário.
+  - System prompt inclui: descrição real da plataforma (extraída da auditoria) + catálogo carregado do DB (só campos public-safe).
+  - Fluxo: se usuário informar código → retorna passos do catálogo verbatim. Se descrever sintoma → LLM propõe hipótese, cruza com `error_occurrences` recentes do usuário, faz UMA pergunta de esclarecimento se ambíguo, senão responde.
+  - Se sem match no catálogo → cria `error_occurrences` com `error_code=NULL` marcado `uncatalogued=true` para triagem humana.
+  - Usa Lovable AI Gateway (`gemini-2.5-flash`), com rate-limit e persistência.
+- UI: novo `SupportChat` acessível via botão flutuante global (substitui/complementa o antigo WhatsApp button removido) + página dedicada `/suporte`. Estados de conversa visíveis (aberta/diagnóstico/aguardando/resolvida/escalada).
+- Reaproveita padrão markdown do `FinancyAIChat`.
 
-## Arquivos previstos
+**Fase 7 (escalonamento):**
+- Regra: severity `critical` OU `ai_resolvable=false` OU keywords financeiras/segurança → seta `state='escalated'`, cria linha em `support_escalations` com contexto completo.
+- Toast + mensagem clara ao usuário: "Encaminhado para nossa equipe. Chamado #XYZ."
 
-- `supabase/functions/cakto-webhook/index.ts`
-  - Refatoração do parsing, autenticação, identificação de plano, idempotência, status e respostas.
+---
 
-Possível ajuste de banco somente se a validação mostrar ausência de índice/constraint confiável para idempotência em `payment_notifications` ou `receitas`. Se necessário, será criada uma migration pequena e segura.
+## Entrega 3 — Painel Admin de Observabilidade
+
+**Fase 4:**
+- Rota `/admin/observabilidade` protegida por `has_role('admin')`.
+- Abas:
+  1. **Dashboard**: volume por código (7d/30d), série temporal, top módulos, ocorrências não catalogadas.
+  2. **Ocorrências**: tabela filtrável (código, módulo, severity, status, usuário, período), drill-down para detalhes.
+  3. **Catálogo**: CRUD do `error_catalog` inline (título/descrições/passos/severity) sem novo deploy.
+  4. **Conversas**: lista de `support_conversations`, com transcript e ticket vinculado; ações: marcar resolvida, reabrir, escalar.
+- Reutiliza componentes shadcn já no projeto (Table, Card, Dialog).
+
+---
+
+## Entrega 4 — KPIs e Evolução Contínua
+
+**Fase 8:**
+- Ao encerrar conversa: prompt inline "Isso resolveu seu problema?" (👍/👎 + comentário) grava em `support_conversations.rating`.
+- View SQL `support_kpis`: % resolvido pela IA, tempo médio de resolução, top 10 códigos, taxa de escalonamento.
+- Nova aba "KPIs" no painel admin com gráficos (recharts, já usado no projeto).
+- Job semanal (edge function agendada) que lista os top erros não catalogados e cria uma notificação para admins.
+
+---
+
+## Detalhes técnicos
+
+- **Stack**: mantém React + Vite + Supabase + Lovable AI Gateway. Sem novas libs pesadas.
+- **Segurança**: todas as tabelas novas com RLS estrita; grants explícitos por role; sanitização de PII antes de persistir contextos; rate-limit reutiliza `check_and_increment_rate_limit`.
+- **Roles**: implementa `app_role` enum + `user_roles` + `has_role()` conforme padrão do projeto (ainda não existe — `get_user_role` atual lê `profiles.settings->>role` que é inseguro; será migrado).
+- **Compatibilidade**: `ErrorBoundary` e edge functions existentes continuam funcionando; captura é aditiva.
+- **Deploy**: cada entrega é independente e testável antes da próxima.
+
+---
+
+## Ordem sugerida
+
+1. Entrega 1 (fundação, 1 mensagem) — desbloqueia tudo.
+2. Entrega 2 (chat) — valor imediato ao usuário.
+3. Entrega 3 (admin) — valor à equipe.
+4. Entrega 4 (KPIs) — polimento.
+
+Confirma o escopo completo ou prefere começar apenas pela Entrega 1 e validar antes de seguir?
