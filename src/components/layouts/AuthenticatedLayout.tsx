@@ -12,6 +12,7 @@ import Footer from '@/components/Footer';
 import { SubscriptionBanners } from '@/components/SubscriptionBanners';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { ProductTour } from '@/components/onboarding/ProductTour';
+import { FloatingSupportButton } from '@/components/support/FloatingSupportButton';
 import { celebrate } from '@/utils/celebration';
 import {
   isSectionAllowedWhenBlocked,
@@ -117,6 +118,7 @@ export const AuthenticatedLayout = () => {
         </div>
       </SidebarProvider>
       <ProductTour />
+      {activeSection !== 'suporte' && <FloatingSupportButton />}
     </div>
   );
 };

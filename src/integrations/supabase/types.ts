@@ -1204,6 +1204,130 @@ export type Database = {
         }
         Relationships: []
       }
+      support_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          rating: number | null
+          rating_comment: string | null
+          resolved_at: string | null
+          state: string
+          subject: string | null
+          ticket_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rating?: number | null
+          rating_comment?: string | null
+          resolved_at?: string | null
+          state?: string
+          subject?: string | null
+          ticket_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rating?: number | null
+          rating_comment?: string | null
+          resolved_at?: string | null
+          state?: string
+          subject?: string | null
+          ticket_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      support_escalations: {
+        Row: {
+          context: Json
+          conversation_id: string
+          created_at: string
+          error_code: string | null
+          id: string
+          reason: string
+          severity: string | null
+          status: string
+          ticket_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context?: Json
+          conversation_id: string
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          reason: string
+          severity?: string | null
+          status?: string
+          ticket_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context?: Json
+          conversation_id?: string
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          reason?: string
+          severity?: string | null
+          status?: string
+          ticket_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_escalations_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "support_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          matched_code: string | null
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          matched_code?: string | null
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          matched_code?: string | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "support_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_dashboards: {
         Row: {
           created_at: string
