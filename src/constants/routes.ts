@@ -25,6 +25,7 @@ export const SECTION_TO_ROUTE: Record<string, string> = {
   'assinatura': '/assinatura',
   'configuracoes': '/configuracoes',
   'ajuda': '/ajuda',
+  'suporte': '/suporte',
 };
 
 // Mapeamento de rota para seção (gerado automaticamente do inverso)
@@ -33,7 +34,7 @@ export const ROUTE_TO_SECTION: Record<string, string> = Object.fromEntries(
 );
 
 // Seções permitidas quando assinatura está bloqueada
-export const ALLOWED_SECTIONS_WHEN_BLOCKED = ['assinatura', 'configuracoes', 'ajuda'] as const;
+export const ALLOWED_SECTIONS_WHEN_BLOCKED = ['assinatura', 'configuracoes', 'ajuda', 'suporte'] as const;
 
 // Seções que requerem dashboard empresarial
 export const BUSINESS_ONLY_SECTIONS = ['equipe', 'fechamento'] as const;
@@ -53,6 +54,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'assinatura', label: 'Assinatura', businessOnly: false },
   { id: 'configuracoes', label: 'Configurações', businessOnly: false },
   { id: 'ajuda', label: 'Ajuda e Suporte', businessOnly: false },
+  { id: 'suporte', label: 'Suporte Inteligente', businessOnly: false },
 ];
 
 /**
