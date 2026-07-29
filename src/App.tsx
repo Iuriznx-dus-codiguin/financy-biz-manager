@@ -32,6 +32,7 @@ import AgentesIAPage from "./pages/AgentesIAPage";
 import AssinaturaPage from "./pages/AssinaturaPage";
 import ConfiguracoesPage from "./pages/ConfiguracoesPage";
 import AjudaPage from "./pages/AjudaPage";
+import SuportePage from "./pages/SuportePage";
 import AuditoriaWebhooksPage from "./pages/AuditoriaWebhooksPage";
 
 const App = () => (
