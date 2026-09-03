@@ -1295,6 +1295,7 @@ export type Database = {
       }
       support_messages: {
         Row: {
+          author_id: string | null
           content: string
           conversation_id: string
           created_at: string
@@ -1303,6 +1304,7 @@ export type Database = {
           role: string
         }
         Insert: {
+          author_id?: string | null
           content: string
           conversation_id: string
           created_at?: string
@@ -1311,6 +1313,7 @@ export type Database = {
           role: string
         }
         Update: {
+          author_id?: string | null
           content?: string
           conversation_id?: string
           created_at?: string
@@ -1698,6 +1701,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      request_human_support: {
+        Args: { p_conversation_id: string; p_reason?: string }
+        Returns: string
       }
       user_has_dashboard_access: {
         Args: { p_dashboard_id: string; p_user_id: string }
