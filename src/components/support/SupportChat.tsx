@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Send, LifeBuoy, User, Plus, ThumbsUp, ThumbsDown, AlertTriangle } from 'lucide-react';
+import { Send, LifeBuoy, User, Plus, ThumbsUp, ThumbsDown, AlertTriangle, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +35,7 @@ export const SupportChat = ({ showHistory = false, className }: SupportChatProps
     isLoading,
     error,
     sendMessage,
+    requestHumanSupport,
     openConversation,
     startNewConversation,
     rateConversation,
@@ -258,6 +259,18 @@ export const SupportChat = ({ showHistory = false, className }: SupportChatProps
               <Send className="h-4 w-4" />
             </Button>
           </div>
+          {state !== 'escalated' && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={requestHumanSupport}
+              disabled={isLoading}
+            >
+              <Headphones className="h-4 w-4 mr-2" />
+              Falar com um atendente
+            </Button>
+          )}
           <div className="flex items-center justify-between text-[11px] text-muted-foreground">
             <span>Nunca compartilhe senhas ou dados de cartão.</span>
             <span>
