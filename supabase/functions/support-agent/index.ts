@@ -244,6 +244,11 @@ ${occurrencesText}`;
       content = content.replace(metaMatch[0], "").trim();
     }
 
+    // Pedido explícito de atendimento humano
+    if (/(falar|conversar).{0,20}(atendente|humano|pessoa|equipe|suporte humano)|atendimento humano|quero um humano|suporte humano/i.test(message)) {
+      escalate = true;
+    }
+
     const catalogEntry = matchedCode ? entries.find((e) => e.code === matchedCode) ?? null : null;
     if (catalogEntry && (catalogEntry.severity === "critical" || catalogEntry.ai_resolvable === false)) {
       escalate = true;
@@ -290,7 +295,7 @@ ${occurrencesText}`;
         ticket_id: ticketId,
         reason: catalogEntry
           ? `Erro ${catalogEntry.code} (${catalogEntry.severity}) exige atendimento humano`
-          : "Problema sem correspondência no catálogo",
+          : "Atendimento humano solicitado ou problema sem correspondência no catálogo",
         error_code: catalogEntry?.code ?? null,
         severity: catalogEntry?.severity ?? null,
         context: { relato: message.slice(0, 500), rota: "/suporte" },
