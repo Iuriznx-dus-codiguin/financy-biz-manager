@@ -155,14 +155,25 @@ export const SupportChat = ({ showHistory = false, className }: SupportChatProps
                 key={m.id}
                 className={cn('flex gap-3', m.role === 'user' ? 'justify-end' : 'justify-start')}
               >
-                {m.role === 'assistant' && (
+                {m.role !== 'user' && (
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <LifeBuoy className="h-4 w-4 text-primary" />
+                    {m.role === 'agent' ? (
+                      <Headphones className="h-4 w-4 text-primary" />
+                    ) : (
+                      <LifeBuoy className="h-4 w-4 text-primary" />
+                    )}
                   </div>
                 )}
                 <div className={cn('max-w-[85%] space-y-1', m.role === 'user' && 'order-first')}>
                   {m.role === 'user' ? (
                     <div className="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground whitespace-pre-wrap">
+                      {m.content}
+                    </div>
+                  ) : m.role === 'agent' ? (
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm whitespace-pre-wrap">
+                      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-primary">
+                        Equipe Financy
+                      </span>
                       {m.content}
                     </div>
                   ) : (
@@ -183,6 +194,7 @@ export const SupportChat = ({ showHistory = false, className }: SupportChatProps
                 )}
               </div>
             ))}
+
 
             {isLoading && (
               <p className="text-sm text-muted-foreground animate-pulse">Analisando seu caso...</p>
