@@ -34,6 +34,7 @@ import ConfiguracoesPage from "./pages/ConfiguracoesPage";
 import AjudaPage from "./pages/AjudaPage";
 import SuportePage from "./pages/SuportePage";
 import AuditoriaWebhooksPage from "./pages/AuditoriaWebhooksPage";
+import AdminSuportePage from "./pages/AdminSuportePage";
 
 const App = () => (
   <ErrorBoundary>
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/suporte" element={<SuportePage />} />
 
             <Route path="/auditoria/webhooks-cakto" element={<AuditoriaWebhooksPage />} />
+            <Route path="/admin/suporte" element={<AdminSuportePage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

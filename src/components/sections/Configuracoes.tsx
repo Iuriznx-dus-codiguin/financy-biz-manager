@@ -1152,9 +1152,15 @@ const Configuracoes = () => {
             <p className="text-sm text-muted-foreground">
               Acompanhe eventos processados pelo webhook da Cakto, erros e reenvios com filtros por assinatura, categoria e status.
             </p>
-            <Button asChild variant="default" size="sm">
-              <Link to="/auditoria/webhooks-cakto">Abrir auditoria de webhooks</Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="default" size="sm">
+                <Link to="/auditoria/webhooks-cakto">Abrir auditoria de webhooks</Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin/suporte">Atendimento humano (suporte)</Link>
+              </Button>
+            </div>
+
           </CardContent>
         </Card>
       )}

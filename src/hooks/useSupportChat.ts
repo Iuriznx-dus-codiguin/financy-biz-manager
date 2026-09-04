@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-export type SupportRole = 'user' | 'assistant';
+export type SupportRole = 'user' | 'assistant' | 'agent';
 
 export interface SupportMessage {
   id: string;
@@ -41,6 +41,8 @@ export function useSupportChat() {
   const [ticketId, setTicketId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const conversationRef = useRef<string | null>(null);
+  conversationRef.current = conversationId;
 
   const loadConversations = useCallback(async () => {
     if (!user) return;
@@ -56,9 +58,7 @@ export function useSupportChat() {
     loadConversations();
   }, [loadConversations]);
 
-  const openConversation = useCallback(async (id: string) => {
-    setError(null);
-    setConversationId(id);
+  const refreshMessages = useCallback(async (id: string) => {
     const [{ data: msgs }, { data: conv }] = await Promise.all([
       supabase
         .from('support_messages')
@@ -75,6 +75,33 @@ export function useSupportChat() {
     setState(conv?.state ?? 'open');
     setTicketId(conv?.ticket_id ?? null);
   }, []);
+
+  const openConversation = useCallback(
+    async (id: string) => {
+      setError(null);
+      setConversationId(id);
+      await refreshMessages(id);
+    },
+    [refreshMessages]
+  );
+
+  // Atualização em tempo real: novas mensagens da equipe aparecem sem recarregar
+  useEffect(() => {
+    if (!conversationId) return;
+    const channel = supabase
+      .channel(`support-conv-${conversationId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'support_messages', filter: `conversation_id=eq.${conversationId}` },
+        () => {
+          if (conversationRef.current) refreshMessages(conversationRef.current);
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversationId, refreshMessages]);
 
   const startNewConversation = useCallback(() => {
     setConversationId(null);
@@ -140,6 +167,37 @@ export function useSupportChat() {
     [conversationId, isLoading, loadConversations]
   );
 
+  /** Encaminha a conversa atual para atendimento humano. */
+  const requestHumanSupport = useCallback(async () => {
+    if (isLoading) return;
+    setError(null);
+
+    // Sem conversa aberta: cria uma pelo agente e depois escala
+    let id = conversationId;
+    if (!id) {
+      await sendMessage('Quero falar com um atendente humano.');
+      id = conversationRef.current;
+      if (!id) return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data, error: rpcError } = await supabase.rpc('request_human_support', {
+        p_conversation_id: id,
+        p_reason: 'Usuário solicitou atendimento humano pelo chat',
+      });
+      if (rpcError) throw rpcError;
+      setTicketId((data as string) ?? null);
+      setState('escalated');
+      await refreshMessages(id);
+      loadConversations();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível chamar um atendente.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [conversationId, isLoading, loadConversations, refreshMessages, sendMessage]);
+
   const rateConversation = useCallback(
     async (rating: number, comment?: string) => {
       if (!conversationId) return;
@@ -167,6 +225,7 @@ export function useSupportChat() {
     isLoading,
     error,
     sendMessage,
+    requestHumanSupport,
     openConversation,
     startNewConversation,
     rateConversation,
