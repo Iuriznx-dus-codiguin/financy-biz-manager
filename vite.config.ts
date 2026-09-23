@@ -20,17 +20,19 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Bibliotecas pesadas em chunks próprios, com cache independente do código
-    // da aplicação: exceljs/jspdf só são baixados quando o usuário exporta algo,
-    // e recharts só quando abre uma tela com gráfico.
     rollupOptions: {
       output: {
+        // Só as bibliotecas que realmente fazem parte do carregamento inicial
+        // ganham chunk fixo — assim têm hash estável e ficam em cache entre
+        // deploys.
+        //
+        // recharts, exceljs e jspdf ficam DE FORA de propósito: são usados
+        // apenas por rotas lazy e por imports dinâmicos, e listá-las aqui
+        // forçava uma aresta de import estático a partir do chunk de entrada,
+        // anulando o carregamento sob demanda. Deixar o Rollup dividir
+        // sozinho mantém cada uma no chunk da rota que a utiliza.
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-charts': ['recharts'],
-          'vendor-spreadsheet': ['exceljs'],
-          'vendor-pdf': ['jspdf'],
-          'vendor-motion': ['framer-motion'],
           'vendor-supabase': ['@supabase/supabase-js'],
         },
       },

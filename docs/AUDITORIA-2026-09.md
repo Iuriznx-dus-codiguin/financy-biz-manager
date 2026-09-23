@@ -141,7 +141,20 @@ Três endpoints n8n estavam escritos no código-fonte de um repositório públic
 
 O build gerava **um único chunk JS de 3,79 MB (1,02 MB gzip)**. Todas as 17 páginas eram importadas estaticamente em `App.tsx`, então quem abria a tela de login baixava junto Relatórios, `exceljs`, `jspdf`, `html2canvas`, `recharts` e `framer-motion` antes do primeiro render.
 
-**Corrigido:** `React.lazy` por rota + `manualChunks` no Vite separando react, recharts, exceljs, jspdf, framer-motion e supabase.
+**Corrigido** em três frentes:
+
+1. `React.lazy` por rota em `App.tsx`.
+2. `exceljs` e `jspdf` carregados por `import()` dinâmico no ponto de uso. O `exceljs` entrava no grafo estático por um caminho nada óbvio — `AuthenticatedLayout` → `OnboardingFlow` → `ExpenseSheetStep` → `parseNumber`, uma função pura que só estava no mesmo arquivo que o código de planilha.
+3. `manualChunks` restrito a react e supabase. Listar `recharts`/`exceljs`/`jspdf` ali **criava uma aresta de import estático a partir do chunk de entrada** e anulava o lazy loading — a primeira tentativa desta auditoria caiu exatamente nessa armadilha, e só a medição do grafo de chunks revelou.
+
+Resultado medido (fechamento transitivo dos chunks por rota):
+
+| Rota | Antes | Depois | Redução (gzip) |
+|---|---|---|---|
+| Login | 3.792 kB / 1.017 kB gzip | 937 kB / **292 kB gzip** | **−71%** |
+| Dashboard | 3.792 kB / 1.017 kB gzip | 1.404 kB / **420 kB gzip** | **−59%** |
+
+Tempo de build também caiu de 8m08s para ~1m30s.
 
 ### 20. Uma dezena de consultas idênticas por render
 
@@ -195,6 +208,14 @@ O ESLint rodava sobre `supabase/functions/**` (Deno, com globais e imports por U
 Sem `</head>`, `<body>` aninhado dentro do `<head>`, `og:title` e `og:description` ausentes e `description` igual a "Financy Ltda".
 
 **Corrigido:** HTML válido e metadados sociais completos.
+
+---
+
+### 26. Componentes e dependências instalados sem uso
+
+22 componentes de `src/components/ui/` não têm nenhum import no projeto (`calendar`, `carousel`, `chart`, `command`, `form`, `popover`, `slider`, `radio-group`, entre outros). **Não foram removidos**: são scaffolding do shadcn/ui, o Vite já os elimina do bundle por tree-shaking e podem ser regerados a qualquer momento. Ficam registrados porque cada um carrega uma dependência Radix no `package.json`.
+
+Mais relevante: **`zod` e `@hookform/resolvers` estão instalados e não são usados em lugar nenhum**. Uma plataforma financeira sem nenhum schema de validação de entrada, tendo a biblioteca à disposição — é o mesmo padrão do `security.ts` do item 21: a ferramenta foi adicionada, mas nunca conectada.
 
 ---
 
