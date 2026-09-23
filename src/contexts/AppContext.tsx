@@ -740,7 +740,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const previous = membrosEquipe;
     setMembrosEquipe(prev => prev.filter(m => m.id !== id));
     try {
-      const { error } = await supabase.from('equipe_membros').delete().eq('id', id);
+      // Filtro por user_id como nas demais exclusões: a RLS já protege, mas
+      // esta era a única delete sem a cláusula — defesa em profundidade contra
+      // uma política que venha a ser afrouxada.
+      const { error } = await supabase.from('equipe_membros').delete().eq('id', id).eq('user_id', user!.id);
       if (error) throw error;
     } catch (error) {
       setMembrosEquipe(previous);

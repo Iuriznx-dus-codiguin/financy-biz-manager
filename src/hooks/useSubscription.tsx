@@ -48,10 +48,13 @@ export const useSubscription = () => {
           .select('id, email, status, subscription_type, expires_at')
           .eq('user_id', user.id)
           .maybeSingle(),
+        // Filtra só por user_id. O `.or()` anterior interpolava `user.email`
+        // direto na string de filtro do PostgREST — um email contendo vírgula
+        // ou parêntese (caracteres válidos no padrão) reescrevia a condição.
         supabase
           .from('customer_subscriptions')
           .select('id, email, status, plan_type, expires_at')
-          .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle(),

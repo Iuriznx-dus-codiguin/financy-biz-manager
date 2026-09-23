@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Download, BarChart3, TrendingUp, TrendingDown, FolderOpen, FileText, Users, Target, DollarSign, Calendar, HelpCircle } from 'lucide-react';
-import jsPDF from 'jspdf';
 import { useProductTour } from '@/hooks/useProductTour';
 import { TourId } from '@/config/tourSteps';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -52,9 +51,11 @@ const Ajuda = () => {
 
 
 
-  const generatePDF = (guideType: string) => {
+  const generatePDF = async (guideType: string) => {
+    // jspdf (~417 kB) só é baixado quando o usuário pede um guia em PDF.
+    const { default: jsPDF } = await import('jspdf');
     const doc = new jsPDF();
-    
+
     // Configurar fonte
     doc.setFont('helvetica');
     

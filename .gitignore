@@ -24,6 +24,12 @@ dist-ssr
 *.sw?
 
 # Environment variables
+# .env estava listado aqui mas continuava versionado (entrou no repositório
+# antes desta regra). Foi removido do índice — `git rm --cached .env`.
 .env
-.env.local
+.env.*
+!.env.example
+
+# O projeto usa bun (bun.lock é o lockfile versionado).
+# package-lock.json fica de fora para não haver dois lockfiles divergentes.
 package-lock.json
