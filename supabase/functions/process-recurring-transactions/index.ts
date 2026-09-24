@@ -1,10 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { checkEnv, safeHandler } from '../_shared/utils.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { checkEnv, getCorsHeaders, isAuthorizedCron, safeHandler } from '../_shared/utils.ts';
 
 /**
  * Edge Function: process-recurring-transactions
@@ -20,6 +15,8 @@ const corsHeaders = {
  */
 
 Deno.serve(safeHandler(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -43,11 +40,10 @@ Deno.serve(safeHandler(async (req) => {
   const envVars = checkEnv(['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'CRON_SECRET_TOKEN']);
   const supabaseClient = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_SERVICE_ROLE_KEY);
 
-  // Validar autenticação via token CRON
-  const authHeader = req.headers.get('Authorization');
-  const expectedToken = `Bearer ${envVars.CRON_SECRET_TOKEN}`;
-  
-  if (!authHeader || authHeader !== expectedToken) {
+  // Validar autenticação via token CRON.
+  // A comparação é em tempo constante: `!==` em string vaza, pelo tempo de
+  // resposta, quantos caracteres iniciais do segredo o atacante acertou.
+  if (!isAuthorizedCron(req, envVars.CRON_SECRET_TOKEN)) {
     console.error('[SECURITY] Unauthorized access attempt - Invalid or missing cron token');
     return new Response(
       JSON.stringify({ 

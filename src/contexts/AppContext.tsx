@@ -200,8 +200,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }, 500);
     };
 
+    // Nome do canal inclui o dashboard: com o nome fixo 'financial-changes', a
+    // troca de dashboard podia recriar o canal antes do anterior ser desfeito e
+    // as duas inscrições colidiam no mesmo topic do realtime.
     const channel = supabase
-      .channel('financial-changes')
+      .channel(`financial-changes:${currentDashboard.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'despesas', filter: `dashboard_id=eq.${currentDashboard.id}` },
@@ -740,7 +743,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const previous = membrosEquipe;
     setMembrosEquipe(prev => prev.filter(m => m.id !== id));
     try {
-      const { error } = await supabase.from('equipe_membros').delete().eq('id', id);
+      // Filtro por user_id como nas demais exclusões: a RLS já protege, mas
+      // esta era a única delete sem a cláusula — defesa em profundidade contra
+      // uma política que venha a ser afrouxada.
+      const { error } = await supabase.from('equipe_membros').delete().eq('id', id).eq('user_id', user!.id);
       if (error) throw error;
     } catch (error) {
       setMembrosEquipe(previous);

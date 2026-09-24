@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders } from '../_shared/utils.ts';
 
 const MAX_CHARS = 1500;
 const MAX_DAILY_MESSAGES = 60;
@@ -21,13 +17,6 @@ interface CatalogEntry {
   resolution_steps: unknown;
   ai_resolvable: boolean;
   related_codes: string[] | null;
-}
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
 }
 
 function makeTicketId() {
@@ -54,6 +43,16 @@ Não invente funcionalidades que não estejam nesta lista.
 `;
 
 serve(async (req) => {
+  // Headers CORS resolvidos por requisição (allowlist de origem), então `json`
+  // precisa viver dentro do handler para enxergá-los.
+  const corsHeaders = getCorsHeaders(req);
+
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");

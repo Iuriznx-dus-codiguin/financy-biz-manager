@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
-import * as Icons from 'lucide-react';
+import { getCategoryIcon } from '@/constants/categoryIcons';
 import { useCategoriasPersonalizadas, CategoriaPersonalizada } from '@/hooks/useCategoriasPersonalizadas';
 import { useAppContext } from '@/contexts/AppContext';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -131,10 +131,11 @@ export function Categorias() {
     setDeletingUsageCount(null);
   };
 
-  const getIcon = (iconName: string) => {
-    const IconComponent = (Icons as any)[iconName] || Icons.Folder;
-    return IconComponent;
-  };
+  // Resolve pelo registro explícito — ver src/constants/categoryIcons.ts.
+  // O `Icons[iconName]` anterior nunca achava nada (o lucide exporta em
+  // PascalCase, os nomes aqui são kebab-case), então toda categoria mostrava a
+  // mesma pasta — e ainda impedia o tree-shaking da biblioteca de ícones.
+  const getIcon = getCategoryIcon;
 
   if (loading) {
     return (

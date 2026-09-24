@@ -1,26 +1,69 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkEnv, constantTimeCompare, getCorsHeaders } from '../_shared/utils.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const unauthorized = () =>
+    new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
+    const envVars = checkEnv([
+      'SUPABASE_URL',
+      'SUPABASE_SERVICE_ROLE_KEY',
+      'SUPABASE_ANON_KEY',
+      'N8N_RELATIONAL_DATA_URL',
+    ]);
 
-    const { userId, eventType } = await req.json();
-    // eventType: 'free_trial' ou 'subscription_renewal'
+    const supabaseClient = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_SERVICE_ROLE_KEY);
 
-    console.log('📅 Agendando webhooks para:', userId, eventType);
+    const body = await req.json().catch(() => ({}));
+    const { userId, eventType } = body || {};
+
+    if (!userId || typeof userId !== 'string' || !UUID_RE.test(userId)) {
+      return new Response(JSON.stringify({ error: 'userId inválido' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Autorização: a function roda com service role e lê/envia PII de qualquer
+    // usuário a partir de um userId do corpo. Sem esta checagem, qualquer
+    // usuário logado dispara notificações para a conta de terceiros (IDOR).
+    const authHeader = req.headers.get('Authorization') || '';
+    if (!authHeader.startsWith('Bearer ')) return unauthorized();
+    const token = authHeader.slice('Bearer '.length);
+
+    const isInternalCall = constantTimeCompare(token, envVars.SUPABASE_SERVICE_ROLE_KEY);
+    if (!isInternalCall) {
+      // Chamada vinda do app: só pode agendar para a própria conta.
+      const authClient = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
+      const callerId = claimsData?.claims?.sub as string | undefined;
+      if (claimsError || !callerId) return unauthorized();
+      if (callerId !== userId) {
+        console.error('[SECURITY] schedule-user-webhooks: tentativa de agendar para outro usuário');
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    console.log('📅 Agendando webhooks', { eventType, internal: isInternalCall });
 
     // Buscar dados do usuário
     const { data: profile } = await supabaseClient
@@ -33,7 +76,7 @@ serve(async (req) => {
       throw new Error('Perfil não encontrado');
     }
 
-    const webhookUrl = 'https://central-financy-n8n.y8enlt.easypanel.host/webhook/centro-de-dados-relacionais';
+    const webhookUrl = envVars.N8N_RELATIONAL_DATA_URL;
     const basePayload = {
       nome: profile.nome_completo,
       email: profile.email,

@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Download, BarChart3, TrendingUp, TrendingDown, FolderOpen, FileText, Users, Target, DollarSign, Calendar, HelpCircle } from 'lucide-react';
-import jsPDF from 'jspdf';
 import { useProductTour } from '@/hooks/useProductTour';
 import { TourId } from '@/config/tourSteps';
 import { useDashboard } from '@/hooks/useDashboard';
 import { getRouteForSection } from '@/constants/routes';
+import { toast } from 'sonner';
 
 const Ajuda = () => {
   const { startTour } = useProductTour();
@@ -52,9 +52,11 @@ const Ajuda = () => {
 
 
 
-  const generatePDF = (guideType: string) => {
+  const generatePDF = async (guideType: string) => {
+    // jspdf (~417 kB) só é baixado quando o usuário pede um guia em PDF.
+    const { default: jsPDF } = await import('jspdf');
     const doc = new jsPDF();
-    
+
     // Configurar fonte
     doc.setFont('helvetica');
     
@@ -165,6 +167,21 @@ const Ajuda = () => {
     
     // Download do PDF
     doc.save(`financy-guia-${guideType}.pdf`);
+  };
+
+  /**
+   * Handler do botão. `generatePDF` é assíncrona desde que o jspdf passou a ser
+   * carregado sob demanda — sem este wrapper, uma falha de rede ao buscar o
+   * chunk viraria uma promise rejeitada sem tratamento e o usuário clicaria sem
+   * nenhum retorno na tela.
+   */
+  const handleDownloadGuide = (guideType: string) => {
+    generatePDF(guideType).catch((error) => {
+      console.error('Erro ao gerar o guia em PDF:', error);
+      toast.error('Não foi possível gerar o guia', {
+        description: 'Verifique sua conexão e tente novamente.',
+      });
+    });
   };
 
   const guias = [
@@ -316,7 +333,7 @@ const Ajuda = () => {
                     <h4 className="font-semibold text-lg mb-2">{guia.title}</h4>
                     <p className="text-sm text-muted-foreground mb-4">{guia.description}</p>
                     <Button
-                      onClick={() => generatePDF(guia.guideType)}
+                      onClick={() => handleDownloadGuide(guia.guideType)}
                       className="rounded-lg bg-primary hover:bg-primary/90"
                       size="sm"
                     >

@@ -10,6 +10,9 @@ const corsHeaders = {
 
 type JsonObject = Record<string, any>;
 
+/** Teto para o corpo do webhook (~256 KB) — payloads reais da Cakto são de poucos KB. */
+const MAX_WEBHOOK_BODY_BYTES = 256 * 1024;
+
 interface PlanConfig {
   subscription_type: 'personal' | 'business';
   plan_name: string;
@@ -278,7 +281,7 @@ async function recordWebhookLog(
       const { data } = await supabase
         .from('profiles')
         .select('id')
-        .ilike('email', event.email)
+        .ilike('email', escapeLikePattern(event.email))
         .limit(1);
       userId = data?.[0]?.id ?? null;
     }
@@ -340,12 +343,48 @@ function normalizeEmail(value: any): string {
   return sanitizeText(value).toLowerCase();
 }
 
-function parseAmount(value: any): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value > 1000 ? value / 100 : value;
-  const text = sanitizeText(value).replace(/[^0-9,.-]/g, '').replace(',', '.');
-  const parsed = Number.parseFloat(text);
+/**
+ * Limiar da heurística de centavos herdada do código original.
+ * Valores acima disso são divididos por 100 — ver `parseAmount`.
+ */
+const CENTS_HEURISTIC_THRESHOLD = 1000;
+
+/**
+ * Converte o valor do payload para reais.
+ *
+ * Quando o payload traz um campo que declara a unidade (`amount_cents` e
+ * variantes), `inCents = true` e a conversão é exata.
+ *
+ * Sem esse campo, cai na heurística original `valor > 1000 ? valor / 100`.
+ * Ela é ambígua e erra para vendas acima de R$ 1.000 informadas em reais
+ * (R$ 1.200,00 vira R$ 12,00) — mas foi MANTIDA de propósito: se a Cakto
+ * envia `amount` em centavos, trocá-la por leitura direta multiplicaria por
+ * 100 o valor de toda venda, o que é muito pior. A saída definitiva é
+ * confirmar a unidade na documentação/painel da Cakto e então remover a
+ * heurística; até lá, cada uso dela é registrado em log para auditoria.
+ */
+function parseAmount(value: any, inCents = false): number {
+  let parsed: number;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    parsed = value;
+  } else {
+    const text = sanitizeText(value).replace(/[^0-9,.-]/g, '').replace(',', '.');
+    parsed = Number.parseFloat(text);
+  }
   if (!Number.isFinite(parsed)) return 0;
-  return parsed > 1000 ? parsed / 100 : parsed;
+
+  // Unidade declarada pelo payload: conversão exata.
+  if (inCents) return parsed / 100;
+
+  // Unidade desconhecida: heurística herdada, com registro para auditoria.
+  if (parsed > CENTS_HEURISTIC_THRESHOLD) {
+    console.warn(
+      'Webhook Cakto: valor sem unidade declarada acima do limiar — aplicando heurística de centavos',
+      { valor_recebido: parsed, valor_registrado: parsed / 100 },
+    );
+    return parsed / 100;
+  }
+  return parsed;
 }
 
 function maskEmail(email: string): string {
@@ -382,7 +421,16 @@ function normalizePayload(payload: JsonObject): NormalizedCaktoPayload {
     'metadata.plan_id', 'metadata.plan', 'metadata.plan_slug', 'metadata.subscription_plan', 'plan_id', 'plan.slug', 'plan.id', 'offer.code', 'product.code',
   ]));
   const paymentMethod = sanitizeText(getValue(merged, ['payment_method', 'payment.method', 'method', 'payment.type'])) || 'Cakto';
-  const amount = parseAmount(getValue(merged, ['amount', 'total_amount', 'price', 'value', 'payment.amount', 'purchase.amount', 'paid_amount']));
+
+  // Preferir campos que declaram a unidade. Só caímos no campo genérico
+  // (assumido em reais) quando nenhum campo em centavos vem no payload.
+  const amountInCents = getValue(merged, [
+    'amount_cents', 'total_amount_cents', 'amount_in_cents', 'price_cents',
+    'payment.amount_cents', 'purchase.amount_cents',
+  ]);
+  const amount = amountInCents !== undefined
+    ? parseAmount(amountInCents, true)
+    : parseAmount(getValue(merged, ['amount', 'total_amount', 'price', 'value', 'payment.amount', 'purchase.amount', 'paid_amount']));
 
   return { raw: payload, data, eventType, status, email, amount, transactionId, subscriptionId, customerId, productName, offerName, planHint, paymentMethod, metadata };
 }
@@ -404,22 +452,49 @@ function identifyPlan(event: NormalizedCaktoPayload): PlanConfig | null {
     const alias = PLAN_ALIASES[key] || key;
     if (PLAN_MAPPINGS[alias]) return PLAN_MAPPINGS[alias];
 
+    // Correspondência por palavra inteira sobre o identificador normalizado.
+    // O `includes` anterior liberava plano pago por substring: qualquer produto
+    // cujo nome contivesse "pro" — "PROdutos", "PROmoção" — casava com o plano Pro.
+    const tokens = new Set(key.split('_').filter(Boolean));
     for (const [mappingKey, config] of Object.entries(PLAN_MAPPINGS)) {
-      const normalizedPlanId = normalizeKey(config.plan_id);
-      const normalizedName = normalizeKey(config.plan_name);
-      if (key.includes(mappingKey) || key.includes(normalizedPlanId) || key.includes(normalizedName)) return config;
+      const variants = [mappingKey, normalizeKey(config.plan_id), normalizeKey(config.plan_name)];
+      for (const variant of variants) {
+        const variantTokens = variant.split('_').filter(Boolean);
+        if (variantTokens.length > 0 && variantTokens.every((t) => tokens.has(t))) return config;
+      }
     }
   }
 
+  // Fallback por características do nome, para payloads que não casam com
+  // nenhum mapeamento conhecido.
+  //
+  // A periodicidade continua caindo em "mensal" quando o payload não informa —
+  // igual ao comportamento original. Exigir periodicidade explícita aqui
+  // devolveria 422 e o cliente ficaria SEM acesso após pagar; conceder 30 dias
+  // é o modo de falha recuperável (o suporte estende, o cliente não fica na
+  // porta). Cada vez que isso acontece vai para o log.
   const searchable = normalizeKey(candidates.join(' '));
-  const isYearly = /anual|annual|yearly|ano/.test(searchable);
-  const isBusiness = /empresarial|business|empresa|company/.test(searchable);
-  const type = isBusiness ? 'empresarial' : 'pessoal';
+  const isYearly = /(^|_)(anual|annual|yearly|ano)(_|$)/.test(searchable);
+  const isMonthly = /(^|_)(mensal|monthly|mes|month)(_|$)/.test(searchable);
   const period = isYearly ? 'anual' : 'mensal';
+  if (!isYearly && !isMonthly) {
+    console.warn('Webhook Cakto: periodicidade não informada no payload — assumindo mensal', {
+      candidatos: searchable,
+    });
+  }
 
-  if (/super|enterprise|company/.test(searchable)) return PLAN_MAPPINGS[`empresarial_enterprise_${period}`] || null;
-  if (/pro/.test(searchable)) return PLAN_MAPPINGS[`${type}_pro_${period}`] || null;
-  if (/plus/.test(searchable)) return PLAN_MAPPINGS[`${type}_plus_${period}`] || null;
+  const isBusiness = /(^|_)(empresarial|business|empresa|company)(_|$)/.test(searchable);
+  const type = isBusiness ? 'empresarial' : 'pessoal';
+
+  // Enterprise ("Super Company") só existe na linha empresarial.
+  // `company` permanece na lista para manter o comportamento original — sem
+  // ele, um nome de produto desconhecido contendo "company" passaria a cair em
+  // 422 em vez de liberar o plano, tirando o acesso de quem pagou.
+  if (/(^|_)(super|enterprise|company)(_|$)/.test(searchable)) {
+    return PLAN_MAPPINGS[`empresarial_enterprise_${period}`] || null;
+  }
+  if (/(^|_)pro(_|$)/.test(searchable)) return PLAN_MAPPINGS[`${type}_pro_${period}`] || null;
+  if (/(^|_)plus(_|$)/.test(searchable)) return PLAN_MAPPINGS[`${type}_plus_${period}`] || null;
   return null;
 }
 
@@ -463,11 +538,20 @@ async function authenticateWebhook(req: Request, rawBody: string, payload: JsonO
   throw new WebhookError(401, 'missing_or_invalid_secret', 'Não autorizado');
 }
 
+/**
+ * Escapa curingas de LIKE (`%`, `_`) vindos do payload.
+ * Sem isso, `joao_silva@x.com` casa com `joaoXsilva@x.com` e um email
+ * `%@%` casaria com qualquer perfil da base.
+ */
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
 async function findProfileByEmail(supabase: any, email: string) {
   const { data, error } = await supabase
     .from('profiles')
     .select('id, email, created_at')
-    .ilike('email', email)
+    .ilike('email', escapeLikePattern(email))
     .order('created_at', { ascending: true })
     .limit(2);
 
@@ -528,12 +612,45 @@ async function processApprovedPayment(supabase: any, event: NormalizedCaktoPaylo
   }
 
   const now = new Date();
-  const subscriptionEndDate = new Date(now);
-  subscriptionEndDate.setDate(subscriptionEndDate.getDate() + planConfig.duration_days);
   const amount = event.amount || 0;
   const idempotencyKey = event.transactionId || event.subscriptionId || `${profile.id}-${planConfig.plan_id}-${now.toISOString().slice(0, 10)}`;
   const alreadyRegistered = await hasExistingRevenue(supabase, profile.id, idempotencyKey);
   const dashboardId = await getMainDashboardId(supabase, profile.id);
+
+  // Proteção contra replay: o webhook não exige timestamp nem nonce, então um
+  // POST autêntico capturado pode ser reenviado indefinidamente. A idempotência
+  // existente só evitava duplicar a receita — a validade da assinatura era
+  // recalculada a partir de `now` a cada reenvio, renovando o plano de graça.
+  //
+  // O vencimento só é preservado quando a chave veio de `transaction_id`, que é
+  // único por cobrança. Se ela caiu no fallback para `subscription_id` (igual em
+  // todas as renovações da mesma assinatura), preservar o vencimento
+  // impediria uma RENOVAÇÃO legítima de estender o plano — por isso, nesse caso,
+  // o comportamento original de recalcular é mantido.
+  const hasUniqueTransactionId = Boolean(event.transactionId);
+  let existingExpiresAt: string | null = null;
+  if (alreadyRegistered && hasUniqueTransactionId) {
+    const { data: currentSub } = await supabase
+      .from('user_subscriptions')
+      .select('expires_at')
+      .eq('user_id', profile.id)
+      .maybeSingle();
+    existingExpiresAt = currentSub?.expires_at ?? null;
+    if (existingExpiresAt) {
+      console.warn('Webhook Cakto: reenvio da mesma transação — vencimento preservado', {
+        transaction_id: idempotencyKey,
+        expires_at: existingExpiresAt,
+      });
+    }
+  } else if (alreadyRegistered) {
+    console.warn('Webhook Cakto: evento repetido sem transaction_id único — tratado como renovação', {
+      subscription_id: event.subscriptionId || null,
+    });
+  }
+
+  const subscriptionEndDate = new Date(now);
+  subscriptionEndDate.setDate(subscriptionEndDate.getDate() + planConfig.duration_days);
+  const effectiveExpiresAt = existingExpiresAt ?? subscriptionEndDate.toISOString();
 
   if (!alreadyRegistered) {
     const { error: receitaError } = await supabase
@@ -567,7 +684,7 @@ async function processApprovedPayment(supabase: any, event: NormalizedCaktoPaylo
       status: 'active',
       billing_period: planConfig.billing_period,
       started_at: now.toISOString(),
-      expires_at: subscriptionEndDate.toISOString(),
+      expires_at: effectiveExpiresAt,
       renewed_at: alreadyRegistered ? undefined : now.toISOString(),
       amount,
       features: planConfig.features,
@@ -598,7 +715,7 @@ async function processApprovedPayment(supabase: any, event: NormalizedCaktoPaylo
       email: event.email,
       subscribed: true,
       subscription_tier: tierFromPlan(planConfig.plan_id),
-      subscription_end: subscriptionEndDate.toISOString(),
+      subscription_end: effectiveExpiresAt,
       updated_at: now.toISOString(),
     }, { onConflict: 'email' });
 
@@ -641,7 +758,7 @@ async function processApprovedPayment(supabase: any, event: NormalizedCaktoPaylo
       name: planConfig.plan_name,
       type: planConfig.subscription_type,
       period: planConfig.billing_period,
-      expires_at: subscriptionEndDate.toISOString(),
+      expires_at: effectiveExpiresAt,
     },
   });
 }
@@ -668,8 +785,16 @@ async function processSubscriptionStop(supabase: any, event: NormalizedCaktoPayl
       metadata: { event_type: event.eventType, status: event.status, transaction_id: event.transactionId, processed_at: now },
     });
 
-  if (userId) updateQuery = updateQuery.eq('user_id', userId);
-  else updateQuery = updateQuery.eq('cakto_subscription_id', event.subscriptionId);
+  if (userId) {
+    updateQuery = updateQuery.eq('user_id', userId);
+  } else if (event.subscriptionId) {
+    updateQuery = updateQuery.eq('cakto_subscription_id', event.subscriptionId);
+  } else {
+    // Sem user_id e sem subscription_id o UPDATE sairia sem cláusula de
+    // identificação e cancelaria assinaturas de terceiros em lote.
+    console.warn('Webhook Cakto: cancelamento sem identificador utilizável, ignorado');
+    return jsonResponse({ success: true, ignored: true, code: 'unresolved_identifier', message: 'Não foi possível identificar a assinatura' });
+  }
 
   const { error } = await updateQuery;
   if (error) {
@@ -785,7 +910,13 @@ serve(async (req) => {
 
     const envVars = checkEnv(['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'CAKTO_WEBHOOK_SECRET']);
     supabase = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_SERVICE_ROLE_KEY);
+
     const rawBody = await req.text();
+    // Corpo é lido inteiro na memória antes da autenticação; sem teto, um POST
+    // grande derruba a function mesmo sem segredo válido.
+    if (rawBody.length > MAX_WEBHOOK_BODY_BYTES) {
+      throw new WebhookError(413, 'payload_too_large', 'Payload excede o tamanho máximo');
+    }
 
     try {
       payload = JSON.parse(rawBody || '{}');

@@ -10,6 +10,10 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3000',
 ];
 
+/** Limites de payload do chat (histórico completo é reenviado a cada turno). */
+const MAX_MESSAGES = 40;
+const MAX_MESSAGES_CHARS = 24_000;
+
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get('Origin') || '';
   const allowedOrigin = ALLOWED_ORIGINS.includes(origin)
@@ -66,6 +70,19 @@ serve(async (req) => {
     const body = await req.json();
     const { messages, dashboardId, dashboardType, userType, action, actionData } = body;
 
+    // `dashboardId` vem do corpo da requisição e é gravado nas transações por um
+    // client com service role (RLS desativada). Sem validar a posse, um usuário
+    // poderia escrever nos dashboards de outra conta.
+    if (dashboardId !== undefined && dashboardId !== null && dashboardId !== '') {
+      const owns = await userOwnsDashboard(supabase, user.id, dashboardId);
+      if (!owns) {
+        console.error('[SECURITY] ai-agent: dashboardId não pertence ao usuário autenticado');
+        return new Response(JSON.stringify({ error: 'Dashboard inválido' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Handle direct CRUD actions
     if (action) {
       const result = await handleAction(supabase, user.id, dashboardId, action, actionData);
@@ -77,6 +94,14 @@ serve(async (req) => {
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: 'Mensagens são obrigatórias' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Teto de payload: o histórico vai inteiro para o gateway de IA e é cobrado
+    // por token — sem limite, uma única requisição esgota a cota do dia.
+    if (messages.length > MAX_MESSAGES || JSON.stringify(messages).length > MAX_MESSAGES_CHARS) {
+      return new Response(JSON.stringify({ error: 'Conversa muito longa. Inicie um novo chat.' }), {
+        status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
@@ -327,6 +352,33 @@ serve(async (req) => {
 
 // ================= Helper Functions =================
 
+/** Confirma que o dashboard informado pertence ao usuário autenticado. */
+async function userOwnsDashboard(supabase: any, userId: string, dashboardId: string): Promise<boolean> {
+  if (typeof dashboardId !== 'string') return false;
+  const { data, error } = await supabase
+    .from('user_dashboards')
+    .select('id')
+    .eq('id', dashboardId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) {
+    console.error('Erro ao validar posse do dashboard:', { code: error.code, message: error.message });
+    return false; // fail closed: na dúvida, não grava
+  }
+  return Boolean(data);
+}
+
+/**
+ * Normaliza um valor monetário proposto pela IA ou enviado pelo cliente.
+ * A IA pode alucinar `"abc"`, `null`, `Infinity` ou valores negativos, e o
+ * código seguinte chamava `.toFixed(2)` direto no valor — estourando a função.
+ */
+function parseMoney(value: unknown): number | null {
+  const n = typeof value === 'number' ? value : Number.parseFloat(String(value ?? '').replace(',', '.'));
+  if (!Number.isFinite(n) || n <= 0 || n > 1_000_000_000) return null;
+  return Math.round(n * 100) / 100;
+}
+
 async function saveConversation(supabase: any, userId: string, message: string, response: string) {
   try {
     await supabase.from('ai_conversations').insert({
@@ -485,10 +537,14 @@ async function executeToolCall(supabase: any, userId: string, dashboardId: strin
 
   switch (fnName) {
     case 'register_expense': {
+      const valor = parseMoney(args.valor);
+      if (valor === null) {
+        return { success: false, error: 'Valor da despesa inválido. Informe um número positivo em reais.' };
+      }
       const insertData: any = {
         user_id: userId,
         descricao: args.descricao,
-        valor: args.valor,
+        valor,
         categoria: args.categoria,
         data: args.data || today,
         forma_pagamento: args.forma_pagamento || 'Pix',
@@ -504,14 +560,18 @@ async function executeToolCall(supabase: any, userId: string, dashboardId: strin
         throw new Error(`Erro ao registrar despesa: ${error.message}`);
       }
       await invalidateContextCache(supabase, userId, dashboardId);
-      return { success: true, type: 'expense_created', message: `✅ Despesa "${args.descricao}" de R$ ${args.valor.toFixed(2)} registrada com sucesso!`, id: data.id };
+      return { success: true, type: 'expense_created', message: `✅ Despesa "${args.descricao}" de R$ ${valor.toFixed(2)} registrada com sucesso!`, id: data.id };
     }
 
     case 'register_revenue': {
+      const valor = parseMoney(args.valor);
+      if (valor === null) {
+        return { success: false, error: 'Valor da receita inválido. Informe um número positivo em reais.' };
+      }
       const insertData: any = {
         user_id: userId,
         descricao: args.descricao,
-        valor: args.valor,
+        valor,
         categoria: args.categoria,
         data: args.data || today,
         forma_pagamento: args.forma_pagamento || 'Pix',
@@ -527,7 +587,7 @@ async function executeToolCall(supabase: any, userId: string, dashboardId: strin
         throw new Error(`Erro ao registrar receita: ${error.message}`);
       }
       await invalidateContextCache(supabase, userId, dashboardId);
-      return { success: true, type: 'revenue_created', message: `✅ Receita "${args.descricao}" de R$ ${args.valor.toFixed(2)} registrada com sucesso!`, id: data.id };
+      return { success: true, type: 'revenue_created', message: `✅ Receita "${args.descricao}" de R$ ${valor.toFixed(2)} registrada com sucesso!`, id: data.id };
     }
 
     case 'query_financial_data': {
@@ -546,7 +606,11 @@ async function executeToolCall(supabase: any, userId: string, dashboardId: strin
       const table = args.type === 'receita' ? 'receitas' : 'despesas';
       const updateData: any = {};
       if (args.descricao) updateData.descricao = args.descricao;
-      if (args.valor) updateData.valor = args.valor;
+      if (args.valor !== undefined && args.valor !== null) {
+        const valor = parseMoney(args.valor);
+        if (valor === null) return { success: false, error: 'Valor inválido para atualização.' };
+        updateData.valor = valor;
+      }
       if (args.categoria) updateData.categoria = args.categoria;
       if (args.data) updateData.data = args.data;
 

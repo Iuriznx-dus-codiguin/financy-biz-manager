@@ -8,7 +8,7 @@ import { Plus } from 'lucide-react';
 import { useCategoriasPersonalizadas } from '@/hooks/useCategoriasPersonalizadas';
 import { useDashboard } from '@/hooks/useDashboard';
 import { getPredefinedCategories } from '@/constants/categories';
-import * as Icons from 'lucide-react';
+import { getCategoryIcon } from '@/constants/categoryIcons';
 
 interface CategorySelectorProps {
   tipo: 'receita' | 'despesa';
@@ -69,10 +69,9 @@ export function CategorySelector({ tipo, value, onChange, placeholder, className
     }
   };
 
-  const getIcon = (iconName: string) => {
-    const IconComponent = (Icons as any)[iconName] || Icons.Folder;
-    return IconComponent;
-  };
+  // Ver src/constants/categoryIcons.ts — o lookup dinâmico no namespace do
+  // lucide-react nunca resolvia o nome e travava o tree-shaking.
+  const getIcon = getCategoryIcon;
 
   return (
     <div className={className}>

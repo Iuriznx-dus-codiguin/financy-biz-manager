@@ -8,6 +8,15 @@ schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
+# verify_jwt declarado explicitamente em TODAS as functions.
+# Omitir a entrada deixa o valor no default da plataforma, o que mascarava
+# rotinas de cron como se já estivessem protegidas.
+#
+# verify_jwt = false só é aceitável quando a própria function autentica o
+# chamador (assinatura HMAC do webhook, CRON_SECRET_TOKEN ou validação de JWT
+# feita no código).
+
+# Webhook externo da Cakto: autenticado por assinatura HMAC do corpo.
 [functions.cakto-webhook]
 verify_jwt = false
 
@@ -20,11 +29,15 @@ verify_jwt = true
 [functions.ai-tax-agent]
 verify_jwt = true
 
+[functions.support-agent]
+verify_jwt = true
+
+# Valida o JWT manualmente via supabase.auth.getUser antes de qualquer acesso.
 [functions.ai-agent]
 verify_jwt = false
 
 [functions.ai-financial-insights]
-verify_jwt = false
+verify_jwt = true
 
 [functions.validate-developer-key]
 verify_jwt = true
@@ -32,10 +45,22 @@ verify_jwt = true
 [functions.get-main-dashboard]
 verify_jwt = true
 
+# Rotinas de cron: exigem CRON_SECRET_TOKEN dentro da própria function.
+# verify_jwt = true sozinho não protegeria — todo usuário logado tem um JWT.
 [functions.process-recurring-transactions]
 verify_jwt = false
 
+[functions.process-scheduled-webhooks]
+verify_jwt = false
+
+[functions.daily-transaction-reminder]
+verify_jwt = false
+
+# Chamada interna (service role) ou pelo próprio usuário — validado na function.
 [functions.novo-usuario-webhook]
+verify_jwt = false
+
+[functions.schedule-user-webhooks]
 verify_jwt = false
 
 [db]
