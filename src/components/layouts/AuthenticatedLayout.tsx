@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { RouteFallback } from '@/components/ui/route-fallback';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -102,14 +103,22 @@ export const AuthenticatedLayout = () => {
               />
             </div>
             {isBlocked && <SubscriptionBanners />}
+            {/* As páginas são carregadas sob demanda: o limite de Suspense fica
+                aqui, em volta do Outlet, para que apenas a área de conteúdo
+                mostre o placeholder. Um limite acima de <Routes> trocaria a
+                sidebar e o cabeçalho pelo spinner a cada primeira navegação. */}
             {activeSection === 'agentes-ia' ? (
               <main className="flex-1 overflow-hidden h-[calc(100dvh-3.5rem)] lg:h-screen">
-                <Outlet />
+                <Suspense fallback={<RouteFallback />}>
+                  <Outlet />
+                </Suspense>
               </main>
             ) : (
               <>
                 <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
-                  <Outlet />
+                  <Suspense fallback={<RouteFallback />}>
+                    <Outlet />
+                  </Suspense>
                 </main>
                 <Footer />
               </>

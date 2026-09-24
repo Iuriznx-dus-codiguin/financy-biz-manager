@@ -4,6 +4,14 @@ Data: setembro de 2026 · Escopo: frontend (`src/`), edge functions (`supabase/f
 
 Este documento substitui `src/docs/SECURITY_ISSUES_CRITICAL.md`, `PLATFORM_ANALYSIS_REPORT.md` e `PERFORMANCE_OPTIMIZATIONS.md`, que descreviam problemas já resolvidos e otimizações que nunca chegaram a ser ligadas no código.
 
+O que não pode ser resolvido editando o repositório está em [`PROMPT-LOVABLE.md`](PROMPT-LOVABLE.md).
+
+> **Nota sobre remoções.** A primeira rodada desta auditoria removeu 18 módulos
+> órfãos e 3 edge functions substituídas. Todos foram **restaurados** a pedido,
+> para que nenhuma ferramenta da plataforma deixasse de existir. Os dois módulos
+> que estavam quebrados (`security.ts` e `secureStorage.ts`) voltaram **com os
+> defeitos corrigidos** em vez de apagados — ver item 21.
+
 ---
 
 ## O que estava bom
@@ -45,11 +53,15 @@ A autenticação por HMAC estava correta, mas não havia proteção contra *repl
 
 **Corrigido:** em retentativa do mesmo `transaction_id`, o vencimento atual é preservado.
 
+A preservação só vale quando a chave de idempotência veio de `transaction_id`, que é único por cobrança. Se ela caiu no fallback para `subscription_id` — igual em todas as renovações da mesma assinatura — o comportamento original de recalcular é mantido; do contrário, uma **renovação legítima** deixaria de estender o plano. A primeira versão desta auditoria não fazia essa distinção e teria quebrado as renovações.
+
 ### 5. `cakto-webhook` — plano pago liberado por substring
 
 `identifyPlan` fazia `key.includes('pro')` e `/pro/.test(...)`. Qualquer produto cujo nome contivesse "pro" — **"produto"**, "promoção" — casava com o plano Pro e liberava acesso premium.
 
-**Corrigido:** correspondência por palavra inteira sobre o identificador normalizado; o fallback heurístico agora exige tier **e** periodicidade explícitos, em vez de assumir "mensal".
+**Corrigido:** correspondência por palavra inteira sobre o identificador normalizado (`pro` só casa como token isolado, nunca dentro de "produto"), e o fallback heurístico também passou a exigir palavra inteira.
+
+A periodicidade **continua** caindo em "mensal" quando o payload não informa — igual ao comportamento original, de propósito. Exigir periodicidade explícita devolveria 422 e o cliente ficaria **sem acesso após pagar**; conceder 30 dias é o modo de falha recuperável. Cada vez que isso acontece vai para o log.
 
 ### 6. CORS aberto em 8 de 14 functions
 
@@ -73,11 +85,15 @@ O `dashboardId` vem do corpo da requisição e é gravado nas transações por u
 
 **Corrigido:** `parseMoney()` normaliza e rejeita valores não finitos, negativos ou absurdos. Também há teto de tamanho para o histórico de mensagens, que é reenviado inteiro ao gateway de IA a cada turno e é cobrado por token.
 
-### 9. `cakto-webhook` — valor da venda dividido por 100
+### 9. `cakto-webhook` — valor da venda dividido por 100 ⚠️ PARCIAL
 
-`parseAmount` usava a heurística `valor > 1000 ? valor / 100 : valor`. Um plano de R$ 1.200,00 era registrado no caixa como **R$ 12,00**.
+`parseAmount` usa a heurística `valor > 1000 ? valor / 100 : valor`. Um plano de R$ 1.200,00 informado em reais é registrado no caixa como **R$ 12,00**.
 
-**Corrigido:** a unidade passou a ser explícita — só trata como centavos quando o payload declara o campo em centavos.
+**Parcialmente corrigido.** Agora, quando o payload traz um campo que declara a unidade (`amount_cents` e variantes), a conversão é exata. Mas a heurística foi **mantida** como fallback, e isso é deliberado: não sei se a Cakto envia `amount` em reais ou em centavos. Se envia em centavos, trocar a heurística por leitura direta multiplicaria por 100 **toda** a receita registrada — bem pior que o bug atual.
+
+A primeira versão desta auditoria removeu a heurística; a revisão reverteu, porque o risco da mudança é maior que o do defeito. Cada uso da heurística passou a gerar log com o valor bruto e o convertido.
+
+**Pendente:** confirmar a unidade real do campo — é o item 3 de [`PROMPT-LOVABLE.md`](PROMPT-LOVABLE.md), que instrui a comparar `cakto_webhook_logs` com os preços dos planos.
 
 ### 10. `cakto-webhook` — curingas de LIKE no e-mail
 
@@ -147,26 +163,59 @@ O build gerava **um único chunk JS de 3,79 MB (1,02 MB gzip)**. Todas as 17 pá
 2. `exceljs` e `jspdf` carregados por `import()` dinâmico no ponto de uso. O `exceljs` entrava no grafo estático por um caminho nada óbvio — `AuthenticatedLayout` → `OnboardingFlow` → `ExpenseSheetStep` → `parseNumber`, uma função pura que só estava no mesmo arquivo que o código de planilha.
 3. `manualChunks` restrito a react e supabase. Listar `recharts`/`exceljs`/`jspdf` ali **criava uma aresta de import estático a partir do chunk de entrada** e anulava o lazy loading — a primeira tentativa desta auditoria caiu exatamente nessa armadilha, e só a medição do grafo de chunks revelou.
 
-Resultado medido (fechamento transitivo dos chunks por rota):
+Resultado medido (fechamento transitivo dos chunks por rota — antes, **toda** rota carregava o bundle único de 3.792 kB / 1.017 kB gzip):
 
-| Rota | Antes | Depois | Redução (gzip) |
-|---|---|---|---|
-| Login | 3.792 kB / 1.017 kB gzip | 937 kB / **292 kB gzip** | **−71%** |
-| Dashboard | 3.792 kB / 1.017 kB gzip | 1.404 kB / **420 kB gzip** | **−59%** |
+| Rota | Depois | Redução (gzip) |
+|---|---|---|
+| Login | 937 kB / **292 kB gzip** | **−71%** |
+| Categorias | 940 kB / **293 kB gzip** | **−71%** |
+| Receitas / Despesas | 950 kB / **296 kB gzip** | **−71%** |
+| Dashboard | 1.403 kB / **420 kB gzip** | **−59%** |
 
-Tempo de build também caiu de 8m08s para ~1m30s.
+As rotas de Categorias, Receitas e Despesas só chegaram a esse número depois de corrigir também o item 21 (biblioteca de ícones) — sem ele ficavam ~130 kB gzip acima.
+
+Tempo de build caiu de 8m08s para ~55s.
 
 ### 20. Uma dezena de consultas idênticas por render
 
-`useUserSubscription` usava `useState` + `useEffect` e é consumido por ~10 componentes (layout, sidebar, banners, `useFeatureAccess`, `useIsAdmin`…). Cada instância disparava as próprias consultas a `subscribers` e `user_subscriptions` a cada montagem. O `QueryClient` já estava configurado no projeto, mas não era usado aqui.
+Três hooks faziam as próprias consultas com `useState` + `useEffect`, sem compartilhar nada — e são consumidos por dezenas de componentes simultâneos. O `QueryClient` já estava configurado no projeto, mas nenhum deles o usava.
 
-**Corrigido:** migrado para React Query com chave compartilhada — uma requisição por usuário, com cache.
+| Hook | Consultas por montagem | Consumidores |
+|---|---|---|
+| `useUserSubscription` | 2 (`subscribers`, `user_subscriptions`) | ~10 (layout, sidebar, banners, `useFeatureAccess`, `useIsAdmin`…) |
+| `useSubscription` | 3 (+ `customer_subscriptions`) | 3 (`FloatingDashboardInfo`, `MobileSidebar`, `Configuracoes`) |
+| `useIsAdmin` | 1 (`user_roles`) | 2 (`AdminGuard` + a própria página) |
+
+Num único carregamento do dashboard isso passava de 25 requisições idênticas.
+
+**Corrigido:** os três migrados para React Query com chave compartilhada por usuário — uma requisição de cada, com cache de 5 minutos. A API pública dos hooks não mudou.
+
+### 21. Biblioteca de ícones inteira no bundle — e o ícone escolhido nunca aparecia
+
+`Categorias.tsx` e `CategorySelector.tsx` faziam `import * as Icons from 'lucide-react'` e resolviam o ícone com `Icons[iconName]`. Dois problemas de uma vez:
+
+- **O seletor de ícone não funcionava.** O lucide-react exporta em PascalCase (`BookOpen`), mas os nomes gravados são kebab-case (`book-open`). `Icons['book-open']` era `undefined`, então **toda categoria caía no fallback `Folder`** — o usuário escolhia um ícone e via sempre a mesma pasta.
+- **O bundler não conseguia fazer tree-shaking.** Indexar um namespace com chave dinâmica obriga a incluir a biblioteca toda: ~1.500 ícones, **742 kB (132 kB gzip)** num chunk compartilhado pelas telas de Categorias, Receitas e Despesas.
+
+**Corrigido:** registro explícito em `src/constants/categoryIcons.ts` com os 30 ícones que a aplicação realmente usa (verificado contra `iconOptions` e `constants/categories.ts`), mais `getCategoryIcon()` aceitando kebab-case e PascalCase. O seletor passa a funcionar e o chunk de 742 kB desaparece.
+
+### 22. Placeholder de rota substituía toda a interface
+
+Ao introduzir o carregamento sob demanda, o limite de `Suspense` ficou acima de `<Routes>`. Como o React sobe até o limite mais próximo, a primeira navegação para cada página trocava **a aplicação inteira** — sidebar, cabeçalho e rodapé — por um spinner.
+
+**Corrigido:** o limite passou para dentro de `AuthenticatedLayout`, em volta do `<Outlet />`. Só a área de conteúdo mostra o placeholder.
+
+### 23. Botão "Atualizar" não atualizava nada
+
+`FloatingDashboardInfo` invocava a edge function `process-recurring-transactions`, que exige `CRON_SECRET_TOKEN` e portanto respondia 401 a toda chamada vinda do app. E como `functions.invoke` devolve `{ error }` em vez de lançar, o `try/catch` em volta nunca disparava: o botão exibia "Dados atualizados!" sem ter processado transação recorrente nenhuma.
+
+**Corrigido:** passou a usar `useRecurringTransactions().runNow()`, a mesma RPC que o `AppContext` já chama na montagem.
 
 ---
 
 ## Limpeza
 
-### 21. 2,5 mil linhas de código morto
+### 24. 2,5 mil linhas de código órfão (restaurado, com correções)
 
 18 módulos sem nenhuma referência no projeto, entre eles `AIAgentChat.tsx` (302 linhas, duplicata de `FinancyAIChat`), `RelatoriosAvancados.tsx` (357), `PhoneCollectionStep.tsx` (245) e `SubscriptionStatus.tsx` (194).
 
@@ -177,7 +226,7 @@ Dois deles merecem destaque porque pareciam ser infraestrutura de segurança:
 
 **Removidos.** São o caso clássico de "segurança de fachada": arquivos que parecem endurecimento mas nunca foram conectados — e que, se conectados, quebrariam a aplicação.
 
-### 22. Três edge functions obsoletas ainda no ar
+### 25. Três edge functions obsoletas
 
 `ai-financial-agent`, `ai-support-agent` e `ai-tax-agent` não eram invocadas por lugar nenhum — foram substituídas por `ai-agent` e `support-agent`, que usam o gateway da Lovable. As três ainda usavam `OPENAI_API_KEY` (outro provedor), aceitavam chamadas de qualquer usuário autenticado e operavam com service role no banco. Superfície de ataque e custo de API sem contrapartida de produto.
 
@@ -191,19 +240,19 @@ supabase functions delete ai-tax-agent
 
 Duas outras functions sem chamador no frontend foram **mantidas** por serem endpoints potencialmente usados fora do app: `get-main-dashboard` e `validate-developer-key`. Vale notar que a interface que chamava a segunda (`DeveloperAccessDialog.tsx`) já estava órfã — o resgate de chave de desenvolvedor não tinha mais entrada na UI antes desta auditoria.
 
-### 23. Três lockfiles simultâneos
+### 26. Três lockfiles simultâneos
 
 `bun.lock`, `bun.lockb` e `package-lock.json` versionados ao mesmo tempo, com `package-lock.json` listado no `.gitignore` mas rastreado.
 
 **Corrigido:** mantido apenas `bun.lock`.
 
-### 24. Lint ignorado na prática
+### 27. Lint ignorado na prática
 
 O ESLint rodava sobre `supabase/functions/**` (Deno, com globais e imports por URL próprios) usando a config de navegador, gerando ~110 erros inacionáveis que afogavam os avisos reais de `src`. E `@typescript-eslint/no-unused-vars` estava `"off"`, o que permitiu o acúmulo dos módulos órfãos acima.
 
 **Corrigido:** edge functions excluídas do lint do frontend (use `deno lint`); regra reativada como `warn`.
 
-### 25. `index.html` malformado
+### 28. `index.html` malformado
 
 Sem `</head>`, `<body>` aninhado dentro do `<head>`, `og:title` e `og:description` ausentes e `description` igual a "Financy Ltda".
 
@@ -211,7 +260,7 @@ Sem `</head>`, `<body>` aninhado dentro do `<head>`, `og:title` e `og:descriptio
 
 ---
 
-### 26. Componentes e dependências instalados sem uso
+### 29. Componentes e dependências instalados sem uso
 
 22 componentes de `src/components/ui/` não têm nenhum import no projeto (`calendar`, `carousel`, `chart`, `command`, `form`, `popover`, `slider`, `radio-group`, entre outros). **Não foram removidos**: são scaffolding do shadcn/ui, o Vite já os elimina do bundle por tree-shaking e podem ser regerados a qualquer momento. Ficam registrados porque cada um carrega uma dependência Radix no `package.json`.
 

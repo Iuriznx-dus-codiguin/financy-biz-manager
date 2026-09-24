@@ -20,20 +20,25 @@ Deno.serve(async (req) => {
     // Rotina de cron: roda com service role, lê o cadastro de TODOS os usuários
     // e dispara notificações em massa. Exige CRON_SECRET_TOKEN — `verify_jwt`
     // sozinho deixaria qualquer usuário logado disparar a rotina.
-    const envVars = checkEnv([
-      'SUPABASE_URL',
-      'SUPABASE_SERVICE_ROLE_KEY',
-      'CRON_SECRET_TOKEN',
-      'N8N_DAILY_REMINDER_URL',
-    ]);
+    //
+    // A autorização vem ANTES de validar o resto do ambiente: assim um chamador
+    // não autenticado recebe sempre 401, sem conseguir distinguir "token errado"
+    // de "servidor mal configurado" pela diferença entre 401 e 500.
+    const { CRON_SECRET_TOKEN } = checkEnv(['CRON_SECRET_TOKEN']);
 
-    if (!isAuthorizedCron(req, envVars.CRON_SECRET_TOKEN)) {
+    if (!isAuthorizedCron(req, CRON_SECRET_TOKEN)) {
       console.error('[SECURITY] daily-transaction-reminder: token de cron ausente ou inválido');
       return new Response(
         JSON.stringify({ error: 'Unauthorized', timestamp: new Date().toISOString() }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
+
+    const envVars = checkEnv([
+      'SUPABASE_URL',
+      'SUPABASE_SERVICE_ROLE_KEY',
+      'N8N_DAILY_REMINDER_URL',
+    ]);
 
     console.log('🔔 Iniciando verificação de lembretes diários...');
 

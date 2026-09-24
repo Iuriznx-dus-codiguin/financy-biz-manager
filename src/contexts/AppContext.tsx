@@ -200,8 +200,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }, 500);
     };
 
+    // Nome do canal inclui o dashboard: com o nome fixo 'financial-changes', a
+    // troca de dashboard podia recriar o canal antes do anterior ser desfeito e
+    // as duas inscrições colidiam no mesmo topic do realtime.
     const channel = supabase
-      .channel('financial-changes')
+      .channel(`financial-changes:${currentDashboard.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'despesas', filter: `dashboard_id=eq.${currentDashboard.id}` },

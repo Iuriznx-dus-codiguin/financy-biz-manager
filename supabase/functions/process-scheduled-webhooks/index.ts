@@ -31,17 +31,21 @@ serve(async (req) => {
   }
 
   try {
-    const envVars = checkEnv(['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'CRON_SECRET_TOKEN']);
-
     // Rotina de cron com service role: exige o token dedicado, senão qualquer
     // usuário logado pode adiantar o disparo da fila de notificações.
-    if (!isAuthorizedCron(req, envVars.CRON_SECRET_TOKEN)) {
+    // A checagem vem antes do resto do ambiente para que a resposta a um
+    // chamador não autorizado seja sempre 401.
+    const { CRON_SECRET_TOKEN } = checkEnv(['CRON_SECRET_TOKEN']);
+
+    if (!isAuthorizedCron(req, CRON_SECRET_TOKEN)) {
       console.error('[SECURITY] process-scheduled-webhooks: token de cron ausente ou inválido');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    const envVars = checkEnv(['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
 
     const supabaseClient = createClient(
       envVars.SUPABASE_URL,

@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { useAuth } from './useAuth';
 import { logger } from '@/utils/logger';
 import { isDeveloperTier } from '@/utils/subscriptionHelpers';
@@ -31,7 +32,9 @@ export interface UserSubscription {
     advanced_analytics?: boolean;
     export_data?: boolean;
   };
-  metadata: Record<string, any>;
+  // `Json` (tipo gerado pelo Supabase) em vez de `Record<string, any>`:
+  // `updateSubscription` repassa este objeto ao client, que exige `Json`.
+  metadata: Json;
   updated_at: string;
 }
 
@@ -269,7 +272,7 @@ export const useUserSubscription = () => {
     if (!user) return false;
 
     try {
-      const { data, error } = await supabase.rpc('renew_subscription', {
+      const { error } = await supabase.rpc('renew_subscription', {
         p_user_id: user.id,
         p_new_expires_at: newExpiresAt || null,
         p_amount: amount || null

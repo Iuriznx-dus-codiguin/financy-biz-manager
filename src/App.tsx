@@ -2,7 +2,7 @@ import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { RouteFallback } from "@/components/ui/route-fallback";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { AuthenticatedLayout } from "@/components/layouts/AuthenticatedLayout";
@@ -47,19 +47,15 @@ const AuditoriaWebhooksPage = lazy(() => import("./pages/AuditoriaWebhooksPage")
 const AdminSuportePage = lazy(() => import("./pages/AdminSuportePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-const RouteFallback = () => (
-  <div className="min-h-[50vh] flex items-center justify-center" role="status" aria-live="polite">
-    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-    <span className="sr-only">Carregando página…</span>
-  </div>
-);
-
 const App = () => (
   <ErrorBoundary>
     <AppProviders>
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        {/* Limite externo: cobre as rotas públicas (login, 404). As páginas
+            autenticadas têm o próprio limite dentro de AuthenticatedLayout, para
+            que a sidebar e o cabeçalho não sumam da tela durante a troca. */}
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<RootRedirect />} />

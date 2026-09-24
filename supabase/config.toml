@@ -20,6 +20,15 @@ max_rows = 1000
 [functions.cakto-webhook]
 verify_jwt = false
 
+[functions.ai-support-agent]
+verify_jwt = true
+
+[functions.ai-financial-agent]
+verify_jwt = true
+
+[functions.ai-tax-agent]
+verify_jwt = true
+
 [functions.support-agent]
 verify_jwt = true
 

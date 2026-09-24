@@ -344,13 +344,24 @@ function normalizeEmail(value: any): string {
 }
 
 /**
+ * Limiar da heurística de centavos herdada do código original.
+ * Valores acima disso são divididos por 100 — ver `parseAmount`.
+ */
+const CENTS_HEURISTIC_THRESHOLD = 1000;
+
+/**
  * Converte o valor do payload para reais.
  *
- * A regra anterior era `valor > 1000 ? valor / 100 : valor`, o que registrava
- * um plano de R$ 1.200,00 como R$ 12,00 — e qualquer venda acima de mil reais
- * entrava no caixa com o valor errado. Agora a unidade é explícita: só tratamos
- * como centavos quando o payload declara (campo `*_cents`/`currency_minor`) ou
- * quando o número é inteiro e o provedor marcou a moeda em unidade menor.
+ * Quando o payload traz um campo que declara a unidade (`amount_cents` e
+ * variantes), `inCents = true` e a conversão é exata.
+ *
+ * Sem esse campo, cai na heurística original `valor > 1000 ? valor / 100`.
+ * Ela é ambígua e erra para vendas acima de R$ 1.000 informadas em reais
+ * (R$ 1.200,00 vira R$ 12,00) — mas foi MANTIDA de propósito: se a Cakto
+ * envia `amount` em centavos, trocá-la por leitura direta multiplicaria por
+ * 100 o valor de toda venda, o que é muito pior. A saída definitiva é
+ * confirmar a unidade na documentação/painel da Cakto e então remover a
+ * heurística; até lá, cada uso dela é registrado em log para auditoria.
  */
 function parseAmount(value: any, inCents = false): number {
   let parsed: number;
@@ -361,7 +372,19 @@ function parseAmount(value: any, inCents = false): number {
     parsed = Number.parseFloat(text);
   }
   if (!Number.isFinite(parsed)) return 0;
-  return inCents ? parsed / 100 : parsed;
+
+  // Unidade declarada pelo payload: conversão exata.
+  if (inCents) return parsed / 100;
+
+  // Unidade desconhecida: heurística herdada, com registro para auditoria.
+  if (parsed > CENTS_HEURISTIC_THRESHOLD) {
+    console.warn(
+      'Webhook Cakto: valor sem unidade declarada acima do limiar — aplicando heurística de centavos',
+      { valor_recebido: parsed, valor_registrado: parsed / 100 },
+    );
+    return parsed / 100;
+  }
+  return parsed;
 }
 
 function maskEmail(email: string): string {
@@ -442,20 +465,32 @@ function identifyPlan(event: NormalizedCaktoPayload): PlanConfig | null {
     }
   }
 
-  // Fallback por características do nome. Exige tier + periodicidade explícitos:
-  // adivinhar "mensal" quando o payload não diz nada já causou cobrança anual
-  // liberando acesso de 30 dias, e vice-versa.
+  // Fallback por características do nome, para payloads que não casam com
+  // nenhum mapeamento conhecido.
+  //
+  // A periodicidade continua caindo em "mensal" quando o payload não informa —
+  // igual ao comportamento original. Exigir periodicidade explícita aqui
+  // devolveria 422 e o cliente ficaria SEM acesso após pagar; conceder 30 dias
+  // é o modo de falha recuperável (o suporte estende, o cliente não fica na
+  // porta). Cada vez que isso acontece vai para o log.
   const searchable = normalizeKey(candidates.join(' '));
   const isYearly = /(^|_)(anual|annual|yearly|ano)(_|$)/.test(searchable);
   const isMonthly = /(^|_)(mensal|monthly|mes|month)(_|$)/.test(searchable);
-  if (!isYearly && !isMonthly) return null;
   const period = isYearly ? 'anual' : 'mensal';
+  if (!isYearly && !isMonthly) {
+    console.warn('Webhook Cakto: periodicidade não informada no payload — assumindo mensal', {
+      candidatos: searchable,
+    });
+  }
 
   const isBusiness = /(^|_)(empresarial|business|empresa|company)(_|$)/.test(searchable);
   const type = isBusiness ? 'empresarial' : 'pessoal';
 
   // Enterprise ("Super Company") só existe na linha empresarial.
-  if (/(^|_)(super|enterprise)(_|$)/.test(searchable)) {
+  // `company` permanece na lista para manter o comportamento original — sem
+  // ele, um nome de produto desconhecido contendo "company" passaria a cair em
+  // 422 em vez de liberar o plano, tirando o acesso de quem pagou.
+  if (/(^|_)(super|enterprise|company)(_|$)/.test(searchable)) {
     return PLAN_MAPPINGS[`empresarial_enterprise_${period}`] || null;
   }
   if (/(^|_)pro(_|$)/.test(searchable)) return PLAN_MAPPINGS[`${type}_pro_${period}`] || null;
@@ -586,9 +621,15 @@ async function processApprovedPayment(supabase: any, event: NormalizedCaktoPaylo
   // POST autêntico capturado pode ser reenviado indefinidamente. A idempotência
   // existente só evitava duplicar a receita — a validade da assinatura era
   // recalculada a partir de `now` a cada reenvio, renovando o plano de graça.
-  // Numa retentativa do mesmo transaction_id preservamos o vencimento atual.
+  //
+  // O vencimento só é preservado quando a chave veio de `transaction_id`, que é
+  // único por cobrança. Se ela caiu no fallback para `subscription_id` (igual em
+  // todas as renovações da mesma assinatura), preservar o vencimento
+  // impediria uma RENOVAÇÃO legítima de estender o plano — por isso, nesse caso,
+  // o comportamento original de recalcular é mantido.
+  const hasUniqueTransactionId = Boolean(event.transactionId);
   let existingExpiresAt: string | null = null;
-  if (alreadyRegistered) {
+  if (alreadyRegistered && hasUniqueTransactionId) {
     const { data: currentSub } = await supabase
       .from('user_subscriptions')
       .select('expires_at')
@@ -596,11 +637,15 @@ async function processApprovedPayment(supabase: any, event: NormalizedCaktoPaylo
       .maybeSingle();
     existingExpiresAt = currentSub?.expires_at ?? null;
     if (existingExpiresAt) {
-      console.warn('Webhook Cakto: reenvio de transação já processada — vencimento preservado', {
+      console.warn('Webhook Cakto: reenvio da mesma transação — vencimento preservado', {
         transaction_id: idempotencyKey,
         expires_at: existingExpiresAt,
       });
     }
+  } else if (alreadyRegistered) {
+    console.warn('Webhook Cakto: evento repetido sem transaction_id único — tratado como renovação', {
+      subscription_id: event.subscriptionId || null,
+    });
   }
 
   const subscriptionEndDate = new Date(now);
