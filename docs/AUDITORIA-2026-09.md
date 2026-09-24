@@ -230,21 +230,17 @@ Dois deles merecem destaque porque pareciam ser infraestrutura de segurança:
 
 `ai-financial-agent`, `ai-support-agent` e `ai-tax-agent` não eram invocadas por lugar nenhum — foram substituídas por `ai-agent` e `support-agent`, que usam o gateway da Lovable. As três ainda usavam `OPENAI_API_KEY` (outro provedor), aceitavam chamadas de qualquer usuário autenticado e operavam com service role no banco. Superfície de ataque e custo de API sem contrapartida de produto.
 
-**Removidas do repositório.** Atenção: remover o código **não** as tira do ar — é preciso rodar também:
-
-```bash
-supabase functions delete ai-financial-agent
-supabase functions delete ai-support-agent
-supabase functions delete ai-tax-agent
-```
+**Mantidas** (foram removidas e depois restauradas, já com o CORS por allowlist). Se um dia decidir tirá-las do ar, lembre que apagar o código **não** as remove do Supabase — é preciso rodar também `supabase functions delete <nome>` para cada uma. O item 2 de [`PROMPT-LOVABLE.md`](PROMPT-LOVABLE.md) levanta a lista do que está deployado antes de qualquer remoção.
 
 Duas outras functions sem chamador no frontend foram **mantidas** por serem endpoints potencialmente usados fora do app: `get-main-dashboard` e `validate-developer-key`. Vale notar que a interface que chamava a segunda (`DeveloperAccessDialog.tsx`) já estava órfã — o resgate de chave de desenvolvedor não tinha mais entrada na UI antes desta auditoria.
 
-### 26. Três lockfiles simultâneos
+### 26. Três lockfiles simultâneos — NÃO alterado
 
 `bun.lock`, `bun.lockb` e `package-lock.json` versionados ao mesmo tempo, com `package-lock.json` listado no `.gitignore` mas rastreado.
 
-**Corrigido:** mantido apenas `bun.lock`.
+**Revertido — os três continuam versionados.** A auditoria tinha removido o `package-lock.json` do índice, e isso **mudou o resultado do check de segurança do Snyk no PR**: o Snyk lê `package-lock.json` para projetos npm e não entende `bun.lock`, então ficou sem lockfile para resolver a árvore de dependências. O `npm install` da esteira também depende dele.
+
+Redundância de lockfile é desarrumação; lockfile faltando é quebra de ferramenta. O `.gitignore` foi ajustado para refletir o estado real (os três versionados) em vez de listar um arquivo que está rastreado. Consolidar num único lockfile exige antes confirmar o que a CI e o Snyk estão configurados para ler.
 
 ### 27. Lint ignorado na prática
 

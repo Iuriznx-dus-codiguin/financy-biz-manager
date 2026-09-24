@@ -30,6 +30,12 @@ dist-ssr
 .env.*
 !.env.example
 
-# O projeto usa bun (bun.lock é o lockfile versionado).
-# package-lock.json fica de fora para não haver dois lockfiles divergentes.
-package-lock.json
+# Lockfiles: o projeto versiona bun.lock, bun.lockb E package-lock.json.
+#
+# Ter os três é redundante, mas package-lock.json NÃO pode sair do
+# versionamento: o Snyk (check de segurança do PR) e o `npm install` da esteira
+# de CI leem esse arquivo — o Snyk não entende bun.lock. Removê-lo fez o check
+# de segurança mudar de resultado.
+#
+# Se algum dia for consolidar num único lockfile, confirme antes o que a CI e o
+# Snyk estão configurados para ler.
