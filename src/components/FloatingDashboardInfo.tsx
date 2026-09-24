@@ -10,7 +10,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAppContext } from '@/contexts/AppContext';
-import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface FloatingDashboardInfoProps {
@@ -29,7 +29,6 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
   const { isFeatureAvailable } = useFeatureAccess();
   const { onboardingData } = useOnboarding();
   const { carregarDados } = useAppContext();
-  const { runNow } = useRecurringTransactions();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const userName = onboardingData?.nome_preferido || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
@@ -38,18 +37,14 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
     setIsRefreshing(true);
     
     try {
-      // Processa as transações recorrentes pela RPC do banco.
-      //
-      // Antes isto invocava a edge function `process-recurring-transactions`,
-      // que exige CRON_SECRET_TOKEN e portanto respondia 401 a toda chamada
-      // vinda do app. E como `functions.invoke` devolve `{ error }` em vez de
-      // lançar, o try/catch nunca disparava: o botão exibia "Dados
-      // atualizados!" sem ter processado nada. A RPC é o mesmo caminho que o
-      // AppContext já usa na montagem, então funciona de fato.
-      if (user?.id) {
-        await runNow(user.id);
+      // Tentar processar transações recorrentes (opcional)
+      try {
+        await supabase.functions.invoke('process-recurring-transactions');
+      } catch (funcError) {
+        // Ignorar erro da edge function - não é crítico
+        console.log('Edge function não disponível, atualizando dados localmente');
       }
-
+      
       // Sempre recarregar dados do banco
       await carregarDados();
       

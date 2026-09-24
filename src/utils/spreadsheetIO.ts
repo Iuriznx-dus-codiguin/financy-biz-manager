@@ -1,20 +1,4 @@
-import type ExcelJSType from 'exceljs';
-
-/**
- * exceljs (~938 kB minificado) carregado sob demanda.
- *
- * Com o import estático, o módulo entrava no grafo do chunk de entrada por um
- * caminho indireto — `AuthenticatedLayout` → `OnboardingFlow` →
- * `ExpenseSheetStep` → `parseNumber` — e toda a biblioteca era baixada no
- * primeiro carregamento, mesmo por quem nunca exporta uma planilha.
- *
- * As funções puras deste módulo (`parseNumber`, `parseDate`) continuam sem
- * custo algum; só quem chama as funções de import/export paga o download.
- */
-const loadExcelJS = async (): Promise<typeof ExcelJSType> => {
-  const mod = await import('exceljs');
-  return mod.default ?? (mod as unknown as typeof ExcelJSType);
-};
+import ExcelJS from 'exceljs';
 
 export interface SheetSpec {
   name: string;
@@ -34,7 +18,6 @@ export interface TemplateColumn {
  * Compatível com Excel, Google Sheets, Numbers, LibreOffice.
  */
 export async function downloadXlsx(fileName: string, sheets: SheetSpec[]) {
-  const ExcelJS = await loadExcelJS();
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Financy';
   workbook.created = new Date();
@@ -69,7 +52,6 @@ export async function downloadTemplate(
   sheetName: string,
   columns: TemplateColumn[]
 ) {
-  const ExcelJS = await loadExcelJS();
   const workbook = new ExcelJS.Workbook();
   const ws = workbook.addWorksheet(sheetName);
 
@@ -114,7 +96,6 @@ export async function parseSpreadsheetFile(file: File): Promise<Record<string, a
 }
 
 async function parseXlsx(buffer: ArrayBuffer): Promise<Record<string, any>[]> {
-  const ExcelJS = await loadExcelJS();
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer);
   const ws = workbook.worksheets[0];

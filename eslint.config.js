@@ -5,10 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  // `supabase/functions` roda em Deno (globais Deno, imports por URL) e era
-  // lintado com esta config de navegador: gerava ~110 erros inacionáveis que
-  // afogavam os avisos reais de `src`. Use `deno lint` nessas funções.
-  { ignores: ["dist", "supabase/functions/**"] },
+  { ignores: ["dist"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -26,12 +23,7 @@ export default tseslint.config(
         "warn",
         { allowConstantExport: true },
       ],
-      // Estava "off", o que escondeu os imports e módulos órfãos acumulados ao
-      // longo do desenvolvimento. Fica como warn para não travar o build.
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrors: "none" },
-      ],
+      "@typescript-eslint/no-unused-vars": "off",
     },
   }
 );

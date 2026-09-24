@@ -1,80 +1,42 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { checkEnv, constantTimeCompare, getCorsHeaders } from '../_shared/utils.ts';
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const unauthorized = () =>
-    new Response(JSON.stringify({ error: 'Unauthorized', success: false }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
   try {
     console.log('🎉 [WEBHOOK BOAS-VINDAS] Iniciando processamento...');
+    
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    );
 
-    const envVars = checkEnv([
-      'SUPABASE_URL',
-      'SUPABASE_SERVICE_ROLE_KEY',
-      'SUPABASE_ANON_KEY',
-      'N8N_NEW_USER_URL',
-    ]);
-
-    // O perfil é lido com service role: a chave anon anterior esbarrava na RLS
-    // de `profiles` e a function falhava silenciosamente para todo usuário novo.
-    const supabaseClient = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_SERVICE_ROLE_KEY);
-
-    // Parse do body com validação. Nunca logar o body cru — ele carrega PII.
-    let userId: string | undefined;
+    // Parse do body com validação
+    let userId;
     try {
       const body = await req.json();
-      userId = body?.userId;
+      userId = body.userId;
+      console.log('📋 [WEBHOOK BOAS-VINDAS] Body recebido:', JSON.stringify(body));
     } catch (parseError) {
       console.error('❌ [WEBHOOK BOAS-VINDAS] Erro ao parsear JSON:', parseError);
       throw new Error('Invalid JSON body');
     }
 
-    if (!userId || typeof userId !== 'string' || !UUID_RE.test(userId)) {
-      console.error('❌ [WEBHOOK BOAS-VINDAS] userId ausente ou inválido');
-      return new Response(JSON.stringify({ error: 'userId inválido', success: false }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (!userId) {
+      console.error('❌ [WEBHOOK BOAS-VINDAS] userId não fornecido');
+      throw new Error('userId is required');
     }
 
-    // Autorização: sem isto o endpoint é público (verify_jwt = false) e qualquer
-    // um dispara mensagens de boas-vindas para contas de terceiros.
-    const authHeader = req.headers.get('Authorization') || '';
-    if (!authHeader.startsWith('Bearer ')) return unauthorized();
-    const token = authHeader.slice('Bearer '.length);
-
-    const isInternalCall = constantTimeCompare(token, envVars.SUPABASE_SERVICE_ROLE_KEY);
-    if (!isInternalCall) {
-      const authClient = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_ANON_KEY, {
-        global: { headers: { Authorization: authHeader } },
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
-      const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
-      const callerId = claimsData?.claims?.sub as string | undefined;
-      if (claimsError || !callerId) return unauthorized();
-      if (callerId !== userId) {
-        console.error('[SECURITY] novo-usuario-webhook: userId diferente do usuário autenticado');
-        return new Response(JSON.stringify({ error: 'Forbidden', success: false }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
-    console.log('🔍 [WEBHOOK BOAS-VINDAS] Buscando dados do usuário');
+    console.log('🔍 [WEBHOOK BOAS-VINDAS] Buscando dados do usuário:', userId);
 
     // Buscar dados do perfil do usuário
     const { data: profile, error: profileError } = await supabaseClient
@@ -85,24 +47,28 @@ serve(async (req) => {
 
     if (profileError) {
       console.error('❌ [WEBHOOK BOAS-VINDAS] Erro ao buscar perfil:', {
+        error: profileError,
+        userId,
         code: profileError.code,
-        message: profileError.message,
+        message: profileError.message
       });
       throw profileError;
     }
 
     if (!profile) {
-      console.error('❌ [WEBHOOK BOAS-VINDAS] Perfil não encontrado');
+      console.error('❌ [WEBHOOK BOAS-VINDAS] Perfil não encontrado para userId:', userId);
       throw new Error('Profile not found');
     }
 
-    console.log('✅ [WEBHOOK BOAS-VINDAS] Perfil encontrado', {
-      tem_telefone: Boolean(profile.telefone),
+    console.log('✅ [WEBHOOK BOAS-VINDAS] Perfil encontrado:', {
+      nome: profile.nome_completo,
+      email: profile.email,
+      telefone: profile.telefone ? 'Sim' : 'Não'
     });
 
     // Preparar dados para enviar ao webhook n8n
-    const webhookUrl = envVars.N8N_NEW_USER_URL;
-
+    const webhookUrl = 'https://central-financy-n8n.y8enlt.easypanel.host/webhook/Novo-Usúario';
+    
     const webhookPayload = {
       nome: profile.nome_completo || 'Usuário',
       email: profile.email,
@@ -111,7 +77,10 @@ serve(async (req) => {
       user_id: userId
     };
 
-    console.log('📤 [WEBHOOK BOAS-VINDAS] Enviando dados para n8n');
+    console.log('📤 [WEBHOOK BOAS-VINDAS] Enviando dados para n8n:', {
+      url: webhookUrl,
+      payload: webhookPayload
+    });
 
     // Enviar para webhook n8n com timeout
     const controller = new AbortController();
@@ -170,15 +139,14 @@ serve(async (req) => {
       stack: error.stack,
       name: error.name
     });
-
-    // Mensagem genérica para o cliente: a original expõe detalhes internos.
+    
     return new Response(
-      JSON.stringify({
-        error: 'Erro ao processar boas-vindas',
+      JSON.stringify({ 
+        error: error.message,
         success: false,
         timestamp: new Date().toISOString()
       }),
-      {
+      { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }

@@ -8,8 +8,8 @@ import { useAppContext } from '@/contexts/AppContext';
 import { TimeFilter } from '@/components/TimeFilter';
 import { isDateInRange, getDateRange } from '@/utils/dateFilters';
 import { toast } from 'sonner';
-// `excelExport.ts` era uma cópia reduzida de `spreadsheetIO.ts` — consolidado.
-import { downloadXlsx, type SheetSpec } from '@/utils/spreadsheetIO';
+import jsPDF from 'jspdf';
+import { downloadXlsx, SheetSpec } from '@/utils/excelExport';
 import { FileText, Download } from 'lucide-react';
 import { SectionSkeleton } from '@/components/ui/section-skeleton';
 
@@ -317,10 +317,8 @@ import { SectionSkeleton } from '@/components/ui/section-skeleton';
 
   const handleExportPDF = async () => {
     try {
-      // jspdf (~417 kB) só é baixado quando o usuário realmente exporta um PDF.
-      const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF();
-
+      
       // Título
       doc.setFontSize(20);
       doc.text('Relatório Financeiro - Financy', 20, 30);

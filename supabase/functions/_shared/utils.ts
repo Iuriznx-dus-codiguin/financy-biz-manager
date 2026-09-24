@@ -65,16 +65,12 @@ export async function generateHmacSha256(secret: string, data: string): Promise<
 }
 
 /**
- * Origens autorizadas a chamar as edge functions a partir do navegador.
- * Fonte única — nenhuma function deve declarar `Access-Control-Allow-Origin: '*'`,
- * porque isso permite que qualquer site aberto pelo usuário logado leia respostas
- * que contêm dados financeiros.
+ * Wrapper seguro para tratamento de erros em edge functions
  */
 const ALLOWED_ORIGINS_SHARED = [
   'https://app.financy.site',
   'https://financy.site',
   'https://www.financy.site',
-  'http://localhost:8080',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
@@ -86,38 +82,14 @@ function getAllowedOrigin(req: Request): string {
     : 'https://app.financy.site';
 }
 
-/**
- * Headers CORS com allowlist de origem. Use em toda function que responda ao
- * navegador, no lugar de um objeto `corsHeaders` fixo por arquivo.
- */
-export function getCorsHeaders(req: Request): Record<string, string> {
-  return {
-    'Access-Control-Allow-Origin': getAllowedOrigin(req),
-    'Access-Control-Allow-Headers':
-      'authorization, x-client-info, apikey, content-type, x-webhook-signature',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Vary': 'Origin',
-  };
-}
-
-/**
- * Autentica chamadas de rotina (cron) comparando o Authorization com
- * CRON_SECRET_TOKEN em tempo constante.
- *
- * `verify_jwt` sozinho NÃO protege estas functions: ele apenas exige um JWT
- * válido, e todo usuário logado da plataforma possui um. Rotinas que rodam com
- * service role (ignorando RLS) e disparam mensagens em massa precisam deste
- * segundo fator.
- */
-export function isAuthorizedCron(req: Request, cronSecret: string): boolean {
-  const authHeader = req.headers.get('Authorization') || '';
-  if (!authHeader.startsWith('Bearer ')) return false;
-  return constantTimeCompare(authHeader.slice('Bearer '.length), cronSecret);
-}
-
 export function safeHandler(handler: (req: Request) => Promise<Response>) {
   return async (req: Request): Promise<Response> => {
-    const corsHeaders = getCorsHeaders(req);
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': getAllowedOrigin(req),
+      'Access-Control-Allow-Headers':
+        'authorization, x-client-info, apikey, content-type, x-webhook-signature',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    };
 
     try {
       if (req.method === 'OPTIONS') {

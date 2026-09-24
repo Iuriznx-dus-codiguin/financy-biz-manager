@@ -1,11 +1,14 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { checkEnv, safeHandler, checkRateLimit, getCorsHeaders } from '../_shared/utils.ts';
+import { checkEnv, safeHandler, checkRateLimit } from '../_shared/utils.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(safeHandler(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-
   // Validar variáveis de ambiente obrigatórias
   const envVars = checkEnv(['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
   const supabase = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_SERVICE_ROLE_KEY);

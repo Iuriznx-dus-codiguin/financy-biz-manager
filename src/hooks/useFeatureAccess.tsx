@@ -76,42 +76,15 @@ const PLAN_LIMITS: Record<Tier, PlanLimits> = {
 };
 
 /**
- * Mapa autoritativo plan_id → tier.
- *
- * `plan_id` é gravado pelo webhook da Cakto a partir de PLAN_MAPPINGS e é o
- * único identificador estável do plano. Classificar por `plan_name` (como era
- * feito antes) errava em dois casos reais:
- *   - "Super Company" (Enterprise) não contém a palavra "enterprise" e caía no
- *     fallback `subscription_type === 'business'` → premium, tirando do cliente
- *     do plano mais caro as features ia_pixel, economia_impostos,
- *     gestao_multi_empresa e suporte_dedicado que ele estava pagando;
- *   - "PRO Empresarial" e "Plus Empresarial" casavam ambos em 'empresarial'
- *     antes de 'pro', então o assinante Pro recebia exatamente o mesmo conjunto
- *     de features do Plus.
- */
-const PLAN_ID_TO_TIER: Record<string, Tier> = {
-  personal_plus_monthly: 'plus',
-  personal_plus_yearly: 'plus',
-  personal_pro_monthly: 'pro',
-  personal_pro_yearly: 'pro',
-  business_plus_monthly: 'premium',
-  business_plus_yearly: 'premium',
-  business_pro_monthly: 'premium',
-  business_pro_yearly: 'premium',
-  business_enterprise_monthly: 'enterprise',
-  business_enterprise_yearly: 'enterprise',
-};
-
-/**
  * Resolve o tier canônico a partir dos campos brutos da assinatura.
  * subscription_type vem como: 'developer' | 'personal' | 'business' | 'pending' | 'free_trial'
+ * plan_name pode conter: 'Plus', 'Pro', 'Premium', 'Empresarial', 'Enterprise', etc.
  */
 export const resolveTier = (
   subscriptionType?: string | null,
   planName?: string | null,
   status?: string | null,
   expiresAt?: string | null,
-  planId?: string | null,
 ): Tier => {
   if (subscriptionType === 'developer') return 'developer';
 
@@ -119,21 +92,13 @@ export const resolveTier = (
   const isActive = status === 'active' && (!expiresAt || new Date(expiresAt) > new Date());
   if (!isActive) return 'unsubscribed';
 
-  // 1) plan_id — identificador estável, preferido sempre que presente
-  const byPlanId = planId ? PLAN_ID_TO_TIER[planId.toLowerCase()] : undefined;
-  if (byPlanId) return byPlanId;
-
-  // 2) plan_name — fallback para assinaturas antigas sem plan_id gravado.
-  //    A ordem importa: nomes mais específicos primeiro.
   const p = (planName || '').toLowerCase();
-  const isBusiness = /empresarial|business|company/.test(p);
-  if (/enterprise|super company/.test(p)) return 'enterprise';
-  if (/\bpro\b/.test(p)) return isBusiness ? 'premium' : 'pro';
-  if (/\bplus\b/.test(p)) return isBusiness ? 'premium' : 'plus';
-  if (p.includes('premium')) return 'premium';
-  if (isBusiness) return 'premium';
+  if (p.includes('enterprise')) return 'enterprise';
+  if (p.includes('premium') || p.includes('empresarial') || p.includes('business')) return 'premium';
+  if (p.includes('pro')) return 'pro';
+  if (p.includes('plus')) return 'plus';
 
-  // 3) Fallback por subscription_type quando nada mais bate
+  // Fallback por subscription_type quando plan_name não bate
   if (subscriptionType === 'business') return 'premium';
   if (subscriptionType === 'personal') return 'plus';
 
@@ -148,7 +113,6 @@ export const useFeatureAccess = () => {
     subscription?.plan_name,
     subscription?.status,
     subscription?.expires_at,
-    subscription?.plan_id,
   );
 
   const isFeatureAvailable = (feature: string): boolean => {

@@ -1,6 +1,5 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { Json } from '@/integrations/supabase/types';
 import { useAuth } from './useAuth';
 import { logger } from '@/utils/logger';
 import { isDeveloperTier } from '@/utils/subscriptionHelpers';
@@ -32,113 +31,102 @@ export interface UserSubscription {
     advanced_analytics?: boolean;
     export_data?: boolean;
   };
-  // `Json` (tipo gerado pelo Supabase) em vez de `Record<string, any>`:
-  // `updateSubscription` repassa este objeto ao client, que exige `Json`.
-  metadata: Json;
+  metadata: Record<string, any>;
   updated_at: string;
 }
 
-/** Chave compartilhada do cache — o mesmo usuário nunca é buscado duas vezes. */
-export const userSubscriptionQueryKey = (userId?: string) => ['user-subscription', userId] as const;
-
-const fetchUserSubscription = async (userId: string): Promise<UserSubscription | null> => {
-  // PRIMEIRO: Verificar se é desenvolvedor na tabela subscribers
-  const { data: subscriberData } = await supabase
-    .from('subscribers')
-    .select('subscription_tier, subscribed, subscription_end')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  // Se é desenvolvedor, retornar acesso ilimitado
-  if (isDeveloperTier(subscriberData)) {
-    logger.success('Acesso de desenvolvedor detectado - acesso ilimitado concedido');
-
-    const { data } = await supabase
-      .from('user_subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    // Antes, um developer sem linha em user_subscriptions ficava com
-    // subscription = null e caía em `isBlocked() === true`, perdendo o acesso
-    // que o tier deveria garantir. O registro sintético evita isso.
-    return (data as UserSubscription | null) ?? ({
-      user_id: userId,
-      subscription_type: 'developer',
-      plan_name: 'Developer',
-      status: 'active',
-      features: {},
-      metadata: {},
-    } as unknown as UserSubscription);
-  }
-
-  const { data, error } = await supabase
-    .from('user_subscriptions')
-    .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (error) {
-    logger.error('Erro ao buscar assinatura:', error);
-    throw error;
-  }
-
-  if (data) return data as UserSubscription;
-
-  // Se não encontrou assinatura, criar automaticamente (fallback)
-  logger.warn('Assinatura não encontrada para o usuário. Criando assinatura pendente automaticamente...');
-  const { error: ensureError } = await supabase.rpc('ensure_user_has_subscription', {
-    p_user_id: userId,
-  });
-  if (ensureError) {
-    logger.error('Erro ao criar assinatura automática:', ensureError);
-  }
-
-  const { data: newData, error: refetchError } = await supabase
-    .from('user_subscriptions')
-    .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (refetchError) {
-    logger.error('Erro ao buscar assinatura após criação:', refetchError);
-    throw refetchError;
-  }
-
-  return newData as UserSubscription | null;
-};
-
-/**
- * Assinatura do usuário logado.
- *
- * Roda sobre React Query porque o hook é consumido por ~10 componentes
- * (layout, sidebar, banners, useFeatureAccess, useIsAdmin…). Com o useState +
- * useEffect anterior, cada instância disparava as próprias consultas a
- * `subscribers` e `user_subscriptions` a cada montagem — uma dezena de
- * requisições idênticas em um único carregamento do dashboard.
- */
 export const useUserSubscription = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const [subscription, setSubscription] = useState<UserSubscription | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const {
-    data: subscription = null,
-    isLoading,
-    error: queryError,
-    refetch: refetchQuery,
-  } = useQuery({
-    queryKey: userSubscriptionQueryKey(user?.id),
-    queryFn: () => fetchUserSubscription(user!.id),
-    enabled: Boolean(user?.id),
-    staleTime: 1000 * 60 * 5,
-  });
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-  const loading = Boolean(user?.id) && isLoading;
-  const error = queryError ? 'Erro ao carregar dados da assinatura' : null;
+    fetchSubscription();
+  }, [user]);
 
   const fetchSubscription = async () => {
-    await queryClient.invalidateQueries({ queryKey: userSubscriptionQueryKey(user?.id) });
-    await refetchQuery();
+    try {
+      setLoading(true);
+      setError(null);
+
+      // PRIMEIRO: Verificar se é desenvolvedor na tabela subscribers
+      const { data: subscriberData } = await supabase
+        .from('subscribers')
+        .select('subscription_tier, subscribed, subscription_end')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+
+      // Se é desenvolvedor, retornar acesso ilimitado
+      if (isDeveloperTier(subscriberData)) {
+        logger.success('Acesso de desenvolvedor detectado - acesso ilimitado concedido');
+        
+        // Buscar subscription completa (já foi sincronizada pela migration)
+        const { data } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', user!.id)
+          .maybeSingle();
+        
+        if (data) {
+          setSubscription(data as UserSubscription);
+        }
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+
+      if (error) {
+        logger.error('Erro ao buscar assinatura:', error);
+        setError('Erro ao carregar dados da assinatura');
+        return;
+      }
+
+      // Se não encontrou assinatura, criar automaticamente (fallback)
+      if (!data) {
+        logger.warn('Assinatura não encontrada para o usuário. Criando assinatura pendente automaticamente...');
+        
+        // Chamar função do banco que cria assinatura de teste gratuito
+        const { error: ensureError } = await supabase.rpc('ensure_user_has_subscription', {
+          p_user_id: user!.id
+        });
+
+        if (ensureError) {
+          logger.error('Erro ao criar assinatura automática:', ensureError);
+        }
+
+        // Buscar novamente após criar
+        const { data: newData, error: refetchError } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', user!.id)
+          .maybeSingle();
+
+        if (refetchError) {
+          logger.error('Erro ao buscar assinatura após criação:', refetchError);
+          setError('Erro ao carregar dados da assinatura');
+          return;
+        }
+
+        setSubscription(newData as UserSubscription | null);
+      } else {
+        setSubscription(data as UserSubscription | null);
+      }
+    } catch (err) {
+      logger.error('Erro inesperado ao carregar assinatura:', err);
+      setError('Erro inesperado ao carregar assinatura');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const hasFeature = (feature: string): boolean => {
@@ -272,7 +260,7 @@ export const useUserSubscription = () => {
     if (!user) return false;
 
     try {
-      const { error } = await supabase.rpc('renew_subscription', {
+      const { data, error } = await supabase.rpc('renew_subscription', {
         p_user_id: user.id,
         p_new_expires_at: newExpiresAt || null,
         p_amount: amount || null

@@ -28,18 +28,6 @@ const { VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY } = validateEnvVars();
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(
-  VITE_SUPABASE_URL,
-  VITE_SUPABASE_PUBLISHABLE_KEY,
-  {
-    auth: {
-      // PKCE no lugar do fluxo implícito: o token deixa de trafegar no fragmento
-      // da URL (#access_token=...), onde acabava no histórico do navegador,
-      // em extensões e em logs de referrer de terceiros.
-      flowType: 'pkce',
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      storageKey: 'financy-auth',
-    },
-  }
+  VITE_SUPABASE_URL, 
+  VITE_SUPABASE_PUBLISHABLE_KEY
 );

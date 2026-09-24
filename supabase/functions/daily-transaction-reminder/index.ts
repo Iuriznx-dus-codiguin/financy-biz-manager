@@ -1,5 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
-import { checkEnv, getCorsHeaders, isAuthorizedCron } from '../_shared/utils.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 interface UserWithoutTransaction {
   id: string;
@@ -9,40 +13,17 @@ interface UserWithoutTransaction {
 }
 
 Deno.serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Rotina de cron: roda com service role, lê o cadastro de TODOS os usuários
-    // e dispara notificações em massa. Exige CRON_SECRET_TOKEN — `verify_jwt`
-    // sozinho deixaria qualquer usuário logado disparar a rotina.
-    //
-    // A autorização vem ANTES de validar o resto do ambiente: assim um chamador
-    // não autenticado recebe sempre 401, sem conseguir distinguir "token errado"
-    // de "servidor mal configurado" pela diferença entre 401 e 500.
-    const { CRON_SECRET_TOKEN } = checkEnv(['CRON_SECRET_TOKEN']);
-
-    if (!isAuthorizedCron(req, CRON_SECRET_TOKEN)) {
-      console.error('[SECURITY] daily-transaction-reminder: token de cron ausente ou inválido');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized', timestamp: new Date().toISOString() }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      );
-    }
-
-    const envVars = checkEnv([
-      'SUPABASE_URL',
-      'SUPABASE_SERVICE_ROLE_KEY',
-      'N8N_DAILY_REMINDER_URL',
-    ]);
-
     console.log('🔔 Iniciando verificação de lembretes diários...');
 
-    const supabase = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_SERVICE_ROLE_KEY);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Data atual (sem horário para comparação)
     const today = new Date();
@@ -123,10 +104,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Endpoint do n8n vem de env — manter a URL no código a expõe no repositório
-    // público e obriga um deploy a cada troca de ambiente.
-    const n8nWebhookUrl = envVars.N8N_DAILY_REMINDER_URL;
-
+    // Enviar dados para o webhook do n8n
+    const n8nWebhookUrl = 'https://central-financy-n8n.y8enlt.easypanel.host/webhook/verificar-transacoes';
+    
     console.log(`🚀 Enviando ${usersWithoutTransactions.length} usuários para o webhook n8n...`);
 
     // Enviar todos os usuários de uma vez em um array
@@ -181,12 +161,10 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Erro no processamento:', error);
-    // Detalhe do erro fica só no log: a mensagem crua revela nomes de tabela,
-    // colunas e variáveis de ambiente ausentes para quem chamou.
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: 'Erro interno ao processar lembretes',
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
         timestamp: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
