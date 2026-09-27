@@ -228,3 +228,13 @@ export function planoDaFamilia(familia: string, periodo: PeriodoPlano): Plano | 
 export function nomeComercial(plano: Plano): string {
   return `${plano.nome} (${plano.periodo === 'yearly' ? 'anual' : 'mensal'})`;
 }
+
+/** Uma linha por família com preços e limite de perfis/empresas (texto para os assistentes de suporte). */
+export function resumoDosPlanos(formatarPreco: (valor: number) => string): string {
+  return FAMILIAS.map((familia) => {
+    const planos = PLANOS.filter((p) => p.familia === familia.id);
+    const precos = planos.map((p) => `${formatarPreco(p.preco)}/${p.periodo === 'yearly' ? 'ano' : 'mês'}`).join(' ou ');
+    const limite = familia.itens.find((i) => /Contas|Empresas/.test(i.nome));
+    return `- ${planos[0]?.nome ?? familia.titulo} (${familia.descricao}): ${precos}${limite ? `; ${limite.nome}: ${limite.valor}` : ''}`;
+  }).join('\n');
+}

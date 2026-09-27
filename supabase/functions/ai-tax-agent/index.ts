@@ -1,47 +1,46 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Legado: sem chamador no front (ver ARQUITETURA-ALVO D-03). Mantida no ar até confirmar que o n8n não a usa.
+import { exigirAssinaturaAtiva } from '../_shared/acesso.ts';
+import { cabecalhosCors } from '../_shared/cors.ts';
+import { ErroHttp, naoAutorizado, requisicaoInvalida } from '../_shared/http.ts';
+import { clienteServico } from '../_shared/supabase.ts';
 import { checkEnv, safeHandler, checkRateLimit } from '../_shared/utils.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-serve(safeHandler(async (req) => {
+Deno.serve(safeHandler(async (req) => {
+  const corsHeaders = cabecalhosCors(req);
   // Validar variáveis de ambiente obrigatórias
-  const envVars = checkEnv(['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
-  const supabase = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_SERVICE_ROLE_KEY);
+  const envVars = checkEnv(['OPENAI_API_KEY']);
+  const supabase = clienteServico();
 
   // Rate limit por IP ANTES da autenticação (prevenir ataques de força bruta)
   const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
   if (!(await checkRateLimit(supabase, `ip:${clientIp}`, 'ip_request', 60, 1))) {
-    throw new Error('Too many requests from this IP');
+    throw new ErroHttp(429, 'LIMITE_ATINGIDO', 'Muitas requisições. Tente novamente em instantes.');
   }
 
   // Autenticar usuário
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) {
-    throw new Error('Unauthorized');
+    throw naoAutorizado();
   }
   
   const token = authHeader.replace('Bearer ', '');
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
   if (authError || !user) {
-    throw new Error('Unauthorized');
+    throw naoAutorizado();
   }
+  await exigirAssinaturaAtiva(supabase, user.id);
 
-  // Rate limit por usuário APÓS autenticação (5 requests/min para IA)
+  // Rate limit por usuário APÓS autenticação (50 mensagens por dia)
   if (!(await checkRateLimit(supabase, `user:${user.id}`, 'ai_message', 50, 1440))) {
-    throw new Error('Rate limit exceeded - Limite de 5 requisições por minuto atingido');
+    throw new ErroHttp(429, 'LIMITE_ATINGIDO', 'Limite diário de mensagens atingido. Tente novamente amanhã.');
   }
 
   const body = await req.json();
   const { message } = body;
 
   if (!message) {
-    throw new Error('Bad request - Message is required');
+    throw requisicaoInvalida('Mensagem é obrigatória');
   }
 
   // Sistema prompt para o especialista em impostos

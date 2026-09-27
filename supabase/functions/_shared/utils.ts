@@ -1,5 +1,7 @@
 // Utilitários compartilhados para Supabase Functions
 import { cabecalhosCors } from './cors.ts';
+import { ErroHttp } from './http.ts';
+import { ConfiguracaoAusente } from './supabase.ts';
 
 /**
  * Função para validar variáveis de ambiente obrigatórias
@@ -79,7 +81,19 @@ export function safeHandler(handler: (req: Request) => Promise<Response>) {
       }
       return await handler(req);
     } catch (error) {
+      if (error instanceof ErroHttp) {
+        return new Response(
+          JSON.stringify({ error: error.message, code: error.codigo, timestamp: new Date().toISOString() }),
+          { status: error.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       console.error('Erro capturado pelo safeHandler:', error);
+      if (error instanceof ConfiguracaoAusente) {
+        return new Response(
+          JSON.stringify({ error: 'Serviço indisponível: configuração ausente', code: 'CONFIGURACAO_AUSENTE' }),
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       let status = 500;
       let message = 'Erro interno do servidor';
       if (error instanceof Error) {
