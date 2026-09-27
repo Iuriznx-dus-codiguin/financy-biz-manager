@@ -1,269 +1,224 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Insights financeiros do painel (InteligenciaFinanceiraIA).
+// Contrato mantido: corpo { dashboardId, dashboardType, timeFilter, forceRefresh } → { insights, metrics, fromCache }.
+// Exige assinatura ativa e posse do dashboard; as chamadas à IA (não as respostas do cache) contam no
+// limite diário 'ai_insights'. Datas do período em Brasília; totais paginados.
+import { consumirLimite, exigirAssinaturaAtiva, exigirDonoDoDashboard } from '../_shared/acesso.ts';
+import { usuarioDaRequisicao } from '../_shared/auth.ts';
+import { lancamentosDoPeriodo } from '../_shared/consultas.ts';
+import { hojeISO, intervaloDoFiltro } from '../_shared/datas.ts';
+import { formatarBRL, percentual, somarReais } from '../_shared/dinheiro.ts';
+import { json, lerJson, requisicaoInvalida, servir } from '../_shared/http.ts';
+import { chamarIA } from '../_shared/ia.ts';
+import { totalDeImpostos } from '../_shared/impostos.ts';
+import { clienteServico } from '../_shared/supabase.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
-};
+const FILTROS = ['hoje', 'esta-semana', 'este-mes', 'mes-passado', 'ultimos-30-dias', 'ultimos-90-dias', 'este-ano'];
+const LIMITE_DIARIO_IA = 40;
+const TIPOS_INSIGHT = ['alerta', 'sucesso', 'dica', 'info'] as const;
 
-// Simple hash for change detection
-function simpleHash(str: string): string {
+interface Insight {
+  tipo: (typeof TIPOS_INSIGHT)[number];
+  titulo: string;
+  descricao: string;
+  acao: string;
+}
+
+interface Corpo {
+  dashboardId?: unknown;
+  dashboardType?: unknown;
+  timeFilter?: unknown;
+  forceRefresh?: unknown;
+}
+
+type Linha = Record<string, unknown> & { valor: number; categoria: string };
+
+// Hash simples para detectar mudança nos dados (o mesmo de antes: mantém as chaves de cache válidas).
+function hashSimples(texto: string): string {
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const chr = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + chr;
+  for (let i = 0; i < texto.length; i++) {
+    hash = (hash << 5) - hash + texto.charCodeAt(i);
     hash |= 0;
   }
   return hash.toString(36);
 }
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+function porCategoria(linhas: Linha[]): Record<string, number> {
+  const grupos: Record<string, number[]> = {};
+  for (const l of linhas) (grupos[l.categoria ?? 'outros'] ??= []).push(Number(l.valor));
+  return Object.fromEntries(Object.entries(grupos).map(([c, v]) => [c, somarReais(v)]));
+}
 
-  try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
+function insightsValidos(bruto: unknown): Insight[] {
+  const lista = (bruto as { insights?: unknown })?.insights;
+  if (!Array.isArray(lista)) return [];
+  return lista
+    .filter((i) => i && typeof i === 'object')
+    .map((i) => ({
+      tipo: (TIPOS_INSIGHT as readonly string[]).includes(i.tipo) ? i.tipo : 'info',
+      titulo: String(i.titulo ?? '').slice(0, 80),
+      descricao: String(i.descricao ?? '').slice(0, 400),
+      acao: String(i.acao ?? '').slice(0, 200),
+    }))
+    .filter((i) => i.titulo && i.descricao)
+    .slice(0, 6);
+}
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const { dashboardId, dashboardType, timeFilter, forceRefresh } = await req.json();
-    const isPersonal = dashboardType === 'personal';
-
-    // Build date range
-    const now = new Date();
-    let startDate: string;
-    let endDate = now.toISOString().split('T')[0];
-
-    switch (timeFilter) {
-      case 'hoje': startDate = endDate; break;
-      case 'esta-semana': {
-        const w = new Date(now); w.setDate(w.getDate() - w.getDay());
-        startDate = w.toISOString().split('T')[0]; break;
-      }
-      case 'este-mes': startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]; break;
-      case 'mes-passado': {
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
-        break;
-      }
-      case 'ultimos-30-dias': { const d = new Date(now); d.setDate(d.getDate() - 30); startDate = d.toISOString().split('T')[0]; break; }
-      case 'ultimos-90-dias': { const d = new Date(now); d.setDate(d.getDate() - 90); startDate = d.toISOString().split('T')[0]; break; }
-      case 'este-ano': startDate = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0]; break;
-      default: startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    }
-
-    // Fetch financial data
-    const buildFilter = (query: any) => {
-      let q = query.eq('user_id', user.id);
-      if (dashboardId) q = q.eq('dashboard_id', dashboardId);
-      return q;
-    };
-
-    const [recRes, despRes, impRes, metRes, eqRes] = await Promise.all([
-      buildFilter(supabase.from('receitas').select('data, categoria, valor, status'))
-        .gte('data', startDate).lte('data', endDate).order('data', { ascending: false }).limit(500),
-      buildFilter(supabase.from('despesas').select('data, categoria, valor, status'))
-        .gte('data', startDate).lte('data', endDate).order('data', { ascending: false }).limit(500),
-      buildFilter(supabase.from('impostos').select('tipo, valor, vencimento, pago'))
-        .gte('vencimento', startDate).lte('vencimento', endDate).limit(100),
-      buildFilter(supabase.from('metas').select('titulo, progresso, status')).limit(20),
-      buildFilter(supabase.from('equipe_membros').select('salario, status, periodicidade')).limit(50),
-    ]);
-
-    const receitas = recRes.data || [];
-    const despesas = despRes.data || [];
-    const impostos = impRes.data || [];
-    const metas = metRes.data || [];
-    const equipe = eqRes.data || [];
-
-    const totalRec = receitas.reduce((s: number, r: any) => s + Number(r.valor), 0);
-    const totalDesp = despesas.reduce((s: number, d: any) => s + Number(d.valor), 0);
-    const totalImpPago = impostos.filter((i: any) => i.pago).reduce((s: number, i: any) => s + Number(i.valor), 0);
-    const totalImpPendente = impostos.filter((i: any) => !i.pago).reduce((s: number, i: any) => s + Number(i.valor), 0);
-
-    const gastosEquipe = equipe.filter((m: any) => m.status === 'ativo').reduce((t: number, m: any) => {
-      const s = Number(m.salario || 0);
-      switch (m.periodicidade) { case 'semanal': return t + s * 4; case 'quinzenal': return t + s * 2; default: return t + s; }
-    }, 0);
-
-    const catDesp: Record<string, number> = {};
-    despesas.forEach((d: any) => { catDesp[d.categoria] = (catDesp[d.categoria] || 0) + Number(d.valor); });
-    const catRec: Record<string, number> = {};
-    receitas.forEach((r: any) => { catRec[r.categoria] = (catRec[r.categoria] || 0) + Number(r.valor); });
-
-    const lucro = totalRec - totalDesp - totalImpPago - gastosEquipe;
-    const margem = totalRec > 0 ? (lucro / totalRec) * 100 : 0;
-
-    // Metrics to return
-    const metrics = {
-      totalReceitas: totalRec,
-      totalDespesas: totalDesp,
-      lucro,
-      margem,
-      totalImpostosPendente: totalImpPendente,
-      gastosEquipe,
-      periodo: `${startDate} a ${endDate}`,
-    };
-
-    // Create data fingerprint for cache invalidation
-    const dataFingerprint = simpleHash(JSON.stringify({
-      recs: receitas.length, desps: despesas.length,
-      totalRec: Math.round(totalRec), totalDesp: Math.round(totalDesp),
-      imps: impostos.length, totalImpPend: Math.round(totalImpPendente),
-      metas: metas.length, eq: equipe.length, gastosEq: Math.round(gastosEquipe),
-    }));
-
-    const cacheKey = `insights_${dashboardId || 'default'}_${timeFilter || 'default'}_${dataFingerprint}`;
-
-    // Check cache (skip if forceRefresh)
-    if (!forceRefresh) {
-      const { data: cached } = await supabase
-        .from('query_cache')
-        .select('cached_data')
-        .eq('user_id', user.id)
-        .eq('query_key', cacheKey)
-        .gt('expires_at', new Date().toISOString())
-        .maybeSingle();
-
-      if (cached?.cached_data) {
-        return new Response(JSON.stringify({ ...cached.cached_data as any, metrics, fromCache: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
-    const formatBRL = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-
-    // Compact data context
-    const dataContext = `${startDate} a ${endDate}: Rec ${formatBRL(totalRec)}(${receitas.length}), Desp ${formatBRL(totalDesp)}(${despesas.length}), Imp pagos ${formatBRL(totalImpPago)}, pend ${formatBRL(totalImpPendente)}${gastosEquipe > 0 ? `, Equipe ${formatBRL(gastosEquipe)}` : ''}, ${isPersonal ? 'Saldo' : 'Lucro'} ${formatBRL(lucro)}, Margem ${margem.toFixed(1)}%. CatDesp: ${JSON.stringify(catDesp)}. CatRec: ${JSON.stringify(catRec)}.${metas.length > 0 ? ` Metas: ${metas.map((m: any) => `${m.titulo}:${m.progresso}%`).join(',')}` : ''}`;
-
-    const systemPrompt = isPersonal
-      ? `Consultor financeiro pessoal Financy. Gere 3-4 insights curtos (max 2 frases cada). JSON: {"insights":[{"tipo":"alerta|sucesso|dica|info","titulo":"max 5 palavras","descricao":"max 2 frases","acao":"max 1 frase"}]}. Sem dados insuficientes, dê dicas motivacionais.`
-      : `Consultor empresarial Financy. Gere 3-4 insights estratégicos curtos (max 2 frases cada). JSON: {"insights":[{"tipo":"alerta|sucesso|dica|info","titulo":"max 5 palavras","descricao":"max 2 frases","acao":"max 1 frase"}]}. Foque em KPIs, margem, fluxo de caixa.`;
-
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
+const FERRAMENTA = {
+  type: 'function',
+  function: {
+    name: 'generate_insights',
+    description: 'Gerar insights financeiros',
+    parameters: {
+      type: 'object',
+      properties: {
+        insights: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              tipo: { type: 'string', enum: [...TIPOS_INSIGHT] },
+              titulo: { type: 'string' },
+              descricao: { type: 'string' },
+              acao: { type: 'string' },
+            },
+            required: ['tipo', 'titulo', 'descricao', 'acao'],
+            additionalProperties: false,
+          },
+        },
       },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: dataContext },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "generate_insights",
-            description: "Gerar insights financeiros",
-            parameters: {
-              type: "object",
-              properties: {
-                insights: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      tipo: { type: "string", enum: ["alerta", "sucesso", "dica", "info"] },
-                      titulo: { type: "string" },
-                      descricao: { type: "string" },
-                      acao: { type: "string" }
-                    },
-                    required: ["tipo", "titulo", "descricao", "acao"],
-                    additionalProperties: false
-                  }
-                }
-              },
-              required: ["insights"],
-              additionalProperties: false
-            }
-          }
-        }],
-        tool_choice: { type: "function", function: { name: "generate_insights" } },
-        temperature: 0.5,
-        max_tokens: 800,
-      }),
-    });
+      required: ['insights'],
+      additionalProperties: false,
+    },
+  },
+};
 
-    if (!aiResponse.ok) {
-      const status = aiResponse.status;
-      if (status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited" }), {
-          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      if (status === 402) {
-        return new Response(JSON.stringify({ error: "Credits exhausted" }), {
-          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      throw new Error(`AI error: ${status}`);
-    }
+servir('ai-financial-insights', async (req) => {
+  if (req.method !== 'POST') throw requisicaoInvalida('Método não suportado');
+  const usuario = await usuarioDaRequisicao(req);
+  const corpo = await lerJson<Corpo>(req);
+  const supabase = clienteServico();
+  const dashboardId = typeof corpo.dashboardId === 'string' && corpo.dashboardId ? corpo.dashboardId : null;
+  const filtro = typeof corpo.timeFilter === 'string' && FILTROS.includes(corpo.timeFilter) ? corpo.timeFilter : 'este-mes';
+  const pessoal = corpo.dashboardType === 'personal';
 
-    const aiData = await aiResponse.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    
-    let insights = [];
-    if (toolCall) {
-      try {
-        const parsed = JSON.parse(toolCall.function.arguments);
-        insights = parsed.insights || [];
-      } catch {
-        insights = [];
-      }
-    }
+  await exigirAssinaturaAtiva(supabase, usuario.id);
+  await exigirDonoDoDashboard(supabase, usuario.id, dashboardId);
 
-    if (insights.length === 0) {
-      insights = [{
-        tipo: "info",
-        titulo: isPersonal ? "Comece a registrar" : "Configure suas finanças",
-        descricao: isPersonal
-          ? "Registre receitas e despesas para insights personalizados."
-          : "Adicione dados para análise de performance.",
-        acao: isPersonal ? "Registre sua primeira transação" : "Cadastre seu faturamento"
-      }];
-    }
-
-    // Save to cache (expires in 6 hours)
-    const cacheData = { insights };
-    const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
-    
-    await supabase.from('query_cache').upsert({
-      user_id: user.id,
-      query_key: cacheKey,
-      cached_data: cacheData,
-      expires_at: expiresAt,
-    }, { onConflict: 'user_id,query_key' });
-
-    return new Response(JSON.stringify({ insights, metrics, fromCache: false }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
-  } catch (e) {
-    console.error("ai-financial-insights error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+  const { inicio, fim } = intervaloDoFiltro(filtro, hojeISO());
+  const filtroLancamentos = { userId: usuario.id, dashboardId, inicio, fim };
+  let impostosQ = supabase.from('impostos').select('*').eq('user_id', usuario.id).gte('vencimento', inicio).lte('vencimento', fim);
+  let metasQ = supabase.from('metas').select('titulo, progresso, status').eq('user_id', usuario.id);
+  let equipeQ = supabase.from('equipe_membros').select('salario, status, periodicidade').eq('user_id', usuario.id);
+  if (dashboardId) {
+    impostosQ = impostosQ.eq('dashboard_id', dashboardId);
+    metasQ = metasQ.eq('dashboard_id', dashboardId);
+    equipeQ = equipeQ.eq('dashboard_id', dashboardId);
   }
+
+  const [receitas, despesas, impostosRes, metasRes, equipeRes] = await Promise.all([
+    lancamentosDoPeriodo<Linha>(supabase, 'receitas', 'id, data, categoria, valor', filtroLancamentos),
+    lancamentosDoPeriodo<Linha>(supabase, 'despesas', 'id, data, categoria, valor', filtroLancamentos),
+    impostosQ.limit(500),
+    metasQ.limit(20),
+    equipeQ.limit(200),
+  ]);
+  const impostos = (impostosRes.data ?? []) as (Record<string, unknown> & { valor: number; pago: boolean })[];
+  const metas = (metasRes.data ?? []) as { titulo: string; progresso: number }[];
+  const equipe = (equipeRes.data ?? []) as { salario: number; status: string; periodicidade: string }[];
+
+  const totalRec = somarReais(receitas.map((r) => r.valor));
+  const totalDesp = somarReais(despesas.map((d) => d.valor));
+  const totalImpPago = totalDeImpostos(impostos.filter((i) => i.pago), totalRec);
+  const totalImpPendente = totalDeImpostos(impostos.filter((i) => !i.pago), totalRec);
+  const gastosEquipe = somarReais(
+    equipe.filter((m) => m.status === 'ativo').map((m) => {
+      const salario = Number(m.salario ?? 0);
+      return m.periodicidade === 'semanal' ? salario * 4 : m.periodicidade === 'quinzenal' ? salario * 2 : salario;
+    }),
+  );
+  // Mesma fórmula de antes (modelo de resultado em revisão: ARQUITETURA-ALVO D-01).
+  const lucro = somarReais([totalRec, -totalDesp, -totalImpPago, -gastosEquipe]);
+  const margem = percentual(lucro, totalRec);
+  const catDesp = porCategoria(despesas);
+  const catRec = porCategoria(receitas);
+
+  const metrics = {
+    totalReceitas: totalRec,
+    totalDespesas: totalDesp,
+    lucro,
+    margem,
+    totalImpostosPendente: totalImpPendente,
+    gastosEquipe,
+    periodo: `${inicio} a ${fim}`,
+  };
+
+  const impressao = hashSimples(JSON.stringify({
+    recs: receitas.length, desps: despesas.length,
+    totalRec: Math.round(totalRec), totalDesp: Math.round(totalDesp),
+    imps: impostos.length, totalImpPend: Math.round(totalImpPendente),
+    metas: metas.length, eq: equipe.length, gastosEq: Math.round(gastosEquipe),
+    fim,
+  }));
+  const chave = `insights_${dashboardId || 'default'}_${filtro}_${impressao}`;
+
+  if (corpo.forceRefresh !== true) {
+    const { data: cache } = await supabase
+      .from('query_cache')
+      .select('cached_data')
+      .eq('user_id', usuario.id)
+      .eq('query_key', chave)
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle();
+    const emCache = insightsValidos(cache?.cached_data);
+    if (emCache.length) return json(req, { insights: emCache, metrics, fromCache: true });
+  }
+
+  await consumirLimite(supabase, usuario.id, 'ai_insights', LIMITE_DIARIO_IA, 1440);
+
+  const contexto =
+    `${inicio} a ${fim}: Rec ${formatarBRL(totalRec)}(${receitas.length}), Desp ${formatarBRL(totalDesp)}(${despesas.length}), ` +
+    `Imp pagos ${formatarBRL(totalImpPago)}, pend ${formatarBRL(totalImpPendente)}` +
+    `${gastosEquipe > 0 ? `, Equipe ${formatarBRL(gastosEquipe)}` : ''}, ${pessoal ? 'Saldo' : 'Lucro'} ${formatarBRL(lucro)}, ` +
+    `Margem ${margem.toFixed(1)}%. CatDesp: ${JSON.stringify(catDesp)}. CatRec: ${JSON.stringify(catRec)}.` +
+    (metas.length ? ` Metas: ${metas.map((m) => `${m.titulo}:${m.progresso}%`).join(',')}` : '');
+
+  const formato = '{"insights":[{"tipo":"alerta|sucesso|dica|info","titulo":"max 5 palavras","descricao":"max 2 frases","acao":"max 1 frase"}]}';
+  const sistema = pessoal
+    ? `Consultor financeiro pessoal da Financy. Gere 3-4 insights curtos em português do Brasil (máx. 2 frases cada). JSON: ${formato}. Com poucos dados, dê dicas práticas para começar.`
+    : `Consultor empresarial da Financy. Gere 3-4 insights estratégicos curtos em português do Brasil (máx. 2 frases cada). JSON: ${formato}. Foque em margem, fluxo de caixa e custos.`;
+
+  const escolha = await chamarIA({
+    messages: [{ role: 'system', content: sistema }, { role: 'user', content: contexto }],
+    tools: [FERRAMENTA],
+    tool_choice: { type: 'function', function: { name: 'generate_insights' } },
+    temperature: 0.5,
+    max_tokens: 800,
+  });
+
+  let insights: Insight[] = [];
+  const chamada = escolha.message?.tool_calls?.[0];
+  if (chamada) {
+    try {
+      insights = insightsValidos(JSON.parse(chamada.function.arguments));
+    } catch {
+      insights = [];
+    }
+  }
+  if (!insights.length) {
+    insights = [{
+      tipo: 'info',
+      titulo: pessoal ? 'Comece a registrar' : 'Configure suas finanças',
+      descricao: pessoal
+        ? 'Registre entradas e gastos para receber análises personalizadas.'
+        : 'Adicione receitas e despesas para analisar o desempenho da empresa.',
+      acao: pessoal ? 'Registre sua primeira transação' : 'Cadastre seu faturamento',
+    }];
+  } else {
+    await supabase.from('query_cache').upsert(
+      { user_id: usuario.id, query_key: chave, cached_data: { insights }, expires_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString() },
+      { onConflict: 'user_id,query_key' },
+    );
+  }
+
+  return json(req, { insights, metrics, fromCache: false });
 });

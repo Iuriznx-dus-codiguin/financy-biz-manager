@@ -8,4 +8,5 @@ if [ "$#" -gt 0 ]; then alvos=("$@"); else mapfile -t alvos < <(ls -d supabase/f
 arquivos=()
 for f in "${alvos[@]}"; do arquivos+=("supabase/functions/$f/index.ts"); done
 for s in supabase/functions/_shared/*.ts; do [[ "$s" == *.test.ts ]] || arquivos+=("$s"); done
-deno check --import-map=scripts/deno/check-import-map.json "${arquivos[@]}"
+if command -v deno >/dev/null; then DENO=(deno); else DENO=(npx --yes deno); fi
+"${DENO[@]}" check --import-map=scripts/deno/check-import-map.json "${arquivos[@]}"
