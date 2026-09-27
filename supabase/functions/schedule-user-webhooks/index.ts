@@ -1,123 +1,63 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Agenda os avisos de renovação (5 dias antes, 1 dia antes e no dia) enviados ao n8n por
+// process-scheduled-webhooks. Chamada apenas pelo backend (cakto-webhook, com a service role).
+import { exigirChamadorInterno } from '../_shared/auth.ts';
+import { hojeISO, somarDias } from '../_shared/datas.ts';
+import { json, lerJson, requisicaoInvalida, servir } from '../_shared/http.ts';
+import { log } from '../_shared/logger.ts';
+import { urlN8n } from '../_shared/n8n.ts';
+import { clienteServico } from '../_shared/supabase.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const EVENTOS_RENOVACAO = ['renovacao5', 'renovacao1', 'renovacao0'];
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+servir('schedule-user-webhooks', async (req) => {
+  exigirChamadorInterno(req);
+  const { userId, eventType } = await lerJson<{ userId?: string; eventType?: string }>(req);
+  if (!userId) throw requisicaoInvalida('userId é obrigatório');
+
+  // O agendamento de teste grátis foi removido junto com o trial; só renovações são agendadas.
+  if (eventType !== 'subscription_renewal') {
+    return json(req, { success: true, scheduled: 0, webhooks: [] });
   }
 
-  try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
+  const supabase = clienteServico();
+  const [{ data: profile }, { data: subscription }] = await Promise.all([
+    supabase.from('profiles').select('nome_completo, email, telefone').eq('id', userId).maybeSingle(),
+    supabase.from('user_subscriptions').select('expires_at').eq('user_id', userId).maybeSingle(),
+  ]);
+  if (!profile) throw requisicaoInvalida('Perfil não encontrado');
+  if (!subscription?.expires_at) throw requisicaoInvalida('Data de renovação não encontrada');
 
-    const { userId, eventType } = await req.json();
-    // eventType: 'free_trial' ou 'subscription_renewal'
+  const hoje = hojeISO();
+  const dataRenovacao = hojeISO(new Date(subscription.expires_at));
+  const basePayload = { nome: profile.nome_completo, email: profile.email, telefone: profile.telefone, user_id: userId };
+  const webhookUrl = urlN8n('centro-de-dados-relacionais');
 
-    console.log('📅 Agendando webhooks para:', userId, eventType);
+  // Cada renovação reagenda: os avisos antigos ainda não enviados são substituídos (antes duplicavam).
+  await supabase
+    .from('scheduled_webhooks')
+    .delete()
+    .eq('user_id', userId)
+    .eq('executed', false)
+    .in('event_type', EVENTOS_RENOVACAO);
 
-    // Buscar dados do usuário
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('nome_completo, email, telefone, created_at')
-      .eq('id', userId)
-      .single();
+  const webhooksToSchedule = [
+    { event_type: 'renovacao5', scheduled_date: somarDias(dataRenovacao, -5) },
+    { event_type: 'renovacao1', scheduled_date: somarDias(dataRenovacao, -1) },
+    { event_type: 'renovacao0', scheduled_date: dataRenovacao },
+  ]
+    // Aviso cuja data já passou não é enviado atrasado (ex.: "faltam 5 dias" quando faltam 3).
+    .filter((w) => w.scheduled_date >= hoje)
+    .map((w) => ({ ...w, user_id: userId, webhook_url: webhookUrl, payload: basePayload }));
 
-    if (!profile) {
-      throw new Error('Perfil não encontrado');
-    }
-
-    const webhookUrl = 'https://central-financy-n8n.y8enlt.easypanel.host/webhook/centro-de-dados-relacionais';
-    const basePayload = {
-      nome: profile.nome_completo,
-      email: profile.email,
-      telefone: profile.telefone,
-      user_id: userId
-    };
-
-    const webhooksToSchedule = [];
-
-    // NOTA: Lógica de free_trial removida - modelo de pagamento direto implementado
-    // Agora apenas webhooks de renovação são agendados quando o usuário assina
-
-    if (eventType === 'subscription_renewal') {
-      // Buscar data de renovação
-      const { data: subscription } = await supabaseClient
-        .from('user_subscriptions')
-        .select('expires_at')
-        .eq('user_id', userId)
-        .single();
-
-      if (!subscription?.expires_at) {
-        throw new Error('Data de renovação não encontrada');
-      }
-
-      const renewalDate = new Date(subscription.expires_at);
-      
-      // 5 dias antes, 1 dia antes, dia da renovação
-      const date5Before = new Date(renewalDate);
-      date5Before.setDate(date5Before.getDate() - 5);
-      
-      const date1Before = new Date(renewalDate);
-      date1Before.setDate(date1Before.getDate() - 1);
-
-      webhooksToSchedule.push(
-        {
-          user_id: userId,
-          event_type: 'renovacao5',
-          scheduled_date: date5Before.toISOString().split('T')[0],
-          webhook_url: webhookUrl,
-          payload: basePayload
-        },
-        {
-          user_id: userId,
-          event_type: 'renovacao1',
-          scheduled_date: date1Before.toISOString().split('T')[0],
-          webhook_url: webhookUrl,
-          payload: basePayload
-        },
-        {
-          user_id: userId,
-          event_type: 'renovacao0',
-          scheduled_date: renewalDate.toISOString().split('T')[0],
-          webhook_url: webhookUrl,
-          payload: basePayload
-        }
-      );
-    }
-
-    // Inserir webhooks agendados
-    const { error: insertError } = await supabaseClient
-      .from('scheduled_webhooks')
-      .insert(webhooksToSchedule);
-
-    if (insertError) {
-      console.error('Erro ao inserir webhooks:', insertError);
-      throw insertError;
-    }
-
-    console.log(`✅ ${webhooksToSchedule.length} webhooks agendados com sucesso`);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        scheduled: webhooksToSchedule.length,
-        webhooks: webhooksToSchedule.map(w => ({ event_type: w.event_type, date: w.scheduled_date }))
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-    );
-
-  } catch (error) {
-    console.error('Erro:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+  if (webhooksToSchedule.length > 0) {
+    const { error } = await supabase.from('scheduled_webhooks').insert(webhooksToSchedule);
+    if (error) throw new Error(`Erro ao agendar webhooks: ${error.message}`);
   }
+
+  log('info', 'agendamento.renovacao', { user_id: userId, agendados: webhooksToSchedule.length, renovacao: dataRenovacao });
+  return json(req, {
+    success: true,
+    scheduled: webhooksToSchedule.length,
+    webhooks: webhooksToSchedule.map((w) => ({ event_type: w.event_type, date: w.scheduled_date })),
+  });
 });

@@ -59,8 +59,9 @@ $$;
 CREATE OR REPLACE FUNCTION cron.unschedule(p_name text) RETURNS boolean
 LANGUAGE sql AS $$ DELETE FROM cron.job WHERE jobname = p_name RETURNING true $$;
 CREATE SCHEMA IF NOT EXISTS net;
+CREATE TABLE IF NOT EXISTS net.requisicoes (id bigserial PRIMARY KEY, url text, headers jsonb, body jsonb);
 CREATE OR REPLACE FUNCTION net.http_post(url text, headers jsonb DEFAULT '{}'::jsonb, body jsonb DEFAULT '{}'::jsonb)
-RETURNS bigint LANGUAGE sql AS $$ SELECT 1::bigint $$;
+RETURNS bigint LANGUAGE sql AS $$ INSERT INTO net.requisicoes (url, headers, body) VALUES (url, headers, body) RETURNING id $$;
 
 DO $$ BEGIN
   CREATE PUBLICATION supabase_realtime; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
@@ -121,3 +122,10 @@ CREATE OR REPLACE FUNCTION public.check_auth_rate_limit(
 ) RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$ SELECT true $$;
 CREATE OR REPLACE FUNCTION public.encrypt_sensitive_data(p_data text) RETURNS text
 LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$ SELECT p_data $$;
+
+-- Vault simulado (Supabase Vault): segredos lidos pelos jobs do cron.
+CREATE SCHEMA IF NOT EXISTS vault;
+CREATE TABLE IF NOT EXISTS vault.secrets (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text UNIQUE, secret text, created_at timestamptz DEFAULT now());
+CREATE OR REPLACE VIEW vault.decrypted_secrets AS SELECT id, name, secret AS decrypted_secret, created_at FROM vault.secrets;
+CREATE OR REPLACE FUNCTION vault.create_secret(p_secret text, p_name text) RETURNS uuid
+LANGUAGE sql AS $$ INSERT INTO vault.secrets (name, secret) VALUES (p_name, p_secret) RETURNING id $$;
