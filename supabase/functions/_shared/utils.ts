@@ -1,4 +1,5 @@
 // Utilitários compartilhados para Supabase Functions
+import { cabecalhosCors } from './cors.ts';
 
 /**
  * Função para validar variáveis de ambiente obrigatórias
@@ -65,31 +66,12 @@ export async function generateHmacSha256(secret: string, data: string): Promise<
 }
 
 /**
- * Wrapper seguro para tratamento de erros em edge functions
+ * Wrapper seguro para tratamento de erros em edge functions (usado pelas functions antigas).
+ * CORS pela allowlist única de ./cors.ts.
  */
-const ALLOWED_ORIGINS_SHARED = [
-  'https://app.financy.site',
-  'https://financy.site',
-  'https://www.financy.site',
-  'http://localhost:5173',
-  'http://localhost:3000',
-];
-
-function getAllowedOrigin(req: Request): string {
-  const origin = req.headers.get('Origin') || '';
-  return ALLOWED_ORIGINS_SHARED.includes(origin)
-    ? origin
-    : 'https://app.financy.site';
-}
-
 export function safeHandler(handler: (req: Request) => Promise<Response>) {
   return async (req: Request): Promise<Response> => {
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': getAllowedOrigin(req),
-      'Access-Control-Allow-Headers':
-        'authorization, x-client-info, apikey, content-type, x-webhook-signature',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    };
+    const corsHeaders = cabecalhosCors(req);
 
     try {
       if (req.method === 'OPTIONS') {
@@ -124,7 +106,8 @@ export function safeHandler(handler: (req: Request) => Promise<Response>) {
  * Usa a função SQL `check_and_increment_rate_limit`.
  */
 export async function checkRateLimit(
-  supabase: any,
+  // deno-lint-ignore no-explicit-any
+  supabase: any, // eslint-disable-line @typescript-eslint/no-explicit-any
   userId: string,
   action: string = 'ai_message',
   maxRequests: number = 50,
@@ -138,7 +121,7 @@ export async function checkRateLimit(
   });
   if (error) {
     console.error('Rate limit check error:', error);
-    return true; // Fail open em caso de erro de banco
+    return false; // Falha fechada: sem verificação, sem chamada à IA
   }
   return data === true;
 }
