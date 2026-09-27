@@ -16,6 +16,7 @@ import {
   normalizePayload,
   redactPayload,
   tierFromPlan,
+  valorPago,
 } from '../_shared/cakto.ts';
 
 const corsHeaders = {
@@ -101,7 +102,7 @@ async function recordWebhookLog(
       plan_name: planConfig?.plan_name ?? event?.productName ?? event?.offerName ?? null,
       transaction_id: transactionId,
       subscription_id: event?.subscriptionId || null,
-      amount: event?.amount || null,
+      amount: event ? valorPago(event.rawAmount, planConfig?.price) || null : null,
       payment_method: event?.paymentMethod || null,
       duration_ms: durationMs,
       error_code: errorCode ?? null,
@@ -199,7 +200,7 @@ async function processApprovedPayment(supabase: any, event: NormalizedCaktoPaylo
   const now = new Date();
   const subscriptionEndDate = new Date(now);
   subscriptionEndDate.setDate(subscriptionEndDate.getDate() + planConfig.duration_days);
-  const amount = event.amount || 0;
+  const amount = valorPago(event.rawAmount, planConfig.price);
   const idempotencyKey = event.transactionId || event.subscriptionId || `${profile.id}-${planConfig.plan_id}-${now.toISOString().slice(0, 10)}`;
   const alreadyRegistered = await hasExistingRevenue(supabase, profile.id, idempotencyKey);
   const dashboardId = await getMainDashboardId(supabase, profile.id);
