@@ -14,7 +14,7 @@ import { FileText, Download } from 'lucide-react';
 import { SectionSkeleton } from '@/components/ui/section-skeleton';
 import { dataLocal, hojeISO, paraDataISO } from '@/shared/lib/datas';
 import { formatarBRL, somarReais } from '@/shared/lib/dinheiro';
-import { valorDoImposto } from '@/shared/lib/impostos';
+import { totalDeImpostos, valorDoImposto } from '@/shared/lib/impostos';
 
   const Relatorios = () => {
   const [selectedReport, setSelectedReport] = useState('mensal');
@@ -28,13 +28,13 @@ import { valorDoImposto } from '@/shared/lib/impostos';
   const filteredImpostos = impostos.filter(i => isDateInRange(i.vencimento, timeFilter));
 
   // Calcular dados reais baseados no filtro, incluindo TODOS os gastos
-  const totalReceitas = filteredReceitas.reduce((sum, r) => sum + r.valor, 0);
-  const totalDespesas = filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
-  const totalImpostosPagos = filteredImpostos.filter(i => i.pago).reduce((sum, i) => sum + i.valor, 0);
-  const totalTaxasPagas = filteredImpostos.filter(i => i.pago && i.tipo === 'taxa').reduce((sum, i) => sum + i.valor, 0);
-  
+  const totalReceitas = somarReais(filteredReceitas.map((r) => r.valor));
+  const totalDespesas = somarReais(filteredDespesas.map((d) => d.valor));
+  // Impostos e taxas pagos, uma vez só (antes as taxas eram somadas de novo) e com percentuais em reais.
+  const totalImpostosPagos = totalDeImpostos(filteredImpostos.filter(i => i.pago), totalReceitas);
+
   // Calcular gastos operacionais totais
-  const totalGastosOperacionais = totalDespesas + totalImpostosPagos + totalTaxasPagas;
+  const totalGastosOperacionais = somarReais([totalDespesas, totalImpostosPagos]);
   const lucroLiquido = totalReceitas - totalGastosOperacionais;
   const margemLucro = totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
 
@@ -49,12 +49,14 @@ import { valorDoImposto } from '@/shared/lib/impostos';
     });
     
     // Adicionar impostos E taxas pagos como categorias separadas (usando valores já calculados no escopo)
-    const totalImpostosPagosCalc = filteredImpostos.filter(i => i.pago && i.tipo === 'imposto').reduce((sum, i) => sum + i.valor, 0);
-    if (totalImpostosPagosCalc > 0) {
-      gastosCategorizados['Impostos'] = totalImpostosPagosCalc;
+    const pagos = filteredImpostos.filter(i => i.pago);
+    const impostosPagos = totalDeImpostos(pagos.filter(i => i.tipo === 'imposto'), totalReceitas);
+    const taxasPagas = totalDeImpostos(pagos.filter(i => i.tipo === 'taxa'), totalReceitas);
+    if (impostosPagos > 0) {
+      gastosCategorizados['Impostos'] = impostosPagos;
     }
-    if (totalTaxasPagas > 0) {
-      gastosCategorizados['Taxas'] = totalTaxasPagas;
+    if (taxasPagas > 0) {
+      gastosCategorizados['Taxas'] = taxasPagas;
     }
 
     return Object.entries(gastosCategorizados)
