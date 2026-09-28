@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import type { Json, Tables } from '@/integrations/supabase/types';
 
 // DDDs válidos do Brasil (11-99)
 const VALID_DDDS = [
@@ -424,14 +425,13 @@ export async function savePhoneCorrection(
   source: 'onboarding' | 'phone_collection' | 'settings'
 ): Promise<void> {
   try {
-    // Usar type assertion para contornar problema temporário dos types não atualizados
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('phone_corrections_audit')
       .insert({
         user_id: userId,
         original_input: original,
         normalized_output: normalized,
-        corrections_applied: corrections,
+        corrections_applied: corrections as unknown as Json,
         source
       });
     
@@ -446,10 +446,9 @@ export async function savePhoneCorrection(
 /**
  * Busca histórico de correções do usuário
  */
-export async function getPhoneCorrectionsHistory(userId: string): Promise<any[]> {
+export async function getPhoneCorrectionsHistory(userId: string): Promise<Tables<'phone_corrections_audit'>[]> {
   try {
-    // Usar type assertion para contornar problema temporário dos types não atualizados
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('phone_corrections_audit')
       .select('*')
       .eq('user_id', userId)

@@ -18,8 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { dataLocal, hojeISO } from '@/shared/lib/datas';
 
 // Componente de formulário separado para evitar re-renders
-interface FormFieldsProps {
-  formData: {
+interface DadosFormularioMembro {
     nome: string;
     email: string;
     telefone: string;
@@ -27,13 +26,16 @@ interface FormFieldsProps {
     salario: number;
     periodicidade: 'mensal' | 'semanal' | 'quinzenal';
     dataAdmissao: string;
-  };
-  onFormChange: (data: any) => void;
+}
+
+interface FormFieldsProps {
+  formData: DadosFormularioMembro;
+  onFormChange: (data: DadosFormularioMembro) => void;
   isEdit?: boolean;
 }
 
 const FormFields = React.memo(({ formData, onFormChange, isEdit = false }: FormFieldsProps) => {
-  const handleChange = useCallback((field: string, value: any) => {
+  const handleChange = useCallback(<K extends keyof DadosFormularioMembro>(field: K, value: DadosFormularioMembro[K]) => {
     onFormChange({ ...formData, [field]: value });
   }, [formData, onFormChange]);
 
@@ -263,7 +265,7 @@ const Equipe = () => {
     }, 0);
   };
 
-  const handleFormChange = useCallback((newData: any) => {
+  const handleFormChange = useCallback((newData: DadosFormularioMembro) => {
     setFormData(newData);
   }, []);
 

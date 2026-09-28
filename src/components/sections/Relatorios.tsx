@@ -4,15 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { useAppContext } from '@/contexts/AppContext';
+import { type Despesa, type Receita, useAppContext } from '@/contexts/AppContext';
 import { TimeFilter } from '@/components/TimeFilter';
 import { isDateInRange, getDateRange } from '@/utils/dateFilters';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
-import { downloadXlsx, SheetSpec } from '@/utils/spreadsheetIO';
+import { downloadXlsx, type LinhaPlanilha, SheetSpec } from '@/utils/spreadsheetIO';
 import { FileText, Download } from 'lucide-react';
 import { SectionSkeleton } from '@/components/ui/section-skeleton';
 import { dataLocal, hojeISO, paraDataISO } from '@/shared/lib/datas';
+import { formatarBRL, somarReais } from '@/shared/lib/dinheiro';
+import { valorDoImposto } from '@/shared/lib/impostos';
 
   const Relatorios = () => {
   const [selectedReport, setSelectedReport] = useState('mensal');
@@ -159,9 +161,11 @@ import { dataLocal, hojeISO, paraDataISO } from '@/shared/lib/datas';
   };
 
   const gerarDadosAnaliseImpostos = () => {
+    // Percentuais em reais sobre as receitas do período (antes "6%" aparecia como R$ 6,00).
+    const baseReceitas = somarReais(filteredReceitas.map((r) => r.valor));
     return filteredImpostos.map(imposto => ({
       tipo: imposto.tipo,
-      valor: imposto.valor,
+      valor: valorDoImposto(imposto, baseReceitas),
       status: imposto.pago ? 'Pago' : 'Pendente',
       vencimento: imposto.vencimento
     }));
@@ -362,8 +366,17 @@ import { dataLocal, hojeISO, paraDataISO } from '@/shared/lib/datas';
       ];
 
       const sheets: SheetSpec[] = [{ name: 'Resumo', aoa: resumoData }];
-      if (filteredReceitas.length > 0) sheets.push({ name: 'Receitas', json: filteredReceitas as any });
-      if (filteredDespesas.length > 0) sheets.push({ name: 'Despesas', json: filteredDespesas as any });
+      // Só as colunas do usuário (antes ia o objeto inteiro, com ids internos e JSON de recorrência).
+      const linha = (l: Receita | Despesa): LinhaPlanilha => ({
+        data: l.data, descricao: l.descricao, categoria: l.categoria, valor: l.valor,
+        formaPagamento: l.formaPagamento, status: l.status,
+      });
+      if (filteredReceitas.length > 0) {
+        sheets.push({ name: 'Receitas', json: filteredReceitas.map((r) => ({ ...linha(r), cliente: r.cliente ?? '' })) });
+      }
+      if (filteredDespesas.length > 0) {
+        sheets.push({ name: 'Despesas', json: filteredDespesas.map((d) => ({ ...linha(d), fornecedor: d.fornecedor ?? '' })) });
+      }
 
       const fileName = `relatorio-${timeFilter}-${hojeISO()}.xlsx`;
       await downloadXlsx(fileName, sheets);
@@ -728,14 +741,14 @@ import { dataLocal, hojeISO, paraDataISO } from '@/shared/lib/datas';
               ) : selectedReport === 'analise-impostos' ? (
                 <div className="overflow-x-auto">
                   <div className="space-y-3 min-w-[480px]">
-                    {dadosRelatorio.map((imposto: any, index: number) => (
+                    {(dadosRelatorio as ReturnType<typeof gerarDadosAnaliseImpostos>).map((imposto, index) => (
                       <div key={index} className="flex justify-between items-center gap-3 p-4 border-2 rounded-xl hover:shadow-md transition-all">
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-base truncate">{imposto.tipo}</p>
                           <p className="text-xs sm:text-sm text-muted-foreground mt-1">📅 Vencimento: {dataLocal(imposto.vencimento).toLocaleDateString('pt-BR')}</p>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="font-bold text-base sm:text-lg whitespace-nowrap">R$ {imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          <p className="font-bold text-base sm:text-lg whitespace-nowrap">{formatarBRL(imposto.valor)}</p>
                           <p className={`text-xs sm:text-sm font-semibold mt-1 ${imposto.status === 'Pago' ? 'text-success' : 'text-warning'}`}>
                             {imposto.status === 'Pago' ? '✅ Pago' : '⏰ Pendente'}
                           </p>

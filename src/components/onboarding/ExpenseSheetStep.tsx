@@ -7,7 +7,7 @@ import { Trash2, Plus } from 'lucide-react';
 import { OnboardingData, GastoInicial } from '@/types/onboarding';
 import { useToast } from '@/hooks/use-toast';
 import { SpreadsheetImportExport } from '@/components/SpreadsheetImportExport';
-import { parseNumber } from '@/utils/spreadsheetIO';
+import { type LinhaPlanilha, parseNumber } from '@/utils/spreadsheetIO';
 
 interface ExpenseSheetStepProps {
   data: OnboardingData;
@@ -103,7 +103,7 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
     });
   };
 
-  const atualizarGasto = (id: string, campo: keyof GastoInicial, valor: any) => {
+  const atualizarGasto = (id: string, campo: keyof GastoInicial, valor: GastoInicial[keyof GastoInicial]) => {
     setData({
       ...data,
       gastos_iniciais: gastos.map(g => 
@@ -137,7 +137,7 @@ export const ExpenseSheetStep: React.FC<ExpenseSheetStepProps> = ({ data, setDat
   };
 
 
-  const importarPlanilha = async (rows: Record<string, any>[]) => {
+  const importarPlanilha = async (rows: LinhaPlanilha[]) => {
     const importados: GastoInicial[] = rows
       .map((row, index) => {
         const categoria = String(row.categoria ?? row.Categoria ?? 'Outros').trim() || 'Outros';

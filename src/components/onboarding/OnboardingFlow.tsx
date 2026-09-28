@@ -25,6 +25,7 @@ import financyLogo from '@/assets/financy-logo-new-dark.png';
 import { FinancialDataStep } from './FinancialDataStep';
 import { ExpenseSheetStep } from './ExpenseSheetStep';
 import { FinancialGoalStep } from './FinancialGoalStep';
+import { textoDoErro } from '@/shared/lib/erros';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => Promise<void>;
@@ -237,11 +238,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         title: '🎉 Bem-vindo ao Financy!',
         description: `Olá ${data.nome_preferido}! Vamos começar.`,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erro ao completar onboarding:', error);
       toast({
         title: 'Erro',
-        description: error?.message || 'Houve um erro ao salvar. Tente novamente.',
+        description: textoDoErro(error, 'Houve um erro ao salvar. Tente novamente.'),
         variant: 'destructive',
       });
     } finally {

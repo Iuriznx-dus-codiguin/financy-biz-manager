@@ -39,7 +39,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
-import { ehFuncaoAusente, mensagemDeErro } from '@/shared/lib/erros';
+import { ehFuncaoAusente, mensagemDeErro, textoDoErro } from '@/shared/lib/erros';
 import { rpcNova } from '@/shared/lib/rpcNovas';
 import {
   AlertDialog,
@@ -220,7 +220,7 @@ const Configuracoes = () => {
     }
   };
 
-  const handleEditDashboard = (dashboard: any) => {
+  const handleEditDashboard = (dashboard: { id: string; name: string }) => {
     setEditingDashboard(dashboard.id);
     setNewDashboardName(dashboard.name);
   };
@@ -383,10 +383,10 @@ const Configuracoes = () => {
         title: "Senha alterada",
         description: "Sua senha foi alterada com sucesso."
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível alterar a senha. Tente novamente.",
+        description: textoDoErro(error, "Não foi possível alterar a senha. Tente novamente."),
         variant: "destructive"
       });
     }
@@ -441,10 +441,10 @@ const Configuracoes = () => {
         title: "Email atualizado",
         description: "Seu email foi atualizado com sucesso. Verifique sua caixa de entrada para confirmar o novo email."
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível atualizar o email. Tente novamente.",
+        description: textoDoErro(error, "Não foi possível atualizar o email. Tente novamente."),
         variant: "destructive"
       });
     }
@@ -468,10 +468,10 @@ const Configuracoes = () => {
         title: "Telefone atualizado",
         description: "Seu telefone foi atualizado com sucesso."
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível atualizar o telefone. Tente novamente.",
+        description: textoDoErro(error, "Não foi possível atualizar o telefone. Tente novamente."),
         variant: "destructive"
       });
     }
@@ -843,7 +843,7 @@ const Configuracoes = () => {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-medium">Plano Atual:</span>
-              <Badge variant={subscriptionStatus.variant as any}>
+              <Badge variant={subscriptionStatus.variant as 'default' | 'secondary' | 'destructive'}>
                 {subscriptionStatus.status}
               </Badge>
             </div>

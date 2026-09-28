@@ -4,10 +4,15 @@ import { ehDataISO, hojeISO } from '@/shared/lib/datas';
 // exceljs (~900 kB) só é baixado quando o usuário importa ou exporta uma planilha.
 const carregarExcel = async () => (await import('exceljs')).default;
 
+/** Valor de uma célula lida ou escrita em planilha. */
+export type ValorCelula = string | number | boolean | Date | null;
+/** Linha de planilha: cabeçalho → valor. */
+export type LinhaPlanilha = Record<string, ValorCelula>;
+
 export interface SheetSpec {
   name: string;
-  aoa?: any[][];
-  json?: Record<string, any>[];
+  aoa?: ValorCelula[][];
+  json?: LinhaPlanilha[];
 }
 
 export interface TemplateColumn {
@@ -73,7 +78,7 @@ export async function downloadTemplate(
     fgColor: { argb: 'FFEFF6FF' },
   };
 
-  const exampleRow: Record<string, any> = {};
+  const exampleRow: LinhaPlanilha = {};
   columns.forEach((c) => {
     if (c.example !== undefined) exampleRow[c.key] = c.example;
   });
@@ -90,7 +95,7 @@ export async function downloadTemplate(
  * Lê um arquivo .xlsx ou .csv e retorna linhas como objetos
  * usando os headers da primeira linha como chaves.
  */
-export async function parseSpreadsheetFile(file: File): Promise<Record<string, any>[]> {
+export async function parseSpreadsheetFile(file: File): Promise<LinhaPlanilha[]> {
   const name = file.name.toLowerCase();
   if (name.endsWith('.csv')) {
     return parseCsv(await file.text());
@@ -101,18 +106,18 @@ export async function parseSpreadsheetFile(file: File): Promise<Record<string, a
   throw new Error('Formato não suportado. Use .xlsx ou .csv');
 }
 
-async function parseXlsx(buffer: ArrayBuffer): Promise<Record<string, any>[]> {
+async function parseXlsx(buffer: ArrayBuffer): Promise<LinhaPlanilha[]> {
   const ExcelJS = await carregarExcel();
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer);
   const ws = workbook.worksheets[0];
   if (!ws) return [];
 
-  const rows: Record<string, any>[] = [];
+  const rows: LinhaPlanilha[] = [];
   let headers: string[] = [];
 
   ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-    const values = row.values as any[];
+    const values = row.values as unknown[];
     // ExcelJS row.values is 1-indexed; drop the leading undefined
     const cells = values.slice(1).map((v) => normalizeCell(v));
     if (rowNumber === 1) {
@@ -120,7 +125,7 @@ async function parseXlsx(buffer: ArrayBuffer): Promise<Record<string, any>[]> {
       return;
     }
     if (cells.every((c) => c === '' || c === null || c === undefined)) return;
-    const obj: Record<string, any> = {};
+    const obj: LinhaPlanilha = {};
     headers.forEach((h, i) => {
       if (h) obj[h] = cells[i] ?? '';
     });
@@ -130,24 +135,24 @@ async function parseXlsx(buffer: ArrayBuffer): Promise<Record<string, any>[]> {
   return rows;
 }
 
-function normalizeCell(v: any): any {
+function normalizeCell(v: unknown): ValorCelula {
   if (v === null || v === undefined) return '';
   if (v instanceof Date) return v.toISOString().split('T')[0];
   if (typeof v === 'object') {
     if ('text' in v) return String(v.text);
-    if ('result' in v) return v.result;
-    if ('richText' in v) return v.richText.map((t: any) => t.text).join('');
+    if ('result' in v) return normalizeCell(v.result);
+    if ('richText' in v) return (v as { richText: { text: string }[] }).richText.map((t) => t.text).join('');
   }
-  return v;
+  return typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean' ? v : String(v);
 }
 
-function parseCsv(text: string): Record<string, any>[] {
+function parseCsv(text: string): LinhaPlanilha[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (lines.length === 0) return [];
   const headers = splitCsvLine(lines[0]).map((h) => h.trim());
   return lines.slice(1).map((line) => {
     const cells = splitCsvLine(line);
-    const obj: Record<string, any> = {};
+    const obj: LinhaPlanilha = {};
     headers.forEach((h, i) => {
       if (h) obj[h] = (cells[i] ?? '').trim();
     });

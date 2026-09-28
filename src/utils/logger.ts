@@ -9,7 +9,7 @@ export const logger = {
   /**
    * Log informational messages (only in development)
    */
-  info: (message: string, data?: any) => {
+  info: (message: string, data?: unknown) => {
     if (isDevelopment) {
       console.log(`ℹ️ ${message}`, data !== undefined ? data : '');
     }
@@ -18,7 +18,7 @@ export const logger = {
   /**
    * Log warning messages (only in development)
    */
-  warn: (message: string, data?: any) => {
+  warn: (message: string, data?: unknown) => {
     if (isDevelopment) {
       console.warn(`⚠️ ${message}`, data !== undefined ? data : '');
     }
@@ -27,7 +27,7 @@ export const logger = {
   /**
    * Log error messages (always logged but sanitized)
    */
-  error: (message: string, error?: any) => {
+  error: (message: string, error?: unknown) => {
     // Always log errors, but sanitize sensitive data
     const sanitizedError = error instanceof Error 
       ? { message: error.message, name: error.name }
@@ -39,7 +39,7 @@ export const logger = {
   /**
    * Log success messages (only in development)
    */
-  success: (message: string, data?: any) => {
+  success: (message: string, data?: unknown) => {
     if (isDevelopment) {
       console.log(`✅ ${message}`, data !== undefined ? data : '');
     }

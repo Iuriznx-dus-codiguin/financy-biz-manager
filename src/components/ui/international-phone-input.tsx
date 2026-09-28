@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { parsePhoneNumber, AsYouType } from 'libphonenumber-js';
+import { parsePhoneNumber, AsYouType, type CountryCode } from 'libphonenumber-js';
 import { Input } from './input';
 import { Label } from './label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
@@ -82,7 +82,7 @@ export const InternationalPhoneInput: React.FC<InternationalPhoneInputProps> = (
     
     try {
       // Usar AsYouType para formatação em tempo real
-      const asYouType = new AsYouType(selectedCountry.code as any);
+      const asYouType = new AsYouType(selectedCountry.code as CountryCode);
       asYouType.input(inputValue);
       const formatted = asYouType.getNumber()?.formatNational() || inputValue;
       
@@ -121,7 +121,7 @@ export const InternationalPhoneInput: React.FC<InternationalPhoneInputProps> = (
     
     // Gerar placeholder baseado no país
     try {
-      const asYouType = new AsYouType(selectedCountry.code as any);
+      const asYouType = new AsYouType(selectedCountry.code as CountryCode);
       asYouType.input('1234567890');
       return asYouType.getNumber()?.formatNational() || '(11) 99999-9999';
     } catch {

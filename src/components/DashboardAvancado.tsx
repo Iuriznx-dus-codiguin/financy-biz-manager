@@ -52,6 +52,9 @@ import { TooltipInfo } from '@/components/TooltipInfo';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { dataLocal, hojeISO } from '@/shared/lib/datas';
+import type { Tables } from '@/integrations/supabase/types';
+import type { LucideIcon } from 'lucide-react';
+import { formatarBRL } from '@/shared/lib/dinheiro';
 
 interface DashboardAvancadoProps {
   timeFilter: string;
@@ -60,11 +63,20 @@ interface DashboardAvancadoProps {
 
 const COLORS = ['#6366f1', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#06b6d4'];
 
+interface PropsMetricCard {
+  title: React.ReactNode;
+  value: string;
+  change?: number;
+  icon: LucideIcon;
+  gradient: string;
+  isExpense?: boolean;
+}
+
 export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter, setTimeFilter }) => {
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
   const { user } = useAuth();
   const { currentDashboard } = useDashboard();
-  const [onboardingData, setOnboardingData] = React.useState<any>(null);
+  const [onboardingData, setOnboardingData] = React.useState<Tables<'onboarding_data'> | null>(null);
 
   // Buscar dados do onboarding
   React.useEffect(() => {
@@ -188,8 +200,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
       case 'este-mes':
         return hoje.getDate();
       case 'mes-passado':
-        const ultimoDiaMesPassado = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
-        return ultimoDiaMesPassado.getDate();
+        return new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate();
       case 'ultimos-30-dias':
         return 30;
       case 'ultimos-90-dias':
@@ -537,7 +548,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     ? ((dadosEvolutivos[5].receitas - dadosEvolutivos[4].receitas) / dadosEvolutivos[4].receitas) * 100 
     : 0;
 
-  const MetricCard = ({ title, value, change, changeType, icon: Icon, gradient, isExpense = false }: any) => {
+  const MetricCard = ({ title, value, change, icon: Icon, gradient, isExpense = false }: PropsMetricCard) => {
     // Para despesas: aumento = ruim (vermelho), diminuição = bom (verde)
     // Para receitas/lucros: aumento = bom (verde), diminuição = ruim (vermelho)
     const isPositiveChange = isExpense ? change < 0 : change > 0;
@@ -798,7 +809,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px'
                       }}
-                      formatter={(value: any) => [`R$ ${value.toLocaleString('pt-BR')}`, '']}
+                      formatter={(value: number) => [formatarBRL(value), '']}
                     />
                     <Area
                       type="monotone"
@@ -858,7 +869,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
                       ))}
                     </Pie>
                     <Tooltip 
-                      formatter={(value: any) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Valor']}
+                      formatter={(value: number) => [formatarBRL(value), 'Valor']}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -1007,7 +1018,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
                     tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
                   />
                   <Tooltip 
-                    formatter={(value: any) => [`R$ ${value.toLocaleString('pt-BR')}`, '']}
+                    formatter={(value: number) => [formatarBRL(value), '']}
                   />
                   <Bar dataKey="receitas" fill="#10b981" name="Receitas" />
                   <Bar dataKey="despesas" fill="#ef4444" name="Despesas" />

@@ -55,7 +55,7 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
       setInsights(data?.insights || []);
       setFromCache(data?.fromCache || false);
       setHasLoaded(true);
-    } catch (e: any) {
+    } catch (e) {
       console.error('Error fetching AI insights:', e);
       setError('Não foi possível gerar insights. Tente novamente.');
     } finally {
@@ -105,7 +105,7 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
     }
   };
 
-  const getBadgeVariant = (tipo: string) => {
+  const getBadgeVariant = (tipo: string): 'destructive' | 'default' | 'secondary' => {
     switch (tipo) {
       case 'alerta': return 'destructive';
       case 'sucesso': return 'default';
@@ -186,7 +186,7 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-semibold text-sm">{insight.titulo}</h4>
-                        <Badge variant={getBadgeVariant(insight.tipo) as any} className="text-[9px] px-1.5 py-0">
+                        <Badge variant={getBadgeVariant(insight.tipo)} className="text-[9px] px-1.5 py-0">
                           {insight.tipo === 'alerta' ? 'Atenção' : insight.tipo === 'sucesso' ? 'Positivo' : insight.tipo === 'dica' ? 'Dica' : 'Info'}
                         </Badge>
                       </div>

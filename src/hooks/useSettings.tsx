@@ -3,6 +3,7 @@ import { useTheme } from './useTheme';
 import { useToast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface UserSettings {
   tema: 'light' | 'dark' | 'system';
@@ -98,8 +99,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           .upsert({
             id: user.id,
             email: user.email,
-            settings: updatedSettings as any, // jsonb aceita objeto diretamente
-          } as any);
+            settings: updatedSettings as unknown as Json, // jsonb aceita objeto diretamente
+          });
       }
 
       toast({

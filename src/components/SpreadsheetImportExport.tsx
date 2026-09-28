@@ -15,17 +15,19 @@ import {
   downloadXlsx,
   parseSpreadsheetFile,
   TemplateColumn,
+  type LinhaPlanilha,
 } from '@/utils/spreadsheetIO';
 import { hojeISO } from '@/shared/lib/datas';
+import { textoDoErro } from '@/shared/lib/erros';
 
 export interface SpreadsheetImportExportProps {
   entityLabel: string; // ex: "Receitas"
   fileBaseName: string; // ex: "receitas"
   templateColumns: TemplateColumn[];
   /** Função que devolve as linhas para exportação */
-  getExportRows?: () => Record<string, any>[];
+  getExportRows?: () => LinhaPlanilha[];
   /** Recebe as linhas importadas, devolve quantos foram salvos */
-  onImport?: (rows: Record<string, any>[]) => Promise<{ inserted: number; skipped?: number }>;
+  onImport?: (rows: LinhaPlanilha[]) => Promise<{ inserted: number; skipped?: number }>;
   /** Estilo compacto (somente ícone em telas pequenas) */
   compact?: boolean;
 }
@@ -99,9 +101,9 @@ export const SpreadsheetImportExport: React.FC<SpreadsheetImportExportProps> = (
       toast.success(`Importação concluída`, {
         description: `${inserted} registro(s) adicionado(s)${skipped ? ` · ${skipped} ignorado(s)` : ''}.`,
       });
-    } catch (err: any) {
+    } catch (err) {
       toast.error('Erro ao importar planilha', {
-        description: err?.message ?? 'Verifique o formato e tente novamente.',
+        description: textoDoErro(err, 'Verifique o formato e tente novamente.'),
       });
     } finally {
       setBusy(null);

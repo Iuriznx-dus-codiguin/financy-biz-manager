@@ -64,3 +64,10 @@ export async function erroDaFunction(erro: unknown, padrao = 'Não foi possível
   }
   return { mensagem: padrao, codigo: null, status: null };
 }
+
+/** Texto de um erro qualquer (Error, erro do PostgREST ou desconhecido). */
+export function textoDoErro(erro: unknown, padrao = 'Erro inesperado.'): string {
+  if (erro instanceof Error && erro.message) return erro.message;
+  const mensagem = comoErro(erro).message;
+  return typeof mensagem === 'string' && mensagem ? mensagem : padrao;
+}

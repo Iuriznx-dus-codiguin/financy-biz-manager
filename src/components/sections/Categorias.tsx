@@ -64,13 +64,13 @@ export function Categorias() {
     const gastos = new Map<string, { despesas: number; receitas: number }>();
 
     despesasDoMes.forEach(despesa => {
-      const categoria = (despesa as any).categoria_personalizada || despesa.categoria;
+      const categoria = despesa.categoria_personalizada || despesa.categoria;
       const atual = gastos.get(categoria) || { despesas: 0, receitas: 0 };
       gastos.set(categoria, { ...atual, despesas: atual.despesas + Number(despesa.valor) });
     });
 
     receitasDoMes.forEach(receita => {
-      const categoria = (receita as any).categoria_personalizada || receita.categoria;
+      const categoria = receita.categoria_personalizada || receita.categoria;
       const atual = gastos.get(categoria) || { despesas: 0, receitas: 0 };
       gastos.set(categoria, { ...atual, receitas: atual.receitas + Number(receita.valor) });
     });

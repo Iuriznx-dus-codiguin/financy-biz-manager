@@ -22,8 +22,72 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Target, Plus, TrendingUp, DollarSign, Calendar, Award, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAppContext } from '@/contexts/AppContext';
+import { type Meta, useAppContext } from '@/contexts/AppContext';
 import { dataLocal } from '@/shared/lib/datas';
+
+type FormularioMeta = Omit<Meta, 'id' | 'dashboard_id'>;
+
+const FORMULARIO_VAZIO: FormularioMeta = {
+  titulo: '',
+  valorMeta: 0,
+  valorAtual: 0,
+  progresso: 0,
+  prazo: '',
+  categoria: '',
+  status: 'em_andamento',
+  cor: 'bg-blue-500'
+};
+
+// Fora do componente: declarado dentro, era recriado a cada render e o campo perdia o foco a cada tecla.
+function MetaFormFields<T extends FormularioMeta>({ form, setForm }: { form: T; setForm: (f: T) => void }) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="titulo">Título da Meta</Label>
+        <Input id="titulo" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} required />
+      </div>
+      <div>
+        <Label htmlFor="categoria">Categoria</Label>
+        <Select value={form.categoria} onValueChange={(value) => setForm({ ...form, categoria: value })}>
+          <SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Receita">Receita</SelectItem>
+            <SelectItem value="Economia">Economia</SelectItem>
+            <SelectItem value="Poupança">Poupança</SelectItem>
+            <SelectItem value="Investimento">Investimento</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="valorMeta">Valor da Meta</Label>
+        <Input id="valorMeta" type="number" value={form.valorMeta} onChange={(e) => setForm({ ...form, valorMeta: Number(e.target.value) })} required />
+      </div>
+      <div>
+        <Label htmlFor="valorAtual">Valor Atual</Label>
+        <Input id="valorAtual" type="number" value={form.valorAtual} onChange={(e) => {
+          const valorAtual = Number(e.target.value);
+          const progresso = form.valorMeta > 0 ? Math.round((valorAtual / form.valorMeta) * 100) : 0;
+          setForm({ ...form, valorAtual, progresso });
+        }} />
+      </div>
+      <div>
+        <Label htmlFor="status">Status</Label>
+        <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value as Meta['status'] })}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="em_andamento">Em Andamento</SelectItem>
+            <SelectItem value="concluida">Concluída</SelectItem>
+            <SelectItem value="atrasada">Atrasada</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="prazo">Prazo</Label>
+        <Input id="prazo" type="date" value={form.prazo} onChange={(e) => setForm({ ...form, prazo: e.target.value })} required />
+      </div>
+    </div>
+  );
+}
 
 const Metas = () => {
   const { metas, addMeta, updateMeta, deleteMeta, loading } = useAppContext();
@@ -31,16 +95,7 @@ const Metas = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteMetaId, setDeleteMetaId] = useState<string | null>(null);
   
-  const emptyForm = {
-    titulo: '',
-    valorMeta: 0,
-    valorAtual: 0,
-    progresso: 0,
-    prazo: '',
-    categoria: '',
-    status: 'em_andamento' as const,
-    cor: 'bg-blue-500'
-  };
+  const emptyForm = FORMULARIO_VAZIO;
 
   const [novaMetaForm, setNovaMetaForm] = useState(emptyForm);
   const [editForm, setEditForm] = useState<{ id: string } & typeof emptyForm>({ id: '', ...emptyForm });
@@ -57,7 +112,7 @@ const Metas = () => {
     }
   };
 
-  const handleEditMeta = (meta: any) => {
+  const handleEditMeta = (meta: Meta) => {
     setEditForm({
       id: meta.id,
       titulo: meta.titulo,
@@ -129,54 +184,6 @@ const Metas = () => {
   const progressoMedio = metas.length > 0 
     ? Math.round(metas.reduce((acc, meta) => acc + meta.progresso, 0) / metas.length)
     : 0;
-
-  const MetaFormFields = ({ form, setForm }: { form: typeof emptyForm; setForm: (f: any) => void }) => (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="titulo">Título da Meta</Label>
-        <Input id="titulo" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} required />
-      </div>
-      <div>
-        <Label htmlFor="categoria">Categoria</Label>
-        <Select value={form.categoria} onValueChange={(value) => setForm({ ...form, categoria: value })}>
-          <SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Receita">Receita</SelectItem>
-            <SelectItem value="Economia">Economia</SelectItem>
-            <SelectItem value="Poupança">Poupança</SelectItem>
-            <SelectItem value="Investimento">Investimento</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="valorMeta">Valor da Meta</Label>
-        <Input id="valorMeta" type="number" value={form.valorMeta} onChange={(e) => setForm({ ...form, valorMeta: Number(e.target.value) })} required />
-      </div>
-      <div>
-        <Label htmlFor="valorAtual">Valor Atual</Label>
-        <Input id="valorAtual" type="number" value={form.valorAtual} onChange={(e) => {
-          const valorAtual = Number(e.target.value);
-          const progresso = form.valorMeta > 0 ? Math.round((valorAtual / form.valorMeta) * 100) : 0;
-          setForm({ ...form, valorAtual, progresso });
-        }} />
-      </div>
-      <div>
-        <Label htmlFor="status">Status</Label>
-        <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="em_andamento">Em Andamento</SelectItem>
-            <SelectItem value="concluida">Concluída</SelectItem>
-            <SelectItem value="atrasada">Atrasada</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="prazo">Prazo</Label>
-        <Input id="prazo" type="date" value={form.prazo} onChange={(e) => setForm({ ...form, prazo: e.target.value })} required />
-      </div>
-    </div>
-  );
 
   if (loading) {
     return <SectionSkeleton rows={4} />;
@@ -324,7 +331,7 @@ const Metas = () => {
             <DialogDescription>Atualize os dados da sua meta financeira.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUpdateMeta} className="space-y-4">
-            <MetaFormFields form={editForm} setForm={setEditForm} />
+            <MetaFormFields<typeof editForm> form={editForm} setForm={setEditForm} />
             <Button type="submit" className="w-full">Salvar Alterações</Button>
           </form>
         </DialogContent>

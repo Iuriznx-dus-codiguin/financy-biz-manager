@@ -20,7 +20,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { erroDaFunction } from '@/shared/lib/erros';
+import { erroDaFunction, textoDoErro } from '@/shared/lib/erros';
+import type { Json } from '@/integrations/supabase/types';
 
 interface ChatMessage {
   id?: string;
@@ -110,7 +111,7 @@ export const FinancyAIChat = () => {
       .from('ai_chat_sessions')
       .select('id')
       .eq('user_id', user.id);
-    const sessionIds = userSessions?.map((s: any) => s.id) || [];
+    const sessionIds = userSessions?.map((s) => s.id) || [];
     if (sessionIds.length === 0) {
       setDailyCount(0);
       return;
@@ -131,12 +132,12 @@ export const FinancyAIChat = () => {
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true });
     if (data) {
-      setMessages(data.map((m: any) => ({
+      setMessages(data.map((m) => ({
         id: m.id,
         role: m.role as 'user' | 'assistant',
         content: m.content,
         timestamp: new Date(m.created_at),
-        toolResults: m.tool_results,
+        toolResults: m.tool_results as ChatMessage['toolResults'],
       })));
     }
     setCurrentSessionId(sessionId);
@@ -188,11 +189,11 @@ export const FinancyAIChat = () => {
     }
   };
 
-  const saveMessage = async (sessionId: string, role: string, content: string, currentMsgCount: number, toolResults?: any) => {
+  const saveMessage = async (sessionId: string, role: string, content: string, currentMsgCount: number, toolResults?: ChatMessage['toolResults']) => {
     await supabase.from('ai_chat_messages').insert({
-      session_id: sessionId, role, content, tool_results: toolResults || null,
+      session_id: sessionId, role, content, tool_results: (toolResults as Json) || null,
     });
-    const updates: any = { message_count: currentMsgCount + 1, updated_at: new Date().toISOString() };
+    const updates: { message_count: number; updated_at: string; title?: string } = { message_count: currentMsgCount + 1, updated_at: new Date().toISOString() };
     if (role === 'user' && currentMsgCount === 0) {
       updates.title = content.substring(0, 60);
     }
@@ -257,13 +258,13 @@ export const FinancyAIChat = () => {
       if (newMessages.length === 1) {
         setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title: text.substring(0, 60) } : s));
       }
-      if (data.tool_results?.some((r: any) => r.success)) {
+      if ((data.tool_results as ChatMessage['toolResults'])?.some((r) => r.success)) {
         await carregarDados();
         window.dispatchEvent(new CustomEvent('financial-data-changed'));
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('AI chat error:', error);
-      toast({ title: 'Erro', description: error.message || 'Não foi possível enviar a mensagem.', variant: 'destructive' });
+      toast({ title: 'Erro', description: textoDoErro(error, 'Não foi possível enviar a mensagem.'), variant: 'destructive' });
       setMessages(prev => prev.slice(0, -1));
       setInput(text);
       setDailyCount(prev => prev - 1);
