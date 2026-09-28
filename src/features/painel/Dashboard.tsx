@@ -18,6 +18,7 @@ import { useOnboarding } from '@/features/onboarding/useOnboarding';
 import { useDashboard } from '@/features/dashboards/useDashboard';
 import { RecurringTransactions } from '@/features/lancamentos/RecurringTransactions';
 import { DashboardSkeleton } from '@/features/painel/DashboardSkeleton';
+import { listaEmPortugues, planosComRecurso } from '@/features/assinatura/regras';
 
 interface DashboardProps {
   setActiveSection?: (section: string) => void;
@@ -112,7 +113,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
       <UpgradeCard
         feature="Dashboard Avançado"
         description="Gráficos interativos, métricas avançadas e insights com IA"
-        requiredPlan="Premium ou superior"
+        requiredPlan={`Disponível nos planos ${listaEmPortugues(planosComRecurso('dashboard_avancado'))}`}
         onUpgrade={() => setActiveSection?.('assinatura')}
         dismissible={true}
       />

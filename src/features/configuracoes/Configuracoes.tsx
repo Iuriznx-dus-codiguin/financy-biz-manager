@@ -1001,10 +1001,11 @@ const Configuracoes = () => {
                   <li>Histórico de conversas com IA</li>
                   <li>Configurações e preferências</li>
                   <li>Notificações e tutoriais</li>
+                  <li>Telefone cadastrado (a IA no WhatsApp deixa de reconhecer seu número até você informá-lo de novo)</li>
                 </ul>
                 <div className="bg-success/10 dark:bg-green-950/20 border border-success/30 rounded p-2 mt-2">
                   <p className="text-xs text-success font-medium">
-                    ✅ Serão mantidos: assinatura ativa e histórico de teste gratuito (para prevenção de fraude)
+                    ✅ Serão mantidos: seu login, a assinatura, o histórico de pagamentos e os atendimentos de suporte
                   </p>
                 </div>
                 <p className="text-xs text-destructive font-bold mt-2">
@@ -1040,6 +1041,7 @@ const Configuracoes = () => {
                     <li>Todo o histórico de conversas com IA</li>
                     <li>Todas as notificações e progresso de tutoriais</li>
                     <li>Todas as configurações personalizadas</li>
+                    <li>O telefone cadastrado (desconecta a IA do WhatsApp)</li>
                   </ul>
                   
                   <div className="bg-success/10 dark:bg-green-950/20 border-2 border-green-500 rounded-lg p-3 mt-3">
@@ -1048,8 +1050,8 @@ const Configuracoes = () => {
                     </p>
                     <ul className="text-xs text-success space-y-1 mt-2 ml-4 list-disc">
                       <li>Suas credenciais de login (email/senha)</li>
-                      <li>Status da sua assinatura atual</li>
-                      <li><strong>Histórico de teste gratuito</strong> (prevenção de fraude)</li>
+                      <li>Status da sua assinatura atual e histórico de pagamentos</li>
+                      <li>Atendimentos de suporte</li>
                       <li>Logs de segurança e auditoria</li>
                     </ul>
                   </div>

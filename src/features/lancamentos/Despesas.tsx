@@ -28,9 +28,13 @@ import { parseNumber, parseDate } from '@/shared/lib/spreadsheetIO';
 import { dataLocal, formatarData, hojeISO } from '@/shared/lib/datas';
 import { interpretarValor } from '@/shared/lib/dinheiro';
 import { ocorrenciasAte } from '@/shared/lib/recorrencia';
+import { useUserContext } from '@/features/dashboards/useUserContext';
+import { getLabel } from '@/shared/lib/nomenclature';
 
 const Despesas = () => {
   const { despesas, addDespesa, deleteDespesa, updateDespesa } = useAppContext();
+  // Vocabulário PF/PJ: "Gastos" no pessoal, "Despesas" no empresarial.
+  const { currentDashboardType } = useUserContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todas');
@@ -158,7 +162,7 @@ const Despesas = () => {
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Despesas</h2><SectionTourTrigger tourId="despesas" /></div>
+          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">{getLabel('despesas', currentDashboardType)}</h2><SectionTourTrigger tourId="despesas" /></div>
           <p className="text-muted-foreground">Controle completo das suas saídas de dinheiro</p>
         </div>
         <div className="flex items-center gap-2">
@@ -217,12 +221,12 @@ const Despesas = () => {
           <DialogTrigger asChild>
             <Button className="rounded-xl" data-tutorial="add-despesa-btn">
               <Plus className="mr-2 h-4 w-4" />
-              Nova Despesa
+              {getLabel('nova-despesa', currentDashboardType)}
             </Button>
           </DialogTrigger>
           <DialogContent className="rounded-2xl max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Adicionar Nova Despesa</DialogTitle>
+              <DialogTitle>Adicionar {getLabel('nova-despesa', currentDashboardType)}</DialogTitle>
               <DialogDescription>
                 Registre uma nova despesa com todos os detalhes necessários para controle financeiro.
               </DialogDescription>

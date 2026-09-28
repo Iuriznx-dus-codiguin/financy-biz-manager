@@ -5,7 +5,10 @@
 
 export interface MenuItem {
   id: string;
+  /** Rótulo em dashboards empresariais (e padrão). */
   label: string;
+  /** Rótulo em dashboards pessoais, quando difere (vocabulário de shared/lib/nomenclature.ts). */
+  labelPessoal?: string;
   icon?: string;
   businessOnly: boolean;
 }
@@ -42,20 +45,25 @@ export const BUSINESS_ONLY_SECTIONS = ['equipe', 'fechamento'] as const;
 // Menu items compartilhados entre AppSidebar e MobileSidebar
 export const MENU_ITEMS: MenuItem[] = [
   { id: 'painel', label: 'Painel', businessOnly: false },
-  { id: 'receitas', label: 'Receitas', businessOnly: false },
-  { id: 'despesas', label: 'Despesas', businessOnly: false },
+  { id: 'receitas', label: 'Receitas', labelPessoal: 'Entradas', businessOnly: false },
+  { id: 'despesas', label: 'Despesas', labelPessoal: 'Gastos', businessOnly: false },
   { id: 'categorias', label: 'Categorias', businessOnly: false },
-  { id: 'impostos', label: 'Impostos e Taxas', businessOnly: false },
+  { id: 'impostos', label: 'Impostos e Taxas', labelPessoal: 'Contas e Compromissos', businessOnly: false },
   { id: 'equipe', label: 'Equipe', businessOnly: true },
-  { id: 'metas', label: 'Objetivos', businessOnly: false },
+  { id: 'metas', label: 'Metas', labelPessoal: 'Objetivos', businessOnly: false },
   { id: 'relatorios', label: 'Relatórios', businessOnly: false },
   { id: 'fechamento', label: 'Fechamento de Caixa', businessOnly: true },
-  { id: 'agentes-ia', label: 'Agentes de IA', businessOnly: false },
+  { id: 'agentes-ia', label: 'Assistente de IA', businessOnly: false },
   { id: 'assinatura', label: 'Assinatura', businessOnly: false },
   { id: 'configuracoes', label: 'Configurações', businessOnly: false },
-  { id: 'ajuda', label: 'Ajuda e Suporte', businessOnly: false },
-  { id: 'suporte', label: 'Suporte Inteligente', businessOnly: false },
+  // Uma entrada para atendimento (chat + humano) e outra para o conteúdo de ajuda.
+  { id: 'ajuda', label: 'Central de Ajuda', businessOnly: false },
+  { id: 'suporte', label: 'Suporte', businessOnly: false },
 ];
+
+/** Rótulo do item no contexto do dashboard atual (pessoal ou empresarial). */
+export const rotuloDoMenu = (item: MenuItem, tipo: 'personal' | 'business' | null | undefined): string =>
+  tipo === 'personal' && item.labelPessoal ? item.labelPessoal : item.label;
 
 /**
  * Helpers

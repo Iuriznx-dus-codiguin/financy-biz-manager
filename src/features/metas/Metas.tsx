@@ -24,6 +24,8 @@ import { Target, Plus, TrendingUp, DollarSign, Calendar, Award, Pencil, Trash2 }
 import { toast } from 'sonner';
 import { type Meta, useAppContext } from '@/features/financeiro/AppContext';
 import { dataLocal } from '@/shared/lib/datas';
+import { useUserContext } from '@/features/dashboards/useUserContext';
+import { getLabel } from '@/shared/lib/nomenclature';
 
 type FormularioMeta = Omit<Meta, 'id' | 'dashboard_id'>;
 
@@ -91,6 +93,7 @@ function MetaFormFields<T extends FormularioMeta>({ form, setForm }: { form: T; 
 
 const Metas = () => {
   const { metas, addMeta, updateMeta, deleteMeta, loading } = useAppContext();
+  const { currentDashboardType } = useUserContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteMetaId, setDeleteMetaId] = useState<string | null>(null);
@@ -196,15 +199,15 @@ const Metas = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center space-x-2 min-w-0">
           <Target className="h-6 w-6 text-primary shrink-0" />
-          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold font-display tracking-tight">Metas Financeiras</h2><SectionTourTrigger tourId="metas" /></div>
+          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold font-display tracking-tight">{getLabel('metas-titulo', currentDashboardType)}</h2><SectionTourTrigger tourId="metas" /></div>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button data-tutorial="add-meta-btn" className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Nova Meta</Button>
+            <Button data-tutorial="add-meta-btn" className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />{getLabel('nova-meta', currentDashboardType)}</Button>
           </DialogTrigger>
           <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90dvh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Criar Nova Meta</DialogTitle>
+              <DialogTitle>Criar {getLabel('nova-meta', currentDashboardType)}</DialogTitle>
               <DialogDescription>Defina uma nova meta financeira com valor, prazo e categoria.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmitMeta} className="space-y-4">

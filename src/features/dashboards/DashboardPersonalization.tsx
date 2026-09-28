@@ -9,6 +9,7 @@ import { useDashboard } from '@/features/dashboards/useDashboard';
 import { useAuth } from '@/features/auth/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
 
 interface UserProfileData {
   user_type: string;
@@ -22,6 +23,7 @@ export const DashboardPersonalization: React.FC = () => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState('');
+  const { ativa, nomePlano } = useAssinatura();
   const [userProfileData, setUserProfileData] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -113,8 +115,8 @@ export const DashboardPersonalization: React.FC = () => {
             {userProfileData.user_type === 'empresarial' ? 'Empresarial' : 'Pessoal'}
           </Badge>
           <Badge variant="secondary">
-            {userProfileData.subscription_tier === 'unsubscribed' || userProfileData.subscription_tier === 'free' ? 'Sem Assinatura' : 
-             userProfileData.subscription_tier.charAt(0).toUpperCase() + userProfileData.subscription_tier.slice(1)}
+            {/* Nome comercial do plano (antes: tier legado de subscribers, ex.: "Premium" para o Pro Pessoal) */}
+            {ativa ? nomePlano ?? 'Assinante' : 'Sem assinatura'}
           </Badge>
         </div>
 

@@ -12,7 +12,7 @@ import { useTheme } from '@/features/configuracoes/useTheme';
 import { useDashboard } from '@/features/dashboards/useDashboard';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { useAuth } from '@/features/auth/useAuth';
-import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/app/rotas';
+import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked, rotuloDoMenu } from '@/app/rotas';
 
 import financyLogoLight from '@/assets/financy-logo-light.png';
 import financyLogoDark from '@/assets/financy-logo-new-dark.png';
@@ -159,7 +159,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
                           `}>
                             <Icon className="h-4 w-4" />
                           </div>
-                          <span>{item.label}</span>
+                          <span>{rotuloDoMenu(item, currentDashboard?.type)}</span>
                           {isActive && (
                             <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
                           )}

@@ -8,7 +8,7 @@ import {
   Layout, TrendingUp, TrendingDown, Receipt, PieChart, Settings, HelpCircle,
   CreditCard, Calculator, Users, Sun, Moon, Target, Bot, Folder
 } from 'lucide-react';
-import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/app/rotas';
+import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked, rotuloDoMenu } from '@/app/rotas';
 import { useDashboard } from '@/features/dashboards/useDashboard';
 import { useTheme } from '@/features/configuracoes/useTheme';
 import { useUserContext } from '@/features/dashboards/useUserContext';
@@ -102,13 +102,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ activeSection, setActive
                           setActiveSection(item.id);
                         }
                       }}
-                      tooltip={isCollapsed && !shouldShowExpanded ? item.label : undefined}
+                      tooltip={isCollapsed && !shouldShowExpanded ? rotuloDoMenu(item, currentDashboard?.type) : undefined}
                       isActive={isActive}
                       disabled={!isAllowed}
                       className={!isAllowed ? 'opacity-50 cursor-not-allowed' : ''}
                     >
                       <Icon className="h-4 w-4" />
-                      <span className="transition-opacity duration-300">{item.label}</span>
+                      <span className="transition-opacity duration-300">{rotuloDoMenu(item, currentDashboard?.type)}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

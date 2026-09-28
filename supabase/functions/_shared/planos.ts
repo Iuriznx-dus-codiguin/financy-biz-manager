@@ -249,6 +249,16 @@ export function planoPorNomeAproximado(texto: string | null | undefined): Plano 
   return PLANOS.find((p) => p.tipo === tipo && p.nivel === nivel && p.periodo === periodo) ?? null;
 }
 
+/** Nomes comerciais (sem período) dos planos que liberam o recurso, na ordem do catálogo. */
+export function planosComRecurso(recurso: Recurso): string[] {
+  return Array.from(new Set(PLANOS.filter((p) => p.recursos.includes(recurso)).map((p) => p.nome)));
+}
+
+/** "A, B e C" */
+export function listaEmPortugues(itens: string[]): string {
+  return itens.length <= 1 ? itens.join('') : `${itens.slice(0, -1).join(', ')} e ${itens[itens.length - 1]}`;
+}
+
 /** Nome exibido ao usuário, com período: "Plus Pessoal (anual)". */
 export function nomeComercial(plano: Plano): string {
   return `${plano.nome} (${plano.periodo === 'yearly' ? 'anual' : 'mensal'})`;

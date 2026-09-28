@@ -28,9 +28,13 @@ import { parseNumber, parseDate } from '@/shared/lib/spreadsheetIO';
 import { dataLocal, formatarData, hojeISO } from '@/shared/lib/datas';
 import { interpretarValor } from '@/shared/lib/dinheiro';
 import { ocorrenciasAte } from '@/shared/lib/recorrencia';
+import { useUserContext } from '@/features/dashboards/useUserContext';
+import { getLabel } from '@/shared/lib/nomenclature';
 
 const Receitas = () => {
   const { receitas, addReceita, deleteReceita, updateReceita } = useAppContext();
+  // Vocabulário PF/PJ: "Entradas" no pessoal, "Receitas" no empresarial.
+  const { currentDashboardType } = useUserContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todas');
@@ -149,7 +153,7 @@ const Receitas = () => {
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Receitas</h2><SectionTourTrigger tourId="receitas" /></div>
+          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">{getLabel('receitas', currentDashboardType)}</h2><SectionTourTrigger tourId="receitas" /></div>
           <p className="text-muted-foreground">Controle completo das suas entradas de dinheiro</p>
         </div>
         <div className="flex items-center gap-2">
@@ -208,12 +212,12 @@ const Receitas = () => {
           <DialogTrigger asChild>
             <Button className="rounded-xl" data-tutorial="add-receita-btn">
               <Plus className="mr-2 h-4 w-4" />
-              Nova Receita
+              {getLabel('nova-receita', currentDashboardType)}
             </Button>
           </DialogTrigger>
           <DialogContent className="rounded-2xl max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Adicionar Nova Receita</DialogTitle>
+              <DialogTitle>Adicionar {getLabel('nova-receita', currentDashboardType)}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleAddReceita} className="space-y-4 sm:space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">

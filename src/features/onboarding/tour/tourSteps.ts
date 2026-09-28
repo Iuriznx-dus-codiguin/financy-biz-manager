@@ -61,7 +61,7 @@ const generalDesktop: TourStep[] = [
     target: '[data-tutorial="nav-receitas"]',
     title: '💰 Receitas',
     content:
-      'Onde você registra todas as entradas (salário, vendas, freelas). Clique no item para abrir e use o botão "Nova Receita".',
+      'Onde você registra todas as entradas (salário, vendas, freelas). Clique no item para abrir e use o botão de novo lançamento.',
     position: 'right',
   },
   {
@@ -169,7 +169,7 @@ const generalMobile: TourStep[] = [
     target: null,
     title: '💰 Receitas e 💸 Despesas',
     content:
-      'Pelo menu lateral você acessa Receitas (entradas) e Despesas (gastos). Os botões "Nova Receita" e "Nova Despesa" lançam novas transações.',
+      'Pelo menu lateral você acessa Receitas (entradas) e Despesas (gastos). O botão de novo lançamento em cada tela registra novas transações.',
     position: 'center',
   },
   {

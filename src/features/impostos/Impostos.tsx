@@ -20,9 +20,12 @@ import { formatarData, hojeISO } from '@/shared/lib/datas';
 import { formatarBRL, interpretarValor, somarReais } from '@/shared/lib/dinheiro';
 import { totalDeImpostos, valorDoImposto } from '@/shared/lib/impostos';
 import { proximaOcorrencia, ROTULOS_RECORRENCIA, situacaoVencimento, type TipoRecorrencia } from '@/shared/lib/recorrencia';
+import { useUserContext } from '@/features/dashboards/useUserContext';
+import { getLabel } from '@/shared/lib/nomenclature';
 
 const Impostos = () => {
   const { impostos, addImposto, updateImposto, deleteImposto, receitas, loading } = useAppContext();
+  const { currentDashboardType } = useUserContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [novoImposto, setNovoImposto] = useState({
@@ -123,7 +126,7 @@ const Impostos = () => {
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">Impostos e Taxas</h2><SectionTourTrigger tourId="impostos" /></div>
+          <div className="flex items-center gap-1"><h2 className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">{getLabel('impostos-titulo', currentDashboardType)}</h2><SectionTourTrigger tourId="impostos" /></div>
           <p className="text-muted-foreground">Gerencie seus impostos e taxas de forma simples</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
