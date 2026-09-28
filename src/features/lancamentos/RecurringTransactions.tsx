@@ -15,7 +15,7 @@ import {
 import { Calendar, TrendingUp, TrendingDown, RefreshCw, Loader2 } from 'lucide-react';
 import { useAppContext } from '@/features/financeiro/AppContext';
 import { useAuth } from '@/features/auth/useAuth';
-import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
+import { useRecurringTransactions } from '@/features/lancamentos/useRecurringTransactions';
 import { toast } from 'sonner';
 import { dataLocal } from '@/shared/lib/datas';
 import { ROTULOS_RECORRENCIA, type TipoRecorrencia } from '@/shared/lib/recorrencia';

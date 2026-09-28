@@ -4,7 +4,7 @@ import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase
 import { useAuth } from '@/features/auth/useAuth';
 import { useDashboard } from '@/features/dashboards/useDashboard';
 import { logger } from '@/shared/lib/logger';
-import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
+import { useRecurringTransactions } from '@/features/lancamentos/useRecurringTransactions';
 import { hojeISO } from '@/shared/lib/datas';
 import { ehColunaAusente } from '@/shared/lib/erros';
 import { buscarTodas } from '@/shared/lib/paginacao';

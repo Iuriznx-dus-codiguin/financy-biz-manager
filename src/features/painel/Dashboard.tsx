@@ -16,7 +16,7 @@ import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { FloatingDashboardInfo } from '@/features/painel/FloatingDashboardInfo';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useDashboard } from '@/features/dashboards/useDashboard';
-import { RecurringTransactions } from '@/components/RecurringTransactions';
+import { RecurringTransactions } from '@/features/lancamentos/RecurringTransactions';
 import { DashboardSkeleton } from '@/features/painel/DashboardSkeleton';
 
 interface DashboardProps {

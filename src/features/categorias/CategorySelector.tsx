@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
-import { useCategoriasPersonalizadas } from '@/hooks/useCategoriasPersonalizadas';
+import { useCategoriasPersonalizadas } from '@/features/categorias/useCategoriasPersonalizadas';
 import { useDashboard } from '@/features/dashboards/useDashboard';
-import { getPredefinedCategories } from '@/constants/categories';
+import { getPredefinedCategories } from '@/features/categorias/categories';
 import { iconeDaCategoria } from '@/shared/ui/iconesCategoria';
 
 interface CategorySelectorProps {

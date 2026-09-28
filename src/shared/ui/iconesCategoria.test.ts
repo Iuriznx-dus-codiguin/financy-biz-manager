@@ -4,7 +4,7 @@ import { ICONES_CATEGORIA, iconeDaCategoria } from './iconesCategoria';
 import {
   ADDITIONAL_BUSINESS_EXPENSE_OPTIONS, ADDITIONAL_PERSONAL_EXPENSE_OPTIONS, ADDITIONAL_PERSONAL_REVENUE_OPTIONS,
   BUSINESS_EXPENSE_CATEGORIES, BUSINESS_REVENUE_CATEGORIES, PERSONAL_EXPENSE_CATEGORIES, PERSONAL_REVENUE_CATEGORIES,
-} from '@/constants/categories';
+} from '@/features/categorias/categories';
 
 describe('iconeDaCategoria', () => {
   it('resolve nomes kebab-case e PascalCase', () => {

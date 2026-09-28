@@ -1,4 +1,4 @@
-import Fechamento from '@/components/sections/Fechamento';
+import Fechamento from '@/features/fechamento/Fechamento';
 
 export default function FechamentoPage() {
   return <Fechamento />;

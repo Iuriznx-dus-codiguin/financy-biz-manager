@@ -7,7 +7,7 @@ import { CompactDashboardSelector } from '@/features/dashboards/CompactDashboard
 import { Crown, Zap, Star, Settings, Code, Sparkles, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
-import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
+import { useRecurringTransactions } from '@/features/lancamentos/useRecurringTransactions';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAppContext } from '@/features/financeiro/AppContext';
 import { toast } from 'sonner';

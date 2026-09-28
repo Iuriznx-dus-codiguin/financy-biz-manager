@@ -22,7 +22,7 @@ import {
 import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppContext } from '@/features/financeiro/AppContext';
-import { CategorySelector } from '@/components/CategorySelector';
+import { CategorySelector } from '@/features/categorias/CategorySelector';
 import { SpreadsheetImportExport } from '@/shared/ui/SpreadsheetImportExport';
 import { parseNumber, parseDate } from '@/shared/lib/spreadsheetIO';
 import { dataLocal, formatarData, hojeISO } from '@/shared/lib/datas';

@@ -1,4 +1,4 @@
-import Impostos from '@/components/sections/Impostos';
+import Impostos from '@/features/impostos/Impostos';
 
 export default function ImpostosPage() {
   return <Impostos />;

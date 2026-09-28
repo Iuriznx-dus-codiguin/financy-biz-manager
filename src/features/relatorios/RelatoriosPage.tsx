@@ -1,4 +1,4 @@
-import Relatorios from '@/components/sections/Relatorios';
+import Relatorios from '@/features/relatorios/Relatorios';
 
 export default function RelatoriosPage() {
   return <Relatorios />;
