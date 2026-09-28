@@ -70,3 +70,15 @@ describe('limites e recursos por plan_id (corrige A-05/A-06)', () => {
     expect(planoDaAssinatura({ status: 'active', subscription_type: 'personal', expires_at: null, plan_name: 'Pro Pessoal - Anual' })?.id).toBe('personal_pro_yearly');
   });
 });
+
+describe('planoDaAssinatura com plan_name antigo', () => {
+  it('reconhece o plano pelas palavras do nome quando não há plan_id nem nome exato', () => {
+    expect(planoDaAssinatura({ status: 'active', subscription_type: 'personal', expires_at: null, plan_name: 'Pro Pessoal Mensal' })?.id)
+      .toBe('personal_pro_monthly');
+    expect(planoDaAssinatura({ status: 'active', subscription_type: 'business', expires_at: null, plan_name: 'Plano PRO Empresarial Anual' })?.id)
+      .toBe('business_pro_yearly');
+    expect(planoDaAssinatura({ status: 'active', subscription_type: 'business', expires_at: null, plan_name: 'Super Company' })?.id)
+      .toBe('business_enterprise_monthly');
+    expect(planoDaAssinatura({ status: 'active', subscription_type: 'personal', expires_at: null, plan_name: 'Produto qualquer' })).toBeNull();
+  });
+});

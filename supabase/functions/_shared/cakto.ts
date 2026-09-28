@@ -4,7 +4,7 @@
 // Contrato preservado: mesmos eventos aceitos, mesmos caminhos de leitura do payload (mais alguns novos).
 
 import { interpretarValor } from './dinheiro.ts';
-import { type LimitesPlano, type Plano, PLANOS, planoPorChaveCakto, planoPorId } from './planos.ts';
+import { type LimitesPlano, type Plano, PLANOS, planoPorChaveCakto, planoPorId, planoPorNomeAproximado } from './planos.ts';
 
 // deno-lint-ignore no-explicit-any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload JSON de terceiros, navegado por caminho
@@ -239,24 +239,6 @@ function planoPorOferta(evento: NormalizedCaktoPayload): Plano | null {
  * Identifica o plano pelo nome, comparando PALAVRAS inteiras (não substrings):
  * "Plano Plus Mensal" não é anual e "Produto Plus" não é Pro.
  */
-function planoPorNome(texto: string): Plano | null {
-  const palavras = new Set(normalizeKey(texto).split('_').filter(Boolean));
-  if (palavras.size === 0) return null;
-  const tem = (...ps: string[]) => ps.some((p) => palavras.has(p));
-
-  const anual = tem('anual', 'annual', 'yearly', 'ano', 'anuais');
-  const empresarial = tem('empresarial', 'business', 'empresa', 'empresas', 'company', 'pj');
-  let nivel: Plano['nivel'] | null = null;
-  if (tem('super', 'enterprise')) nivel = 'enterprise';
-  else if (tem('pro')) nivel = 'pro';
-  else if (tem('plus')) nivel = 'plus';
-  if (!nivel) return null;
-
-  const tipo = nivel === 'enterprise' || empresarial ? 'business' : 'personal';
-  const periodo = anual ? 'yearly' : 'monthly';
-  return PLANOS.find((p) => p.tipo === tipo && p.nivel === nivel && p.periodo === periodo) ?? null;
-}
-
 /**
  * Ordem de identificação: oferta da Cakto (id/URL de checkout) → chave ou plan_id explícito
  * (metadados) → nome do produto/oferta por palavras inteiras.
@@ -274,7 +256,7 @@ export function identifyPlan(event: NormalizedCaktoPayload): PlanConfig | null {
   }
 
   for (const nome of [event.offerName, event.productName, ...chaves].filter(Boolean)) {
-    const plano = planoPorNome(nome);
+    const plano = planoPorNomeAproximado(nome);
     if (plano) return planConfigFrom(plano);
   }
   return null;

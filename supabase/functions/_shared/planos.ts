@@ -224,6 +224,31 @@ export function planoDaFamilia(familia: string, periodo: PeriodoPlano): Plano | 
   return PLANOS.find((p) => p.familia === familia && p.periodo === periodo) ?? null;
 }
 
+/** Palavras de um texto sem acentos e em minúsculas ("PRO Empresarial - Anual" → pro, empresarial, anual). */
+function palavrasDe(texto: string): Set<string> {
+  return new Set(
+    texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean),
+  );
+}
+
+/**
+ * Plano pelo nome, por palavras inteiras (nome de produto da Cakto, plan_name antigo). Nível: super/enterprise,
+ * pro ou plus; empresarial por "empresarial/business/empresa/company/pj"; anual por "anual/annual/yearly/ano".
+ */
+export function planoPorNomeAproximado(texto: string | null | undefined): Plano | null {
+  if (!texto) return null;
+  const palavras = palavrasDe(texto);
+  const tem = (...ps: string[]) => ps.some((p) => palavras.has(p));
+  let nivel: NivelPlano | null = null;
+  if (tem('super', 'enterprise')) nivel = 'enterprise';
+  else if (tem('pro')) nivel = 'pro';
+  else if (tem('plus')) nivel = 'plus';
+  if (!nivel) return null;
+  const tipo: TipoPlano = nivel === 'enterprise' || tem('empresarial', 'business', 'empresa', 'empresas', 'company', 'pj') ? 'business' : 'personal';
+  const periodo: PeriodoPlano = tem('anual', 'annual', 'yearly', 'ano', 'anuais') ? 'yearly' : 'monthly';
+  return PLANOS.find((p) => p.tipo === tipo && p.nivel === nivel && p.periodo === periodo) ?? null;
+}
+
 /** Nome exibido ao usuário, com período: "Plus Pessoal (anual)". */
 export function nomeComercial(plano: Plano): string {
   return `${plano.nome} (${plano.periodo === 'yearly' ? 'anual' : 'mensal'})`;

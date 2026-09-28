@@ -1,7 +1,7 @@
 // Regra única de assinatura (front, functions e — espelhada em SQL — `public.tem_assinatura_ativa`).
 // Regras puras, sem dependências.
 
-import { type LimitesPlano, type Plano, type Recurso, planoPorId, planoPorNomeCompleto } from './planos.ts';
+import { type LimitesPlano, type Plano, type Recurso, planoPorId, planoPorNomeAproximado, planoPorNomeCompleto } from './planos.ts';
 
 /** Colunas de user_subscriptions que decidem o acesso. */
 export interface LinhaAssinatura {
@@ -73,10 +73,13 @@ export function situacaoAssinatura(
   }
 }
 
-/** Plano do catálogo pelo plan_id; registros antigos sem plan_id caem para o plan_name exato. */
+/**
+ * Plano do catálogo pelo plan_id; registros antigos sem plan_id caem para o plan_name exato e, por fim,
+ * para as palavras do plan_name (o front antigo liberava recursos por "pro"/"plus"/"empresarial" no nome).
+ */
 export function planoDaAssinatura(linha: LinhaAssinatura | null): Plano | null {
   if (!linha) return null;
-  return planoPorId(linha.plan_id) ?? planoPorNomeCompleto(linha.plan_name);
+  return planoPorId(linha.plan_id) ?? planoPorNomeCompleto(linha.plan_name) ?? planoPorNomeAproximado(linha.plan_name);
 }
 
 function numero(valor: unknown): number | null {
