@@ -10,7 +10,7 @@ import {
   useSupportChat,
   MAX_SUPPORT_CHARS,
   SUPPORT_STATE_LABEL,
-} from '@/hooks/useSupportChat';
+} from '@/features/suporte/useSupportChat';
 
 const SUGGESTIONS = [
   'Não estou conseguindo entrar na minha conta',

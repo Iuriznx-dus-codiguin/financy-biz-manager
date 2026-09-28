@@ -8,7 +8,7 @@ import { Crown, Zap, Star, Settings, Code, Sparkles, RefreshCw } from 'lucide-re
 import { useAuth } from '@/features/auth/useAuth';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { useRecurringTransactions } from '@/features/lancamentos/useRecurringTransactions';
-import { useOnboarding } from '@/hooks/useOnboarding';
+import { useOnboarding } from '@/features/onboarding/useOnboarding';
 import { useAppContext } from '@/features/financeiro/AppContext';
 import { toast } from 'sonner';
 

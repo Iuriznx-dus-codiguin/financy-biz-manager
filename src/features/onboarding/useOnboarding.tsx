@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/features/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { OnboardingData } from '@/types/onboarding';
+import { OnboardingData } from '@/features/onboarding/tipos';
 import type { Json } from '@/integrations/supabase/types';
 import { hojeISO, somarMeses } from '@/shared/lib/datas';
 import { ehFuncaoAusente, mensagemDeErro } from '@/shared/lib/erros';

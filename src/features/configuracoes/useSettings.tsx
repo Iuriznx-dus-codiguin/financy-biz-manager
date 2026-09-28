@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react';
-import { useTheme } from './useTheme';
-import { useToast } from './use-toast';
+import { useTheme } from '@/features/configuracoes/useTheme';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/features/auth/useAuth';
 import type { Json } from '@/integrations/supabase/types';

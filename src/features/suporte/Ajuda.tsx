@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Download, BarChart3, TrendingUp, TrendingDown, FolderOpen, FileText, Users, Target, DollarSign, Calendar, HelpCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
-import { useProductTour } from '@/hooks/useProductTour';
-import { TourId } from '@/config/tourSteps';
+import { useProductTour } from '@/features/onboarding/tour/useProductTour';
+import { TourId } from '@/features/onboarding/tour/tourSteps';
 import { useDashboard } from '@/features/dashboards/useDashboard';
 import { getRouteForSection } from '@/app/rotas';
 

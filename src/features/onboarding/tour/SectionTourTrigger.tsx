@@ -2,8 +2,8 @@ import React from 'react';
 import { HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useProductTour } from '@/hooks/useProductTour';
-import type { TourId } from '@/config/tourSteps';
+import { useProductTour } from '@/features/onboarding/tour/useProductTour';
+import type { TourId } from '@/features/onboarding/tour/tourSteps';
 
 interface SectionTourTriggerProps {
   tourId: TourId;

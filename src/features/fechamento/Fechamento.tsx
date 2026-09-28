@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
+import { SectionTourTrigger } from '@/features/onboarding/tour/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, TrendingUp, TrendingDown, DollarSign, Search, Filter, ArrowUpCircle, ArrowDownCircle, FileText, Users, Calendar } from 'lucide-react';

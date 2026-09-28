@@ -1,11 +1,11 @@
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from '@/hooks/useTheme';
+import { ThemeProvider } from '@/features/configuracoes/useTheme';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/features/auth/useAuth';
-import { SettingsProvider } from '@/hooks/useSettings';
-import { OnboardingProvider } from '@/hooks/useOnboarding';
-import { ProductTourProvider } from '@/hooks/useProductTour';
+import { SettingsProvider } from '@/features/configuracoes/useSettings';
+import { OnboardingProvider } from '@/features/onboarding/useOnboarding';
+import { ProductTourProvider } from '@/features/onboarding/tour/useProductTour';
 import { DashboardProvider } from '@/features/dashboards/useDashboard';
 import { UserContextProvider } from '@/features/dashboards/useUserContext';
 import { AppProvider } from '@/features/financeiro/AppContext';

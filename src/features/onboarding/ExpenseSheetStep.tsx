@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, Plus } from 'lucide-react';
-import { OnboardingData, GastoInicial } from '@/types/onboarding';
+import { OnboardingData, GastoInicial } from '@/features/onboarding/tipos';
 import { useToast } from '@/hooks/use-toast';
 import { SpreadsheetImportExport } from '@/shared/ui/SpreadsheetImportExport';
 import { type LinhaPlanilha, parseNumber } from '@/shared/lib/spreadsheetIO';

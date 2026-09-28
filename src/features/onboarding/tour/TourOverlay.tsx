@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { useProductTour } from '@/hooks/useProductTour';
-import { TourPosition } from '@/config/tourSteps';
+import { useProductTour } from '@/features/onboarding/tour/useProductTour';
+import { TourPosition } from '@/features/onboarding/tour/tourSteps';
 
 interface Rect {
   top: number;

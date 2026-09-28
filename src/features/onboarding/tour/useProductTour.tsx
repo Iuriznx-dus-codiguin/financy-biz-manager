@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '@/features/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { getTourSteps, TourId, TourStep, TourContext as TourCtx } from '@/config/tourSteps';
-import { useIsBelowLg, isBelowLgNow } from './use-mobile';
+import { getTourSteps, TourId, TourStep, TourContext as TourCtx } from '@/features/onboarding/tour/tourSteps';
+import { useIsBelowLg, isBelowLgNow } from '@/hooks/use-mobile';
 import { useDashboard } from '@/features/dashboards/useDashboard';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 

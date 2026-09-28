@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
+import { SectionTourTrigger } from '@/features/onboarding/tour/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

@@ -22,13 +22,13 @@ const EquipePage = carregarPagina(() => import("@/features/equipe/EquipePage"));
 const MetasPage = carregarPagina(() => import("@/features/metas/MetasPage"));
 const RelatoriosPage = carregarPagina(() => import("@/features/relatorios/RelatoriosPage"));
 const FechamentoPage = carregarPagina(() => import("@/features/fechamento/FechamentoPage"));
-const AgentesIAPage = carregarPagina(() => import("./pages/AgentesIAPage"));
+const AgentesIAPage = carregarPagina(() => import("@/features/ia/AgentesIAPage"));
 const AssinaturaPage = carregarPagina(() => import("@/features/assinatura/AssinaturaPage"));
-const ConfiguracoesPage = carregarPagina(() => import("./pages/ConfiguracoesPage"));
-const AjudaPage = carregarPagina(() => import("./pages/AjudaPage"));
-const SuportePage = carregarPagina(() => import("./pages/SuportePage"));
+const ConfiguracoesPage = carregarPagina(() => import("@/features/configuracoes/ConfiguracoesPage"));
+const AjudaPage = carregarPagina(() => import("@/features/suporte/AjudaPage"));
+const SuportePage = carregarPagina(() => import("@/features/suporte/SuportePage"));
 const AuditoriaWebhooksPage = carregarPagina(() => import("@/features/admin/AuditoriaWebhooksPage"));
-const AdminSuportePage = carregarPagina(() => import("./pages/AdminSuportePage"));
+const AdminSuportePage = carregarPagina(() => import("@/features/suporte/AdminSuportePage"));
 
 /**
  * Redireciona "/" para "/dashboard" preservando o hash da URL.

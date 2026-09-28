@@ -1,7 +1,7 @@
 import { SectionSkeleton } from '@/components/ui/section-skeleton';
 
 import React, { useState } from 'react';
-import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
+import { SectionTourTrigger } from '@/features/onboarding/tour/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';

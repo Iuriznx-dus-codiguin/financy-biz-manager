@@ -14,17 +14,17 @@ import {
   PiggyBank, ListChecks, Target
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { OnboardingData } from '@/types/onboarding';
+import { OnboardingData } from '@/features/onboarding/tipos';
 // confetti removido: agora é disparado pelo AuthenticatedLayout via flag em sessionStorage
 import { motion, AnimatePresence } from 'framer-motion';
-import { requestGeneralTour } from '@/components/onboarding/ProductTour';
+import { requestGeneralTour } from '@/features/onboarding/tour/ProductTour';
 import { validateAndNormalizePhone, savePhoneCorrection, type CorrectionType } from '@/shared/lib/evolutionPhoneValidation';
 import { checkPhoneDuplicate } from '@/shared/lib/phoneValidation';
 import { useAuth } from '@/features/auth/useAuth';
 import financyLogo from '@/assets/financy-logo-new-dark.png';
-import { FinancialDataStep } from './FinancialDataStep';
-import { ExpenseSheetStep } from './ExpenseSheetStep';
-import { FinancialGoalStep } from './FinancialGoalStep';
+import { FinancialDataStep } from '@/features/onboarding/FinancialDataStep';
+import { ExpenseSheetStep } from '@/features/onboarding/ExpenseSheetStep';
+import { FinancialGoalStep } from '@/features/onboarding/FinancialGoalStep';
 import { textoDoErro } from '@/shared/lib/erros';
 
 interface OnboardingFlowProps {

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/features/auth/useAuth';
-import { useOnboarding } from '@/hooks/useOnboarding';
+import { useOnboarding } from '@/features/onboarding/useOnboarding';
 import { useDashboard } from '@/features/dashboards/useDashboard';
 
 export interface UserContext {

@@ -27,14 +27,14 @@ import {
   Mail,
   LogOut
 } from 'lucide-react';
-import { useSettings, useCurrency } from '@/hooks/useSettings';
-import { useTheme } from '@/hooks/useTheme';
+import { useSettings, useCurrency } from '@/features/configuracoes/useSettings';
+import { useTheme } from '@/features/configuracoes/useTheme';
 import { useAuth } from '@/features/auth/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useDashboard } from '@/features/dashboards/useDashboard';
 import { DashboardCreateDialog } from '@/features/dashboards/DashboardCreateDialog';
 import { DashboardPersonalization } from '@/features/dashboards/DashboardPersonalization';
-import { useOnboarding } from '@/hooks/useOnboarding';
+import { useOnboarding } from '@/features/onboarding/useOnboarding';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';

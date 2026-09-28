@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
-import { FinancyAIChat } from '@/components/FinancyAIChat';
+import { FinancyAIChat } from '@/features/ia/FinancyAIChat';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

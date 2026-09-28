@@ -3,7 +3,7 @@ import { LifeBuoy, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // O chat (com o renderizador de markdown) só é baixado quando o usuário abre o suporte.
-const SupportChat = lazy(() => import('@/components/support/SupportChat').then((m) => ({ default: m.SupportChat })));
+const SupportChat = lazy(() => import('@/features/suporte/SupportChat').then((m) => ({ default: m.SupportChat })));
 
 export const FloatingSupportButton = () => {
   const [open, setOpen] = useState(false);

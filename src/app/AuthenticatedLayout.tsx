@@ -1,7 +1,7 @@
 import { Suspense, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/useAuth';
-import { useOnboarding } from '@/hooks/useOnboarding';
+import { useOnboarding } from '@/features/onboarding/useOnboarding';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { useDashboard } from '@/features/dashboards/useDashboard';
 import { usePaymentSuccess } from '@/features/assinatura/usePaymentSuccess';
@@ -10,9 +10,9 @@ import { MobileSidebar } from '@/app/navegacao/MobileSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import Footer from '@/app/Footer';
 import { SubscriptionBanners } from '@/features/assinatura/SubscriptionBanners';
-import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
-import { ProductTour } from '@/components/onboarding/ProductTour';
-import { FloatingSupportButton } from '@/components/support/FloatingSupportButton';
+import { OnboardingFlow } from '@/features/onboarding/OnboardingFlow';
+import { ProductTour } from '@/features/onboarding/tour/ProductTour';
+import { FloatingSupportButton } from '@/features/suporte/FloatingSupportButton';
 import { celebrate } from '@/shared/lib/celebration';
 import { CarregandoPagina } from '@/app/CarregandoPagina';
 import {

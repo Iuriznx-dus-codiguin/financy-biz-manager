@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { OnboardingData } from '@/types/onboarding';
+import { OnboardingData } from '@/features/onboarding/tipos';
 
 interface FinancialGoalStepProps {
   data: OnboardingData;

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/app/rotas';
 import { useDashboard } from '@/features/dashboards/useDashboard';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/configuracoes/useTheme';
 import { useUserContext } from '@/features/dashboards/useUserContext';
 import { Button } from '@/components/ui/button';
 import {

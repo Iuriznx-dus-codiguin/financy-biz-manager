@@ -1,4 +1,4 @@
-import AgentesIA from '@/components/sections/AgentesIA';
+import AgentesIA from '@/features/ia/AgentesIA';
 
 export default function AgentesIAPage() {
   return (

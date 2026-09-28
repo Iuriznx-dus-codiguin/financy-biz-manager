@@ -1,4 +1,4 @@
-import { SupportChat } from '@/components/support/SupportChat';
+import { SupportChat } from '@/features/suporte/SupportChat';
 
 export default function SuportePage() {
   return (

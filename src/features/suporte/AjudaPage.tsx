@@ -1,4 +1,4 @@
-import Ajuda from '@/components/sections/Ajuda';
+import Ajuda from '@/features/suporte/Ajuda';
 
 export default function AjudaPage() {
   return <Ajuda />;

@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useProductTour } from '@/hooks/useProductTour';
-import { TourOverlay } from './TourOverlay';
-import { TourId, BUSINESS_ONLY_TOURS } from '@/config/tourSteps';
+import { useProductTour } from '@/features/onboarding/tour/useProductTour';
+import { TourOverlay } from '@/features/onboarding/tour/TourOverlay';
+import { TourId, BUSINESS_ONLY_TOURS } from '@/features/onboarding/tour/tourSteps';
 import { useDashboard } from '@/features/dashboards/useDashboard';
 import { ROUTE_TO_SECTION } from '@/app/rotas';
 
