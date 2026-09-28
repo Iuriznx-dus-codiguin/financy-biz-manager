@@ -157,26 +157,3 @@ export const getLabel = (key: string, context: ContextType): string => {
   
   return label[context];
 };
-
-/**
- * Adapta múltiplas labels de uma vez
- */
-export const getLabels = (
-  keys: string[], 
-  context: ContextType
-): Record<string, string> => {
-  return keys.reduce((acc, key) => {
-    acc[key] = getLabel(key, context);
-    return acc;
-  }, {} as Record<string, string>);
-};
-
-/**
- * Hook personalizado para usar nomenclatura adaptativa
- */
-export const useAdaptiveLabels = (context: ContextType) => {
-  return {
-    getLabel: (key: string) => getLabel(key, context),
-    getLabels: (keys: string[]) => getLabels(keys, context)
-  };
-};

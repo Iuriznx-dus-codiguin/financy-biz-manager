@@ -24,18 +24,6 @@ export const BUSINESS_EXPENSE_CATEGORIES: CategoryOption[] = [
   { value: 'outros', label: 'Outros gastos operacionais', icon: 'folder' },
 ];
 
-// Categorias adicionais empresariais disponíveis para criação personalizada
-export const ADDITIONAL_BUSINESS_EXPENSE_OPTIONS: CategoryOption[] = [
-  { value: 'alimentacao', label: 'Alimentação / Refeição empresarial' },
-  { value: 'transporte', label: 'Transporte / Logística' },
-  { value: 'manutencao', label: 'Manutenção / Limpeza' },
-  { value: 'contabilidade', label: 'Contabilidade / Assessoria' },
-  { value: 'equipamentos', label: 'Equipamentos / Investimentos' },
-  { value: 'tarifas-bancarias', label: 'Tarifas bancárias / Financeiras' },
-  { value: 'treinamentos', label: 'Treinamentos / Educação corporativa' },
-  { value: 'viagens', label: 'Viagens / Deslocamentos' },
-];
-
 // Categorias predefinidas para versão PESSOAL
 export const PERSONAL_REVENUE_CATEGORIES: CategoryOption[] = [
   { value: 'salario', label: 'Salário', icon: 'banknote' },
@@ -52,22 +40,6 @@ export const PERSONAL_EXPENSE_CATEGORIES: CategoryOption[] = [
   { value: 'saude', label: 'Saúde', icon: 'heart-pulse' },
   { value: 'lazer', label: 'Lazer', icon: 'gamepad-2' },
   { value: 'outros', label: 'Outros', icon: 'folder' },
-];
-
-// Categorias adicionais pessoais disponíveis para criação personalizada
-export const ADDITIONAL_PERSONAL_EXPENSE_OPTIONS: CategoryOption[] = [
-  { value: 'roupas', label: 'Roupas / Cuidados pessoais' },
-  { value: 'assinaturas', label: 'Assinaturas (Netflix, Spotify, etc.)' },
-  { value: 'pets', label: 'Pets / Animais de estimação' },
-  { value: 'familia', label: 'Família / Filhos' },
-  { value: 'presentes', label: 'Presentes / Doações' },
-  { value: 'financiamentos', label: 'Financiamentos / Empréstimos' },
-  { value: 'impostos', label: 'Impostos / Taxas' },
-];
-
-export const ADDITIONAL_PERSONAL_REVENUE_OPTIONS: CategoryOption[] = [
-  { value: 'presentes', label: 'Presentes / Doações' },
-  { value: 'juros', label: 'Juros / Aplicações' },
 ];
 
 /**
@@ -94,23 +66,4 @@ export const getPredefinedCategories = (
   return transactionType === 'receita'
     ? PERSONAL_REVENUE_CATEGORIES
     : PERSONAL_EXPENSE_CATEGORIES;
-};
-
-/**
- * Retorna as categorias adicionais disponíveis para criação personalizada
- */
-export const getAdditionalCategories = (
-  dashboardType: 'pessoal' | 'empresarial' | null,
-  transactionType: 'receita' | 'despesa'
-): CategoryOption[] => {
-  if (!dashboardType || dashboardType === 'empresarial') {
-    if (transactionType === 'receita') {
-      return [];
-    }
-    return ADDITIONAL_BUSINESS_EXPENSE_OPTIONS;
-  }
-
-  return transactionType === 'receita'
-    ? ADDITIONAL_PERSONAL_REVENUE_OPTIONS
-    : ADDITIONAL_PERSONAL_EXPENSE_OPTIONS;
 };

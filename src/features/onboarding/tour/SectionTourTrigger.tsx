@@ -43,4 +43,3 @@ export const SectionTourTrigger: React.FC<SectionTourTriggerProps> = ({
   );
 };
 
-export default SectionTourTrigger;

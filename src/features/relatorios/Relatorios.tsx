@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { type Despesa, type Receita, useAppContext } from '@/features/financeiro/AppContext';
-import { TimeFilter } from '@/shared/ui/TimeFilter';
+import { loadPersistedTimeFilter, TimeFilter } from '@/shared/ui/TimeFilter';
 import { isDateInRange, getDateRange } from '@/shared/lib/dateFilters';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
@@ -18,10 +18,7 @@ import { valorDoImposto } from '@/shared/lib/impostos';
 
   const Relatorios = () => {
   const [selectedReport, setSelectedReport] = useState('mensal');
-  const [timeFilter, setTimeFilter] = useState(() => {
-    if (typeof window === 'undefined') return 'este-mes';
-    try { return window.localStorage.getItem('financy-filter:relatorios') || 'este-mes'; } catch { return 'este-mes'; }
-  });
+  const [timeFilter, setTimeFilter] = useState(() => loadPersistedTimeFilter('relatorios', 'este-mes'));
   const [isGenerating, setIsGenerating] = useState(false);
   const { receitas, despesas, impostos, loading } = useAppContext();
 

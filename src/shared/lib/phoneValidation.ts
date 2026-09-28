@@ -9,67 +9,11 @@ export interface PhoneValidationResult {
 }
 
 /**
- * Valida um número de telefone com validações robustas
- */
-export const validatePhoneNumber = (phone: string, countryCode: CountryCode = 'BR'): PhoneValidationResult => {
-  // Remove espaços e caracteres especiais para validação
-  const cleanPhone = phone.replace(/\s+/g, '').trim();
-  
-  if (!cleanPhone || cleanPhone.length === 0) {
-    return {
-      isValid: false,
-      error: 'Número de telefone é obrigatório'
-    };
-  }
-
-  try {
-    // Validar se é um número válido
-    if (!isValidPhoneNumber(cleanPhone, countryCode)) {
-      return {
-        isValid: false,
-        error: 'Número de telefone inválido para o país selecionado'
-      };
-    }
-
-    // Parse do número
-    const phoneNumber = parsePhoneNumber(cleanPhone, countryCode);
-    
-    if (!phoneNumber) {
-      return {
-        isValid: false,
-        error: 'Não foi possível processar o número de telefone'
-      };
-    }
-
-    // Verificar se é um número móvel (necessário para WhatsApp)
-    const type = phoneNumber.getType();
-    if (type && type !== 'MOBILE' && type !== 'FIXED_LINE_OR_MOBILE') {
-      return {
-        isValid: false,
-        error: 'O número deve ser um celular válido para WhatsApp'
-      };
-    }
-
-    // Retornar formato E.164 (padrão internacional)
-    const e164 = phoneNumber.format('E.164');
-    const formatted = phoneNumber.formatInternational();
-
-    return {
-      isValid: true,
-      e164,
-      formatted
-    };
-  } catch (error) {
-    console.error('Erro ao validar telefone:', error);
-    return {
-      isValid: false,
-      error: 'Formato de telefone inválido'
-    };
-  }
-};
-
-/**
- * Verifica se o número de telefone já está cadastrado
+ * Verifica se o número de telefone já está cadastrado.
+ * Atenção: a RLS de `profiles` só deixa ler o próprio perfil, então esta consulta não enxerga outros
+ * usuários e na prática nunca encontra duplicata. A garantia real é a constraint única do banco —
+ * concluir_onboarding devolve "Este número de telefone já está cadastrado". Checagem antecipada exige
+ * decisão (D-19 em docs/ARQUITETURA-ALVO.md): uma RPC de disponibilidade permitiria enumerar telefones.
  */
 export const checkPhoneDuplicate = async (phone: string, currentUserId?: string): Promise<{ isDuplicate: boolean; error?: string }> => {
   try {
@@ -106,30 +50,5 @@ export const checkPhoneDuplicate = async (phone: string, currentUserId?: string)
       isDuplicate: false, 
       error: 'Erro inesperado ao verificar telefone' 
     };
-  }
-};
-
-/**
- * Formata um número de telefone para exibição
- */
-export const formatPhoneForDisplay = (phone: string, countryCode: CountryCode = 'BR'): string => {
-  try {
-    const phoneNumber = parsePhoneNumber(phone, countryCode);
-    if (!phoneNumber) return phone;
-    return phoneNumber.formatInternational();
-  } catch {
-    return phone;
-  }
-};
-
-/**
- * Sanitiza e formata o número para salvar no banco (E.164)
- */
-export const sanitizePhoneForStorage = (phone: string, countryCode: CountryCode = 'BR'): string | null => {
-  try {
-    const validation = validatePhoneNumber(phone, countryCode);
-    return validation.isValid ? validation.e164 || null : null;
-  } catch {
-    return null;
   }
 };

@@ -70,13 +70,3 @@ export function celebrate(opts: CelebrateOptions = {}): void {
     });
   }, delay);
 }
-
-/** Limpa a marca de deduplicação para permitir um novo disparo no mesmo evento. */
-export function resetCelebration(dedupeKey: string): void {
-  inMemoryFired.delete(dedupeKey);
-  try {
-    sessionStorage.removeItem(FIRED_KEY_PREFIX + dedupeKey);
-  } catch {
-    /* ignore */
-  }
-}

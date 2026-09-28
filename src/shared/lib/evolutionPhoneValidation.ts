@@ -370,49 +370,6 @@ export function formatPhoneForDisplay(e164Phone: string): string {
   return e164Phone;
 }
 
-/**
- * Gera mensagem de feedback formatada para exibir ao usuário
- */
-export function getValidationMessage(result: PhoneValidationResult): {
-  title: string;
-  description: string;
-  variant: 'success' | 'warning' | 'error';
-} {
-  if (!result.isValid) {
-    return {
-      title: 'Número inválido',
-      description: result.error || 'Formato de número não reconhecido.',
-      variant: 'error'
-    };
-  }
-  
-  // Se tem warnings
-  if (result.warning) {
-    const correctionMsgs = result.corrections.map(c => c.message).join('\n');
-    return {
-      title: 'Número salvo com aviso',
-      description: `${result.warning}${correctionMsgs ? '\n\n' + correctionMsgs : ''}`,
-      variant: 'warning'
-    };
-  }
-  
-  // Se tem correções
-  if (result.corrections.length > 0) {
-    const correctionMsgs = result.corrections.map(c => c.message).join('\n');
-    return {
-      title: 'Número salvo com correções',
-      description: `${correctionMsgs}\n\nSalvo como: ${result.normalized}`,
-      variant: 'warning'
-    };
-  }
-  
-  // Número perfeito
-  return {
-    title: '✅ Número válido',
-    description: `Salvo como: ${result.normalized}`,
-    variant: 'success'
-  };
-}
 
 /**
  * Salva log de auditoria de correção de telefone
@@ -440,25 +397,5 @@ export async function savePhoneCorrection(
     }
   } catch (error) {
     console.error('Erro inesperado ao salvar auditoria:', error);
-  }
-}
-
-/**
- * Busca histórico de correções do usuário
- */
-export async function getPhoneCorrectionsHistory(userId: string): Promise<Tables<'phone_corrections_audit'>[]> {
-  try {
-    const { data, error } = await supabase
-      .from('phone_corrections_audit')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(20);
-    
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar histórico de correções:', error);
-    return [];
   }
 }
