@@ -32,9 +32,18 @@ Configurações, Ajuda e Suporte — e o banco garante isso (RLS restritiva de e
 ## Comandos
 - `npm run build` · `npm run lint` · `npm run typecheck` · `npm test` (Vitest via `npx`, sem mexer em lockfile).
 - Banco local: `PGHOST=/tmp PGPORT=54399 scripts/db/apply-migrations.sh && scripts/db/testes/rodar.sh`.
+- Functions: `scripts/deno/checar-functions.sh [nome ...]` (`deno check` com import map local; usa `npx deno` se preciso).
 
 ## Convenções
-- Código novo por domínio em `src/features/<domínio>`; utilitários em `src/shared`; shadcn fica em `src/components/ui`.
+- Código por domínio em `src/features/<domínio>`; shell (providers, guardas, layout, rotas) em `src/app`;
+  utilitários em `src/shared/lib` e componentes genéricos em `src/shared/ui`; shadcn fica em `src/components/ui`
+  (e `hooks/use-toast`, `hooks/use-mobile`, `lib/utils`, pelos aliases do `components.json`).
+- Regras puras (datas, dinheiro, recorrência, impostos, planos, assinatura, Cakto) vivem em
+  `supabase/functions/_shared/*.ts`, testadas no Vitest e reexportadas pelo front em `src/shared/lib`.
+- Assinatura no front: sempre `useAssinatura()` (`src/features/assinatura`). Admin: `useIsAdmin()`/`AdminGuard`
+  (papel `admin` em `user_roles`). RPCs novas ainda fora de `types.ts`: `src/shared/lib/rpcNovas.ts`.
+- Erros para o usuário: `mensagemDeErro`/`erroDaFunction` (`src/shared/lib/erros.ts`); o front tolera RPC/coluna
+  ausente (migração ainda não aplicada) com o caminho antigo.
 - Datas-calendário (`AAAA-MM-DD`) sem fuso; "hoje" é o de `America/Sao_Paulo` (`src/shared/lib/datas.ts`).
 - Dinheiro em centavos inteiros para cálculo (`src/shared/lib/dinheiro.ts`).
 - Plano, tier e limites vêm do catálogo `supabase/functions/_shared/planos.ts` + `user_subscriptions` (`plan_id`, `features`).

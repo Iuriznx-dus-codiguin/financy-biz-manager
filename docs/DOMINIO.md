@@ -1,6 +1,9 @@
 # Financy — Domínio, fluxos, regras e contratos
 
-> Fase 0 da reestruturação. Descreve a plataforma **como ela é hoje**, com evidência no código.
+> Fase 0 da reestruturação. Descreve a plataforma **como ela era na linha de base** (commit `95cc1c0`), com evidência
+> no código daquela versão — os caminhos citados são os antigos (antes da Fase 2 mover o front para `src/features`).
+> O que mudou desde então, com commit e evidência, está no status de cada achado da auditoria e em
+> [`RELATORIO-FINAL.md`](./RELATORIO-FINAL.md).
 > Onde o comportamento real diverge do pretendido, a divergência está marcada com ⚠ e detalhada em
 > [`AUDITORIA.md`](./AUDITORIA.md). A proposta de mudança está em [`ARQUITETURA-ALVO.md`](./ARQUITETURA-ALVO.md).
 
@@ -163,13 +166,13 @@ apenas as linhas com `scheduled_date = hoje`.
 | # | Regra | Onde |
 |---|---|---|
 | R1 | Sem plano gratuito; bloqueado vê só Assinatura, Configurações, Ajuda e Suporte. | `routes.ts:37`, `AuthenticatedLayout.tsx:83` (⚠ só no front — A-03) |
-| R2 | Assinatura ativa = `status = 'active'` e `expires_at` futuro (ou tier `developer`). | `useUserSubscription.tsx:155-205` |
+| R2 | Assinatura ativa = `status = 'active'` e `expires_at` futuro (ou tier `developer`). | `useUserSubscription.tsx:155-205` → hoje `_shared/assinatura.ts` e `tem_assinatura_ativa` (mesma regra) |
 | R3 | Equipe e Fechamento só em dashboard `business`. | `routes.ts:40`, `AuthenticatedLayout.tsx:41` |
 | R4 | 1 dashboard padrão por usuário; todo lançamento tem dashboard. | índice `idx_unique_user_default_dashboard`, triggers `ensure_*` |
-| R5 | Limite de dashboards por plano. | `useFeatureAccess.tsx:69` (⚠ valores divergentes do webhook) |
+| R5 | Limite de dashboards por plano. | `useFeatureAccess.tsx:69` (⚠ valores divergentes do webhook) → hoje `features.max_dashboards`/catálogo, imposto pelo trigger `validar_limite_de_dashboards` |
 | R6 | Lançamento `pendente` "não é contabilizado até ser pago". | texto em `Receitas.tsx:345` (⚠ o Dashboard soma pendentes) |
 | R7 | Recorrência gera cópias `paga` com sufixo "(Recorrente)". | `processar_*_recorrentes` |
-| R8 | Imposto percentual incide sobre a receita do período. | `useFinancialCalculations.tsx:56` (⚠ nunca ocorre — A-15) |
+| R8 | Imposto percentual incide sobre a receita do período. | `useFinancialCalculations.tsx:56` (⚠ nunca ocorria — A-15) → hoje `_shared/impostos.ts`, com `valor_tipo` gravado |
 | R9 | Folha entra como custo mensal (semanal ×4, quinzenal ×2). | `useFinancialCalculations.tsx:86` |
 | R10 | IA in-app: 50 mensagens/dia; suporte: 60/dia. | `ai-agent/index.ts:57`, `support-agent/index.ts:10` |
 | R11 | Telefone único e normalizado (+55). | índice `idx_profiles_telefone_unique`, trigger `normalize_phone_trigger` |

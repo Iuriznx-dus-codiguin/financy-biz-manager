@@ -25,39 +25,39 @@
 
 ```
 src/
-  app/                    # App, roteamento lazy, providers e guardas (auth, assinatura, admin, PJ)
+  App.tsx, main.tsx        # entrada (o Lovable espera estes caminhos)
+  app/                     # providers, guardas (auth, admin), layout autenticado, menus, rotas, 404, carregamento lazy
   features/
-    assinatura/           # hook único de assinatura/plano/limites, tela de planos, banners
-    lancamentos/          # receitas + despesas (uma implementação parametrizada), recorrência, planilhas
-    categorias/
-    dashboards/           # seleção, criação (limite do plano), exclusão transacional
-    metas/
-    impostos/
-    equipe/
-    fechamento/
-    relatorios/
-    financeiro/           # cálculos agregados (modelo único) usados por dashboard, relatórios e IA
-    ia/                   # assistente in-app e insights
-    suporte/              # chat de suporte + FAQ + atendimento humano (admin)
-    onboarding/
-    configuracoes/
-    admin/                # auditoria de webhooks
+    admin/                 # papel admin e auditoria de webhooks
+    assinatura/            # hook único (useAssinatura), regras/catálogo, tela de planos, banners, pós-pagamento
+    auth/                  # login e sessão
+    categorias/            # catálogo, categorias personalizadas, seletor
+    configuracoes/         # tela, preferências, tema
+    dashboards/            # provider, seleção, criação (limite do plano), personalização, contexto PF/PJ
+    equipe/ fechamento/ impostos/ metas/ relatorios/
+    financeiro/            # AppContext (dados do dashboard atual) e cálculos agregados
+    ia/                    # assistente in-app e insights
+    lancamentos/           # receitas, despesas, recorrência
+    onboarding/            # fluxo, etapas e tour guiado (onboarding/tour)
+    painel/                # painel básico e avançado
+    suporte/               # chat, botão flutuante, central de ajuda, atendimento humano
   shared/
-    lib/                  # datas.ts, dinheiro.ts, erros.ts, logger.ts
-    ui/                   # componentes de aplicação reutilizáveis (não-shadcn)
-  components/ui/          # shadcn (mantido no lugar: components.json e o Lovable dependem dele)
-  integrations/supabase/  # gerado — não editar
+    lib/                   # datas, dinheiro, recorrência, impostos (reexportam supabase/functions/_shared), erros,
+                           # paginação, planilhas, filtros de período, logger, nomenclatura PF/PJ, telefone
+    ui/                    # componentes de aplicação reutilizáveis (não-shadcn) e ícones de categoria
+  components/ui/           # shadcn (mantido no lugar: components.json e o Lovable dependem dele)
+  hooks/use-toast, use-mobile, lib/utils   # aliases do shadcn
+  integrations/supabase/   # gerado — não editar
 
 supabase/functions/
   _shared/
-    cors.ts               # allowlist (produção, preview do Lovable, localhost, ALLOWED_ORIGINS opcional)
-    http.ts               # respostas JSON e erros padronizados
-    auth.ts               # usuário pelo JWT; chamador interno (cron/service role)
-    assinatura.ts         # checagem de assinatura ativa (mesma regra do front)
-    ia.ts                 # cliente único do Lovable AI Gateway
-    n8n.ts                # cliente do n8n com segredo compartilhado
-    logger.ts             # log estruturado sem dados pessoais
-    datas.ts, planos.ts, cakto.ts, assinatura-regra.ts  # regras puras, também importadas pelo front e testadas
+    cors.ts                # allowlist (produção, preview do Lovable, localhost, ALLOWED_ORIGINS opcional)
+    http.ts                # servir(), respostas JSON e ErroHttp padronizados
+    auth.ts                # usuário pelo JWT; chamador interno (cron/service role)
+    acesso.ts              # exige assinatura ativa, posse do dashboard, limite de uso (falha fechada)
+    supabase.ts, logger.ts, ia.ts, n8n.ts, consultas.ts (paginação)
+    datas.ts, dinheiro.ts, recorrencia.ts, impostos.ts, planos.ts, assinatura.ts, cakto.ts
+                           # regras puras, testadas no Vitest e importadas também pelo front
 ```
 
 `src/components/ui` permanece onde está porque `components.json` (shadcn) e o editor do Lovable geram componentes
@@ -67,7 +67,7 @@ nesse caminho; mover quebraria a edição futura pelo Lovable.
 
 | Item | Decisão |
 |---|---|
-| Assinatura ativa | `public.tem_assinatura_ativa(uuid)` (`SECURITY DEFINER`, `STABLE`): `status = 'active'` e (`expires_at` futuro ou tier `developer`). Mesma regra de `assinatura-regra.ts`. |
+| Assinatura ativa | `public.tem_assinatura_ativa(uuid)` (`SECURITY DEFINER`, `STABLE`): `status = 'active'` e (`expires_at` futuro ou tier `developer`). Mesma regra de `supabase/functions/_shared/assinatura.ts` (`assinaturaAtiva`). |
 | Paywall no banco | Policies **restritivas** de `INSERT`/`UPDATE` em `receitas`, `despesas`, `impostos`, `metas`, `equipe_membros`, `categorias_personalizadas`. Leitura, exportação e exclusão continuam livres para o dono (LGPD). |
 | RPCs | Guarda `p_user_id = auth.uid()` ou chamador privilegiado (`service_role`, conexão direta, cron) nas usadas pelo front; `EXECUTE` só para `service_role` nas demais. Assinaturas mantidas. |
 | Limite de plano | Trigger em `user_dashboards` usando `features.max_dashboards` gravado pelo webhook. |
@@ -128,14 +128,23 @@ harness de banco em `scripts/db/`.
 5. Front: hook único de assinatura (A-05..A-08), guardas de rota e rotas lazy (A-32), admin por papel (A-09),
    datas (A-13), recorrência gravada (A-11), percentual de imposto (A-15), botão Atualizar (A-10), pós-pagamento (A-24).
 
+**Estado:** entregue (commits `3cd2bbb`…`fd55d15`, status por achado em `docs/AUDITORIA.md`).
+
 ### Fase 2 — Um domínio por vez
 Lançamentos e recorrências → categorias → dashboards → metas → impostos → equipe → fechamento → relatórios → IA →
 suporte → assinatura → onboarding → configurações → admin. Em cada domínio: API + hooks React Query, componentes
 quebrados, remoção do código morto/duplicado do domínio, testes das regras puras.
 
+**Estado:** entregue a parte estrutural — código por domínio (`git mv`, só caminhos), órfãos, duplicatas e exports sem
+uso removidos, regras puras testadas. A troca do `AppContext` por hooks React Query por domínio e a quebra de
+`Configuracoes`/`DashboardAvancado` ficam como próxima etapa (o `AppContext` foi corrigido no lugar: cache, realtime,
+paginação e recorrência).
+
 ### Fase 3 — Coerência de produto (sem mudar a oferta)
 Nomenclatura PF/PJ em menu e telas, "Impostos e Taxas" contextual, uma entrada de suporte, "Assistente de IA" no
 singular, suporte com os planos reais, textos; relatório final com decisões pendentes e novas funcionalidades.
+
+**Estado:** entregue (`aa64af4`, `dc806c9`); relatório final em `docs/RELATORIO-FINAL.md`.
 
 ## 6. Riscos e mitigação
 
@@ -168,6 +177,10 @@ singular, suporte com os planos reais, textos; relatório final com decisões pe
 | D-14 | Recorrência gerada como `paga` (hoje) × `pendente` para contas a pagar. | Configurável por recorrência; padrão `pendente` para despesas futuras. |
 | D-15 | Fuso da plataforma fixo em `America/Sao_Paulo`. | Manter; campo de fuso no perfil só se houver demanda. |
 | D-16 | Uma branch por fase (pedido original) × uma branch com commits por fase (limite do ambiente). | Revisar por commits; separo em branches se preferir. |
+| D-17 | Aviso de vencimento próximo para assinantes ativos (A-52): hoje só bloqueados veem banner; "Renovar agora" pode gerar pagamento em dobro na renovação automática. | Mostrar "sua assinatura renova em N dias" sem botão de pagamento; botão só se a Cakto indicar falha de cobrança. |
+| D-18 | Cancelamento com e-mail cancela a assinatura atual mesmo se o evento for de uma assinatura antiga (A-12). Hoje: mantido e divergência registrada no log. | Enviar exemplos reais de `subscription_canceled`; cancelar só quando `cakto_subscription_id` coincidir. |
+| D-19 | Checagem antecipada de telefone duplicado no onboarding (A-48). | Manter só a constraint (a RPC já devolve a mensagem); uma RPC de disponibilidade permitiria enumerar telefones. |
+| D-20 | Periodicidades já suportadas pelo banco (quinzenal, bimestral, trimestral, semestral) não aparecem nos formulários. | Expor no formulário de impostos e lançamentos (baixo risco; o banco e as regras já tratam). |
 
 ## 8. Pré-requisitos de deploy (resumo; detalhes no PR)
 
@@ -180,4 +193,10 @@ singular, suporte com os planos reais, textos; relatório final com decisões pe
 6. n8n: validar o header `x-financy-secret` nos três webhooks.
 7. Papel admin para a conta dona: `insert into public.user_roles (user_id, role) select id, 'admin' from auth.users where email = '<seu e-mail>' on conflict do nothing;`.
 8. Rotacionar `DEVELOPER_VALID_KEYS` se contiver alguma chave do histórico do git.
-9. Deploy das functions alteradas (`supabase functions deploy <nome>`).
+9. Deploy das functions alteradas (`supabase functions deploy <nome>`): `_shared` mudou, então todas as que o
+   importam — `ai-agent`, `ai-financial-insights`, `support-agent`, `cakto-webhook`, `daily-transaction-reminder`,
+   `process-scheduled-webhooks`, `process-recurring-transactions`, `schedule-user-webhooks`, `novo-usuario-webhook`,
+   `ai-financial-agent`, `ai-support-agent`, `ai-tax-agent`, `get-main-dashboard`, `validate-developer-key`.
+10. Só depois de aprovar o D-03 (e confirmar que o n8n não chama): `supabase functions delete ai-financial-agent`,
+    `supabase functions delete ai-support-agent`, `supabase functions delete ai-tax-agent`,
+    `supabase functions delete validate-developer-key`, `supabase functions delete get-main-dashboard`.
