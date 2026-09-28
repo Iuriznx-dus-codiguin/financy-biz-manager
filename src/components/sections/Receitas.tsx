@@ -25,6 +25,9 @@ import { useAppContext } from '@/contexts/AppContext';
 import { CategorySelector } from '@/components/CategorySelector';
 import { SpreadsheetImportExport } from '@/components/SpreadsheetImportExport';
 import { parseNumber, parseDate } from '@/utils/spreadsheetIO';
+import { dataLocal, formatarData, hojeISO } from '@/shared/lib/datas';
+import { interpretarValor } from '@/shared/lib/dinheiro';
+import { ocorrenciasAte } from '@/shared/lib/recorrencia';
 
 const Receitas = () => {
   const { receitas, addReceita, deleteReceita, updateReceita } = useAppContext();
@@ -32,7 +35,7 @@ const Receitas = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todas');
   const [novaReceita, setNovaReceita] = useState({
-    data: new Date().toISOString().split('T')[0],
+    data: hojeISO(),
     descricao: '',
     categoria: '',
     categoriaPersonalizada: '',
@@ -50,7 +53,7 @@ const Receitas = () => {
     if (novaReceita.descricao && novaReceita.valor) {
       const receitaData = {
         ...novaReceita,
-        valor: parseFloat(novaReceita.valor),
+        valor: interpretarValor(novaReceita.valor) ?? 0,
         categoria_personalizada: novaReceita.categoria === 'outros' ? novaReceita.categoriaPersonalizada : null,
         proxima_data: novaReceita.recorrente ? novaReceita.proximaData : null,
         tipo_recorrencia: novaReceita.recorrente ? novaReceita.tipoRecorrencia : null,
@@ -60,7 +63,7 @@ const Receitas = () => {
         await addReceita(receitaData);
         toast.success('Receita adicionada com sucesso!');
         setNovaReceita({
-          data: new Date().toISOString().split('T')[0],
+          data: hojeISO(),
           descricao: '',
           categoria: '',
           categoriaPersonalizada: '',
@@ -129,21 +132,14 @@ const Receitas = () => {
       return [];
     }
 
-    const startDate = new Date(novaReceita.proximaData);
-    const value = parseFloat(novaReceita.valor);
-    const simulation = [];
-
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(startDate);
-      date.setMonth(date.getMonth() + i);
-      simulation.push({
-        month: date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
-        date: date.toLocaleDateString('pt-BR'),
-        value: value
-      });
-    }
-
-    return simulation;
+    const value = interpretarValor(novaReceita.valor) ?? 0;
+    // Mesma regra do banco: o dia de início é mantido e limitado ao fim do mês (31/01 → 28/02 → 31/03).
+    const diaAncora = Number(novaReceita.proximaData.slice(8, 10));
+    return ocorrenciasAte(novaReceita.proximaData, 'mensal', '9999-12-31', diaAncora, 12).map((iso) => ({
+      month: dataLocal(iso).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
+      date: formatarData(iso),
+      value,
+    }));
   }, [novaReceita.recorrente, novaReceita.proximaData, novaReceita.valor]);
 
   const totalAnualSimulado = generateMonthlySimulation.reduce((sum, item) => sum + item.value, 0);

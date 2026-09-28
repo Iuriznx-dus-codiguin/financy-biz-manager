@@ -16,6 +16,7 @@ import {
   parseSpreadsheetFile,
   TemplateColumn,
 } from '@/utils/spreadsheetIO';
+import { hojeISO } from '@/shared/lib/datas';
 
 export interface SpreadsheetImportExportProps {
   entityLabel: string; // ex: "Receitas"
@@ -67,7 +68,7 @@ export const SpreadsheetImportExport: React.FC<SpreadsheetImportExportProps> = (
         toast.info('Nada para exportar', { description: `Você ainda não possui ${entityLabel.toLowerCase()}.` });
         return;
       }
-      const stamp = new Date().toISOString().split('T')[0];
+      const stamp = hojeISO();
       await downloadXlsx(`${fileBaseName}-${stamp}.xlsx`, [
         { name: entityLabel, json: rows },
       ]);

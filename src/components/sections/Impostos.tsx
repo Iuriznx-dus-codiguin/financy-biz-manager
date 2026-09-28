@@ -16,6 +16,10 @@ import { Plus, Filter, Search, CheckCircle, XCircle, Trash2, Calendar, Repeat } 
 import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
 import { Badge } from '@/components/ui/badge';
+import { formatarData, hojeISO } from '@/shared/lib/datas';
+import { formatarBRL, interpretarValor, somarReais } from '@/shared/lib/dinheiro';
+import { totalDeImpostos, valorDoImposto } from '@/shared/lib/impostos';
+import { proximaOcorrencia, ROTULOS_RECORRENCIA, situacaoVencimento, type TipoRecorrencia } from '@/shared/lib/recorrencia';
 
 const Impostos = () => {
   const { impostos, addImposto, updateImposto, deleteImposto, receitas, loading } = useAppContext();
@@ -35,31 +39,21 @@ const Impostos = () => {
   const handleAddImposto = async (e: React.FormEvent) => {
     e.preventDefault();
     if (novoImposto.tipo && novoImposto.valor && novoImposto.vencimento) {
-      let proximaData = null;
-      if (novoImposto.tipoRecorrencia === 'recorrente') {
-        const vencimentoDate = new Date(novoImposto.vencimento);
-        switch (novoImposto.tipo_recorrencia) {
-          case 'diaria':
-            vencimentoDate.setDate(vencimentoDate.getDate() + 1);
-            break;
-          case 'semanal':
-            vencimentoDate.setDate(vencimentoDate.getDate() + 7);
-            break;
-          case 'mensal':
-            vencimentoDate.setMonth(vencimentoDate.getMonth() + 1);
-            break;
-          case 'anual':
-            vencimentoDate.setFullYear(vencimentoDate.getFullYear() + 1);
-            break;
-        }
-        proximaData = vencimentoDate.toISOString().split('T')[0];
+      // Próxima ocorrência pela mesma regra do banco (31/01 mensal → 28/02, não 03/03).
+      const proximaData = novoImposto.tipoRecorrencia === 'recorrente'
+        ? proximaOcorrencia(novoImposto.vencimento, novoImposto.tipo_recorrencia)
+        : null;
+      const valor = interpretarValor(novoImposto.valor);
+      if (valor === null || valor <= 0) {
+        toast.error('Informe um valor válido.');
+        return;
       }
 
       try {
         await addImposto({
           tipo: novoImposto.tipo,
           descricao: novoImposto.descricao,
-          valor: parseFloat(novoImposto.valor),
+          valor,
           valorTipo: novoImposto.valorTipo,
           vencimento: novoImposto.vencimento,
           pago: false,
@@ -110,20 +104,14 @@ const Impostos = () => {
     }
   };
 
-  // Calcular total de receitas para base de cálculo de impostos em porcentagem
-  const totalReceitas = receitas.reduce((sum, r) => sum + r.valor, 0);
+  // Base dos impostos percentuais: total de receitas (mesma regra do painel e da IA)
+  const totalReceitas = somarReais(receitas.map((r) => r.valor));
+  const totalImpostos = totalDeImpostos(impostos, totalReceitas);
 
-  // Calcular total de impostos considerando porcentagem
-  const totalImpostos = impostos.reduce((sum, imposto) => {
-    if (imposto.valorTipo === 'porcentagem') {
-      // Se for porcentagem, calcular sobre o total de receitas
-      return sum + (totalReceitas * (imposto.valor / 100));
-    }
-    return sum + imposto.valor;
-  }, 0);
-  
   const impostosPagos = impostos.filter(imposto => imposto.pago);
-  const impostosVencidos = impostos.filter(imposto => !imposto.pago && new Date(imposto.vencimento) < new Date());
+  // Vencido só depois do dia do vencimento (antes o próprio dia já aparecia como vencido).
+  const hoje = hojeISO();
+  const impostosVencidos = impostos.filter(imposto => situacaoVencimento(imposto.vencimento, imposto.pago, hoje) === 'vencido');
 
   if (loading) {
     return <SectionSkeleton rows={6} />;
@@ -272,7 +260,7 @@ const Impostos = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total de Impostos</p>
-                <p className="text-2xl font-bold text-warning">R$ {totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-bold text-warning">{formatarBRL(totalImpostos)}</p>
               </div>
               <div className="text-warning text-2xl">🏛️</div>
             </div>
@@ -360,9 +348,7 @@ const Impostos = () => {
                 </TableHeader>
                 <TableBody>
                   {impostos.map((imposto) => {
-                    const valorCalculado = imposto.valorTipo === 'porcentagem'
-                      ? totalReceitas * (imposto.valor / 100)
-                      : imposto.valor;
+                    const valorCalculado = valorDoImposto(imposto, totalReceitas);
 
                     return (
                       <TableRow key={imposto.id}>
@@ -373,17 +359,17 @@ const Impostos = () => {
                             {imposto.recorrente && imposto.tipo_recorrencia && (
                               <Badge variant="secondary" className="w-fit mt-1 text-xs">
                                 <Repeat className="h-3 w-3 mr-1" />
-                                {imposto.tipo_recorrencia}
+                                {ROTULOS_RECORRENCIA[imposto.tipo_recorrencia as TipoRecorrencia] ?? imposto.tipo_recorrencia}
                               </Badge>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span>{new Date(imposto.vencimento).toLocaleDateString('pt-BR')}</span>
+                            <span>{formatarData(imposto.vencimento)}</span>
                             {imposto.proxima_data && (
                               <span className="text-xs text-muted-foreground">
-                                Próx: {new Date(imposto.proxima_data).toLocaleDateString('pt-BR')}
+                                Próx: {formatarData(imposto.proxima_data)}
                               </span>
                             )}
                           </div>
@@ -400,10 +386,10 @@ const Impostos = () => {
                           )}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {imposto.valorTipo === 'porcentagem' ? `${imposto.valor}%` : `R$ ${imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                          {imposto.valorTipo === 'porcentagem' ? `${imposto.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%` : formatarBRL(imposto.valor)}
                         </TableCell>
                         <TableCell className="text-right font-bold">
-                          R$ {valorCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {formatarBRL(valorCalculado)}
                         </TableCell>
                         <TableCell className="text-center">
                           {imposto.pago ? (

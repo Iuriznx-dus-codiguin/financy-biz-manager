@@ -23,6 +23,7 @@ import {
 import { Target, Plus, TrendingUp, DollarSign, Calendar, Award, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
+import { dataLocal } from '@/shared/lib/datas';
 
 const Metas = () => {
   const { metas, addMeta, updateMeta, deleteMeta, loading } = useAppContext();
@@ -122,7 +123,7 @@ const Metas = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    return dataLocal(dateString).toLocaleDateString('pt-BR');
   };
 
   const progressoMedio = metas.length > 0 

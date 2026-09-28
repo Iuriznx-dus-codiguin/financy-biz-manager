@@ -1,9 +1,14 @@
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { logger } from '@/utils/logger';
 import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
+import { hojeISO } from '@/shared/lib/datas';
+import { ehColunaAusente } from '@/shared/lib/erros';
+import { buscarTodas } from '@/shared/lib/paginacao';
+import { ehTipoRecorrencia, proximaOcorrencia, recorrenciaDoLancamento } from '@/shared/lib/recorrencia';
 
 export interface Receita {
   id: number;
@@ -18,7 +23,7 @@ export interface Receita {
   recorrente?: boolean;
   tipo_recorrencia?: string;
   proxima_data?: string;
-  configuracao_recorrencia?: any;
+  configuracao_recorrencia?: unknown;
   categoria_personalizada?: string;
 }
 
@@ -35,7 +40,7 @@ export interface Despesa {
   recorrente?: boolean;
   tipo_recorrencia?: string;
   proxima_data?: string;
-  configuracao_recorrencia?: any;
+  configuracao_recorrencia?: unknown;
   categoria_personalizada?: string;
 }
 
@@ -86,15 +91,13 @@ export interface Configuracoes {
   idioma: 'pt-BR' | 'en-US' | 'es-ES';
 }
 
-interface DashboardCache {
-  [dashboardId: string]: {
-    receitas: Receita[];
-    despesas: Despesa[];
-    impostos: Imposto[];
-    metas: Meta[];
-    membrosEquipe: MembroEquipe[];
-    timestamp: number;
-  };
+interface DadosDoDashboard {
+  receitas: Receita[];
+  despesas: Despesa[];
+  impostos: Imposto[];
+  metas: Meta[];
+  membrosEquipe: MembroEquipe[];
+  timestamp: number;
 }
 
 interface AppContextType {
@@ -129,6 +132,124 @@ interface AppContextType {
   carregarDados: () => Promise<void>;
 }
 
+// ------------------------------------------------------------------ mapeamento banco ⇄ tela
+
+type LinhaReceita = Tables<'receitas'>;
+type LinhaDespesa = Tables<'despesas'>;
+// valor_tipo, tipo_recorrencia e proxima_data de impostos chegam com a migração 20260927120200.
+type LinhaImposto = Tables<'impostos'> & { valor_tipo?: string | null; tipo_recorrencia?: string | null; proxima_data?: string | null };
+
+const status = (valor: string | null) => (valor === 'pendente' ? 'pendente' : 'paga') as 'paga' | 'pendente';
+
+const mapearReceita = (r: LinhaReceita): Receita => ({
+  id: r.id,
+  data: r.data,
+  descricao: r.descricao,
+  categoria: r.categoria,
+  valor: Number(r.valor),
+  cliente: r.cliente ?? undefined,
+  formaPagamento: r.forma_pagamento,
+  dashboard_id: r.dashboard_id ?? undefined,
+  status: status(r.status),
+  recorrente: r.recorrente ?? false,
+  tipo_recorrencia: r.tipo_recorrencia ?? undefined,
+  proxima_data: r.proxima_data ?? undefined,
+  configuracao_recorrencia: r.configuracao_recorrencia ?? undefined,
+  categoria_personalizada: r.categoria_personalizada ?? undefined,
+});
+
+const mapearDespesa = (d: LinhaDespesa): Despesa => ({
+  id: d.id,
+  data: d.data,
+  descricao: d.descricao,
+  categoria: d.categoria,
+  valor: Number(d.valor),
+  fornecedor: d.fornecedor ?? undefined,
+  formaPagamento: d.forma_pagamento,
+  dashboard_id: d.dashboard_id ?? undefined,
+  status: status(d.status),
+  recorrente: d.recorrente ?? false,
+  tipo_recorrencia: d.tipo_recorrencia ?? undefined,
+  proxima_data: d.proxima_data ?? undefined,
+  configuracao_recorrencia: d.configuracao_recorrencia ?? undefined,
+  categoria_personalizada: d.categoria_personalizada ?? undefined,
+});
+
+const mapearImposto = (i: LinhaImposto): Imposto => ({
+  id: i.id,
+  descricao: i.descricao,
+  tipo: i.tipo,
+  valor: Number(i.valor),
+  // Antes era sempre 'fixo': percentuais cadastrados voltavam como valor em reais.
+  valorTipo: i.valor_tipo === 'porcentagem' ? 'porcentagem' : 'fixo',
+  vencimento: i.vencimento,
+  pago: i.pago ?? false,
+  tipoRecorrencia: i.recorrente ? 'recorrente' : 'unico',
+  dashboard_id: i.dashboard_id ?? undefined,
+  recorrente: i.recorrente ?? false,
+  tipo_recorrencia: i.tipo_recorrencia ?? undefined,
+  proxima_data: i.proxima_data ?? undefined,
+});
+
+const mapearMeta = (m: Tables<'metas'>): Meta => ({
+  id: m.id,
+  titulo: m.titulo,
+  valorMeta: Number(m.valor_meta),
+  valorAtual: Number(m.valor_atual),
+  progresso: m.progresso,
+  prazo: m.prazo,
+  categoria: m.categoria,
+  status: m.status as Meta['status'],
+  cor: m.cor,
+  dashboard_id: m.dashboard_id ?? undefined,
+});
+
+const mapearMembro = (m: Tables<'equipe_membros'>): MembroEquipe => ({
+  id: m.id,
+  nome: m.nome,
+  email: m.email,
+  telefone: m.telefone || '',
+  cargo: m.cargo,
+  salario: Number(m.salario),
+  status: m.status as MembroEquipe['status'],
+  periodicidade: m.periodicidade as MembroEquipe['periodicidade'],
+  dataAdmissao: m.data_admissao,
+  dashboard_id: m.dashboard_id ?? undefined,
+});
+
+/** Só os campos informados (undefined some do JSON, mas deixar explícito evita apagar colunas). */
+function definidos<T extends Record<string, unknown>>(campos: T): Partial<T> {
+  return Object.fromEntries(Object.entries(campos).filter(([, v]) => v !== undefined)) as Partial<T>;
+}
+
+/** Recorrência de um lançamento vinda do formulário (aceita os nomes antigos em camelCase). */
+function recorrenciaDoFormulario(l: Partial<Receita | Despesa> & { tipoRecorrencia?: string; proximaData?: string }) {
+  return recorrenciaDoLancamento(
+    l.data ?? hojeISO(),
+    l.recorrente,
+    l.tipo_recorrencia ?? l.tipoRecorrencia,
+    l.proxima_data ?? l.proximaData,
+  );
+}
+
+/** Campos novos de impostos; ausentes no banco antes da migração 20260927120200. */
+function camposNovosDoImposto(imposto: Partial<Imposto>) {
+  const recorrente = imposto.tipoRecorrencia === undefined ? undefined : imposto.tipoRecorrencia === 'recorrente';
+  const tipo = ehTipoRecorrencia(imposto.tipo_recorrencia) ? imposto.tipo_recorrencia : null;
+  return definidos({
+    valor_tipo: imposto.valorTipo,
+    tipo_recorrencia: recorrente === undefined ? undefined : recorrente ? tipo : null,
+    proxima_data:
+      recorrente === undefined
+        ? undefined
+        : recorrente && tipo && imposto.vencimento
+          ? imposto.proxima_data || proximaOcorrencia(imposto.vencimento, tipo)
+          : null,
+  });
+}
+
+const CACHE_TIMEOUT = 5 * 60 * 1000;
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -142,247 +263,148 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     moeda: 'BRL',
     idioma: 'pt-BR'
   });
-  const [dashboardCache, setDashboardCache] = useState<DashboardCache>({});
   const [loading, setLoading] = useState<boolean>(true);
 
   const { user } = useAuth();
   const { currentDashboard } = useDashboard();
   const { processRecurringTransactions } = useRecurringTransactions();
-  const hasProcessedRecurringRef = useRef<string | null>(null);
 
-  // Cache timeout de 5 minutos
-  const CACHE_TIMEOUT = 5 * 60 * 1000;
+  // Cache em ref: o carregamento disparado pelo realtime lia um cache de estado antigo (closure) e
+  // podia devolver dados desatualizados em vez de recarregar.
+  const cacheRef = useRef<Record<string, DadosDoDashboard>>({});
+  const dashboardAtualRef = useRef<string | null>(null);
+  dashboardAtualRef.current = currentDashboard?.id ?? null;
+  const dashboardId = currentDashboard?.id ?? null;
+  const userId = user?.id ?? null;
 
-  // Processar transações recorrentes quando usuário e dashboard estiverem prontos
-  useEffect(() => {
-    const processRecurring = async () => {
-      if (!user?.id) return;
-      
-      const today = new Date().toISOString().split('T')[0];
-      const key = `${user.id}_${today}`;
-      
-      // Evitar reprocessamento no mesmo dia
-      if (hasProcessedRecurringRef.current === key) return;
-      
-      const result = await processRecurringTransactions(user.id);
-      if (result && result.total > 0) {
-        hasProcessedRecurringRef.current = key;
-        // Invalidar cache para forçar recarregamento
-        if (currentDashboard) {
-          clearCacheForDashboard(currentDashboard.id);
-        }
-      } else if (result) {
-        hasProcessedRecurringRef.current = key;
-      }
-    };
+  const clearCacheForDashboard = useCallback((id: string) => {
+    delete cacheRef.current[id];
+  }, []);
 
-    processRecurring();
-  }, [user?.id, processRecurringTransactions]);
+  const invalidarAtual = useCallback(() => {
+    if (dashboardAtualRef.current) delete cacheRef.current[dashboardAtualRef.current];
+  }, []);
 
-  useEffect(() => {
-    if (user && currentDashboard) {
-      carregarDados();
-    }
-  }, [user, currentDashboard]);
+  const aplicar = (dados: Omit<DadosDoDashboard, 'timestamp'>) => {
+    setReceitas(dados.receitas);
+    setDespesas(dados.despesas);
+    setImpostos(dados.impostos);
+    setMetas(dados.metas);
+    setMembrosEquipe(dados.membrosEquipe);
+  };
 
-  // Listener de realtime para invalidar cache quando houver mudanças (com debounce)
-  useEffect(() => {
-    if (!currentDashboard) return;
+  const carregarDados = useCallback(async () => {
+    const id = dashboardAtualRef.current;
+    if (!userId || !id) return;
 
-    let reloadTimeout: NodeJS.Timeout | null = null;
-    
-    const debouncedReload = () => {
-      if (reloadTimeout) clearTimeout(reloadTimeout);
-      reloadTimeout = setTimeout(() => {
-        logger.info('Dados financeiros alterados, recarregando...');
-        clearCacheForDashboard(currentDashboard.id);
-        carregarDados();
-      }, 500);
-    };
-
-    const channel = supabase
-      .channel('financial-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'despesas', filter: `dashboard_id=eq.${currentDashboard.id}` },
-        debouncedReload
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'receitas', filter: `dashboard_id=eq.${currentDashboard.id}` },
-        debouncedReload
-      )
-      .subscribe();
-
-    return () => {
-      if (reloadTimeout) clearTimeout(reloadTimeout);
-      supabase.removeChannel(channel);
-    };
-  }, [currentDashboard]);
-
-  const carregarDados = async () => {
-    if (!currentDashboard) return;
-
-    // Verificar se existe cache válido
-    const cached = dashboardCache[currentDashboard.id];
-    if (cached && (Date.now() - cached.timestamp) < CACHE_TIMEOUT) {
-      setReceitas(cached.receitas);
-      setDespesas(cached.despesas);
-      setImpostos(cached.impostos);
-      setMetas(cached.metas);
-      setMembrosEquipe(cached.membrosEquipe ?? []);
+    const cached = cacheRef.current[id];
+    if (cached && Date.now() - cached.timestamp < CACHE_TIMEOUT) {
+      aplicar(cached);
       setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      if (!user || !currentDashboard) return;
+      const doDashboard = <T,>(tabela: 'receitas' | 'despesas', coluna: string) =>
+        buscarTodas<T>((de, ate) =>
+          supabase
+            .from(tabela)
+            .select('*')
+            .eq('user_id', userId)
+            .eq('dashboard_id', id)
+            .order(coluna, { ascending: false })
+            .order('id', { ascending: false })
+            .range(de, ate) as unknown as PromiseLike<{ data: T[] | null; error: null }>,
+        );
 
-      // Parallelize all queries for better performance
-      const [
-        { data: receitasData, error: receitasError },
-        { data: despesasData, error: despesasError },
-        { data: impostosData, error: impostosError },
-        { data: metasData, error: metasError },
-        { data: membrosData, error: membrosError }
-      ] = await Promise.all([
-        supabase
-          .from('receitas')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('dashboard_id', currentDashboard.id)
-          .order('data', { ascending: false }),
-        
-        supabase
-          .from('despesas')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('dashboard_id', currentDashboard.id)
-          .order('data', { ascending: false }),
-        
-        supabase
-          .from('impostos')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('dashboard_id', currentDashboard.id)
-          .order('vencimento', { ascending: true }),
-        
-        supabase
-          .from('metas')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('dashboard_id', currentDashboard.id)
-          .order('created_at', { ascending: false }),
-        
-        supabase
-          .from('equipe_membros')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('dashboard_id', currentDashboard.id)
-          .order('created_at', { ascending: false })
+      const [receitasData, despesasData, impostosRes, metasRes, membrosRes] = await Promise.all([
+        doDashboard<LinhaReceita>('receitas', 'data'),
+        doDashboard<LinhaDespesa>('despesas', 'data'),
+        supabase.from('impostos').select('*').eq('user_id', userId).eq('dashboard_id', id).order('vencimento', { ascending: true }),
+        supabase.from('metas').select('*').eq('user_id', userId).eq('dashboard_id', id).order('created_at', { ascending: false }),
+        supabase.from('equipe_membros').select('*').eq('user_id', userId).eq('dashboard_id', id).order('created_at', { ascending: false }),
       ]);
+      if (impostosRes.error) throw impostosRes.error;
+      if (metasRes.error) throw metasRes.error;
+      if (membrosRes.error) throw membrosRes.error;
 
-      if (receitasError) throw receitasError;
-      if (despesasError) throw despesasError;
-      if (impostosError) throw impostosError;
-      if (metasError) throw metasError;
-      if (membrosError) throw membrosError;
-
-      const receitasFormatadas = receitasData?.map(r => ({
-        id: r.id,
-        data: r.data,
-        descricao: r.descricao,
-        categoria: r.categoria,
-        valor: r.valor,
-        cliente: r.cliente,
-        formaPagamento: r.forma_pagamento,
-        dashboard_id: r.dashboard_id,
-        status: (r.status || 'paga') as 'paga' | 'pendente'
-      })) || [];
-
-      const despesasFormatadas = despesasData?.map(d => ({
-        id: d.id,
-        data: d.data,
-        descricao: d.descricao,
-        categoria: d.categoria,
-        valor: d.valor,
-        fornecedor: d.fornecedor,
-        formaPagamento: d.forma_pagamento,
-        dashboard_id: d.dashboard_id,
-        status: (d.status || 'paga') as 'paga' | 'pendente'
-      })) || [];
-
-      const impostosFormatados = impostosData?.map(i => ({
-        id: i.id,
-        descricao: i.descricao,
-        tipo: i.tipo,
-        valor: i.valor,
-        valorTipo: 'fixo' as const,
-        vencimento: i.vencimento,
-        pago: i.pago || false,
-        tipoRecorrencia: (i.recorrente ? 'recorrente' : 'unico') as 'unico' | 'recorrente',
-        dashboard_id: i.dashboard_id
-      })) || [];
-
-      const metasFormatadas = metasData?.map(m => ({
-        id: m.id,
-        titulo: m.titulo,
-        valorMeta: m.valor_meta,
-        valorAtual: m.valor_atual,
-        progresso: m.progresso,
-        prazo: m.prazo,
-        categoria: m.categoria,
-        status: m.status as 'em_andamento' | 'concluida' | 'atrasada',
-        cor: m.cor,
-        dashboard_id: m.dashboard_id
-      })) || [];
-
-      const membrosFormatados = membrosData?.map(m => ({
-        id: m.id,
-        nome: m.nome,
-        email: m.email,
-        telefone: m.telefone || '',
-        cargo: m.cargo,
-        salario: m.salario,
-        status: m.status as 'ativo' | 'inativo',
-        periodicidade: m.periodicidade as 'mensal' | 'semanal' | 'quinzenal',
-        dataAdmissao: m.data_admissao,
-        dashboard_id: m.dashboard_id
-      })) || [];
-
-      // Atualizar estados
-      setReceitas(receitasFormatadas);
-      setDespesas(despesasFormatadas);
-      setImpostos(impostosFormatados);
-      setMetas(metasFormatadas);
-      setMembrosEquipe(membrosFormatados);
-
-      // Atualizar cache (incluindo membros da equipe)
-      setDashboardCache(prev => ({
-        ...prev,
-        [currentDashboard.id]: {
-          receitas: receitasFormatadas,
-          despesas: despesasFormatadas,
-          impostos: impostosFormatados,
-          metas: metasFormatadas,
-          membrosEquipe: membrosFormatados,
-          timestamp: Date.now()
-        }
-      }));
-
+      const dados = {
+        receitas: receitasData.map(mapearReceita),
+        despesas: despesasData.map(mapearDespesa),
+        impostos: (impostosRes.data as LinhaImposto[]).map(mapearImposto),
+        metas: (metasRes.data ?? []).map(mapearMeta),
+        membrosEquipe: (membrosRes.data ?? []).map(mapearMembro),
+      };
+      cacheRef.current[id] = { ...dados, timestamp: Date.now() };
+      // O usuário pode ter trocado de dashboard enquanto a consulta rodava.
+      if (dashboardAtualRef.current === id) aplicar(dados);
     } catch (error) {
       logger.error('Erro ao carregar dados financeiros:', error);
     } finally {
-      setLoading(false);
+      if (dashboardAtualRef.current === id) setLoading(false);
     }
-  };
+  }, [userId]);
+
+  const recarregar = useCallback(async () => {
+    invalidarAtual();
+    await carregarDados();
+  }, [invalidarAtual, carregarDados]);
+
+  const recarregarRef = useRef(recarregar);
+  recarregarRef.current = recarregar;
+
+  useEffect(() => {
+    if (userId && dashboardId) carregarDados();
+  }, [userId, dashboardId, carregarDados]);
+
+  // Recorrências vencidas do usuário (uma vez por dia de Brasília); recarrega se algo foi gerado.
+  useEffect(() => {
+    if (!userId) return;
+    let ativo = true;
+    processRecurringTransactions(userId).then((resultado) => {
+      if (ativo && resultado && resultado.total > 0) {
+        cacheRef.current = {};
+        recarregarRef.current();
+      }
+    });
+    return () => {
+      ativo = false;
+    };
+  }, [userId, processRecurringTransactions]);
+
+  // Mudanças feitas fora desta aba (WhatsApp/n8n, outra aba, cron) recarregam o dashboard atual.
+  useEffect(() => {
+    if (!dashboardId) return;
+    let espera: ReturnType<typeof setTimeout> | null = null;
+    const agendar = () => {
+      if (espera) clearTimeout(espera);
+      espera = setTimeout(() => {
+        logger.info('Dados financeiros alterados, recarregando...');
+        recarregarRef.current();
+      }, 500);
+    };
+
+    const filtro = `dashboard_id=eq.${dashboardId}`;
+    // Nome único por assinatura: reaproveitar o mesmo nome entre dashboards misturava as inscrições.
+    const canal = supabase
+      .channel(`financeiro-${dashboardId}-${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'despesas', filter: filtro }, agendar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'receitas', filter: filtro }, agendar)
+      .subscribe();
+
+    return () => {
+      if (espera) clearTimeout(espera);
+      supabase.removeChannel(canal);
+    };
+  }, [dashboardId]);
+
+  // ---------------------------------------------------------------- lançamentos
 
   const addReceita = async (receita: Omit<Receita, 'id'>) => {
     if (!user || !currentDashboard) return;
     const tempId = Date.now() * -1;
-    const optimistic = { ...receita, id: tempId } as Receita;
-    setReceitas(prev => [optimistic, ...prev]);
+    setReceitas(prev => [{ ...receita, id: tempId } as Receita, ...prev]);
     try {
       const { data, error } = await supabase
         .from('receitas')
@@ -395,23 +417,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           valor: receita.valor,
           cliente: receita.cliente,
           forma_pagamento: receita.formaPagamento,
-          status: receita.status || 'paga'
+          status: receita.status || 'paga',
+          categoria_personalizada: receita.categoria_personalizada || null,
+          // Antes a recorrência escolhida no formulário não era gravada.
+          ...recorrenciaDoFormulario(receita),
         })
         .select()
         .single();
       if (error) throw error;
-      setReceitas(prev => prev.map(r => r.id === tempId ? {
-        id: data.id,
-        data: data.data,
-        descricao: data.descricao,
-        categoria: data.categoria,
-        valor: data.valor,
-        cliente: data.cliente,
-        formaPagamento: data.forma_pagamento,
-        dashboard_id: data.dashboard_id,
-        status: (data.status || 'paga') as 'paga' | 'pendente'
-      } : r));
-      clearCacheForDashboard(currentDashboard.id);
+      setReceitas(prev => prev.map(r => (r.id === tempId ? mapearReceita(data) : r)));
+      invalidarAtual();
     } catch (error) {
       setReceitas(prev => prev.filter(r => r.id !== tempId));
       logger.error('Erro ao adicionar receita:', error);
@@ -422,8 +437,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addDespesa = async (despesa: Omit<Despesa, 'id'>) => {
     if (!user || !currentDashboard) return;
     const tempId = Date.now() * -1;
-    const optimistic = { ...despesa, id: tempId } as Despesa;
-    setDespesas(prev => [optimistic, ...prev]);
+    setDespesas(prev => [{ ...despesa, id: tempId } as Despesa, ...prev]);
     try {
       const { data, error } = await supabase
         .from('despesas')
@@ -436,23 +450,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           valor: despesa.valor,
           fornecedor: despesa.fornecedor,
           forma_pagamento: despesa.formaPagamento,
-          status: despesa.status || 'paga'
+          status: despesa.status || 'paga',
+          categoria_personalizada: despesa.categoria_personalizada || null,
+          ...recorrenciaDoFormulario(despesa),
         })
         .select()
         .single();
       if (error) throw error;
-      setDespesas(prev => prev.map(d => d.id === tempId ? {
-        id: data.id,
-        data: data.data,
-        descricao: data.descricao,
-        categoria: data.categoria,
-        valor: data.valor,
-        fornecedor: data.fornecedor,
-        formaPagamento: data.forma_pagamento,
-        dashboard_id: data.dashboard_id,
-        status: (data.status || 'paga') as 'paga' | 'pendente'
-      } : d));
-      clearCacheForDashboard(currentDashboard.id);
+      setDespesas(prev => prev.map(d => (d.id === tempId ? mapearDespesa(data) : d)));
+      invalidarAtual();
     } catch (error) {
       setDespesas(prev => prev.filter(d => d.id !== tempId));
       logger.error('Erro ao adicionar despesa:', error);
@@ -460,50 +466,175 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const addImposto = async (imposto: Omit<Imposto, 'id'>) => {
-    if (!user || !currentDashboard) return;
-    const tempId = Date.now() * -1;
-    const optimistic = { ...imposto, id: tempId } as Imposto;
-    setImpostos(prev => [optimistic, ...prev]);
+  const updateReceita = async (id: number, receita: Partial<Receita>) => {
+    const previous = receitas;
+    setReceitas(prev => prev.map(r => (r.id === id ? { ...r, ...receita } : r)));
     try {
-      const { data, error } = await supabase
-        .from('impostos')
-        .insert({
-          user_id: user.id,
-          dashboard_id: currentDashboard.id,
-          descricao: imposto.descricao,
-          tipo: imposto.tipo,
-          valor: imposto.valor,
-          vencimento: imposto.vencimento,
-          pago: imposto.pago || false,
-          recorrente: imposto.tipoRecorrencia === 'recorrente'
-        })
-        .select()
-        .single();
+      const { error } = await supabase
+        .from('receitas')
+        .update(definidos({
+          data: receita.data,
+          descricao: receita.descricao,
+          categoria: receita.categoria,
+          valor: receita.valor,
+          cliente: receita.cliente,
+          forma_pagamento: receita.formaPagamento,
+          status: receita.status,
+        }) as TablesUpdate<'receitas'>)
+        .eq('id', id)
+        .eq('user_id', user!.id);
       if (error) throw error;
-      setImpostos(prev => prev.map(i => i.id === tempId ? {
-        id: data.id,
-        descricao: data.descricao,
-        tipo: data.tipo,
-        valor: data.valor,
-        valorTipo: imposto.valorTipo,
-        vencimento: data.vencimento,
-        pago: data.pago || false,
-        tipoRecorrencia: imposto.tipoRecorrencia,
-        dashboard_id: data.dashboard_id
-      } : i));
+      invalidarAtual();
     } catch (error) {
-      setImpostos(prev => prev.filter(i => i.id !== tempId));
-      console.error('Erro ao adicionar imposto:', error);
+      setReceitas(previous);
+      logger.error('Erro ao atualizar receita:', error);
       throw error;
     }
   };
 
+  const updateDespesa = async (id: number, despesa: Partial<Despesa>) => {
+    const previous = despesas;
+    setDespesas(prev => prev.map(d => (d.id === id ? { ...d, ...despesa } : d)));
+    try {
+      const { error } = await supabase
+        .from('despesas')
+        .update(definidos({
+          data: despesa.data,
+          descricao: despesa.descricao,
+          categoria: despesa.categoria,
+          valor: despesa.valor,
+          fornecedor: despesa.fornecedor,
+          forma_pagamento: despesa.formaPagamento,
+          status: despesa.status,
+        }) as TablesUpdate<'despesas'>)
+        .eq('id', id)
+        .eq('user_id', user!.id);
+      if (error) throw error;
+      invalidarAtual();
+    } catch (error) {
+      setDespesas(previous);
+      logger.error('Erro ao atualizar despesa:', error);
+      throw error;
+    }
+  };
+
+  const deleteReceita = async (id: number) => {
+    const previous = receitas;
+    setReceitas(prev => prev.filter(r => r.id !== id));
+    try {
+      const { error } = await supabase.from('receitas').delete().eq('id', id).eq('user_id', user!.id);
+      if (error) throw error;
+      invalidarAtual();
+    } catch (error) {
+      setReceitas(previous);
+      logger.error('Erro ao excluir receita:', error);
+      throw error;
+    }
+  };
+
+  const deleteDespesa = async (id: number) => {
+    const previous = despesas;
+    setDespesas(prev => prev.filter(d => d.id !== id));
+    try {
+      const { error } = await supabase.from('despesas').delete().eq('id', id).eq('user_id', user!.id);
+      if (error) throw error;
+      invalidarAtual();
+    } catch (error) {
+      setDespesas(previous);
+      logger.error('Erro ao excluir despesa:', error);
+      throw error;
+    }
+  };
+
+  // ---------------------------------------------------------------- impostos
+
+  const addImposto = async (imposto: Omit<Imposto, 'id'>) => {
+    if (!user || !currentDashboard) return;
+    const tempId = Date.now() * -1;
+    setImpostos(prev => [{ ...imposto, id: tempId } as Imposto, ...prev]);
+    const basicos: TablesInsert<'impostos'> = {
+      user_id: user.id,
+      dashboard_id: currentDashboard.id,
+      descricao: imposto.descricao,
+      tipo: imposto.tipo,
+      valor: imposto.valor,
+      vencimento: imposto.vencimento,
+      pago: imposto.pago || false,
+      recorrente: imposto.tipoRecorrencia === 'recorrente',
+    };
+    try {
+      let resposta = await supabase
+        .from('impostos')
+        .insert({ ...basicos, ...camposNovosDoImposto(imposto) } as TablesInsert<'impostos'>)
+        .select()
+        .single();
+      // Banco ainda sem as colunas novas: grava o básico, como antes.
+      if (resposta.error && ehColunaAusente(resposta.error)) {
+        resposta = await supabase.from('impostos').insert(basicos).select().single();
+      }
+      if (resposta.error) throw resposta.error;
+      const salvo = mapearImposto(resposta.data as LinhaImposto);
+      // Sem a coluna valor_tipo, mantém na tela o tipo escolhido até recarregar.
+      setImpostos(prev => prev.map(i => (i.id === tempId ? { ...salvo, valorTipo: imposto.valorTipo } : i)));
+      invalidarAtual();
+    } catch (error) {
+      setImpostos(prev => prev.filter(i => i.id !== tempId));
+      logger.error('Erro ao adicionar imposto:', error);
+      throw error;
+    }
+  };
+
+  const updateImposto = async (id: number, imposto: Partial<Imposto>) => {
+    const previous = impostos;
+    setImpostos(prev => prev.map(i => (i.id === id ? { ...i, ...imposto } : i)));
+    // Só o que foi informado: marcar como pago não desliga mais a recorrência (antes enviava recorrente=false).
+    const basicos = definidos({
+      pago: imposto.pago,
+      descricao: imposto.descricao,
+      tipo: imposto.tipo,
+      valor: imposto.valor,
+      vencimento: imposto.vencimento,
+      recorrente: imposto.tipoRecorrencia === undefined ? undefined : imposto.tipoRecorrencia === 'recorrente',
+    }) as TablesUpdate<'impostos'>;
+    try {
+      const novos = camposNovosDoImposto(imposto);
+      let { error } = await supabase
+        .from('impostos')
+        .update({ ...basicos, ...novos } as TablesUpdate<'impostos'>)
+        .eq('id', id)
+        .eq('user_id', user!.id);
+      if (error && ehColunaAusente(error) && Object.keys(basicos).length) {
+        ({ error } = await supabase.from('impostos').update(basicos).eq('id', id).eq('user_id', user!.id));
+      }
+      if (error) throw error;
+      invalidarAtual();
+    } catch (error) {
+      setImpostos(previous);
+      logger.error('Erro ao atualizar imposto:', error);
+      throw error;
+    }
+  };
+
+  const deleteImposto = async (id: number) => {
+    const previous = impostos;
+    setImpostos(prev => prev.filter(i => i.id !== id));
+    try {
+      const { error } = await supabase.from('impostos').delete().eq('id', id).eq('user_id', user!.id);
+      if (error) throw error;
+      invalidarAtual();
+    } catch (error) {
+      setImpostos(previous);
+      logger.error('Erro ao excluir imposto:', error);
+      throw error;
+    }
+  };
+
+  // ---------------------------------------------------------------- metas
+
   const addMeta = async (meta: Omit<Meta, 'id'>) => {
     if (!user || !currentDashboard) return;
     const tempId = `temp-${Date.now()}`;
-    const optimistic = { ...meta, id: tempId } as Meta;
-    setMetas(prev => [optimistic, ...prev]);
+    setMetas(prev => [{ ...meta, id: tempId } as Meta, ...prev]);
     try {
       const { data, error } = await supabase
         .from('metas')
@@ -522,30 +653,62 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .select()
         .single();
       if (error) throw error;
-      setMetas(prev => prev.map(m => m.id === tempId ? {
-        id: data.id,
-        titulo: data.titulo,
-        valorMeta: data.valor_meta,
-        valorAtual: data.valor_atual,
-        progresso: data.progresso,
-        prazo: data.prazo,
-        categoria: data.categoria,
-        status: data.status as 'em_andamento' | 'concluida' | 'atrasada',
-        cor: data.cor,
-        dashboard_id: data.dashboard_id
-      } : m));
+      setMetas(prev => prev.map(m => (m.id === tempId ? mapearMeta(data) : m)));
+      invalidarAtual();
     } catch (error) {
       setMetas(prev => prev.filter(m => m.id !== tempId));
-      console.error('Erro ao adicionar meta:', error);
+      logger.error('Erro ao adicionar meta:', error);
       throw error;
     }
   };
 
+  const updateMeta = async (id: string, meta: Partial<Meta>) => {
+    const previous = metas;
+    setMetas(prev => prev.map(m => (m.id === id ? { ...m, ...meta } : m)));
+    try {
+      const { error } = await supabase
+        .from('metas')
+        .update(definidos({
+          titulo: meta.titulo,
+          valor_meta: meta.valorMeta,
+          valor_atual: meta.valorAtual,
+          progresso: meta.progresso,
+          prazo: meta.prazo,
+          categoria: meta.categoria,
+          status: meta.status,
+          cor: meta.cor
+        }) as TablesUpdate<'metas'>)
+        .eq('id', id)
+        .eq('user_id', user!.id);
+      if (error) throw error;
+      invalidarAtual();
+    } catch (error) {
+      setMetas(previous);
+      logger.error('Erro ao atualizar meta:', error);
+      throw error;
+    }
+  };
+
+  const deleteMeta = async (id: string) => {
+    const previous = metas;
+    setMetas(prev => prev.filter(m => m.id !== id));
+    try {
+      const { error } = await supabase.from('metas').delete().eq('id', id).eq('user_id', user!.id);
+      if (error) throw error;
+      invalidarAtual();
+    } catch (error) {
+      setMetas(previous);
+      logger.error('Erro ao excluir meta:', error);
+      throw error;
+    }
+  };
+
+  // ---------------------------------------------------------------- equipe
+
   const addMembroEquipe = async (membro: Omit<MembroEquipe, 'id'>) => {
     if (!user || !currentDashboard) return;
     const tempId = `temp-${Date.now()}`;
-    const optimistic = { ...membro, id: tempId } as MembroEquipe;
-    setMembrosEquipe(prev => [optimistic, ...prev]);
+    setMembrosEquipe(prev => [{ ...membro, id: tempId } as MembroEquipe, ...prev]);
     try {
       const { data, error } = await supabase
         .from('equipe_membros')
@@ -564,32 +727,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .select()
         .single();
       if (error) throw error;
-      setMembrosEquipe(prev => prev.map(m => m.id === tempId ? {
-        id: data.id,
-        nome: data.nome,
-        email: data.email,
-        telefone: data.telefone || '',
-        cargo: data.cargo,
-        salario: data.salario,
-        status: data.status as 'ativo' | 'inativo',
-        periodicidade: data.periodicidade as 'mensal' | 'semanal' | 'quinzenal',
-        dataAdmissao: data.data_admissao,
-        dashboard_id: data.dashboard_id
-      } : m));
+      setMembrosEquipe(prev => prev.map(m => (m.id === tempId ? mapearMembro(data) : m)));
+      invalidarAtual();
     } catch (error) {
       setMembrosEquipe(prev => prev.filter(m => m.id !== tempId));
-      console.error('Erro ao adicionar membro da equipe:', error);
+      logger.error('Erro ao adicionar membro da equipe:', error);
       throw error;
     }
   };
 
   const updateMembroEquipe = async (id: string, membro: Partial<MembroEquipe>) => {
     const previous = membrosEquipe;
-    setMembrosEquipe(prev => prev.map(m => m.id === id ? { ...m, ...membro } : m));
+    setMembrosEquipe(prev => prev.map(m => (m.id === id ? { ...m, ...membro } : m)));
     try {
       const { error } = await supabase
         .from('equipe_membros')
-        .update({
+        .update(definidos({
           nome: membro.nome,
           email: membro.email,
           telefone: membro.telefone,
@@ -598,140 +751,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           status: membro.status,
           periodicidade: membro.periodicidade,
           data_admissao: membro.dataAdmissao
-        })
-        .eq('id', id);
+        }) as TablesUpdate<'equipe_membros'>)
+        .eq('id', id)
+        .eq('user_id', user!.id);
       if (error) throw error;
+      invalidarAtual();
     } catch (error) {
       setMembrosEquipe(previous);
-      console.error('Erro ao atualizar membro da equipe:', error);
-      throw error;
-    }
-  };
-
-  const updateReceita = async (id: number, receita: Partial<Receita>) => {
-    const previous = receitas;
-    setReceitas(prev => prev.map(r => r.id === id ? { ...r, ...receita } : r));
-    try {
-      const { error } = await supabase
-        .from('receitas')
-        .update({
-          data: receita.data,
-          descricao: receita.descricao,
-          categoria: receita.categoria,
-          valor: receita.valor,
-          cliente: receita.cliente,
-          forma_pagamento: receita.formaPagamento,
-          status: receita.status
-        })
-        .eq('id', id)
-        .eq('user_id', user!.id);
-      if (error) throw error;
-    } catch (error) {
-      setReceitas(previous);
-      console.error('Erro ao atualizar receita:', error);
-      throw error;
-    }
-  };
-
-  const updateDespesa = async (id: number, despesa: Partial<Despesa>) => {
-    const previous = despesas;
-    setDespesas(prev => prev.map(d => d.id === id ? { ...d, ...despesa } : d));
-    try {
-      const { error } = await supabase
-        .from('despesas')
-        .update({
-          data: despesa.data,
-          descricao: despesa.descricao,
-          categoria: despesa.categoria,
-          valor: despesa.valor,
-          fornecedor: despesa.fornecedor,
-          forma_pagamento: despesa.formaPagamento,
-          status: despesa.status
-        })
-        .eq('id', id)
-        .eq('user_id', user!.id);
-      if (error) throw error;
-    } catch (error) {
-      setDespesas(previous);
-      console.error('Erro ao atualizar despesa:', error);
-      throw error;
-    }
-  };
-
-  const updateMeta = async (id: string, meta: Partial<Meta>) => {
-    const previous = metas;
-    setMetas(prev => prev.map(m => m.id === id ? { ...m, ...meta } : m));
-    try {
-      const { error } = await supabase
-        .from('metas')
-        .update({
-          titulo: meta.titulo,
-          valor_meta: meta.valorMeta,
-          valor_atual: meta.valorAtual,
-          progresso: meta.progresso,
-          prazo: meta.prazo,
-          categoria: meta.categoria,
-          status: meta.status,
-          cor: meta.cor
-        })
-        .eq('id', id)
-        .eq('user_id', user!.id);
-      if (error) throw error;
-    } catch (error) {
-      setMetas(previous);
-      console.error('Erro ao atualizar meta:', error);
-      throw error;
-    }
-  };
-
-  const deleteReceita = async (id: number) => {
-    const previous = receitas;
-    setReceitas(prev => prev.filter(r => r.id !== id));
-    try {
-      const { error } = await supabase.from('receitas').delete().eq('id', id).eq('user_id', user!.id);
-      if (error) throw error;
-    } catch (error) {
-      setReceitas(previous);
-      console.error('Erro ao deletar receita:', error);
-      throw error;
-    }
-  };
-
-  const deleteDespesa = async (id: number) => {
-    const previous = despesas;
-    setDespesas(prev => prev.filter(d => d.id !== id));
-    try {
-      const { error } = await supabase.from('despesas').delete().eq('id', id).eq('user_id', user!.id);
-      if (error) throw error;
-    } catch (error) {
-      setDespesas(previous);
-      console.error('Erro ao deletar despesa:', error);
-      throw error;
-    }
-  };
-
-  const deleteImposto = async (id: number) => {
-    const previous = impostos;
-    setImpostos(prev => prev.filter(i => i.id !== id));
-    try {
-      const { error } = await supabase.from('impostos').delete().eq('id', id).eq('user_id', user!.id);
-      if (error) throw error;
-    } catch (error) {
-      setImpostos(previous);
-      console.error('Erro ao deletar imposto:', error);
-      throw error;
-    }
-  };
-
-  const deleteMeta = async (id: string) => {
-    const previous = metas;
-    setMetas(prev => prev.filter(m => m.id !== id));
-    try {
-      const { error } = await supabase.from('metas').delete().eq('id', id).eq('user_id', user!.id);
-      if (error) throw error;
-    } catch (error) {
-      setMetas(previous);
-      console.error('Erro ao deletar meta:', error);
+      logger.error('Erro ao atualizar membro da equipe:', error);
       throw error;
     }
   };
@@ -740,49 +767,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const previous = membrosEquipe;
     setMembrosEquipe(prev => prev.filter(m => m.id !== id));
     try {
-      const { error } = await supabase.from('equipe_membros').delete().eq('id', id);
+      const { error } = await supabase.from('equipe_membros').delete().eq('id', id).eq('user_id', user!.id);
       if (error) throw error;
+      invalidarAtual();
     } catch (error) {
       setMembrosEquipe(previous);
-      console.error('Erro ao deletar membro da equipe:', error);
-      throw error;
-    }
-  };
-
-  const updateImposto = async (id: number, imposto: Partial<Imposto>) => {
-    const previous = impostos;
-    setImpostos(prev => prev.map(i => i.id === id ? { ...i, ...imposto } : i));
-    try {
-      const { error } = await supabase
-        .from('impostos')
-        .update({
-          pago: imposto.pago,
-          descricao: imposto.descricao,
-          tipo: imposto.tipo,
-          valor: imposto.valor,
-          vencimento: imposto.vencimento,
-          recorrente: imposto.tipoRecorrencia === 'recorrente'
-        })
-        .eq('id', id)
-        .eq('user_id', user!.id);
-      if (error) throw error;
-    } catch (error) {
-      setImpostos(previous);
-      console.error('Erro ao atualizar imposto:', error);
+      logger.error('Erro ao excluir membro da equipe:', error);
       throw error;
     }
   };
 
   const updateConfiguracoes = (novasConfiguracoes: Partial<Configuracoes>) => {
     setConfiguracoes(prev => ({ ...prev, ...novasConfiguracoes }));
-  };
-
-  const clearCacheForDashboard = (dashboardId: string) => {
-    setDashboardCache(prev => {
-      const newCache = { ...prev };
-      delete newCache[dashboardId];
-      return newCache;
-    });
   };
 
   return (
@@ -815,13 +811,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       updateImposto,
       updateConfiguracoes,
       clearCacheForDashboard,
-      carregarDados
+      carregarDados: recarregar
     }}>
       {children}
     </AppContext.Provider>
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (context === undefined) {
@@ -829,4 +826,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-

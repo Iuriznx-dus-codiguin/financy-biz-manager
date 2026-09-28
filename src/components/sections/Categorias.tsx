@@ -16,6 +16,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { dataLocal } from '@/shared/lib/datas';
 
 // Mesmos nomes do mapa em shared/ui/iconesCategoria.ts.
 const iconOptions = [
@@ -51,12 +52,12 @@ export function Categorias() {
     const fim = endOfMonth(new Date());
     
     const despesasDoMes = despesas.filter(despesa => {
-      const dataDespesa = new Date(despesa.data);
+      const dataDespesa = dataLocal(despesa.data);
       return dataDespesa >= inicio && dataDespesa <= fim;
     });
 
     const receitasDoMes = receitas.filter(receita => {
-      const dataReceita = new Date(receita.data);
+      const dataReceita = dataLocal(receita.data);
       return dataReceita >= inicio && dataReceita <= fim;
     });
 

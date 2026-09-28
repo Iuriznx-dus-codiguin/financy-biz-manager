@@ -25,6 +25,9 @@ import { useAppContext } from '@/contexts/AppContext';
 import { CategorySelector } from '@/components/CategorySelector';
 import { SpreadsheetImportExport } from '@/components/SpreadsheetImportExport';
 import { parseNumber, parseDate } from '@/utils/spreadsheetIO';
+import { dataLocal, formatarData, hojeISO } from '@/shared/lib/datas';
+import { interpretarValor } from '@/shared/lib/dinheiro';
+import { ocorrenciasAte } from '@/shared/lib/recorrencia';
 
 const Despesas = () => {
   const { despesas, addDespesa, deleteDespesa, updateDespesa } = useAppContext();
@@ -32,7 +35,7 @@ const Despesas = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todas');
   const [novaDespesa, setNovaDespesa] = useState({
-    data: '',
+    data: hojeISO(),
     descricao: '',
     categoria: '',
     categoriaPersonalizada: '',
@@ -50,7 +53,7 @@ const Despesas = () => {
     if (novaDespesa.descricao && novaDespesa.valor) {
       const despesaData = {
         ...novaDespesa,
-        valor: parseFloat(novaDespesa.valor),
+        valor: interpretarValor(novaDespesa.valor) ?? 0,
         categoria_personalizada: novaDespesa.categoria === 'outros' ? novaDespesa.categoriaPersonalizada : null,
         proxima_data: novaDespesa.recorrente ? novaDespesa.proximaData : null,
         tipo_recorrencia: novaDespesa.recorrente ? novaDespesa.tipoRecorrencia : null,
@@ -60,7 +63,7 @@ const Despesas = () => {
         await addDespesa(despesaData);
         toast.success('Despesa adicionada com sucesso!');
         setNovaDespesa({
-          data: '',
+          data: hojeISO(),
           descricao: '',
           categoria: '',
           categoriaPersonalizada: '',
@@ -138,21 +141,14 @@ const Despesas = () => {
       return [];
     }
 
-    const startDate = new Date(novaDespesa.proximaData);
-    const value = parseFloat(novaDespesa.valor);
-    const simulation = [];
-
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(startDate);
-      date.setMonth(date.getMonth() + i);
-      simulation.push({
-        month: date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
-        date: date.toLocaleDateString('pt-BR'),
-        value: value
-      });
-    }
-
-    return simulation;
+    const value = interpretarValor(novaDespesa.valor) ?? 0;
+    // Mesma regra do banco: o dia de início é mantido e limitado ao fim do mês (31/01 → 28/02 → 31/03).
+    const diaAncora = Number(novaDespesa.proximaData.slice(8, 10));
+    return ocorrenciasAte(novaDespesa.proximaData, 'mensal', '9999-12-31', diaAncora, 12).map((iso) => ({
+      month: dataLocal(iso).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
+      date: formatarData(iso),
+      value,
+    }));
   }, [novaDespesa.recorrente, novaDespesa.proximaData, novaDespesa.valor]);
 
   const totalAnualSimulado = generateMonthlySimulation.reduce((sum, item) => sum + item.value, 0);

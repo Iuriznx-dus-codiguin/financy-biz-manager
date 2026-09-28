@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ocorrenciasAte, proximaOcorrencia, situacaoVencimento } from './recorrencia';
+import { ocorrenciasAte, proximaOcorrencia, recorrenciaDoLancamento, situacaoVencimento } from './recorrencia';
 
 describe('proximaOcorrencia', () => {
   it('periodicidades em dias', () => {
@@ -40,5 +40,22 @@ describe('situacaoVencimento', () => {
     expect(situacaoVencimento('2026-09-26', false, '2026-09-27')).toBe('vencido');
     expect(situacaoVencimento('2026-09-28', false, '2026-09-27')).toBe('a_vencer');
     expect(situacaoVencimento('2026-09-20', true, '2026-09-27')).toBe('pago');
+  });
+});
+
+describe('recorrenciaDoLancamento', () => {
+  it('sem recorrência ou com tipo inválido não grava nada', () => {
+    expect(recorrenciaDoLancamento('2026-09-05', false, 'mensal')).toEqual({ recorrente: false, tipo_recorrencia: null, proxima_data: null });
+    expect(recorrenciaDoLancamento('2026-09-05', true, 'xpto')).toEqual({ recorrente: false, tipo_recorrencia: null, proxima_data: null });
+  });
+
+  it('início posterior ao lançamento é mantido', () => {
+    expect(recorrenciaDoLancamento('2026-09-05', true, 'mensal', '2026-09-20').proxima_data).toBe('2026-09-20');
+  });
+
+  it('início igual, anterior ou vazio vira a ocorrência seguinte ao lançamento (sem cópia duplicada)', () => {
+    expect(recorrenciaDoLancamento('2026-09-05', true, 'mensal', '2026-09-05').proxima_data).toBe('2026-10-05');
+    expect(recorrenciaDoLancamento('2026-01-31', true, 'mensal', '').proxima_data).toBe('2026-02-28');
+    expect(recorrenciaDoLancamento('2026-09-05', true, 'semanal', '2026-08-01').proxima_data).toBe('2026-09-12');
   });
 });

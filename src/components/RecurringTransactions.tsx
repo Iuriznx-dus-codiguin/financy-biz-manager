@@ -17,6 +17,8 @@ import { useAppContext } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
 import { toast } from 'sonner';
+import { dataLocal } from '@/shared/lib/datas';
+import { ROTULOS_RECORRENCIA, type TipoRecorrencia } from '@/shared/lib/recorrencia';
 
 interface RecurringTransaction {
   id: number;
@@ -59,22 +61,14 @@ export const RecurringTransactions: React.FC = () => {
         proxima_data: d.proxima_data!,
       }));
     return [...r, ...d].sort(
-      (a, b) => new Date(a.proxima_data).getTime() - new Date(b.proxima_data).getTime()
+      (a, b) => dataLocal(a.proxima_data).getTime() - dataLocal(b.proxima_data).getTime()
     );
   }, [receitas, despesas]);
 
-  const getRecurrenceLabel = (tipo: string) => {
-    const labels: Record<string, string> = {
-      diaria: 'Diária',
-      semanal: 'Semanal',
-      mensal: 'Mensal',
-      anual: 'Anual',
-    };
-    return labels[tipo] || tipo;
-  };
+  const getRecurrenceLabel = (tipo: string) => ROTULOS_RECORRENCIA[tipo as TipoRecorrencia] ?? tipo;
 
   const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString('pt-BR', {
+    dataLocal(dateString).toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',

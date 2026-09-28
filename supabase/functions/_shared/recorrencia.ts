@@ -1,7 +1,7 @@
 // Recorrência de lançamentos e vencimentos. Espelha as funções SQL `proxima_ocorrencia` e
 // `calcular_proxima_data` (migração 20260927120100): o front usa para pré-visualizar e o banco para gerar.
 
-import { type DataISO, somarDias, somarMeses } from './datas.ts';
+import { type DataISO, ehDataISO, somarDias, somarMeses } from './datas.ts';
 
 export const TIPOS_RECORRENCIA = [
   'diaria',
@@ -56,6 +56,30 @@ export function proximaOcorrencia(data: DataISO, tipo: string, diaAncora?: numbe
   if (dias) return somarDias(data, dias);
   const meses = MESES[tipo];
   return meses ? somarMeses(data, meses, diaAncora) : null;
+}
+
+export interface RecorrenciaDoLancamento {
+  recorrente: boolean;
+  tipo_recorrencia: TipoRecorrencia | null;
+  proxima_data: DataISO | null;
+}
+
+/**
+ * Campos de recorrência gravados junto com um lançamento. `proxima_data` é a próxima cópia que o banco
+ * vai gerar: a data de início escolhida quando é posterior ao lançamento, senão a ocorrência seguinte a
+ * ele (uma data de início igual ou anterior ao lançamento geraria uma cópia duplicada).
+ */
+export function recorrenciaDoLancamento(
+  data: DataISO,
+  recorrente: boolean | null | undefined,
+  tipo: string | null | undefined,
+  inicio?: string | null,
+): RecorrenciaDoLancamento {
+  if (!recorrente || !ehTipoRecorrencia(tipo) || !ehDataISO(data)) {
+    return { recorrente: false, tipo_recorrencia: null, proxima_data: null };
+  }
+  const proxima = ehDataISO(inicio) && inicio > data ? inicio : proximaOcorrencia(data, tipo);
+  return { recorrente: true, tipo_recorrencia: tipo, proxima_data: proxima };
 }
 
 /**

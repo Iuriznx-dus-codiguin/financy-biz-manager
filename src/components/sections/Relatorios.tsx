@@ -12,6 +12,7 @@ import jsPDF from 'jspdf';
 import { downloadXlsx, SheetSpec } from '@/utils/spreadsheetIO';
 import { FileText, Download } from 'lucide-react';
 import { SectionSkeleton } from '@/components/ui/section-skeleton';
+import { dataLocal, hojeISO, paraDataISO } from '@/shared/lib/datas';
 
   const Relatorios = () => {
   const [selectedReport, setSelectedReport] = useState('mensal');
@@ -136,12 +137,12 @@ import { SectionSkeleton } from '@/components/ui/section-skeleton';
     const mesAnterior = new Date(mesAtual.getFullYear(), mesAtual.getMonth() - 1, 1);
     
     const despesasMesAtual = despesas.filter(d => {
-      const data = new Date(d.data);
+      const data = dataLocal(d.data);
       return data.getMonth() === mesAtual.getMonth() && data.getFullYear() === mesAtual.getFullYear();
     }).reduce((sum, d) => sum + d.valor, 0);
     
     const despesasMesAnterior = despesas.filter(d => {
-      const data = new Date(d.data);
+      const data = dataLocal(d.data);
       return data.getMonth() === mesAnterior.getMonth() && data.getFullYear() === mesAnterior.getFullYear();
     }).reduce((sum, d) => sum + d.valor, 0);
     
@@ -176,12 +177,12 @@ import { SectionSkeleton } from '@/components/ui/section-skeleton';
       const anoStr = mes.getFullYear();
       
       const entradas = receitas.filter(r => {
-        const dataReceita = new Date(r.data);
+        const dataReceita = dataLocal(r.data);
         return dataReceita.getMonth() + 1 === mesStr && dataReceita.getFullYear() === anoStr;
       }).reduce((sum, r) => sum + r.valor, 0);
       
       const saidas = despesas.filter(d => {
-        const dataDespesa = new Date(d.data);
+        const dataDespesa = dataLocal(d.data);
         return dataDespesa.getMonth() + 1 === mesStr && dataDespesa.getFullYear() === anoStr;
       }).reduce((sum, d) => sum + d.valor, 0);
       
@@ -207,7 +208,7 @@ import { SectionSkeleton } from '@/components/ui/section-skeleton';
         const data = new Date(start);
         data.setDate(start.getDate() + i);
         if (data <= end) {
-          const dataStr = data.toISOString().split('T')[0];
+          const dataStr = paraDataISO(data);
           const receitasDia = receitas.filter(r => r.data === dataStr).reduce((sum, r) => sum + r.valor, 0);
           const despesasDia = despesas.filter(d => d.data === dataStr).reduce((sum, d) => sum + d.valor, 0);
           dados.push({
@@ -227,11 +228,11 @@ import { SectionSkeleton } from '@/components/ui/section-skeleton';
         const mesStr = mes.getMonth() + 1;
         const anoStr = mes.getFullYear();
         const receitasMes = receitas.filter(r => {
-          const dataReceita = new Date(r.data);
+          const dataReceita = dataLocal(r.data);
           return dataReceita.getMonth() + 1 === mesStr && dataReceita.getFullYear() === anoStr;
         }).reduce((sum, r) => sum + r.valor, 0);
         const despesasMes = despesas.filter(d => {
-          const dataDespesa = new Date(d.data);
+          const dataDespesa = dataLocal(d.data);
           return dataDespesa.getMonth() + 1 === mesStr && dataDespesa.getFullYear() === anoStr;
         }).reduce((sum, d) => sum + d.valor, 0);
         dados.push({
@@ -273,12 +274,12 @@ import { SectionSkeleton } from '@/components/ui/section-skeleton';
     const despesasAtual = filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
     
     const receitasAnterior = receitas.filter(r => {
-      const data = new Date(r.data);
+      const data = dataLocal(r.data);
       return data >= inicioAnterior && data <= fimAnterior;
     }).reduce((sum, r) => sum + r.valor, 0);
     
     const despesasAnterior = despesas.filter(d => {
-      const data = new Date(d.data);
+      const data = dataLocal(d.data);
       return data >= inicioAnterior && data <= fimAnterior;
     }).reduce((sum, d) => sum + d.valor, 0);
 
@@ -338,7 +339,7 @@ import { SectionSkeleton } from '@/components/ui/section-skeleton';
       doc.text(`Lucro: R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 110);
       doc.text(`Margem: ${margemLucro.toFixed(1)}%`, 20, 120);
       
-      const fileName = `relatorio-${timeFilter}-${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `relatorio-${timeFilter}-${hojeISO()}.pdf`;
       doc.save(fileName);
       toast.success(`Relatório PDF exportado: ${fileName}`);
     } catch (error) {
@@ -364,7 +365,7 @@ import { SectionSkeleton } from '@/components/ui/section-skeleton';
       if (filteredReceitas.length > 0) sheets.push({ name: 'Receitas', json: filteredReceitas as any });
       if (filteredDespesas.length > 0) sheets.push({ name: 'Despesas', json: filteredDespesas as any });
 
-      const fileName = `relatorio-${timeFilter}-${new Date().toISOString().split('T')[0]}.xlsx`;
+      const fileName = `relatorio-${timeFilter}-${hojeISO()}.xlsx`;
       await downloadXlsx(fileName, sheets);
       toast.success(`Relatório Excel exportado: ${fileName}`);
     } catch (error) {
@@ -731,7 +732,7 @@ import { SectionSkeleton } from '@/components/ui/section-skeleton';
                       <div key={index} className="flex justify-between items-center gap-3 p-4 border-2 rounded-xl hover:shadow-md transition-all">
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-base truncate">{imposto.tipo}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">📅 Vencimento: {new Date(imposto.vencimento).toLocaleDateString('pt-BR')}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">📅 Vencimento: {dataLocal(imposto.vencimento).toLocaleDateString('pt-BR')}</p>
                         </div>
                         <div className="text-right shrink-0">
                           <p className="font-bold text-base sm:text-lg whitespace-nowrap">R$ {imposto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>

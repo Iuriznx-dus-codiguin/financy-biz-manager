@@ -15,6 +15,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { MembroEquipe } from '@/contexts/AppContext';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { dataLocal, hojeISO } from '@/shared/lib/datas';
 
 // Componente de formulário separado para evitar re-renders
 interface FormFieldsProps {
@@ -141,7 +142,7 @@ const Equipe = () => {
     cargo: '',
     salario: 0,
     periodicidade: 'mensal' as 'mensal' | 'semanal' | 'quinzenal',
-    dataAdmissao: new Date().toISOString().split('T')[0]
+    dataAdmissao: hojeISO()
   });
 
   // Função para mascarar dados sensíveis
@@ -169,7 +170,7 @@ const Equipe = () => {
       cargo: '',
       salario: 0,
       periodicidade: 'mensal',
-      dataAdmissao: new Date().toISOString().split('T')[0]
+      dataAdmissao: hojeISO()
     });
   };
 
@@ -374,7 +375,7 @@ const Equipe = () => {
                     {membro.status}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Desde {new Date(membro.dataAdmissao).toLocaleDateString('pt-BR')}
+                    Desde {dataLocal(membro.dataAdmissao).toLocaleDateString('pt-BR')}
                   </span>
                 </div>
               </div>

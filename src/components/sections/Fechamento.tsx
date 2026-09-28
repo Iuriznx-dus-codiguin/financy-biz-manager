@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { dataLocal, hojeISO } from '@/shared/lib/datas';
 
 interface TransacaoFluxoCaixa {
   id: string;
@@ -28,9 +29,9 @@ interface TransacaoFluxoCaixa {
 
 const Fechamento = () => {
   const { receitas, despesas, impostos, membrosEquipe } = useAppContext();
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(hojeISO());
+  const [startDate, setStartDate] = useState(hojeISO());
+  const [endDate, setEndDate] = useState(hojeISO());
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todas' | 'paga' | 'pendente' | 'recorrente'>('todas');
   const [tipoFilter, setTipoFilter] = useState<'todas' | 'entradas' | 'saidas'>('todas');
@@ -159,7 +160,7 @@ const Fechamento = () => {
         });
       });
 
-    return transacoes.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+    return transacoes.sort((a, b) => dataLocal(b.data).getTime() - dataLocal(a.data).getTime());
   }, [receitas, despesas, impostos, membrosEquipe, startDate, endDate]);
 
   // Filtrar transações
@@ -489,7 +490,7 @@ const Fechamento = () => {
                         onClick={() => setTransacaoSelecionada(transacao)}
                       >
                         <TableCell className="font-medium">
-                          {new Date(transacao.data).toLocaleDateString('pt-BR')}
+                          {dataLocal(transacao.data).toLocaleDateString('pt-BR')}
                         </TableCell>
                         <TableCell>
                           {transacao.tipo === 'receita' && (
@@ -618,7 +619,7 @@ const Fechamento = () => {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Data</label>
                 <p className="text-base">
-                  {format(new Date(transacaoSelecionada.data), "dd/MM/yyyy", { locale: ptBR })}
+                  {format(dataLocal(transacaoSelecionada.data), "dd/MM/yyyy", { locale: ptBR })}
                 </p>
               </div>
 

@@ -51,6 +51,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { TooltipInfo } from '@/components/TooltipInfo';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
+import { dataLocal, hojeISO } from '@/shared/lib/datas';
 
 interface DashboardAvancadoProps {
   timeFilter: string;
@@ -323,17 +324,17 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
   
   // Calcular dados do período anterior
   const receitasPeriodoAnterior = receitas.filter(r => {
-    const data = new Date(r.data);
+    const data = dataLocal(r.data);
     return data >= startAnterior && data <= endAnterior;
   }).reduce((sum, r) => sum + r.valor, 0);
 
   const despesasPeriodoAnterior = despesas.filter(d => {
-    const data = new Date(d.data);
+    const data = dataLocal(d.data);
     return data >= startAnterior && data <= endAnterior;
   }).reduce((sum, d) => sum + d.valor, 0);
 
   const impostosPeriodoAnterior = impostos.filter(i => {
-    const data = new Date(i.vencimento);
+    const data = dataLocal(i.vencimento);
     return data >= startAnterior && data <= endAnterior;
   });
 
@@ -403,7 +404,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
 
   const totalInvestidoPeriodoAnterior = isDashboardPessoal 
     ? despesas.filter(d => {
-        const data = new Date(d.data);
+        const data = dataLocal(d.data);
         return (d.categoria === 'investimentos' || d.categoria === 'poupanca' || d.categoria === 'poupança') && 
                data >= startAnterior && data <= endAnterior;
       }).reduce((sum, d) => sum + d.valor, 0)
@@ -411,7 +412,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
 
   const receitasTerceirosPeriodoAnterior = isDashboardPessoal 
     ? receitas.filter(r => {
-        const data = new Date(r.data);
+        const data = dataLocal(r.data);
         return (r.categoria === 'terceiros' || r.categoria === 'freelance' || r.categoria === 'extras') && 
                data >= startAnterior && data <= endAnterior;
       }).reduce((sum, r) => sum + r.valor, 0)
@@ -434,7 +435,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     }, 0);
 
   const gastosEquipeDespesasPeriodoAnterior = despesas.filter(d => {
-    const data = new Date(d.data);
+    const data = dataLocal(d.data);
     return d.categoria === 'equipe' && data >= startAnterior && data <= endAnterior;
   }).reduce((sum, d) => sum + d.valor, 0);
 
@@ -447,7 +448,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
     : 0;
 
   const gastosComFornecedoresPeriodoAnterior = despesas.filter(d => {
-    const data = new Date(d.data);
+    const data = dataLocal(d.data);
     return d.fornecedor && d.fornecedor.trim() !== '' && !categorias_operacionais.includes(d.categoria.toLowerCase()) && data >= startAnterior && data <= endAnterior;
   }).reduce((sum, d) => sum + d.valor, 0);
 
@@ -491,7 +492,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
       
       const receitasMes = receitas
         .filter(r => {
-          const dataReceita = new Date(r.data);
+          const dataReceita = dataLocal(r.data);
           return dataReceita.getMonth() === data.getMonth() && 
                  dataReceita.getFullYear() === data.getFullYear();
         })
@@ -499,7 +500,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
 
       const despesasMes = despesas
         .filter(d => {
-          const dataDespesa = new Date(d.data);
+          const dataDespesa = dataLocal(d.data);
           return dataDespesa.getMonth() === data.getMonth() && 
                  dataDespesa.getFullYear() === data.getFullYear();
         })
@@ -963,7 +964,7 @@ export const DashboardAvancado: React.FC<DashboardAvancadoProps> = ({ timeFilter
                       </span>
                     </div>
                   )}
-                  {filteredImpostos.some(i => new Date(i.vencimento) < new Date()) && (
+                  {filteredImpostos.some(i => !i.pago && i.vencimento < hojeISO()) && (
                     <div className="flex items-center gap-2 p-2 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
                       <Calendar className="h-4 w-4 text-yellow-600" />
                       <span className="text-xs text-yellow-800 dark:text-yellow-200">
