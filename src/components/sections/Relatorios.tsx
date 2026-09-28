@@ -9,7 +9,7 @@ import { TimeFilter } from '@/components/TimeFilter';
 import { isDateInRange, getDateRange } from '@/utils/dateFilters';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
-import { downloadXlsx, SheetSpec } from '@/utils/excelExport';
+import { downloadXlsx, SheetSpec } from '@/utils/spreadsheetIO';
 import { FileText, Download } from 'lucide-react';
 import { SectionSkeleton } from '@/components/ui/section-skeleton';
 

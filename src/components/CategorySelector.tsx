@@ -8,7 +8,7 @@ import { Plus } from 'lucide-react';
 import { useCategoriasPersonalizadas } from '@/hooks/useCategoriasPersonalizadas';
 import { useDashboard } from '@/hooks/useDashboard';
 import { getPredefinedCategories } from '@/constants/categories';
-import * as Icons from 'lucide-react';
+import { iconeDaCategoria } from '@/shared/ui/iconesCategoria';
 
 interface CategorySelectorProps {
   tipo: 'receita' | 'despesa';
@@ -69,10 +69,7 @@ export function CategorySelector({ tipo, value, onChange, placeholder, className
     }
   };
 
-  const getIcon = (iconName: string) => {
-    const IconComponent = (Icons as any)[iconName] || Icons.Folder;
-    return IconComponent;
-  };
+  const getIcon = iconeDaCategoria;
 
   return (
     <div className={className}>

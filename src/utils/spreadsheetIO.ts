@@ -1,4 +1,8 @@
-import ExcelJS from 'exceljs';
+import { interpretarValor } from '@/shared/lib/dinheiro';
+import { ehDataISO, hojeISO } from '@/shared/lib/datas';
+
+// exceljs (~900 kB) só é baixado quando o usuário importa ou exporta uma planilha.
+const carregarExcel = async () => (await import('exceljs')).default;
 
 export interface SheetSpec {
   name: string;
@@ -18,6 +22,7 @@ export interface TemplateColumn {
  * Compatível com Excel, Google Sheets, Numbers, LibreOffice.
  */
 export async function downloadXlsx(fileName: string, sheets: SheetSpec[]) {
+  const ExcelJS = await carregarExcel();
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Financy';
   workbook.created = new Date();
@@ -52,6 +57,7 @@ export async function downloadTemplate(
   sheetName: string,
   columns: TemplateColumn[]
 ) {
+  const ExcelJS = await carregarExcel();
   const workbook = new ExcelJS.Workbook();
   const ws = workbook.addWorksheet(sheetName);
 
@@ -96,6 +102,7 @@ export async function parseSpreadsheetFile(file: File): Promise<Record<string, a
 }
 
 async function parseXlsx(buffer: ArrayBuffer): Promise<Record<string, any>[]> {
+  const ExcelJS = await carregarExcel();
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer);
   const ws = workbook.worksheets[0];
@@ -181,29 +188,25 @@ function triggerDownload(blob: Blob, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
-/** Converte string de valor (R$ 1.234,56 ou 1234.56) em número */
-export function parseNumber(v: any): number {
-  if (typeof v === 'number') return v;
+/** Converte valor de planilha (R$ 1.234,56, 1234.56, 1.234 ou número) em reais; inválido vira 0. */
+export function parseNumber(v: unknown): number {
   if (v === null || v === undefined || v === '') return 0;
-  const s = String(v)
-    .replace(/[R$\s]/g, '')
-    .replace(/\./g, '')
-    .replace(',', '.');
-  const n = parseFloat(s);
-  return isNaN(n) ? 0 : n;
+  // Antes "1234.56" virava 123456 (o ponto era sempre tratado como milhar).
+  return interpretarValor(v) ?? 0;
 }
 
-/** Normaliza data para YYYY-MM-DD (aceita DD/MM/YYYY, YYYY-MM-DD, Date) */
-export function parseDate(v: any): string {
-  if (!v) return new Date().toISOString().split('T')[0];
-  if (v instanceof Date) return v.toISOString().split('T')[0];
+/** Normaliza data para AAAA-MM-DD (aceita DD/MM/AAAA, AAAA-MM-DD e Date); inválida vira hoje (Brasília). */
+export function parseDate(v: unknown): string {
+  if (!v) return hojeISO();
+  // Datas de célula do exceljs chegam como Date em UTC à meia-noite.
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? hojeISO() : v.toISOString().slice(0, 10);
   const s = String(v).trim();
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-  const br = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (ehDataISO(s.slice(0, 10))) return s.slice(0, 10);
+  const br = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
   if (br) {
     const [, d, m, y] = br;
-    const year = y.length === 2 ? `20${y}` : y;
-    return `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    const data = `${y.length === 2 ? `20${y}` : y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    if (ehDataISO(data)) return data;
   }
-  return new Date().toISOString().split('T')[0];
+  return hojeISO();
 }

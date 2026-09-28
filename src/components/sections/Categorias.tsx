@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
-import * as Icons from 'lucide-react';
+import { iconeDaCategoria } from '@/shared/ui/iconesCategoria';
 import { useCategoriasPersonalizadas, CategoriaPersonalizada } from '@/hooks/useCategoriasPersonalizadas';
 import { useAppContext } from '@/contexts/AppContext';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -17,6 +17,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+// Mesmos nomes do mapa em shared/ui/iconesCategoria.ts.
 const iconOptions = [
   'folder', 'utensils', 'car', 'home', 'heart', 'book-open', 'gamepad-2',
   'shopping-cart', 'briefcase', 'trending-up', 'credit-card', 'banknote',
@@ -131,10 +132,7 @@ export function Categorias() {
     setDeletingUsageCount(null);
   };
 
-  const getIcon = (iconName: string) => {
-    const IconComponent = (Icons as any)[iconName] || Icons.Folder;
-    return IconComponent;
-  };
+  const getIcon = iconeDaCategoria;
 
   if (loading) {
     return (
