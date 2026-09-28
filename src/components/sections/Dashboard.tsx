@@ -12,7 +12,7 @@ import { TooltipInfo } from '@/components/TooltipInfo';
 import { DashboardAvancado } from '@/components/DashboardAvancado';
 import { isDateInRange } from '@/utils/dateFilters';
 import { Crown, Sparkles } from 'lucide-react';
-import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { FloatingDashboardInfo } from '@/components/FloatingDashboardInfo';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -30,10 +30,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const { currentDashboard } = useDashboard();
   
   
-  const { isFeatureAvailable } = useFeatureAccess();
-  const hasBasicIntelligence = isFeatureAvailable('inteligencia_basica');
-  const hasAdvancedIntelligence = isFeatureAvailable('inteligencia_avancada');
-  const hasAdvancedDashboard = isFeatureAvailable('dashboard_avancado');
+  const { temRecurso } = useAssinatura();
+  const hasBasicIntelligence = temRecurso('inteligencia_basica');
+  const hasAdvancedIntelligence = temRecurso('inteligencia_avancada');
+  const hasAdvancedDashboard = temRecurso('dashboard_avancado');
   
   // Usar cálculos otimizados
   const financialData = useMemo(() => ({ receitas, despesas, impostos }), [receitas, despesas, impostos]);

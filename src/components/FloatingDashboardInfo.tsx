@@ -6,11 +6,10 @@ import { TimeFilter } from '@/components/TimeFilter';
 import { CompactDashboardSelector } from '@/components/CompactDashboardSelector';
 import { Crown, Zap, Star, Settings, Code, Sparkles, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
-import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
+import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAppContext } from '@/contexts/AppContext';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface FloatingDashboardInfoProps {
@@ -25,8 +24,8 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
   dashboardType = 'basic'
 }) => {
   const { user } = useAuth();
-  const { subscriptionTier } = useSubscription();
-  const { isFeatureAvailable } = useFeatureAccess();
+  const { plano, ativa, desenvolvedor, temRecurso } = useAssinatura();
+  const { runNow } = useRecurringTransactions();
   const { onboardingData } = useOnboarding();
   const { carregarDados } = useAppContext();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -37,13 +36,8 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
     setIsRefreshing(true);
     
     try {
-      // Tentar processar transações recorrentes (opcional)
-      try {
-        await supabase.functions.invoke('process-recurring-transactions');
-      } catch (funcError) {
-        // Ignorar erro da edge function - não é crítico
-        console.log('Edge function não disponível, atualizando dados localmente');
-      }
+      // Gera as recorrências vencidas do próprio usuário (a function de cron é só para o backend).
+      if (user) await runNow(user.id);
       
       // Sempre recarregar dados do banco
       await carregarDados();
@@ -64,56 +58,29 @@ export const FloatingDashboardInfo: React.FC<FloatingDashboardInfoProps> = ({
   
   // Configurações de cores e ícones baseadas no plano
   const getSubscriptionBadge = () => {
-    const isDeveloper = isFeatureAvailable('developer_mode');
-    const hasAdvancedIA = isFeatureAvailable('inteligencia_avancada');
-    const hasBasicIA = isFeatureAvailable('inteligencia_basica');
-
-    if (isDeveloper) {
-      return {
-        icon: Code,
-        text: 'Desenvolvedor',
-        gradient: 'from-emerald-500 to-teal-600',
-        bgClass: 'bg-gradient-to-r from-emerald-500 to-teal-600'
-      };
+    if (desenvolvedor) {
+      return { icon: Code, text: 'Desenvolvedor', gradient: 'from-emerald-500 to-teal-600', bgClass: 'bg-gradient-to-r from-emerald-500 to-teal-600' };
     }
-
-    switch (subscriptionTier) {
+    if (!ativa) {
+      return { icon: Sparkles, text: 'Sem plano', gradient: 'from-gray-400 to-gray-600', bgClass: 'bg-gradient-to-r from-gray-400 to-gray-600' };
+    }
+    switch (plano?.nivel) {
       case 'enterprise':
-        return {
-          icon: Star,
-          text: 'Enterprise',
-          gradient: 'from-yellow-400 to-orange-500',
-          bgClass: 'bg-gradient-to-r from-yellow-400 to-orange-500'
-        };
-      case 'premium':
-        return {
-          icon: Crown,
-          text: 'Premium',
-          gradient: 'from-indigo-500 to-purple-600',
-          bgClass: 'bg-gradient-to-r from-indigo-500 to-purple-600'
-        };
+        return { icon: Star, text: plano.nome, gradient: 'from-yellow-400 to-orange-500', bgClass: 'bg-gradient-to-r from-yellow-400 to-orange-500' };
+      case 'pro':
+        return { icon: Crown, text: plano.nome, gradient: 'from-indigo-500 to-purple-600', bgClass: 'bg-gradient-to-r from-indigo-500 to-purple-600' };
       case 'plus':
-        return {
-          icon: Zap,
-          text: 'Plus',
-          gradient: 'from-blue-500 to-cyan-600',
-          bgClass: 'bg-gradient-to-r from-blue-500 to-cyan-600'
-        };
+        return { icon: Zap, text: plano.nome, gradient: 'from-blue-500 to-cyan-600', bgClass: 'bg-gradient-to-r from-blue-500 to-cyan-600' };
       default:
-        return {
-          icon: Sparkles,
-          text: 'Gratuito',
-          gradient: 'from-gray-400 to-gray-600',
-          bgClass: 'bg-gradient-to-r from-gray-400 to-gray-600'
-        };
+        return { icon: Zap, text: 'Assinante', gradient: 'from-blue-500 to-cyan-600', bgClass: 'bg-gradient-to-r from-blue-500 to-cyan-600' };
     }
   };
 
   const getIABadge = () => {
-    if (isFeatureAvailable('inteligencia_avancada')) {
+    if (temRecurso('inteligencia_avancada')) {
       return { text: 'IA Avançada', variant: 'secondary' as const };
     }
-    if (isFeatureAvailable('inteligencia_basica')) {
+    if (temRecurso('inteligencia_basica')) {
       return { text: 'IA Básica', variant: 'outline' as const };
     }
     return null;

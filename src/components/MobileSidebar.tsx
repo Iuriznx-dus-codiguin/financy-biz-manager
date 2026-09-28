@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/hooks/useTheme';
 import { useDashboard } from '@/hooks/useDashboard';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { useAuth } from '@/hooks/useAuth';
 import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/constants/routes';
 
@@ -43,7 +43,7 @@ interface MobileSidebarProps {
 export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, setActiveSection, disabled = false }) => {
   const { resolvedTheme, toggleTheme } = useTheme();
   const { currentDashboard } = useDashboard();
-  const { subscriptionTier } = useSubscription();
+  const { nomePlano, ativa } = useAssinatura();
   const { user, signOut } = useAuth();
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
@@ -101,8 +101,8 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ activeSection, set
                   <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0 capitalize">
-                    {subscriptionTier || 'free'}
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0">
+                    {ativa ? nomePlano ?? 'Assinante' : 'Sem plano'}
                   </Badge>
                   <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setOpen(false)}>
                     <X className="h-4 w-4" />

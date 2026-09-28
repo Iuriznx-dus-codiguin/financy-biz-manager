@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getTourSteps, TourId, TourStep, TourContext as TourCtx } from '@/config/tourSteps';
 import { useIsBelowLg, isBelowLgNow } from './use-mobile';
 import { useDashboard } from './useDashboard';
-import { useFeatureAccess } from './useFeatureAccess';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
 
 
 interface ProductTourContextType {
@@ -37,7 +37,7 @@ export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const { user } = useAuth();
   const isMobile = useIsBelowLg();
   const { currentDashboard } = useDashboard();
-  const { isFeatureAvailable } = useFeatureAccess();
+  const { temRecurso, limiteDashboards } = useAssinatura();
   const [seenTours, setSeenTours] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [currentTourId, setCurrentTourId] = useState<TourId | null>(null);
@@ -45,10 +45,10 @@ export const ProductTourProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const persistingRef = useRef(false);
 
   const tourCtx: TourCtx = useMemo(() => ({
-    hasAdvancedIA: isFeatureAvailable('inteligencia_avancada'),
-    hasBasicIA: isFeatureAvailable('inteligencia_basica'),
-    hasMultiDashboard: isFeatureAvailable('multi_dashboard'),
-  }), [isFeatureAvailable]);
+    hasAdvancedIA: temRecurso('inteligencia_avancada'),
+    hasBasicIA: temRecurso('inteligencia_basica'),
+    hasMultiDashboard: limiteDashboards === -1 || limiteDashboards > 1,
+  }), [temRecurso, limiteDashboards]);
 
   useEffect(() => {
     if (!user) {

@@ -4,18 +4,15 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Building, User, Plus, ChevronDown, Briefcase } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
-import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
 import { useUserContext } from '@/hooks/useUserContext';
 import { getLabel } from '@/utils/nomenclature';
 
 export const CompactDashboardSelector = () => {
   const { currentDashboard, dashboards, setCurrentDashboard } = useDashboard();
-  const { getLimits } = useFeatureAccess();
   const { currentDashboardType } = useUserContext();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
-  const limits = getLimits();
   const personalDashboards = dashboards.filter(d => d.type === 'personal');
   const businessDashboards = dashboards.filter(d => d.type === 'business');
   

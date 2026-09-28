@@ -2,14 +2,14 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { FinancyAIChat } from '@/components/FinancyAIChat';
-import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const AgentesIA: React.FC = () => {
   const navigate = useNavigate();
-  const { isFeatureAvailable, getFeatureLimitMessage } = useFeatureAccess();
-  const hasAccess = isFeatureAvailable('inteligencia_basica');
+  const { temRecurso } = useAssinatura();
+  const hasAccess = temRecurso('inteligencia_basica');
 
   if (!hasAccess) {
     return (
@@ -23,7 +23,7 @@ const AgentesIA: React.FC = () => {
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-muted-foreground text-sm">
-              {getFeatureLimitMessage('inteligencia_basica')}
+              Inteligência financeira disponível em todos os planos pagos.
             </p>
             <ul className="text-sm text-muted-foreground space-y-2 text-left max-w-xs mx-auto">
               <li className="flex items-center gap-2">

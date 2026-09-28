@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
+import { ehFuncaoAusente } from '@/shared/lib/erros';
+import { rpcNova } from '@/shared/lib/rpcNovas';
 
 export interface Dashboard {
   id: string;
@@ -78,7 +81,7 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
         .eq('is_default', true)
         .maybeSingle();
 
-      const applyDashboard = (row: any) => {
+      const applyDashboard = (row: Tables<'user_dashboards'>) => {
         const dash = {
           id: row.id,
           name: row.name,
@@ -99,7 +102,8 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
         .insert({
           user_id: user.id,
           name: 'Dashboard Principal',
-          type: 'business',
+          // Pessoal por padrão; o onboarding (concluir_onboarding) ajusta para empresa quando for o caso.
+          type: 'personal',
           is_default: true,
         })
         .select()
@@ -151,39 +155,32 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
       // Automaticamente definir o novo dashboard como atual
       setCurrentDashboard(newDashboard);
     } catch (error) {
+      // O limite do plano é validado no banco (trigger validar_limite_de_dashboards).
       console.error('Error creating dashboard:', error);
       throw error;
     }
   };
 
   const deleteDashboard = async (id: string) => {
-    try {
-      // Deletar todos os dados relacionados ao dashboard
+    // Uma transação no banco: lançamentos, impostos, metas, equipe e categorias do dashboard.
+    const { error } = await rpcNova('excluir_dashboard', { p_dashboard_id: id });
+    if (error) {
+      if (!ehFuncaoAusente(error)) throw error;
+      // Banco ainda sem a migração 20260927120300: mesmo caminho de antes.
       await Promise.all([
         supabase.from('receitas').delete().eq('dashboard_id', id),
         supabase.from('despesas').delete().eq('dashboard_id', id),
         supabase.from('impostos').delete().eq('dashboard_id', id),
         supabase.from('metas').delete().eq('dashboard_id', id),
       ]);
+      const { error: erroDashboard } = await supabase.from('user_dashboards').delete().eq('id', id);
+      if (erroDashboard) throw erroDashboard;
+    }
 
-      // Deletar o dashboard
-      const { error } = await supabase
-        .from('user_dashboards')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setDashboards(prev => prev.filter(d => d.id !== id));
-      
-      // If deleted dashboard was current, switch to first available
-      if (currentDashboard?.id === id) {
-        const remaining = dashboards.filter(d => d.id !== id);
-        setCurrentDashboard(remaining[0] || null);
-      }
-    } catch (error) {
-      console.error('Error deleting dashboard:', error);
-      throw error;
+    setDashboards(prev => prev.filter(d => d.id !== id));
+    if (currentDashboard?.id === id) {
+      const remaining = dashboards.filter(d => d.id !== id);
+      setCurrentDashboard(remaining.find(d => d.isDefault) || remaining[0] || null);
     }
   };
 

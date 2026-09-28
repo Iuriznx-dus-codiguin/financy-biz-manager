@@ -22,14 +22,12 @@ import {
 import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
-import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { CategorySelector } from '@/components/CategorySelector';
 import { SpreadsheetImportExport } from '@/components/SpreadsheetImportExport';
 import { parseNumber, parseDate } from '@/utils/spreadsheetIO';
 
 const Receitas = () => {
   const { receitas, addReceita, deleteReceita, updateReceita } = useAppContext();
-  const { isFeatureAvailable, getFeatureLimitMessage, getLimits } = useFeatureAccess();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todas');

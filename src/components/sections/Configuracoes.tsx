@@ -30,17 +30,17 @@ import {
 import { useSettings, useCurrency } from '@/hooks/useSettings';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
 import { useToast } from '@/hooks/use-toast';
 import { useDashboard } from '@/hooks/useDashboard';
-import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
 import { DashboardPersonalization } from '@/components/DashboardPersonalization';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
-import { useUserSubscription } from '@/hooks/useUserSubscription';
-import { isDeveloperTier } from '@/utils/subscriptionHelpers';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { ehFuncaoAusente, mensagemDeErro } from '@/shared/lib/erros';
+import { rpcNova } from '@/shared/lib/rpcNovas';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,16 +53,44 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+/** Caminho anterior à migração 20260927120300 (sem transação), usado só se a RPC ainda não existir. */
+async function apagarDadosSemRpc(userId: string) {
+  await Promise.all([
+    supabase.from('receitas').delete().eq('user_id', userId),
+    supabase.from('despesas').delete().eq('user_id', userId),
+    supabase.from('impostos').delete().eq('user_id', userId),
+    supabase.from('metas').delete().eq('user_id', userId),
+  ]);
+  await Promise.all([
+    supabase.from('equipe_membros').delete().eq('user_id', userId),
+    supabase.from('equipe_membros_audit').delete().eq('user_id', userId),
+  ]);
+  await Promise.all([
+    supabase.from('user_dashboards').delete().eq('user_id', userId),
+    supabase.from('categorias_personalizadas').delete().eq('user_id', userId),
+    supabase.from('ai_recognized_transactions').delete().eq('user_id', userId),
+    supabase.from('ai_conversations').delete().eq('user_id', userId),
+    supabase.from('notificacoes').delete().eq('user_id', userId),
+    supabase.from('section_tutorials').delete().eq('user_id', userId),
+    supabase.from('user_tour_progress').delete().eq('user_id', userId),
+    supabase.from('onboarding_data').delete().eq('user_id', userId),
+    supabase.from('query_cache').delete().eq('user_id', userId),
+    supabase.from('validacao_n8n').delete().eq('user_id', userId),
+  ]);
+  await supabase.from('profiles').update({ settings: null, telefone: null, nome_completo: null }).eq('id', userId);
+}
+
 const Configuracoes = () => {
   const { settings, updateSettings, loading } = useSettings();
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
-  const { subscriptionData, subscriptionTier, loading: subscriptionLoading } = useSubscription();
-  const { subscription: userSubscription } = useUserSubscription();
-  const isDeveloper = isDeveloperTier(userSubscription);
+  const {
+    assinatura, ativa, desenvolvedor, situacao, nomePlano, diasParaExpirar, limiteDashboards,
+    carregando: subscriptionLoading,
+  } = useAssinatura();
+  const { isAdmin } = useIsAdmin();
   const { formatCurrency } = useCurrency();
   const { dashboards, currentDashboard, createDashboard, deleteDashboard, updateDashboardName } = useDashboard();
-  const { getLimits } = useFeatureAccess();
   const { toast } = useToast();
   const { onboardingData, refetchOnboardingData } = useOnboarding();
   const [isCreatingDashboard, setIsCreatingDashboard] = useState(false);
@@ -91,7 +119,7 @@ const Configuracoes = () => {
   const [newTelefone, setNewTelefone] = useState('');
   const [userProfile, setUserProfile] = useState<{email?: string; telefone?: string} | null>(null);
 
-  const limits = getLimits();
+  const limiteDeDashboardsTexto = limiteDashboards === -1 ? 'Ilimitado' : String(limiteDashboards);
 
   // Buscar dados do perfil do usuário
   useEffect(() => {
@@ -127,42 +155,26 @@ const Configuracoes = () => {
 
   const getSubscriptionStatus = () => {
     if (subscriptionLoading) return { status: 'Carregando...', variant: 'secondary' };
-
     if (!user) return { status: 'Não autenticado', variant: 'destructive' };
+    if (desenvolvedor) return { status: 'Desenvolvedor', variant: 'default', endDate: 'N/A' };
 
-    // Plataforma sem teste grátis: usuário sem assinatura ativa = pagamento pendente
-    if (!subscriptionData || !subscriptionData.subscribed) {
-      return {
-        status: 'Aguardando Pagamento',
-        variant: 'destructive',
-        endDate: 'N/A'
-      };
+    const endDate = formatSubscriptionEnd(assinatura?.expires_at ?? null);
+    if (ativa) {
+      const restante = diasParaExpirar !== null ? ` (${diasParaExpirar} ${diasParaExpirar === 1 ? 'dia restante' : 'dias restantes'})` : '';
+      return { status: `${nomePlano ?? 'Plano ativo'}${restante}`, variant: 'default', endDate };
     }
-
-    if (subscriptionData.subscription_end) {
-      const endDate = new Date(subscriptionData.subscription_end);
-      const today = new Date();
-      const diffTime = endDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays > 0) {
-        return {
-          status: `${subscriptionData.subscription_tier || 'Premium'} (${diffDays} dias restantes)`,
-          variant: 'default',
-          endDate: formatSubscriptionEnd(subscriptionData.subscription_end)
-        };
-      }
-      return {
-        status: 'Assinatura Expirada',
-        variant: 'destructive',
-        endDate: formatSubscriptionEnd(subscriptionData.subscription_end)
-      };
+    // Sem teste grátis: sem assinatura ativa, o acesso fica limitado até o pagamento.
+    switch (situacao) {
+      case 'expirada':
+        return { status: 'Assinatura expirada', variant: 'destructive', endDate };
+      case 'cancelada':
+        return { status: 'Assinatura cancelada', variant: 'destructive', endDate };
+      case 'pagamento_atrasado':
+        return { status: 'Pagamento em atraso', variant: 'destructive', endDate };
+      default:
+        return { status: 'Aguardando pagamento', variant: 'destructive', endDate: 'N/A' };
     }
-
-    return { status: 'Sem Assinatura', variant: 'secondary' };
   };
-
-
 
   const handleDeleteAllData = async () => {
     if (!user) return;
@@ -170,57 +182,13 @@ const Configuracoes = () => {
     try {
       setIsDeletingData(true);
       
-      // ============================================
-      // APAGAR TODOS OS DADOS DO USUÁRIO
-      // ============================================
-      // MANTIDOS (não apagar):
-      // - security_audit_logs (logs de auditoria)
-      // - profiles (perfil básico do usuário)
-      // - user_subscriptions (assinatura atual)
-      // - subscribers (dados de assinatura)
-      // - customer_subscriptions (dados Cakto)
-      // - auth_rate_limits (segurança)
-      // ============================================
-
-      
-      // Deletar na ordem correta para evitar problemas com RLS e foreign keys
-      // 1. Primeiro: dados financeiros (ANTES de deletar dashboards ou membros)
-      await Promise.all([
-        supabase.from('receitas').delete().eq('user_id', user.id),
-        supabase.from('despesas').delete().eq('user_id', user.id),
-        supabase.from('impostos').delete().eq('user_id', user.id),
-        supabase.from('metas').delete().eq('user_id', user.id),
-      ]);
-      
-      // 2. Segundo: equipe e audit (depois de despesas, antes de dashboards)
-      await Promise.all([
-        supabase.from('equipe_membros').delete().eq('user_id', user.id),
-        supabase.from('equipe_membros_audit').delete().eq('user_id', user.id),
-      ]);
-      
-      // 3. Terceiro: dashboards e outros dados
-      await Promise.all([
-        supabase.from('user_dashboards').delete().eq('user_id', user.id),
-        supabase.from('categorias_personalizadas').delete().eq('user_id', user.id),
-        supabase.from('ai_recognized_transactions').delete().eq('user_id', user.id),
-        supabase.from('ai_conversations').delete().eq('user_id', user.id),
-        supabase.from('notificacoes').delete().eq('user_id', user.id),
-        supabase.from('section_tutorials').delete().eq('user_id', user.id),
-        supabase.from('user_tour_progress').delete().eq('user_id', user.id),
-        supabase.from('onboarding_data').delete().eq('user_id', user.id),
-        supabase.from('query_cache').delete().eq('user_id', user.id),
-        supabase.from('validacao_n8n').delete().eq('user_id', user.id),
-      ]);
-
-      // Resetar configurações do perfil (mas manter o registro)
-      await supabase
-        .from('profiles')
-        .update({ 
-          settings: null,
-          telefone: null,
-          nome_completo: null 
-        } as any)
-        .eq('id', user.id);
+      // Uma transação no banco (apagar_meus_dados). Mantidos: perfil, assinatura, logs de auditoria
+      // e atendimentos de suporte.
+      const { error: erroRpc } = await rpcNova('apagar_meus_dados', {});
+      if (erroRpc) {
+        if (!ehFuncaoAusente(erroRpc)) throw erroRpc;
+        await apagarDadosSemRpc(user.id);
+      }
 
       // Limpar localStorage
       localStorage.removeItem('financy-settings');
@@ -303,7 +271,7 @@ const Configuracoes = () => {
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Erro ao excluir dashboard. Tente novamente.",
+        description: mensagemDeErro(error, "Erro ao excluir dashboard. Tente novamente."),
         variant: "destructive"
       });
     } finally {
@@ -775,7 +743,7 @@ const Configuracoes = () => {
             <LayoutDashboard className="h-5 w-5" />
             Perfis/Empresas
             <Badge variant="outline">
-              {dashboards.length}/{limits.maxProfiles === -1 ? '∞' : limits.maxProfiles}
+              {dashboards.length}/{limiteDashboards === -1 ? '∞' : limiteDashboards}
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -975,10 +943,9 @@ const Configuracoes = () => {
             <div className="space-y-2">
               <span className="font-medium">Limites do Plano:</span>
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>Perfis/Empresas: {limits.maxProfiles === -1 ? 'Ilimitado' : limits.maxProfiles}</div>
-                <div>Receitas: {limits.maxReceitas === -1 ? 'Ilimitado' : limits.maxReceitas}</div>
-                <div>Despesas: {limits.maxDespesas === -1 ? 'Ilimitado' : limits.maxDespesas}</div>
-                <div>Metas: {limits.maxMetas === -1 ? 'Ilimitado' : limits.maxMetas}</div>
+                <div>Perfis/Empresas: {limiteDeDashboardsTexto}</div>
+                <div>Receitas e despesas: {ativa ? 'Ilimitadas' : 'Exige assinatura'}</div>
+                <div>Metas: {ativa ? 'Ilimitadas' : 'Exige assinatura'}</div>
               </div>
             </div>
           </div>
@@ -1140,12 +1107,12 @@ const Configuracoes = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {isDeveloper && (
+      {isAdmin && (
         <Card className="border-primary/30 bg-primary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Shield className="h-4 w-4 text-primary" />
-              Ferramentas de desenvolvedor
+              Administração
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">

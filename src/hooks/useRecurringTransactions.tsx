@@ -1,10 +1,13 @@
 import { useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
+import { hojeISO } from '@/shared/lib/datas';
 
 interface ProcessingResult {
   receitas_processadas: number;
   despesas_processadas: number;
+  /** Presente após a migração 20260927120200. */
+  impostos_processados?: number;
   total: number;
 }
 
@@ -17,8 +20,8 @@ export const useRecurringTransactions = () => {
     options?: { force?: boolean }
   ): Promise<ProcessingResult | null> => {
     const force = options?.force === true;
-    // Evitar processamento duplicado no mesmo dia (a menos que force=true)
-    const today = new Date().toISOString().split('T')[0];
+    // Evitar processamento duplicado no mesmo dia de Brasília (a menos que force=true)
+    const today = hojeISO();
     const cacheKey = `${userId}_${today}`;
 
     if (!force && lastProcessedRef.current === cacheKey) {
@@ -49,7 +52,7 @@ export const useRecurringTransactions = () => {
       const result = data as unknown as ProcessingResult;
 
       if (result && result.total > 0) {
-        logger.info(`Transações recorrentes processadas: ${result.receitas_processadas} receitas, ${result.despesas_processadas} despesas`);
+        logger.info(`Transações recorrentes processadas: ${result.receitas_processadas} receitas, ${result.despesas_processadas} despesas, ${result.impostos_processados ?? 0} impostos`);
       }
 
       // Marcar como processado hoje

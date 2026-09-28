@@ -7,9 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Building, User, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
-import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { useToast } from '@/hooks/use-toast';
-import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
+import { mensagemDeErro } from '@/shared/lib/erros';
 import { celebrate } from '@/utils/celebration';
 
 interface DashboardCreateDialogProps {
@@ -59,9 +59,8 @@ function ensureUniqueName(desired: string, existing: string[]): string {
 
 export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ open, onOpenChange, dashboardType = null }) => {
   const { dashboards, createDashboard } = useDashboard();
-  const { getLimits, subscriptionTier } = useFeatureAccess();
   const { toast } = useToast();
-  const { isBusinessPlan } = useUserSubscription();
+  const { limiteDashboards, podeCriarEmpresa, nomePlano } = useAssinatura();
   const navigate = useNavigate();
 
   const [selectedType, setSelectedType] = useState<'personal' | 'business'>(dashboardType ?? 'personal');
@@ -69,10 +68,10 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
   const [nomeDashboard, setNomeDashboard] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
 
-  const limits = getLimits();
-  const dashboardsRestantes = limits.maxProfiles === -1 ? 999 : limits.maxProfiles - dashboards.length;
-  const isAtLimit = limits.maxProfiles !== -1 && dashboards.length >= limits.maxProfiles;
-  const canCreateBusiness = isBusinessPlan();
+  const ilimitado = limiteDashboards === -1;
+  const dashboardsRestantes = ilimitado ? null : Math.max(limiteDashboards - dashboards.length, 0);
+  const isAtLimit = !ilimitado && dashboards.length >= limiteDashboards;
+  const canCreateBusiness = podeCriarEmpresa;
 
   const presets = useMemo(
     () => (selectedType === 'business' ? BUSINESS_PRESETS : PERSONAL_PRESETS),
@@ -148,7 +147,7 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
       console.error('Erro ao criar dashboard:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível criar o dashboard. Tente novamente.',
+        description: mensagemDeErro(error, 'Não foi possível criar o dashboard. Tente novamente.'),
         variant: 'destructive',
       });
     } finally {
@@ -172,7 +171,7 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
         <div className="space-y-4">
           <div className="bg-muted/50 p-3 rounded-lg flex items-center justify-between">
             <span className="text-sm font-medium">Dashboards restantes</span>
-            <span className="text-lg font-bold text-primary">{dashboardsRestantes}</span>
+            <span className="text-lg font-bold text-primary">{dashboardsRestantes ?? 'Ilimitados'}</span>
           </div>
 
           {isAtLimit ? (
@@ -182,7 +181,7 @@ export const DashboardCreateDialog: React.FC<DashboardCreateDialogProps> = ({ op
                 <div>
                   <p className="text-sm font-medium">Limite atingido</p>
                   <p className="text-xs">
-                    Seu plano {subscriptionTier} permite {limits.maxProfiles} dashboard(s). Faça upgrade para criar mais.
+                    Seu plano{nomePlano ? ` ${nomePlano}` : ''} permite {limiteDashboards} perfil(is)/empresa(s). Faça upgrade para criar mais.
                   </p>
                 </div>
               </div>

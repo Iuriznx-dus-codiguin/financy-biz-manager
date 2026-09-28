@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
-import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { useDashboard } from '@/hooks/useDashboard';
 import { usePaymentSuccess } from '@/hooks/usePaymentSuccess';
 import { AppSidebar } from '@/components/AppSidebar';
@@ -14,6 +14,7 @@ import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { ProductTour } from '@/components/onboarding/ProductTour';
 import { FloatingSupportButton } from '@/components/support/FloatingSupportButton';
 import { celebrate } from '@/utils/celebration';
+import { CarregandoPagina } from '@/app/CarregandoPagina';
 import {
   isSectionAllowedWhenBlocked,
   isBusinessOnlySection,
@@ -26,15 +27,14 @@ const CELEBRATE_FLAG = 'financy-onboarding-celebrate';
 export const AuthenticatedLayout = () => {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
-  const { isBlocked: isSubscriptionBlocked, loading: subscriptionLoading } = useUserSubscription();
+  const { bloqueada: isBlocked, carregando: subscriptionLoading } = useAssinatura();
   const { currentDashboard } = useDashboard();
   const navigate = useNavigate();
   const location = useLocation();
 
-  usePaymentSuccess();
+  usePaymentSuccess(isBlocked);
 
   const activeSection = getSectionForRoute(location.pathname);
-  const isBlocked = !!user && isSubscriptionBlocked();
 
   // Bloquear navegação para seções empresariais se dashboard é pessoal
   useEffect(() => {
@@ -104,12 +104,16 @@ export const AuthenticatedLayout = () => {
             {isBlocked && <SubscriptionBanners />}
             {activeSection === 'agentes-ia' ? (
               <main className="flex-1 overflow-hidden h-[calc(100dvh-3.5rem)] lg:h-screen">
-                <Outlet />
+                <Suspense fallback={<CarregandoPagina />}>
+                  <Outlet />
+                </Suspense>
               </main>
             ) : (
               <>
                 <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
-                  <Outlet />
+                  <Suspense fallback={<CarregandoPagina />}>
+                    <Outlet />
+                  </Suspense>
                 </main>
                 <Footer />
               </>

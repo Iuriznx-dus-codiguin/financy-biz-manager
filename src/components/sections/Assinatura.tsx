@@ -28,7 +28,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
-import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
+import { FAMILIAS, type LimitesPlano, planoDaFamilia } from '@/features/assinatura/regras';
+import { formatarBRL } from '@/shared/lib/dinheiro';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -37,35 +39,16 @@ const Assinatura: React.FC = () => {
   const [planType, setPlanType] = useState<'personal' | 'business'>('personal');
   
   const { user } = useAuth();
-  const { subscription, loading, isPremium, isPersonalPlan } = useUserSubscription();
+  const {
+    assinatura: subscription, carregando: loading, ativa, plano, nomePlano, situacao, limiteDashboards, podeCriarEmpresa,
+  } = useAssinatura();
+  const limites = (plano?.limites ?? subscription?.features ?? null) as Partial<LimitesPlano> | null;
 
-  const paymentUrls: Record<string, string> = {
-    // Planos Pessoais - Mensal
-    'personal-plus-monthly': 'https://pay.cakto.com.br/gbmkspq_506803',
-    'personal-pro-monthly': 'https://pay.cakto.com.br/rtfgu9x_511525',
-    
-    // Planos Pessoais - Anual
-    'personal-plus-annual': 'https://pay.cakto.com.br/39r822v',
-    'personal-pro-annual': 'https://pay.cakto.com.br/jtvtbzy',
-    
-    // Planos Empresariais - Mensal
-    'business-plus-monthly': 'https://pay.cakto.com.br/izhudpq_590408',
-    'business-pro-monthly': 'https://pay.cakto.com.br/f7d9hvg_506809',
-    'business-enterprise-monthly': 'https://pay.cakto.com.br/3ei5eox_590705',
-    
-    // Planos Empresariais - Anual
-    'business-plus-annual': 'https://pay.cakto.com.br/cx7b7r6_590691',
-    'business-pro-annual': 'https://pay.cakto.com.br/36ffsgo_590699',
-    'business-enterprise-annual': 'https://pay.cakto.com.br/t2cpi2a_590702'
-  };
-
+  // Links de checkout do catálogo único (os mesmos que o webhook reconhece).
   const handlePayment = (planId: string, period: string) => {
-    const billing = period === 'annual' ? 'annual' : 'monthly';
-    const urlKey = `${planId}-${billing}`;
-    const url = paymentUrls[urlKey];
-    
+    const url = planoDaFamilia(planId.replace('-', '_'), period === 'annual' ? 'yearly' : 'monthly')?.checkoutUrl;
     if (url) {
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener,noreferrer');
     } else {
       toast({ title: 'Erro', description: 'URL de pagamento para este plano não está configurada ainda.', variant: 'destructive' });
     }
@@ -88,99 +71,35 @@ const Assinatura: React.FC = () => {
     };
   };
 
-  const personalPlans = [
-    {
-      id: 'personal-plus',
-      name: 'Plus',
-      monthlyPrice: 19.90,
-      annualPrice: 159.90,
-      icon: <TrendingUp className="h-6 w-6" />,
-      description: 'Controle financeiro pessoal completo',
-      badge: 'Recomendado',
-      recommended: true,
-      features: [
-        { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADA (texto, áudio, foto)' },
-        { name: 'Dashboard Pessoal', value: 'Básico' },
-        { name: 'Contas Pessoais', value: 'Até 1' },
-        { name: 'Suporte', value: 'Email/WhatsApp' }
-      ]
-    },
-    {
-      id: 'personal-pro',
-      name: 'Pro',
-      monthlyPrice: 34.90,
-      annualPrice: 279.90,
-      icon: <Flame className="h-6 w-6" />,
-      description: 'Ideal para casais',
-      badge: 'Popular',
-      popular: true,
-      features: [
-        { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADA (texto, áudio, foto)' },
-        { name: 'Dashboard Pessoal', value: 'Avançado' },
-        { name: 'Contas Pessoais', value: 'Até 3' },
-        { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
-      ]
-    }
-  ];
+  const icones: Record<string, React.ReactNode> = {
+    personal_plus: <TrendingUp className="h-6 w-6" />,
+    personal_pro: <Flame className="h-6 w-6" />,
+    business_plus: <Sparkles className="h-6 w-6" />,
+    business_pro: <Flame className="h-6 w-6" />,
+    business_enterprise: <Shield className="h-6 w-6" />,
+  };
 
-  const businessPlans = [
-    {
-      id: 'business-plus',
-      name: 'Plus',
-      monthlyPrice: 44.90,
-      annualPrice: 360.00,
-      icon: <Sparkles className="h-6 w-6" />,
-      description: 'Gestão empresarial completa',
-      badge: 'Recomendado',
-      recommended: true,
-      features: [
-        { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADA (texto, áudio, foto)' },
-        { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Empresas', value: 'Até 1' },
-        { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
-      ]
-    },
-    {
-      id: 'business-pro',
-      name: 'PRO',
-      monthlyPrice: 97.00,
-      annualPrice: 770.00,
-      icon: <Flame className="h-6 w-6" />,
-      description: 'Finanças pessoais e empresariais juntas',
-      badge: 'Popular',
-      popular: true,
-      features: [
-        { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADA (texto, áudio, foto)' },
-        { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Empresas/Perfis', value: 'Até 2' },
-        { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
-      ]
-    },
-    {
-      id: 'business-enterprise',
-      name: 'Super Company',
-      monthlyPrice: 147.00,
-      annualPrice: 1170.00,
-      icon: <Shield className="h-6 w-6" />,
-      description: 'Solução empresarial premium',
-      features: [
-        { name: 'Receitas/Despesas', value: 'ILIMITADAS' },
-        { name: 'IA no WhatsApp', value: 'ILIMITADA (texto, áudio, foto)' },
-        { name: 'Ferramentas empresariais', value: 'ILIMITADAS' },
-        { name: 'Empresas/Perfis', value: 'Até 10' },
-        { name: 'Suporte', value: 'Email/WhatsApp 24/7' }
-      ]
-    }
-  ];
+  // Cards montados do catálogo (supabase/functions/_shared/planos.ts): preços e textos em um lugar só.
+  const cardsDoTipo = (tipo: 'personal' | 'business') =>
+    FAMILIAS.filter((familia) => familia.tipo === tipo).map((familia) => ({
+      id: familia.id.replace('_', '-'),
+      name: familia.titulo,
+      monthlyPrice: planoDaFamilia(familia.id, 'monthly')?.preco ?? 0,
+      annualPrice: planoDaFamilia(familia.id, 'yearly')?.preco ?? 0,
+      icon: icones[familia.id],
+      description: familia.descricao,
+      badge: familia.selo,
+      recommended: familia.destaque === 'recomendado',
+      popular: familia.destaque === 'popular',
+      features: familia.itens.map((item) => ({ name: item.nome, value: item.valor })),
+    }));
+
+  const personalPlans = cardsDoTipo('personal');
+  const businessPlans = cardsDoTipo('business');
 
   const currentPlans = planType === 'personal' ? personalPlans : businessPlans;
 
 
-  // isPersonalPlan vem do hook useUserSubscription (usa lógica isBusinessPlan correta)
 
   if (loading) {
     return (
@@ -190,8 +109,8 @@ const Assinatura: React.FC = () => {
     );
   }
 
-  // Se usuário tem plano ativo
-  if (isPremium() && subscription) {
+  // Se usuário tem plano ativo (antes só aparecia para tipos 'premium'/'enterprise', que o webhook nunca grava)
+  if (ativa && subscription) {
     return (
       <div className="space-y-8">
         <Card className="border-2 border-primary/20 bg-gradient-to-br from-background via-primary/5 to-background">
@@ -216,9 +135,9 @@ const Assinatura: React.FC = () => {
             <div className="grid md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Plano Atual</p>
-                <p className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">{subscription.plan_name}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">{plano?.nome ?? nomePlano}</p>
                 <Badge variant="outline" className="mt-2">
-                  {subscription.billing_period === 'yearly' ? 'Anual' : 'Mensal'}
+                  {(plano?.periodo ?? subscription.billing_period) === 'yearly' ? 'Anual' : 'Mensal'}
                 </Badge>
               </div>
               
@@ -238,10 +157,10 @@ const Assinatura: React.FC = () => {
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Valor</p>
                 <p className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">
-                  R$ {subscription.amount ? subscription.amount.toFixed(2) : '0,00'}
+                  {formatarBRL(subscription.amount || plano?.preco || 0)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  /{subscription.billing_period === 'yearly' ? 'ano' : 'mês'}
+                  /{(plano?.periodo ?? subscription.billing_period) === 'yearly' ? 'ano' : 'mês'}
                 </p>
               </div>
             </div>
@@ -252,20 +171,20 @@ const Assinatura: React.FC = () => {
                 Recursos do Seu Plano
               </h3>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {subscription.features && (
+                {(
                   <>
-                    {subscription.features.max_dashboards && (
+                    {limiteDashboards !== 0 && (
                       <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                         <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="font-medium">Perfis/Empresas</p>
                           <p className="text-sm text-muted-foreground">
-                            {subscription.features.max_dashboards === -1 ? 'Ilimitados' : `Até ${subscription.features.max_dashboards}`}
+                            {limiteDashboards === -1 ? 'Ilimitados' : `Até ${limiteDashboards}`}
                           </p>
                         </div>
                       </div>
                     )}
-                    {subscription.features.whatsapp_integration && (
+                    {limites?.whatsapp_integration && (
                       <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                         <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <div>
@@ -274,7 +193,7 @@ const Assinatura: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    {subscription.features.advanced_analytics && (
+                    {limites?.advanced_analytics && (
                       <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                         <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <div>
@@ -283,7 +202,7 @@ const Assinatura: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    {subscription.features.export_data && (
+                    {limites?.export_data && (
                       <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                         <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <div>
@@ -299,7 +218,7 @@ const Assinatura: React.FC = () => {
           </CardContent>
         </Card>
 
-        {isPersonalPlan() && (
+        {!podeCriarEmpresa && (
           <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-50/50 via-purple-50/50 to-blue-50/50 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-blue-950/20">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -459,17 +378,17 @@ const Assinatura: React.FC = () => {
                 <div className="space-y-2 pt-4">
                   {isAnnual && (
                     <div className="text-sm text-muted-foreground line-through">
-                      R$ {plan.monthlyPrice.toFixed(2)}/mês
+                      {formatarBRL(plan.monthlyPrice)}/mês
                     </div>
                   )}
                   <div className="text-2xl sm:text-3xl font-bold text-foreground font-display tracking-tight">
-                    R$ {isAnnual ? pricing.monthlyEquivalent.toFixed(2) : pricing.price.toFixed(2)}
+                    {formatarBRL(isAnnual ? pricing.monthlyEquivalent : pricing.price)}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     /mês
                     {isAnnual && (
                       <div className="text-xs mt-1">
-                        Total anual: R$ {pricing.price.toFixed(2)}
+                        Total anual: {formatarBRL(pricing.price)}
                       </div>
                     )}
                   </div>
@@ -516,7 +435,9 @@ const Assinatura: React.FC = () => {
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-primary/30 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-3">
               <CreditCard className="h-5 w-5 text-primary" />
-              <span className="font-semibold text-primary">Aguardando Pagamento</span>
+              <span className="font-semibold text-primary">
+                {situacao === 'expirada' ? 'Assinatura expirada' : situacao === 'cancelada' ? 'Assinatura cancelada' : situacao === 'pagamento_atrasado' ? 'Pagamento em atraso' : 'Aguardando pagamento'}
+              </span>
             </div>
             <p className="text-sm text-primary mb-4">
               Escolha um plano acima para desbloquear todas as funcionalidades do Financy.

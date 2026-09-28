@@ -2,19 +2,19 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Crown, AlertTriangle, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUserSubscription } from '@/hooks/useUserSubscription';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { Button } from '@/components/ui/button';
 
 export const SubscriptionBanners: React.FC = () => {
-  const { subscription, isSubscriptionExpired, isPendingPayment, getDaysUntilExpiration } = useUserSubscription();
+  const { situacao, carregando, diasParaExpirar: daysRemaining } = useAssinatura();
   const [dismissed, setDismissed] = useState(false);
   const navigate = useNavigate();
 
-  if (!subscription || dismissed) return null;
+  if (carregando || dismissed) return null;
 
-  const expired = isSubscriptionExpired();
-  const isPending = isPendingPayment();
-  const daysRemaining = getDaysUntilExpiration();
+  // Sem assinatura, cancelada ou em atraso contam como "assine"; expirada, como "renove".
+  const expired = situacao === 'expirada';
+  const isPending = ['pagamento_pendente', 'sem_assinatura', 'cancelada', 'pagamento_atrasado'].includes(situacao);
 
   const handleNavigateToSubscription = () => {
     navigate('/assinatura');

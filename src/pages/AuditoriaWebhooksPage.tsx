@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
-import { useUserSubscription } from '@/hooks/useUserSubscription';
-import { isDeveloperTier } from '@/utils/subscriptionHelpers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,7 +101,6 @@ const categoryVariant: Record<string, string> = {
 };
 
 export default function AuditoriaWebhooksPage() {
-  const { subscription, loading: subLoading } = useUserSubscription();
   const [logs, setLogs] = useState<CaktoWebhookLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -117,13 +113,11 @@ export default function AuditoriaWebhooksPage() {
     search: '',
   });
 
-  const isDeveloper = isDeveloperTier(subscription);
-
   const fetchLogs = async () => {
     setRefreshing(true);
     try {
       let query = supabase
-        .from('cakto_webhook_logs' as any)
+        .from('cakto_webhook_logs')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(PAGE_SIZE);
@@ -142,18 +136,19 @@ export default function AuditoriaWebhooksPage() {
       const { data, error } = await query;
       if (error) throw error;
       setLogs((data as unknown as CaktoWebhookLog[]) || []);
-    } catch (err: any) {
-      toast.error('Erro ao carregar logs', { description: err?.message });
+    } catch (err) {
+      toast.error('Erro ao carregar logs', { description: err instanceof Error ? err.message : (err as { message?: string })?.message });
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
+  // Acesso garantido pelo AdminGuard da rota e pela policy de admin da tabela.
   useEffect(() => {
-    if (isDeveloper) fetchLogs();
+    fetchLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDeveloper, filters.subscription, filters.category, filters.status]);
+  }, [filters.subscription, filters.category, filters.status]);
 
   const summary = useMemo(() => {
     const total = logs.length;
@@ -162,18 +157,6 @@ export default function AuditoriaWebhooksPage() {
     const retried = logs.filter((l) => l.is_retry).length;
     return { total, success, failed, retried };
   }, [logs]);
-
-  if (subLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[40vh]">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!isDeveloper) {
-    return <Navigate to="/configuracoes" replace />;
-  }
 
   return (
     <div className="space-y-4">
