@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
-import { logger } from '@/utils/logger';
+import { logger } from '@/shared/lib/logger';
 import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
 import { hojeISO } from '@/shared/lib/datas';
 import { ehColunaAusente } from '@/shared/lib/erros';

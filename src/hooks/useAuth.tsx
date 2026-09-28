@@ -2,7 +2,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { celebrate } from '@/utils/celebration';
+import { celebrate } from '@/shared/lib/celebration';
 import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType {

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { formatDateForFilter, getDateRange, isDateInRange } from './dateFilters';
+import { formatDateForFilter, getDateRange, isDateInRange } from '@/shared/lib/dateFilters';
 
 // 27/09/2026 às 23:30 em Brasília = 28/09/2026 02:30 UTC.
 const noiteEmBrasilia = new Date('2026-09-28T02:30:00Z');

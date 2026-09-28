@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Phone, CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { validateAndNormalizePhone, formatPhoneForDisplay } from '@/utils/evolutionPhoneValidation';
+import { validateAndNormalizePhone, formatPhoneForDisplay } from '@/shared/lib/evolutionPhoneValidation';
 
 interface BrazilianPhoneInputProps {
   value: string;

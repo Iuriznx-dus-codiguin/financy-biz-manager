@@ -3,7 +3,7 @@
  * com sanitização de dados sensíveis.
  */
 import { supabase } from '@/integrations/supabase/client';
-import { logger } from './logger';
+import { logger } from '@/shared/lib/logger';
 
 const SENSITIVE_KEYS = /pass(word)?|token|secret|apikey|api_key|authorization|cpf|cnpj|card|cvv|cvc/i;
 

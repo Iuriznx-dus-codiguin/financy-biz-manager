@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { logger } from '@/utils/logger';
+import { logger } from '@/shared/lib/logger';
 import { hojeISO } from '@/shared/lib/datas';
 
 interface ProcessingResult {

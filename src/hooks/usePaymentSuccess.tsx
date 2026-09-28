@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
-import { celebrate } from '@/utils/celebration';
+import { celebrate } from '@/shared/lib/celebration';
 import { useAtualizarAssinatura } from '@/features/assinatura/useAssinatura';
 
 const INTERVALO_MS = 10_000;

@@ -16,7 +16,7 @@ import {
   parseSpreadsheetFile,
   TemplateColumn,
   type LinhaPlanilha,
-} from '@/utils/spreadsheetIO';
+} from '@/shared/lib/spreadsheetIO';
 import { hojeISO } from '@/shared/lib/datas';
 import { textoDoErro } from '@/shared/lib/erros';
 

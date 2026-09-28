@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { isDateInRange } from '@/utils/dateFilters';
+import { isDateInRange } from '@/shared/lib/dateFilters';
 // Usar tipos compatíveis com o contexto existente
 import type { Receita, Despesa, Imposto, MembroEquipe } from '@/contexts/AppContext';
 

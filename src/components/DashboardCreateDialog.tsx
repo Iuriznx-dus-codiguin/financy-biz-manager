@@ -10,7 +10,7 @@ import { useDashboard } from '@/hooks/useDashboard';
 import { useToast } from '@/hooks/use-toast';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { mensagemDeErro } from '@/shared/lib/erros';
-import { celebrate } from '@/utils/celebration';
+import { celebrate } from '@/shared/lib/celebration';
 
 interface DashboardCreateDialogProps {
   open: boolean;

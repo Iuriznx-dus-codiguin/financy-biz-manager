@@ -6,8 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Trash2, Plus } from 'lucide-react';
 import { OnboardingData, GastoInicial } from '@/types/onboarding';
 import { useToast } from '@/hooks/use-toast';
-import { SpreadsheetImportExport } from '@/components/SpreadsheetImportExport';
-import { type LinhaPlanilha, parseNumber } from '@/utils/spreadsheetIO';
+import { SpreadsheetImportExport } from '@/shared/ui/SpreadsheetImportExport';
+import { type LinhaPlanilha, parseNumber } from '@/shared/lib/spreadsheetIO';
 
 interface ExpenseSheetStepProps {
   data: OnboardingData;

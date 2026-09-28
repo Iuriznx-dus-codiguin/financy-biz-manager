@@ -6,7 +6,7 @@ import { Building, User, Plus, ChevronDown, Briefcase } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
 import { useUserContext } from '@/hooks/useUserContext';
-import { getLabel } from '@/utils/nomenclature';
+import { getLabel } from '@/shared/lib/nomenclature';
 
 export const CompactDashboardSelector = () => {
   const { currentDashboard, dashboards, setCurrentDashboard } = useDashboard();

@@ -23,8 +23,8 @@ import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-rea
 import { toast } from 'sonner';
 import { useAppContext } from '@/contexts/AppContext';
 import { CategorySelector } from '@/components/CategorySelector';
-import { SpreadsheetImportExport } from '@/components/SpreadsheetImportExport';
-import { parseNumber, parseDate } from '@/utils/spreadsheetIO';
+import { SpreadsheetImportExport } from '@/shared/ui/SpreadsheetImportExport';
+import { parseNumber, parseDate } from '@/shared/lib/spreadsheetIO';
 import { dataLocal, formatarData, hojeISO } from '@/shared/lib/datas';
 import { interpretarValor } from '@/shared/lib/dinheiro';
 import { ocorrenciasAte } from '@/shared/lib/recorrencia';

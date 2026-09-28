@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { parseDate, parseNumber } from './spreadsheetIO';
+import { parseDate, parseNumber } from '@/shared/lib/spreadsheetIO';
 
 describe('parseNumber (valores de planilha)', () => {
   it('aceita formatos brasileiro e internacional', () => {

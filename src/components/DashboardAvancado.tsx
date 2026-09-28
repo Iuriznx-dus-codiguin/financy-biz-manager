@@ -45,10 +45,10 @@ import {
   Minus,
   Receipt
 } from 'lucide-react';
-import { TimeFilter } from '@/components/TimeFilter';
-import { isDateInRange } from '@/utils/dateFilters';
+import { TimeFilter } from '@/shared/ui/TimeFilter';
+import { isDateInRange } from '@/shared/lib/dateFilters';
 import { useAppContext } from '@/contexts/AppContext';
-import { TooltipInfo } from '@/components/TooltipInfo';
+import { TooltipInfo } from '@/shared/ui/TooltipInfo';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { dataLocal, hojeISO } from '@/shared/lib/datas';

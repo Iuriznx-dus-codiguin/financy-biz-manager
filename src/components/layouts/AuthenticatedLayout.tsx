@@ -13,7 +13,7 @@ import { SubscriptionBanners } from '@/components/SubscriptionBanners';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { ProductTour } from '@/components/onboarding/ProductTour';
 import { FloatingSupportButton } from '@/components/support/FloatingSupportButton';
-import { celebrate } from '@/utils/celebration';
+import { celebrate } from '@/shared/lib/celebration';
 import { CarregandoPagina } from '@/app/CarregandoPagina';
 import {
   isSectionAllowedWhenBlocked,
