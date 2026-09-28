@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/features/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getTourSteps, TourId, TourStep, TourContext as TourCtx } from '@/config/tourSteps';
 import { useIsBelowLg, isBelowLgNow } from './use-mobile';

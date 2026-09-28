@@ -8,7 +8,7 @@ import {
   Layout, TrendingUp, TrendingDown, Receipt, PieChart, Settings, HelpCircle,
   CreditCard, Calculator, Users, Sun, Moon, Target, Bot, Folder
 } from 'lucide-react';
-import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/constants/routes';
+import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/app/rotas';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/hooks/useTheme';
 import { useUserContext } from '@/hooks/useUserContext';

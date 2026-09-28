@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/features/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { OnboardingData } from '@/types/onboarding';
 import type { Json } from '@/integrations/supabase/types';

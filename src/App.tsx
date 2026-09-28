@@ -2,17 +2,17 @@ import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { AppProviders } from "@/components/providers/AppProviders";
-import { AuthenticatedLayout } from "@/components/layouts/AuthenticatedLayout";
-import { AuthGuard } from "@/components/guards/AuthGuard";
-import { AdminGuard } from "@/components/guards/AdminGuard";
+import { ErrorBoundary } from "@/app/ErrorBoundary";
+import { AppProviders } from "@/app/AppProviders";
+import { AuthenticatedLayout } from "@/app/AuthenticatedLayout";
+import { AuthGuard } from "@/app/guards/AuthGuard";
+import { AdminGuard } from "@/app/guards/AdminGuard";
 import { carregarPagina } from "@/app/carregarPagina";
 import { CarregandoPagina } from "@/app/CarregandoPagina";
 
 // Cada página vira um chunk próprio: o carregamento inicial não inclui gráficos, planilhas e PDF.
-const NotFound = carregarPagina(() => import("./pages/NotFound"));
-const LoginPage = carregarPagina(() => import("./pages/LoginPage"));
+const NotFound = carregarPagina(() => import("@/app/NotFound"));
+const LoginPage = carregarPagina(() => import("@/features/auth/LoginPage"));
 const DashboardPage = carregarPagina(() => import("./pages/DashboardPage"));
 const ReceitasPage = carregarPagina(() => import("./pages/ReceitasPage"));
 const DespesasPage = carregarPagina(() => import("./pages/DespesasPage"));
@@ -27,7 +27,7 @@ const AssinaturaPage = carregarPagina(() => import("./pages/AssinaturaPage"));
 const ConfiguracoesPage = carregarPagina(() => import("./pages/ConfiguracoesPage"));
 const AjudaPage = carregarPagina(() => import("./pages/AjudaPage"));
 const SuportePage = carregarPagina(() => import("./pages/SuportePage"));
-const AuditoriaWebhooksPage = carregarPagina(() => import("./pages/AuditoriaWebhooksPage"));
+const AuditoriaWebhooksPage = carregarPagina(() => import("@/features/admin/AuditoriaWebhooksPage"));
 const AdminSuportePage = carregarPagina(() => import("./pages/AdminSuportePage"));
 
 /**

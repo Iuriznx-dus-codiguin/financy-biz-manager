@@ -4,7 +4,7 @@ import { useProductTour } from '@/hooks/useProductTour';
 import { TourOverlay } from './TourOverlay';
 import { TourId, BUSINESS_ONLY_TOURS } from '@/config/tourSteps';
 import { useDashboard } from '@/hooks/useDashboard';
-import { ROUTE_TO_SECTION } from '@/constants/routes';
+import { ROUTE_TO_SECTION } from '@/app/rotas';
 
 const ROUTE_TO_TOUR: Record<string, TourId> = {
   '/dashboard': 'dashboard',

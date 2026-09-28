@@ -1,14 +1,14 @@
 import { Suspense, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { useDashboard } from '@/hooks/useDashboard';
 import { usePaymentSuccess } from '@/hooks/usePaymentSuccess';
-import { AppSidebar } from '@/components/AppSidebar';
-import { MobileSidebar } from '@/components/MobileSidebar';
+import { AppSidebar } from '@/app/navegacao/AppSidebar';
+import { MobileSidebar } from '@/app/navegacao/MobileSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import Footer from '@/components/Footer';
+import Footer from '@/app/Footer';
 import { SubscriptionBanners } from '@/components/SubscriptionBanners';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { ProductTour } from '@/components/onboarding/ProductTour';
@@ -20,7 +20,7 @@ import {
   isBusinessOnlySection,
   getRouteForSection,
   getSectionForRoute,
-} from '@/constants/routes';
+} from '@/app/rotas';
 
 const CELEBRATE_FLAG = 'financy-onboarding-celebrate';
 

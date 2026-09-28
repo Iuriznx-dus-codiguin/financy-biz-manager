@@ -8,7 +8,7 @@ import jsPDF from 'jspdf';
 import { useProductTour } from '@/hooks/useProductTour';
 import { TourId } from '@/config/tourSteps';
 import { useDashboard } from '@/hooks/useDashboard';
-import { getRouteForSection } from '@/constants/routes';
+import { getRouteForSection } from '@/app/rotas';
 
 const Ajuda = () => {
   const { startTour } = useProductTour();

@@ -1,6 +1,6 @@
 import Dashboard from '@/components/sections/Dashboard';
 import { useNavigate } from 'react-router-dom';
-import { getRouteForSection } from '@/constants/routes';
+import { getRouteForSection } from '@/app/rotas';
 
 export default function DashboardPage() {
   const navigate = useNavigate();

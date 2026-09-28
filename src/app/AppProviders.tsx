@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/hooks/useTheme';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { AuthProvider } from '@/hooks/useAuth';
+import { AuthProvider } from '@/features/auth/useAuth';
 import { SettingsProvider } from '@/hooks/useSettings';
 import { OnboardingProvider } from '@/hooks/useOnboarding';
 import { ProductTourProvider } from '@/hooks/useProductTour';

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { AuthPage } from '@/components/auth/AuthPage';
+import { useAuth } from '@/features/auth/useAuth';
+import { AuthPage } from '@/features/auth/AuthPage';
 
 export default function LoginPage() {
   const { user, loading } = useAuth();

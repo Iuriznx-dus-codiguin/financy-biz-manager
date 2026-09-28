@@ -26,7 +26,7 @@ import {
   ArrowRight,
   CheckCircle2
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/useAuth';
 
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { FAMILIAS, type LimitesPlano, planoDaFamilia } from '@/features/assinatura/regras';

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/features/auth/useAuth';
 import { useToast } from './use-toast';
 import { celebrate } from '@/shared/lib/celebration';
 import { useAtualizarAssinatura } from '@/features/assinatura/useAssinatura';

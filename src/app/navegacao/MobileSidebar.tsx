@@ -11,8 +11,8 @@ import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/hooks/useTheme';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
-import { useAuth } from '@/hooks/useAuth';
-import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/constants/routes';
+import { useAuth } from '@/features/auth/useAuth';
+import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/app/rotas';
 
 import financyLogoLight from '@/assets/financy-logo-light.png';
 import financyLogoDark from '@/assets/financy-logo-new-dark.png';

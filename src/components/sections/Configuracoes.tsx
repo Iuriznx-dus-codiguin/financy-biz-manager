@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { useSettings, useCurrency } from '@/hooks/useSettings';
 import { useTheme } from '@/hooks/useTheme';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useDashboard } from '@/hooks/useDashboard';
 import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
@@ -38,7 +38,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
-import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { useIsAdmin } from '@/features/admin/useIsAdmin';
 import { ehFuncaoAusente, mensagemDeErro, textoDoErro } from '@/shared/lib/erros';
 import { rpcNova } from '@/shared/lib/rpcNovas';
 import {

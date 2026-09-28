@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { useIsAdmin } from '@/features/admin/useIsAdmin';
 
 /** Telas administrativas: só papel "admin" (user_roles), a mesma regra das policies do banco. */
 export const AdminGuard = ({ children }: { children: React.ReactNode }) => {

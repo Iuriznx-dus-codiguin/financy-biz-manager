@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/useAuth';
 import { erroDaFunction } from '@/shared/lib/erros';
 
 export type SupportRole = 'user' | 'assistant' | 'agent';

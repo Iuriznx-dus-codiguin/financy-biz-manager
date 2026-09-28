@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAppContext } from '@/contexts/AppContext';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useUserContext } from '@/hooks/useUserContext';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReactMarkdown from 'react-markdown';
 import {

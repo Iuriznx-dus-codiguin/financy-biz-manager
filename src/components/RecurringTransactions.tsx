@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Calendar, TrendingUp, TrendingDown, RefreshCw, Loader2 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/useAuth';
 import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
 import { toast } from 'sonner';
 import { dataLocal } from '@/shared/lib/datas';

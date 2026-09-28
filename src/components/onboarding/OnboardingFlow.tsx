@@ -20,7 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { requestGeneralTour } from '@/components/onboarding/ProductTour';
 import { validateAndNormalizePhone, savePhoneCorrection, type CorrectionType } from '@/shared/lib/evolutionPhoneValidation';
 import { checkPhoneDuplicate } from '@/shared/lib/phoneValidation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/useAuth';
 import financyLogo from '@/assets/financy-logo-new-dark.png';
 import { FinancialDataStep } from './FinancialDataStep';
 import { ExpenseSheetStep } from './ExpenseSheetStep';

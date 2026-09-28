@@ -49,7 +49,7 @@ import { TimeFilter } from '@/shared/ui/TimeFilter';
 import { isDateInRange } from '@/shared/lib/dateFilters';
 import { useAppContext } from '@/contexts/AppContext';
 import { TooltipInfo } from '@/shared/ui/TooltipInfo';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { dataLocal, hojeISO } from '@/shared/lib/datas';
 import type { Tables } from '@/integrations/supabase/types';
