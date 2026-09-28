@@ -2,7 +2,7 @@ import React, { memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, AlertTriangle, Lightbulb, DollarSign } from 'lucide-react';
-import type { Receita, Despesa, Imposto } from '@/contexts/AppContext';
+import type { Receita, Despesa, Imposto } from '@/features/financeiro/AppContext';
 
 interface InteligenciaFinanceiraBasicaProps {
   receitas: Receita[];

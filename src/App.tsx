@@ -13,7 +13,7 @@ import { CarregandoPagina } from "@/app/CarregandoPagina";
 // Cada página vira um chunk próprio: o carregamento inicial não inclui gráficos, planilhas e PDF.
 const NotFound = carregarPagina(() => import("@/app/NotFound"));
 const LoginPage = carregarPagina(() => import("@/features/auth/LoginPage"));
-const DashboardPage = carregarPagina(() => import("./pages/DashboardPage"));
+const DashboardPage = carregarPagina(() => import("@/features/painel/DashboardPage"));
 const ReceitasPage = carregarPagina(() => import("./pages/ReceitasPage"));
 const DespesasPage = carregarPagina(() => import("./pages/DespesasPage"));
 const CategoriasPage = carregarPagina(() => import("./pages/CategoriasPage"));
@@ -23,7 +23,7 @@ const MetasPage = carregarPagina(() => import("./pages/MetasPage"));
 const RelatoriosPage = carregarPagina(() => import("./pages/RelatoriosPage"));
 const FechamentoPage = carregarPagina(() => import("./pages/FechamentoPage"));
 const AgentesIAPage = carregarPagina(() => import("./pages/AgentesIAPage"));
-const AssinaturaPage = carregarPagina(() => import("./pages/AssinaturaPage"));
+const AssinaturaPage = carregarPagina(() => import("@/features/assinatura/AssinaturaPage"));
 const ConfiguracoesPage = carregarPagina(() => import("./pages/ConfiguracoesPage"));
 const AjudaPage = carregarPagina(() => import("./pages/AjudaPage"));
 const SuportePage = carregarPagina(() => import("./pages/SuportePage"));

@@ -11,8 +11,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Users, UserPlus, Mail, Phone, Edit, Trash2, Shield, Eye, EyeOff } from 'lucide-react';
-import { useAppContext } from '@/contexts/AppContext';
-import { MembroEquipe } from '@/contexts/AppContext';
+import { useAppContext } from '@/features/financeiro/AppContext';
+import { MembroEquipe } from '@/features/financeiro/AppContext';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { dataLocal, hojeISO } from '@/shared/lib/datas';

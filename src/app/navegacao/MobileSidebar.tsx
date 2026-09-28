@@ -9,7 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/hooks/useTheme';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard } from '@/features/dashboards/useDashboard';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { useAuth } from '@/features/auth/useAuth';
 import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/app/rotas';

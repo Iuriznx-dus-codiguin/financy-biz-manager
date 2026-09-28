@@ -3,13 +3,13 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TimeFilter } from '@/shared/ui/TimeFilter';
-import { CompactDashboardSelector } from '@/components/CompactDashboardSelector';
+import { CompactDashboardSelector } from '@/features/dashboards/CompactDashboardSelector';
 import { Crown, Zap, Star, Settings, Code, Sparkles, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
 import { useOnboarding } from '@/hooks/useOnboarding';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/features/financeiro/AppContext';
 import { toast } from 'sonner';
 
 interface FloatingDashboardInfoProps {

@@ -6,9 +6,9 @@ import { AuthProvider } from '@/features/auth/useAuth';
 import { SettingsProvider } from '@/hooks/useSettings';
 import { OnboardingProvider } from '@/hooks/useOnboarding';
 import { ProductTourProvider } from '@/hooks/useProductTour';
-import { DashboardProvider } from '@/hooks/useDashboard';
-import { UserContextProvider } from '@/hooks/useUserContext';
-import { AppProvider } from '@/contexts/AppContext';
+import { DashboardProvider } from '@/features/dashboards/useDashboard';
+import { UserContextProvider } from '@/features/dashboards/useUserContext';
+import { AppProvider } from '@/features/financeiro/AppContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {

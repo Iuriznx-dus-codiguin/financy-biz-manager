@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import { iconeDaCategoria } from '@/shared/ui/iconesCategoria';
 import { useCategoriasPersonalizadas, CategoriaPersonalizada } from '@/hooks/useCategoriasPersonalizadas';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/features/financeiro/AppContext';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,

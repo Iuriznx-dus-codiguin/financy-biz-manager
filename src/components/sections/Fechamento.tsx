@@ -4,7 +4,7 @@ import { SectionTourTrigger } from '@/components/onboarding/SectionTourTrigger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, TrendingUp, TrendingDown, DollarSign, Search, Filter, ArrowUpCircle, ArrowDownCircle, FileText, Users, Calendar } from 'lucide-react';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/features/financeiro/AppContext';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';

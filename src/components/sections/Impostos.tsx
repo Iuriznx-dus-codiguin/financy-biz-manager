@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, Filter, Search, CheckCircle, XCircle, Trash2, Calendar, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/features/financeiro/AppContext';
 import { Badge } from '@/components/ui/badge';
 import { formatarData, hojeISO } from '@/shared/lib/datas';
 import { formatarBRL, interpretarValor, somarReais } from '@/shared/lib/dinheiro';

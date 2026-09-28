@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { type Despesa, type Receita, useAppContext } from '@/contexts/AppContext';
+import { type Despesa, type Receita, useAppContext } from '@/features/financeiro/AppContext';
 import { TimeFilter } from '@/shared/ui/TimeFilter';
 import { isDateInRange, getDateRange } from '@/shared/lib/dateFilters';
 import { toast } from 'sonner';

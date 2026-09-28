@@ -7,7 +7,7 @@ import { Download, BarChart3, TrendingUp, TrendingDown, FolderOpen, FileText, Us
 import jsPDF from 'jspdf';
 import { useProductTour } from '@/hooks/useProductTour';
 import { TourId } from '@/config/tourSteps';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard } from '@/features/dashboards/useDashboard';
 import { getRouteForSection } from '@/app/rotas';
 
 const Ajuda = () => {

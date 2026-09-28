@@ -1,23 +1,23 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/features/financeiro/AppContext';
 import { InteligenciaFinanceiraIA } from '@/components/InteligenciaFinanceiraIA';
 import { InteligenciaFinanceiraBasica } from '@/components/InteligenciaFinanceiraBasica';
-import { UpgradeCard } from '@/components/UpgradeCard';
+import { UpgradeCard } from '@/features/assinatura/UpgradeCard';
 import { OptimizedMetricCard } from '@/shared/ui/OptimizedMetricCard';
-import { useFinancialCalculations } from '@/hooks/useFinancialCalculations';
+import { useFinancialCalculations } from '@/features/financeiro/useFinancialCalculations';
 import { TimeFilter } from '@/shared/ui/TimeFilter';
 import { TooltipInfo } from '@/shared/ui/TooltipInfo';
-import { DashboardAvancado } from '@/components/DashboardAvancado';
+import { DashboardAvancado } from '@/features/painel/DashboardAvancado';
 import { isDateInRange } from '@/shared/lib/dateFilters';
 import { Crown, Sparkles } from 'lucide-react';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
-import { FloatingDashboardInfo } from '@/components/FloatingDashboardInfo';
+import { FloatingDashboardInfo } from '@/features/painel/FloatingDashboardInfo';
 import { useOnboarding } from '@/hooks/useOnboarding';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard } from '@/features/dashboards/useDashboard';
 import { RecurringTransactions } from '@/components/RecurringTransactions';
-import { DashboardSkeleton } from '@/components/DashboardSkeleton';
+import { DashboardSkeleton } from '@/features/painel/DashboardSkeleton';
 
 interface DashboardProps {
   setActiveSection?: (section: string) => void;

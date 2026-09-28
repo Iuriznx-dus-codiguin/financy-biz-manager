@@ -47,10 +47,10 @@ import {
 } from 'lucide-react';
 import { TimeFilter } from '@/shared/ui/TimeFilter';
 import { isDateInRange } from '@/shared/lib/dateFilters';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/features/financeiro/AppContext';
 import { TooltipInfo } from '@/shared/ui/TooltipInfo';
 import { useAuth } from '@/features/auth/useAuth';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard } from '@/features/dashboards/useDashboard';
 import { dataLocal, hojeISO } from '@/shared/lib/datas';
 import type { Tables } from '@/integrations/supabase/types';
 import type { LucideIcon } from 'lucide-react';

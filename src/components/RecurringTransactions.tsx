@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Calendar, TrendingUp, TrendingDown, RefreshCw, Loader2 } from 'lucide-react';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/features/financeiro/AppContext';
 import { useAuth } from '@/features/auth/useAuth';
 import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
 import { toast } from 'sonner';

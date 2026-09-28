@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useProductTour } from '@/hooks/useProductTour';
 import { TourOverlay } from './TourOverlay';
 import { TourId, BUSINESS_ONLY_TOURS } from '@/config/tourSteps';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard } from '@/features/dashboards/useDashboard';
 import { ROUTE_TO_SECTION } from '@/app/rotas';
 
 const ROUTE_TO_TOUR: Record<string, TourId> = {

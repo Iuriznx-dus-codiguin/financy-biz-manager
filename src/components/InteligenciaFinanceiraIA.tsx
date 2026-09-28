@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Lightbulb, AlertTriangle, TrendingUp, RefreshCw, Sparkles, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useDashboard } from '@/hooks/useDashboard';
-import { useUserContext } from '@/hooks/useUserContext';
+import { useDashboard } from '@/features/dashboards/useDashboard';
+import { useUserContext } from '@/features/dashboards/useUserContext';
 import { useToast } from '@/components/ui/use-toast';
 import { erroDaFunction } from '@/shared/lib/erros';
 

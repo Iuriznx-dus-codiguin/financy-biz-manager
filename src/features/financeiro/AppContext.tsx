@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { useAuth } from '@/features/auth/useAuth';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard } from '@/features/dashboards/useDashboard';
 import { logger } from '@/shared/lib/logger';
 import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
 import { hojeISO } from '@/shared/lib/datas';

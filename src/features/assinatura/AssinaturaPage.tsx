@@ -1,4 +1,4 @@
-import Assinatura from '@/components/sections/Assinatura';
+import Assinatura from '@/features/assinatura/Assinatura';
 
 export default function AssinaturaPage() {
   return <Assinatura />;

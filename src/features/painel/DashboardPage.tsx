@@ -1,4 +1,4 @@
-import Dashboard from '@/components/sections/Dashboard';
+import Dashboard from '@/features/painel/Dashboard';
 import { useNavigate } from 'react-router-dom';
 import { getRouteForSection } from '@/app/rotas';
 

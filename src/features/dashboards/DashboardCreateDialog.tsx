@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Building, User, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard } from '@/features/dashboards/useDashboard';
 import { useToast } from '@/hooks/use-toast';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 import { mensagemDeErro } from '@/shared/lib/erros';

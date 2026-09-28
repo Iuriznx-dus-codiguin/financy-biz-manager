@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/features/auth/useAuth';
-import { useOnboarding } from './useOnboarding';
-import { useDashboard } from './useDashboard';
+import { useOnboarding } from '@/hooks/useOnboarding';
+import { useDashboard } from '@/features/dashboards/useDashboard';
 
 export interface UserContext {
   userType: 'pessoal' | 'empresarial';

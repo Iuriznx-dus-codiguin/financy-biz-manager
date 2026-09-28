@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Target, Plus, TrendingUp, DollarSign, Calendar, Award, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { type Meta, useAppContext } from '@/contexts/AppContext';
+import { type Meta, useAppContext } from '@/features/financeiro/AppContext';
 import { dataLocal } from '@/shared/lib/datas';
 
 type FormularioMeta = Omit<Meta, 'id' | 'dashboard_id'>;

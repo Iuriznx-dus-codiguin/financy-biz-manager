@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Building, User, Plus, ChevronDown, Briefcase } from 'lucide-react';
-import { useDashboard } from '@/hooks/useDashboard';
-import { DashboardCreateDialog } from '@/components/DashboardCreateDialog';
-import { useUserContext } from '@/hooks/useUserContext';
+import { useDashboard } from '@/features/dashboards/useDashboard';
+import { DashboardCreateDialog } from '@/features/dashboards/DashboardCreateDialog';
+import { useUserContext } from '@/features/dashboards/useUserContext';
 import { getLabel } from '@/shared/lib/nomenclature';
 
 export const CompactDashboardSelector = () => {

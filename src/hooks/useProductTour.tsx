@@ -3,7 +3,7 @@ import { useAuth } from '@/features/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getTourSteps, TourId, TourStep, TourContext as TourCtx } from '@/config/tourSteps';
 import { useIsBelowLg, isBelowLgNow } from './use-mobile';
-import { useDashboard } from './useDashboard';
+import { useDashboard } from '@/features/dashboards/useDashboard';
 import { useAssinatura } from '@/features/assinatura/useAssinatura';
 
 

@@ -9,9 +9,9 @@ import {
   CreditCard, Calculator, Users, Sun, Moon, Target, Bot, Folder
 } from 'lucide-react';
 import { MENU_ITEMS, getRouteForSection, getSectionForRoute, isSectionAllowedWhenBlocked } from '@/app/rotas';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard } from '@/features/dashboards/useDashboard';
 import { useTheme } from '@/hooks/useTheme';
-import { useUserContext } from '@/hooks/useUserContext';
+import { useUserContext } from '@/features/dashboards/useUserContext';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,

@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, Filter, Search, Trash2, Calendar, Check, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/features/financeiro/AppContext';
 import { CategorySelector } from '@/components/CategorySelector';
 import { SpreadsheetImportExport } from '@/shared/ui/SpreadsheetImportExport';
 import { parseNumber, parseDate } from '@/shared/lib/spreadsheetIO';

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import { useCategoriasPersonalizadas } from '@/hooks/useCategoriasPersonalizadas';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard } from '@/features/dashboards/useDashboard';
 import { getPredefinedCategories } from '@/constants/categories';
 import { iconeDaCategoria } from '@/shared/ui/iconesCategoria';
 
