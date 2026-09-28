@@ -19,6 +19,8 @@ interface DashboardContextType {
   createDashboard: (name: string, type: 'personal' | 'business') => Promise<void>;
   deleteDashboard: (id: string) => Promise<void>;
   updateDashboardName: (id: string, newName: string) => Promise<void>;
+  /** Relê os dashboards do banco (depois do onboarding, que pode renomear e mudar o tipo do padrão). */
+  reloadDashboards: () => Promise<void>;
   loading: boolean;
 }
 
@@ -214,6 +216,7 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
       createDashboard,
       deleteDashboard,
       updateDashboardName,
+      reloadDashboards: loadDashboards,
       loading
     }}>
       {children}

@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useUserContext } from '@/hooks/useUserContext';
 import { useToast } from '@/components/ui/use-toast';
+import { erroDaFunction } from '@/shared/lib/erros';
 
 interface AIInsight {
   tipo: 'alerta' | 'sucesso' | 'dica' | 'info';
@@ -36,9 +37,6 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
-
       const { data, error: fnError } = await supabase.functions.invoke('ai-financial-insights', {
         body: {
           dashboardId: currentDashboard?.id,
@@ -49,14 +47,8 @@ export const InteligenciaFinanceiraIA: React.FC<AIInsightsProps> = ({ timeFilter
       });
 
       if (fnError) {
-        const msg = fnError.message || '';
-        if (msg.includes('429')) {
-          setError('Limite de requisições atingido. Tente novamente em instantes.');
-        } else if (msg.includes('402')) {
-          setError('Créditos de IA esgotados.');
-        } else {
-          throw fnError;
-        }
+        const { mensagem } = await erroDaFunction(fnError, 'Não foi possível gerar insights. Tente novamente.');
+        setError(mensagem);
         return;
       }
 

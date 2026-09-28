@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { erroDaFunction } from '@/shared/lib/erros';
 
 export type SupportRole = 'user' | 'assistant' | 'agent';
 
@@ -131,15 +132,14 @@ export function useSupportChat() {
       setMessages((prev) => [...prev, optimistic]);
 
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error('Sessão expirada. Entre novamente.');
-
         const { data, error: fnError } = await supabase.functions.invoke('support-agent', {
           body: { message: content, conversationId },
-          headers: { Authorization: `Bearer ${session.access_token}` },
         });
 
-        if (fnError) throw fnError;
+        if (fnError) {
+          const { mensagem } = await erroDaFunction(fnError, 'Não foi possível enviar sua mensagem.');
+          throw new Error(mensagem);
+        }
         if (data?.error) throw new Error(data.error);
 
         setConversationId(data.conversationId);

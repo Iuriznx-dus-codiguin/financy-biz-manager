@@ -28,7 +28,7 @@ export const AuthenticatedLayout = () => {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingComplete, completeOnboarding, loading: onboardingLoading } = useOnboarding();
   const { bloqueada: isBlocked, carregando: subscriptionLoading } = useAssinatura();
-  const { currentDashboard } = useDashboard();
+  const { currentDashboard, reloadDashboards } = useDashboard();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -76,7 +76,14 @@ export const AuthenticatedLayout = () => {
   }
 
   if (user && !isOnboardingComplete) {
-    return <OnboardingFlow onComplete={completeOnboarding} />;
+    return (
+      <OnboardingFlow
+        onComplete={async (dados) => {
+          await completeOnboarding(dados);
+          await reloadDashboards();
+        }}
+      />
+    );
   }
 
   // Gating render-time: bloqueia o flash de UI antes do redirect via useEffect

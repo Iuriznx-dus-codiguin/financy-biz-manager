@@ -2,16 +2,11 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-// Cancelled requests (e.g. auth lock / fetch aborted on navigation or reload)
-// are expected and harmless — prevent them from surfacing as unhandled errors.
+// Requisições canceladas (navegação, recarga ou lock de sessão do supabase-js) são esperadas.
+// Só AbortError é silenciado; qualquer outro erro continua aparecendo.
 window.addEventListener('unhandledrejection', (event) => {
-  const reason = event.reason as { name?: string; message?: string } | undefined;
-  if (
-    reason?.name === 'AbortError' ||
-    (typeof reason?.message === 'string' && reason.message.includes('signal is aborted'))
-  ) {
-    event.preventDefault();
-  }
+  const reason = event.reason as { name?: string } | undefined;
+  if (reason?.name === 'AbortError') event.preventDefault();
 });
 
 createRoot(document.getElementById("root")!).render(<App />);

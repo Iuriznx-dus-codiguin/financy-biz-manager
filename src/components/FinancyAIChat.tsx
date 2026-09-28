@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { erroDaFunction } from '@/shared/lib/erros';
 
 interface ChatMessage {
   id?: string;
@@ -227,10 +228,9 @@ export const FinancyAIChat = () => {
     await saveMessage(sessionId, 'user', text, messages.length);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Não autenticado');
-
-      const apiMessages = newMessages.map(m => ({ role: m.role, content: m.content }));
+      // O supabase-js já envia o token da sessão; o getSession() extra disputava o lock de autenticação
+      // (origem dos AbortError). O servidor também limita o histórico às últimas 20 mensagens.
+      const apiMessages = newMessages.slice(-20).map(m => ({ role: m.role, content: m.content }));
       const { data, error } = await supabase.functions.invoke('ai-agent', {
         body: {
           messages: apiMessages,
@@ -241,10 +241,8 @@ export const FinancyAIChat = () => {
       });
 
       if (error) {
-        const errMsg = error.message || '';
-        if (errMsg.includes('429') || errMsg.includes('Rate')) throw new Error('Limite de requisições atingido. Aguarde alguns segundos.');
-        if (errMsg.includes('402')) throw new Error('Créditos de IA esgotados.');
-        throw new Error(errMsg || 'Erro na comunicação com o agente');
+        const { mensagem } = await erroDaFunction(error, 'Erro na comunicação com o assistente.');
+        throw new Error(mensagem);
       }
 
       const assistantMsg: ChatMessage = {

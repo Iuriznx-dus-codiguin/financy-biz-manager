@@ -1,6 +1,6 @@
 // Hook único de assinatura: situação, plano do catálogo, recursos e limites.
 // Substitui useSubscription, useUserSubscription, useFeatureAccess e subscriptionHelpers, que aplicavam
-// regras diferentes entre si (AUDITORIA A-05).
+// regras diferentes entre si (AUDITORIA A-05, A-08).
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
