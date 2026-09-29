@@ -1,0 +1,182 @@
+import React, { useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useAppContext } from '@/features/financeiro/AppContext';
+import { InteligenciaFinanceiraIA } from '@/features/ia/InteligenciaFinanceiraIA';
+import { InteligenciaFinanceiraBasica } from '@/features/ia/InteligenciaFinanceiraBasica';
+import { UpgradeCard } from '@/features/assinatura/UpgradeCard';
+import { OptimizedMetricCard } from '@/shared/ui/OptimizedMetricCard';
+import { useFinancialCalculations } from '@/features/financeiro/useFinancialCalculations';
+import { TimeFilter } from '@/shared/ui/TimeFilter';
+import { TooltipInfo } from '@/shared/ui/TooltipInfo';
+import { DashboardAvancado } from '@/features/painel/DashboardAvancado';
+import { isDateInRange } from '@/shared/lib/dateFilters';
+import { Crown, Sparkles } from 'lucide-react';
+import { useAssinatura } from '@/features/assinatura/useAssinatura';
+import { FloatingDashboardInfo } from '@/features/painel/FloatingDashboardInfo';
+import { useOnboarding } from '@/features/onboarding/useOnboarding';
+import { useDashboard } from '@/features/dashboards/useDashboard';
+import { RecurringTransactions } from '@/features/lancamentos/RecurringTransactions';
+import { DashboardSkeleton } from '@/features/painel/DashboardSkeleton';
+import { listaEmPortugues, planosComRecurso } from '@/features/assinatura/regras';
+
+interface DashboardProps {
+  setActiveSection?: (section: string) => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
+  const [timeFilter, setTimeFilter] = React.useState('este-mes');
+  const { receitas, despesas, impostos, membrosEquipe, loading } = useAppContext();
+  const { onboardingData } = useOnboarding();
+  const { currentDashboard } = useDashboard();
+  
+  
+  const { temRecurso } = useAssinatura();
+  const hasBasicIntelligence = temRecurso('inteligencia_basica');
+  const hasAdvancedIntelligence = temRecurso('inteligencia_avancada');
+  const hasAdvancedDashboard = temRecurso('dashboard_avancado');
+  
+  // Usar cálculos otimizados
+  const financialData = useMemo(() => ({ receitas, despesas, impostos }), [receitas, despesas, impostos]);
+  const { 
+    totalReceitas, 
+    totalDespesas, 
+    totalImpostos, 
+    totalTaxas, 
+    saldo 
+  } = useFinancialCalculations(financialData, timeFilter);
+
+  // Dados filtrados para componentes
+  const filteredData = useMemo(() => {
+    return {
+      receitas: receitas.filter(r => isDateInRange(r.data, timeFilter)),
+      despesas: despesas.filter(d => isDateInRange(d.data, timeFilter)),
+      impostos: impostos.filter(i => isDateInRange(i.vencimento, timeFilter))
+    };
+  }, [receitas, despesas, impostos, timeFilter]);
+
+  const { receitas: filteredReceitas, despesas: filteredDespesas, impostos: filteredImpostos } = filteredData;
+
+  // Show skeleton while data loads on first render
+  if (loading && receitas.length === 0 && despesas.length === 0) {
+    return (
+      <section id="painel" className="space-y-6">
+        <DashboardSkeleton />
+      </section>
+    );
+  }
+
+  // Dashboard avançado para planos premium
+  if (hasAdvancedDashboard) {
+    return (
+      <section id="painel" className="space-y-6 sm:space-y-8 pb-6">
+
+        <FloatingDashboardInfo
+          timeFilter={timeFilter} 
+          setTimeFilter={setTimeFilter}
+          dashboardType="advanced"
+        />
+
+        <DashboardAvancado timeFilter={timeFilter} setTimeFilter={setTimeFilter} />
+
+        {hasAdvancedIntelligence ? (
+          <InteligenciaFinanceiraIA timeFilter={timeFilter} />
+        ) : hasBasicIntelligence ? (
+          <InteligenciaFinanceiraBasica
+            receitas={filteredReceitas}
+            despesas={filteredDespesas}
+            impostos={filteredImpostos}
+          />
+        ) : (
+          <UpgradeCard
+            feature="Inteligência Financeira"
+            description="Análises básicas de suas finanças com insights relevantes"
+            requiredPlan="Plano pago"
+            onUpgrade={() => setActiveSection?.('assinatura')}
+          />
+        )}
+
+        <RecurringTransactions />
+      </section>
+    );
+  }
+
+  // Dashboard básico
+  return (
+    <section id="painel" className="space-y-6 sm:space-y-8 pb-6">
+      <FloatingDashboardInfo
+        timeFilter={timeFilter} 
+        setTimeFilter={setTimeFilter}
+        dashboardType="basic"
+      />
+
+      <UpgradeCard
+        feature="Dashboard Avançado"
+        description="Gráficos interativos, métricas avançadas e insights com IA"
+        requiredPlan={`Disponível nos planos ${listaEmPortugues(planosComRecurso('dashboard_avancado'))}`}
+        onUpgrade={() => setActiveSection?.('assinatura')}
+        dismissible={true}
+      />
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4" data-tutorial="metric-cards">
+        <OptimizedMetricCard
+          title="Total de Receitas"
+          value={`R$ ${totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          subtitle={`${filteredReceitas.length} transações`}
+          valueClassName="text-xl sm:text-2xl font-bold text-success font-display tracking-tight"
+        />
+
+        <OptimizedMetricCard
+          title="Total de Despesas"
+          value={`R$ ${totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          subtitle={`${filteredDespesas.length} transações`}
+          valueClassName="text-xl sm:text-2xl font-bold text-destructive font-display tracking-tight"
+        />
+
+        <OptimizedMetricCard
+          title="Saldo"
+          value={`R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          subtitle="Receitas - Despesas"
+          valueClassName={`text-xl sm:text-2xl font-bold font-display tracking-tight ${saldo >= 0 ? 'text-success' : 'text-destructive'}`}
+        />
+
+        <OptimizedMetricCard
+          title="Total de Impostos"
+          value={`R$ ${totalImpostos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          subtitle={`${filteredImpostos.filter(i => i.tipo === 'imposto').length} impostos`}
+          valueClassName="text-xl sm:text-2xl font-bold text-primary font-display tracking-tight"
+        />
+
+        <OptimizedMetricCard
+          title="Total de Taxas"
+          value={`R$ ${totalTaxas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          subtitle={`${filteredImpostos.filter(i => i.tipo === 'taxa').length} taxas`}
+          valueClassName="text-xl sm:text-2xl font-bold text-warning font-display tracking-tight"
+        />
+      </div>
+
+      <div data-tutorial="intelligence">
+        {hasAdvancedIntelligence ? (
+          <InteligenciaFinanceiraIA timeFilter={timeFilter} />
+        ) : hasBasicIntelligence ? (
+          <InteligenciaFinanceiraBasica
+            receitas={filteredReceitas}
+            despesas={filteredDespesas}
+            impostos={filteredImpostos}
+          />
+        ) : (
+          <UpgradeCard
+            feature="Inteligência Financeira"
+            description="Análises básicas de suas finanças com insights relevantes"
+            requiredPlan="Plano pago"
+            onUpgrade={() => setActiveSection?.('assinatura')}
+          />
+        )}
+      </div>
+
+      <RecurringTransactions />
+    </section>
+  );
+};
+
+export default Dashboard;

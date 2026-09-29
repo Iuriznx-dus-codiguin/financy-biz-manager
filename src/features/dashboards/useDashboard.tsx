@@ -1,0 +1,233 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
+import { useAuth } from '@/features/auth/useAuth';
+import { ehFuncaoAusente } from '@/shared/lib/erros';
+import { rpcNova } from '@/shared/lib/rpcNovas';
+
+export interface Dashboard {
+  id: string;
+  name: string;
+  type: 'personal' | 'business';
+  isDefault: boolean;
+}
+
+interface DashboardContextType {
+  currentDashboard: Dashboard | null;
+  dashboards: Dashboard[];
+  setCurrentDashboard: (dashboard: Dashboard) => void;
+  createDashboard: (name: string, type: 'personal' | 'business') => Promise<void>;
+  deleteDashboard: (id: string) => Promise<void>;
+  updateDashboardName: (id: string, newName: string) => Promise<void>;
+  /** Relê os dashboards do banco (depois do onboarding, que pode renomear e mudar o tipo do padrão). */
+  reloadDashboards: () => Promise<void>;
+  loading: boolean;
+}
+
+const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
+
+export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [currentDashboard, setCurrentDashboard] = useState<Dashboard | null>(null);
+  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      loadDashboards();
+    }
+  }, [user]);
+
+  const loadDashboards = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_dashboards')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const dashboardList = data.map(d => ({
+        id: d.id,
+        name: d.name,
+        type: d.type as 'personal' | 'business',
+        isDefault: d.is_default
+      }));
+
+      setDashboards(dashboardList);
+
+      // Set default dashboard or first one
+      const defaultDashboard = dashboardList.find(d => d.isDefault) || dashboardList[0];
+      if (defaultDashboard) {
+        setCurrentDashboard(defaultDashboard);
+      } else if (dashboardList.length === 0) {
+        // Create default dashboard if none exists
+        await createDefaultDashboard();
+      }
+    } catch (error) {
+      console.error('Error loading dashboards:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createDefaultDashboard = async () => {
+    if (!user) return;
+    try {
+      // Race-safe: select-then-insert (partial unique index enforces 1 default per user)
+      const { data: existing } = await supabase
+        .from('user_dashboards')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_default', true)
+        .maybeSingle();
+
+      const applyDashboard = (row: Tables<'user_dashboards'>) => {
+        const dash = {
+          id: row.id,
+          name: row.name,
+          type: row.type as 'personal' | 'business',
+          isDefault: row.is_default,
+        };
+        setDashboards([dash]);
+        setCurrentDashboard(dash);
+      };
+
+      if (existing) {
+        applyDashboard(existing);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('user_dashboards')
+        .insert({
+          user_id: user.id,
+          name: 'Dashboard Principal',
+          // Pessoal por padrão; o onboarding (concluir_onboarding) ajusta para empresa quando for o caso.
+          type: 'personal',
+          is_default: true,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        // Concurrent insert race: fetch the winner
+        const { data: raceWinner } = await supabase
+          .from('user_dashboards')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_default', true)
+          .maybeSingle();
+        if (raceWinner) applyDashboard(raceWinner);
+        return;
+      }
+
+      applyDashboard(data);
+    } catch (error) {
+      console.error('Erro ao criar dashboard padrão:', error);
+    }
+  };
+
+  const createDashboard = async (name: string, type: 'personal' | 'business') => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_dashboards')
+        .insert({
+          user_id: user.id,
+          name,
+          type,
+          is_default: false
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newDashboard = {
+        id: data.id,
+        name: data.name,
+        type: data.type as 'personal' | 'business',
+        isDefault: data.is_default
+      };
+
+      setDashboards(prev => [...prev, newDashboard]);
+      // Automaticamente definir o novo dashboard como atual
+      setCurrentDashboard(newDashboard);
+    } catch (error) {
+      // O limite do plano é validado no banco (trigger validar_limite_de_dashboards).
+      console.error('Error creating dashboard:', error);
+      throw error;
+    }
+  };
+
+  const deleteDashboard = async (id: string) => {
+    // Uma transação no banco: lançamentos, impostos, metas, equipe e categorias do dashboard.
+    const { error } = await rpcNova('excluir_dashboard', { p_dashboard_id: id });
+    if (error) {
+      if (!ehFuncaoAusente(error)) throw error;
+      // Banco ainda sem a migração 20260927120300: mesmo caminho de antes.
+      await Promise.all([
+        supabase.from('receitas').delete().eq('dashboard_id', id),
+        supabase.from('despesas').delete().eq('dashboard_id', id),
+        supabase.from('impostos').delete().eq('dashboard_id', id),
+        supabase.from('metas').delete().eq('dashboard_id', id),
+      ]);
+      const { error: erroDashboard } = await supabase.from('user_dashboards').delete().eq('id', id);
+      if (erroDashboard) throw erroDashboard;
+    }
+
+    setDashboards(prev => prev.filter(d => d.id !== id));
+    if (currentDashboard?.id === id) {
+      const remaining = dashboards.filter(d => d.id !== id);
+      setCurrentDashboard(remaining.find(d => d.isDefault) || remaining[0] || null);
+    }
+  };
+
+  const updateDashboardName = async (id: string, newName: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_dashboards')
+        .update({ name: newName })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setDashboards(prev => prev.map(d => 
+        d.id === id ? { ...d, name: newName } : d
+      ));
+
+      if (currentDashboard?.id === id) {
+        setCurrentDashboard(prev => prev ? { ...prev, name: newName } : null);
+      }
+    } catch (error) {
+      console.error('Error updating dashboard name:', error);
+      throw error;
+    }
+  };
+
+  return (
+    <DashboardContext.Provider value={{
+      currentDashboard,
+      dashboards,
+      setCurrentDashboard,
+      createDashboard,
+      deleteDashboard,
+      updateDashboardName,
+      reloadDashboards: loadDashboards,
+      loading
+    }}>
+      {children}
+    </DashboardContext.Provider>
+  );
+};
+
+export const useDashboard = () => {
+  const context = useContext(DashboardContext);
+  if (context === undefined) {
+    throw new Error('useDashboard must be used within a DashboardProvider');
+  }
+  return context;
+};

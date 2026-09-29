@@ -1,0 +1,217 @@
+import { interpretarValor } from '@/shared/lib/dinheiro';
+import { ehDataISO, hojeISO } from '@/shared/lib/datas';
+
+// exceljs (~900 kB) só é baixado quando o usuário importa ou exporta uma planilha.
+const carregarExcel = async () => (await import('exceljs')).default;
+
+/** Valor de uma célula lida ou escrita em planilha. */
+export type ValorCelula = string | number | boolean | Date | null;
+/** Linha de planilha: cabeçalho → valor. */
+export type LinhaPlanilha = Record<string, ValorCelula>;
+
+export interface SheetSpec {
+  name: string;
+  aoa?: ValorCelula[][];
+  json?: LinhaPlanilha[];
+}
+
+export interface TemplateColumn {
+  key: string;
+  header: string;
+  example?: string | number;
+  width?: number;
+}
+
+/**
+ * Exporta um ou mais sheets para .xlsx e dispara o download.
+ * Compatível com Excel, Google Sheets, Numbers, LibreOffice.
+ */
+export async function downloadXlsx(fileName: string, sheets: SheetSpec[]) {
+  const ExcelJS = await carregarExcel();
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Financy';
+  workbook.created = new Date();
+
+  for (const spec of sheets) {
+    const ws = workbook.addWorksheet(spec.name);
+    if (spec.aoa) {
+      spec.aoa.forEach((row) => ws.addRow(row));
+      if (spec.aoa.length > 0) {
+        ws.getRow(1).font = { bold: true };
+      }
+    } else if (spec.json && spec.json.length > 0) {
+      const keys = Object.keys(spec.json[0]);
+      ws.columns = keys.map((k) => ({ header: k, key: k, width: Math.max(14, k.length + 2) }));
+      spec.json.forEach((r) => ws.addRow(r));
+      ws.getRow(1).font = { bold: true };
+    }
+  }
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  triggerDownload(blob, fileName);
+}
+
+/**
+ * Gera e baixa um template em .xlsx com cabeçalho e linha de exemplo.
+ */
+export async function downloadTemplate(
+  fileName: string,
+  sheetName: string,
+  columns: TemplateColumn[]
+) {
+  const ExcelJS = await carregarExcel();
+  const workbook = new ExcelJS.Workbook();
+  const ws = workbook.addWorksheet(sheetName);
+
+  ws.columns = columns.map((c) => ({
+    header: c.header,
+    key: c.key,
+    width: c.width ?? Math.max(16, c.header.length + 2),
+  }));
+  ws.getRow(1).font = { bold: true };
+  ws.getRow(1).fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFEFF6FF' },
+  };
+
+  const exampleRow: LinhaPlanilha = {};
+  columns.forEach((c) => {
+    if (c.example !== undefined) exampleRow[c.key] = c.example;
+  });
+  if (Object.keys(exampleRow).length > 0) ws.addRow(exampleRow);
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  triggerDownload(blob, fileName);
+}
+
+/**
+ * Lê um arquivo .xlsx ou .csv e retorna linhas como objetos
+ * usando os headers da primeira linha como chaves.
+ */
+export async function parseSpreadsheetFile(file: File): Promise<LinhaPlanilha[]> {
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.csv')) {
+    return parseCsv(await file.text());
+  }
+  if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    return parseXlsx(await file.arrayBuffer());
+  }
+  throw new Error('Formato não suportado. Use .xlsx ou .csv');
+}
+
+async function parseXlsx(buffer: ArrayBuffer): Promise<LinhaPlanilha[]> {
+  const ExcelJS = await carregarExcel();
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+  const ws = workbook.worksheets[0];
+  if (!ws) return [];
+
+  const rows: LinhaPlanilha[] = [];
+  let headers: string[] = [];
+
+  ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    const values = row.values as unknown[];
+    // ExcelJS row.values is 1-indexed; drop the leading undefined
+    const cells = values.slice(1).map((v) => normalizeCell(v));
+    if (rowNumber === 1) {
+      headers = cells.map((c) => String(c ?? '').trim());
+      return;
+    }
+    if (cells.every((c) => c === '' || c === null || c === undefined)) return;
+    const obj: LinhaPlanilha = {};
+    headers.forEach((h, i) => {
+      if (h) obj[h] = cells[i] ?? '';
+    });
+    rows.push(obj);
+  });
+
+  return rows;
+}
+
+function normalizeCell(v: unknown): ValorCelula {
+  if (v === null || v === undefined) return '';
+  if (v instanceof Date) return v.toISOString().split('T')[0];
+  if (typeof v === 'object') {
+    if ('text' in v) return String(v.text);
+    if ('result' in v) return normalizeCell(v.result);
+    if ('richText' in v) return (v as { richText: { text: string }[] }).richText.map((t) => t.text).join('');
+  }
+  return typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean' ? v : String(v);
+}
+
+function parseCsv(text: string): LinhaPlanilha[] {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  if (lines.length === 0) return [];
+  const headers = splitCsvLine(lines[0]).map((h) => h.trim());
+  return lines.slice(1).map((line) => {
+    const cells = splitCsvLine(line);
+    const obj: LinhaPlanilha = {};
+    headers.forEach((h, i) => {
+      if (h) obj[h] = (cells[i] ?? '').trim();
+    });
+    return obj;
+  });
+}
+
+function splitCsvLine(line: string): string[] {
+  const out: string[] = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      out.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+function triggerDownload(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Converte valor de planilha (R$ 1.234,56, 1234.56, 1.234 ou número) em reais; inválido vira 0. */
+export function parseNumber(v: unknown): number {
+  if (v === null || v === undefined || v === '') return 0;
+  // Antes "1234.56" virava 123456 (o ponto era sempre tratado como milhar).
+  return interpretarValor(v) ?? 0;
+}
+
+/** Normaliza data para AAAA-MM-DD (aceita DD/MM/AAAA, AAAA-MM-DD e Date); inválida vira hoje (Brasília). */
+export function parseDate(v: unknown): string {
+  if (!v) return hojeISO();
+  // Datas de célula do exceljs chegam como Date em UTC à meia-noite.
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? hojeISO() : v.toISOString().slice(0, 10);
+  const s = String(v).trim();
+  if (ehDataISO(s.slice(0, 10))) return s.slice(0, 10);
+  const br = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+  if (br) {
+    const [, d, m, y] = br;
+    const data = `${y.length === 2 ? `20${y}` : y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    if (ehDataISO(data)) return data;
+  }
+  return hojeISO();
+}

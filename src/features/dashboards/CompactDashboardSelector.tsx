@@ -1,0 +1,116 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Building, User, Plus, ChevronDown, Briefcase } from 'lucide-react';
+import { useDashboard } from '@/features/dashboards/useDashboard';
+import { DashboardCreateDialog } from '@/features/dashboards/DashboardCreateDialog';
+import { useUserContext } from '@/features/dashboards/useUserContext';
+import { getLabel } from '@/shared/lib/nomenclature';
+
+export const CompactDashboardSelector = () => {
+  const { currentDashboard, dashboards, setCurrentDashboard } = useDashboard();
+  const { currentDashboardType } = useUserContext();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  
+  const personalDashboards = dashboards.filter(d => d.type === 'personal');
+  const businessDashboards = dashboards.filter(d => d.type === 'business');
+  
+  // Labels adaptativos
+  const labelPerfil = getLabel('dashboard', 'personal');
+  const labelEmpresa = getLabel('dashboard', 'business');
+  const labelPerfis = getLabel('dashboards', 'personal');
+  const labelEmpresas = getLabel('dashboards', 'business');
+  const labelCriar = getLabel('criar_dashboard', currentDashboardType);
+
+  if (!currentDashboard) return null;
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 h-8 px-3 text-xs max-w-[180px] sm:max-w-[240px]"
+            data-tutorial="dashboard-selector"
+            title={currentDashboard.name}
+          >
+            <Briefcase className="h-3 w-3 shrink-0" />
+            <span className="truncate">{currentDashboard.name}</span>
+            <ChevronDown className="h-3 w-3 shrink-0" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64 p-2">
+          {/* Personal Dashboards */}
+          {personalDashboards.length > 0 && (
+            <div className="mb-2">
+              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                {labelPerfis}
+              </div>
+              {personalDashboards.map((dashboard) => (
+                <button
+                  key={dashboard.id}
+                  onClick={() => setCurrentDashboard(dashboard)}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors ${
+                    currentDashboard.id === dashboard.id ? 'bg-muted' : ''
+                  }`}
+                >
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1 text-left flex items-center gap-2">
+                    <span>{dashboard.name}</span>
+                    {dashboard.isDefault && <Badge variant="secondary" className="text-xs">Principal</Badge>}
+                  </div>
+                  {currentDashboard?.id === dashboard.id && <Badge variant="outline" className="text-xs ml-auto">Atual</Badge>}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Business Dashboards */}
+          {businessDashboards.length > 0 && (
+            <div className="mb-2">
+              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                {labelEmpresas}
+              </div>
+              {businessDashboards.map((dashboard) => (
+                <button
+                  key={dashboard.id}
+                  onClick={() => setCurrentDashboard(dashboard)}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors ${
+                    currentDashboard.id === dashboard.id ? 'bg-muted' : ''
+                  }`}
+                >
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1 text-left flex items-center gap-2">
+                    <span>{dashboard.name}</span>
+                    {dashboard.isDefault && <Badge variant="secondary" className="text-xs">Principal</Badge>}
+                  </div>
+                  {currentDashboard?.id === dashboard.id && <Badge variant="outline" className="text-xs ml-auto">Atual</Badge>}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Create New Dashboard */}
+          <>
+            <DropdownMenuSeparator />
+            <button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors text-primary"
+            >
+              <Plus className="h-4 w-4" />
+              <span>{labelCriar}</span>
+            </button>
+          </>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Dashboard Create Dialog */}
+      <DashboardCreateDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+      />
+    </>
+  );
+};

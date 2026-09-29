@@ -1,173 +1,77 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
+// Lembrete diário (cron 23:00 UTC = 20:00 de Brasília, com x-cron-secret): envia ao n8n quem não
+// registrou nenhuma receita ou despesa hoje. Payload igual ao anterior (contrato com o n8n).
+// Antes: qualquer pessoa com a chave pública disparava; 2 consultas por usuário; limitado a 1000 perfis.
+import { exigirChamadorInterno } from '../_shared/auth.ts';
+import { hojeISO } from '../_shared/datas.ts';
+import { json, servir } from '../_shared/http.ts';
+import { log } from '../_shared/logger.ts';
+import { enviarParaN8n, urlN8n } from '../_shared/n8n.ts';
+import { clienteServico, type SupabaseClient } from '../_shared/supabase.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const PAGINA = 1000;
 
-interface UserWithoutTransaction {
-  id: string;
-  nome_completo: string;
-  email: string;
-  telefone: string | null;
+async function todasAsLinhas<T>(
+  buscar: (de: number, ate: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<T[]> {
+  const linhas: T[] = [];
+  for (let de = 0; ; de += PAGINA) {
+    const { data, error } = await buscar(de, de + PAGINA - 1);
+    if (error) throw new Error(error.message);
+    linhas.push(...(data ?? []));
+    if (!data || data.length < PAGINA) return linhas;
+  }
 }
 
-Deno.serve(async (req) => {
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+async function quemLancouHoje(supabase: SupabaseClient, tabela: 'receitas' | 'despesas', hoje: string) {
+  const linhas = await todasAsLinhas<{ user_id: string }>((de, ate) =>
+    supabase.from(tabela).select('user_id').eq('data', hoje).order('user_id').range(de, ate)
+  );
+  return linhas.map((l) => l.user_id);
+}
+
+servir('daily-transaction-reminder', async (req) => {
+  exigirChamadorInterno(req);
+  const supabase = clienteServico();
+  const hoje = hojeISO();
+
+  const [perfis, comReceita, comDespesa] = await Promise.all([
+    todasAsLinhas<{ id: string; nome_completo: string | null; email: string; telefone: string | null }>((de, ate) =>
+      supabase.from('profiles').select('id, nome_completo, email, telefone').not('email', 'is', null).order('id').range(de, ate)
+    ),
+    quemLancouHoje(supabase, 'receitas', hoje),
+    quemLancouHoje(supabase, 'despesas', hoje),
+  ]);
+
+  const lancaram = new Set([...comReceita, ...comDespesa]);
+  const semLancamento = perfis.filter((p) => !lancaram.has(p.id));
+
+  if (semLancamento.length === 0) {
+    return json(req, {
+      success: true,
+      message: perfis.length ? 'Todos os usuários registraram transações hoje!' : 'Nenhum usuário encontrado',
+      usersNotified: 0,
+      totalUsers: perfis.length,
+    });
   }
 
-  try {
-    console.log('🔔 Iniciando verificação de lembretes diários...');
+  await enviarParaN8n(urlN8n('verificar-transacoes'), {
+    data: hoje,
+    hora_verificacao: new Date().toISOString(),
+    total_usuarios: semLancamento.length,
+    usuarios: semLancamento.map((u) => ({
+      nome: u.nome_completo || 'Usuário',
+      email: u.email,
+      telefone: u.telefone,
+      user_id: u.id,
+    })),
+  }, 30_000);
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Data atual (sem horário para comparação)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
-
-    console.log(`📅 Verificando transações do dia: ${todayStr}`);
-
-    // Buscar todos os usuários ativos
-    const { data: allUsers, error: usersError } = await supabase
-      .from('profiles')
-      .select('id, nome_completo, email, telefone')
-      .not('email', 'is', null);
-
-    if (usersError) {
-      console.error('❌ Erro ao buscar usuários:', usersError);
-      throw usersError;
-    }
-
-    console.log(`👥 Total de usuários encontrados: ${allUsers?.length || 0}`);
-
-    if (!allUsers || allUsers.length === 0) {
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Nenhum usuário encontrado',
-          usersNotified: 0
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      );
-    }
-
-    // Para cada usuário, verificar se tem transações hoje
-    const usersWithoutTransactions: UserWithoutTransaction[] = [];
-
-    for (const user of allUsers) {
-      // Verificar receitas do dia
-      const { data: receitas } = await supabase
-        .from('receitas')
-        .select('id')
-        .eq('user_id', user.id)
-        .gte('data', todayStr)
-        .lt('data', new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-        .limit(1);
-
-      // Verificar despesas do dia
-      const { data: despesas } = await supabase
-        .from('despesas')
-        .select('id')
-        .eq('user_id', user.id)
-        .gte('data', todayStr)
-        .lt('data', new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-        .limit(1);
-
-      // Se não tem nenhuma transação hoje, adicionar à lista
-      if ((!receitas || receitas.length === 0) && (!despesas || despesas.length === 0)) {
-        usersWithoutTransactions.push({
-          id: user.id,
-          nome_completo: user.nome_completo || 'Usuário',
-          email: user.email,
-          telefone: user.telefone,
-        });
-      }
-    }
-
-    console.log(`📊 Usuários sem transações hoje: ${usersWithoutTransactions.length}`);
-
-    // Se não há usuários para notificar, retornar sucesso
-    if (usersWithoutTransactions.length === 0) {
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Todos os usuários registraram transações hoje!',
-          usersNotified: 0,
-          totalUsers: allUsers.length
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      );
-    }
-
-    // Enviar dados para o webhook do n8n
-    const n8nWebhookUrl = 'https://central-financy-n8n.y8enlt.easypanel.host/webhook/verificar-transacoes';
-    
-    console.log(`🚀 Enviando ${usersWithoutTransactions.length} usuários para o webhook n8n...`);
-
-    // Enviar todos os usuários de uma vez em um array
-    const webhookResponse = await fetch(n8nWebhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        data: todayStr,
-        hora_verificacao: new Date().toISOString(),
-        total_usuarios: usersWithoutTransactions.length,
-        usuarios: usersWithoutTransactions.map(user => ({
-          nome: user.nome_completo,
-          email: user.email,
-          telefone: user.telefone,
-          user_id: user.id,
-        })),
-      }),
-    });
-
-    if (!webhookResponse.ok) {
-      console.error('❌ Erro ao enviar para webhook n8n:', await webhookResponse.text());
-      throw new Error(`Webhook retornou status ${webhookResponse.status}`);
-    }
-
-    console.log('✅ Webhook n8n chamado com sucesso!');
-
-    // Registrar log no banco para auditoria
-    await supabase.from('security_audit_logs').insert({
-      user_id: null,
-      action: 'DAILY_REMINDER_SENT',
-      table_name: 'system',
-      risk_level: 'low',
-      metadata: {
-        users_notified: usersWithoutTransactions.length,
-        date: todayStr,
-        timestamp: new Date().toISOString(),
-      },
-    });
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Lembretes enviados com sucesso para ${usersWithoutTransactions.length} usuários`,
-        usersNotified: usersWithoutTransactions.length,
-        totalUsers: allUsers.length,
-        date: todayStr,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-    );
-
-  } catch (error) {
-    console.error('❌ Erro no processamento:', error);
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message,
-        timestamp: new Date().toISOString(),
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
-  }
+  log('info', 'lembrete_diario.enviado', { data: hoje, notificados: semLancamento.length, total: perfis.length });
+  return json(req, {
+    success: true,
+    message: `Lembretes enviados com sucesso para ${semLancamento.length} usuários`,
+    usersNotified: semLancamento.length,
+    totalUsers: perfis.length,
+    date: hoje,
+  });
 });

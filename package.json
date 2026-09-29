@@ -13,6 +13,9 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "test": "npx --yes vitest@3.2.4 run",
+    "test:watch": "npx --yes vitest@3.2.4",
     "preview": "vite preview"
   },
   "dependencies": {

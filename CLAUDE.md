@@ -1,0 +1,52 @@
+# Financy Biz Manager
+
+SaaS brasileiro de gestão financeira com IA para pessoas físicas e empresas. React 18 + TypeScript + Vite +
+Tailwind/shadcn + React Query; Supabase (Postgres/RLS, Auth, Edge Functions em Deno); cobrança pela Cakto; IA no
+WhatsApp operada pelo n8n (fora do repositório). O Lovable edita e sincroniza a `main` nos dois sentidos.
+
+**Regra fixa:** não existe plano gratuito nem teste grátis. Sem assinatura ativa o usuário só acessa Assinatura,
+Configurações, Ajuda e Suporte — e o banco garante isso (RLS restritiva de escrita + checagem nas functions).
+
+## Documentos
+- `docs/DOMINIO.md` — entidades, fluxos, regras e contratos externos.
+- `docs/AUDITORIA.md` — achados com severidade, evidência e status.
+- `docs/ARQUITETURA-ALVO.md` — estrutura, plano por fases, modelo financeiro, riscos e decisões pendentes (D-xx).
+- `docs/sql/inspecao-banco.sql` — inspeção somente leitura do banco de produção.
+- `scripts/db/` — Postgres local com shim do Supabase para validar migrações (`README.md` lá dentro).
+
+## Regras invioláveis
+- Não alterar: `.env`, o `project_id` de `supabase/config.toml`, `src/integrations/supabase/client.ts` e `types.ts`
+  (gerados), o `lovable-tagger` e o bloco `server` de `vite.config.ts`, os lockfiles. O front não pode depender de
+  variável de ambiente nova.
+- Preservar contratos: URL e payload do `cakto-webhook`, jobs do cron, e toda tabela/coluna/RPC/function que o n8n
+  possa usar (`validacao_n8n`, `ai_recognized_transactions`, `profiles.telefone`, functions sem chamador no front) até
+  prova em contrário.
+- Nunca editar migração antiga: criar nova, idempotente, sem perda de dados e com a reversão comentada. Renomear ou
+  apagar tabela/coluna exige aprovação e plano de migração de dados.
+- Secret novo faz a function falhar fechada e vem com passo a passo. Remover código de function não a tira do ar:
+  listar o `supabase functions delete`.
+- Mudança de regra de negócio, preço, oferta ou exclusão de dado de cliente é decisão pendente, nunca implementação.
+- Commits atômicos em português (Conventional Commits); o app funciona ao fim de cada commit. Nada é declarado
+  corrigido sem evidência (teste, saída de comando ou diff).
+
+## Comandos
+- `npm run build` · `npm run lint` · `npm run typecheck` · `npm test` (Vitest via `npx`, sem mexer em lockfile).
+- Banco local: `PGHOST=/tmp PGPORT=54399 scripts/db/apply-migrations.sh && scripts/db/testes/rodar.sh`.
+- Functions: `scripts/deno/checar-functions.sh [nome ...]` (`deno check` com import map local; usa `npx deno` se preciso).
+- CI (`.github/workflows/ci.yml`): os mesmos comandos em todo PR, push na `main` e diariamente — front (lint,
+  typecheck, testes, build com tamanho dos chunks), `deno check` e banco (Postgres 16: migrações + testes SQL).
+  Instala com `npm install` porque `npm ci` falha com o lockfile atual (D-08).
+
+## Convenções
+- Código por domínio em `src/features/<domínio>`; shell (providers, guardas, layout, rotas) em `src/app`;
+  utilitários em `src/shared/lib` e componentes genéricos em `src/shared/ui`; shadcn fica em `src/components/ui`
+  (e `hooks/use-toast`, `hooks/use-mobile`, `lib/utils`, pelos aliases do `components.json`).
+- Regras puras (datas, dinheiro, recorrência, impostos, planos, assinatura, Cakto) vivem em
+  `supabase/functions/_shared/*.ts`, testadas no Vitest e reexportadas pelo front em `src/shared/lib`.
+- Assinatura no front: sempre `useAssinatura()` (`src/features/assinatura`). Admin: `useIsAdmin()`/`AdminGuard`
+  (papel `admin` em `user_roles`). RPCs novas ainda fora de `types.ts`: `src/shared/lib/rpcNovas.ts`.
+- Erros para o usuário: `mensagemDeErro`/`erroDaFunction` (`src/shared/lib/erros.ts`); o front tolera RPC/coluna
+  ausente (migração ainda não aplicada) com o caminho antigo.
+- Datas-calendário (`AAAA-MM-DD`) sem fuso; "hoje" é o de `America/Sao_Paulo` (`src/shared/lib/datas.ts`).
+- Dinheiro em centavos inteiros para cálculo (`src/shared/lib/dinheiro.ts`).
+- Plano, tier e limites vêm do catálogo `supabase/functions/_shared/planos.ts` + `user_subscriptions` (`plan_id`, `features`).

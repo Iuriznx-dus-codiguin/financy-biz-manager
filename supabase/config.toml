@@ -38,6 +38,20 @@ verify_jwt = false
 [functions.novo-usuario-webhook]
 verify_jwt = false
 
+# Chamadas pelo pg_cron (chave anon + x-cron-secret) ou por outra function (service role).
+# O gateway exige um JWT válido; a autorização real é feita no código (_shared/auth.ts).
+[functions.daily-transaction-reminder]
+verify_jwt = true
+
+[functions.process-scheduled-webhooks]
+verify_jwt = true
+
+[functions.schedule-user-webhooks]
+verify_jwt = true
+
+[functions.support-agent]
+verify_jwt = true
+
 [db]
 port = 54322
 shadow_port = 54320
