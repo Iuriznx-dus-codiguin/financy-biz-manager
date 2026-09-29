@@ -9,4 +9,6 @@ arquivos=()
 for f in "${alvos[@]}"; do arquivos+=("supabase/functions/$f/index.ts"); done
 for s in supabase/functions/_shared/*.ts; do [[ "$s" == *.test.ts ]] || arquivos+=("$s"); done
 if command -v deno >/dev/null; then DENO=(deno); else DENO=(npx --yes deno); fi
-"${DENO[@]}" check --import-map=scripts/deno/check-import-map.json "${arquivos[@]}"
+# --node-modules-dir=none: com package.json na raiz o Deno 2 buscaria os pacotes npm: no node_modules do front
+# (que pode não existir, como no CI); o runtime das edge functions usa o cache próprio do Deno.
+"${DENO[@]}" check --node-modules-dir=none --import-map=scripts/deno/check-import-map.json "${arquivos[@]}"
