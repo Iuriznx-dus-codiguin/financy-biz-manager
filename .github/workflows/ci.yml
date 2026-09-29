@@ -1,0 +1,131 @@
+# CI do Financy: front, edge functions e banco (migrações + testes SQL).
+# Roda em todo PR, em cada push na main (inclusive os que o Lovable sincroniza) e uma vez por dia na main,
+# para avisar cedo quando uma edição quebra build, lint, testes, tipos das functions ou migrações.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 9 * * *' # 06:17 em Brasília
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+# `shell: bash` liga `-eo pipefail`: falha antes de um `| tee` não passa despercebida.
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  front:
+    name: Front (lint, tipos, testes, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # `npm ci` falha: package-lock.json está fora de sincronia com o package.json e o bun.lock aponta para um
+      # cache privado do Lovable (AUDITORIA A-33, decisão D-08). `npm install` reconcilia só dentro do job;
+      # nada é commitado.
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund --loglevel=error
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Testes (Vitest)
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Tamanho do build
+        run: |
+          inicial="$(grep -o 'assets/index-[^"]*\.js' dist/index.html | head -1)"
+          {
+            echo "### Tamanho do build"
+            echo
+            echo "JS carregado na abertura: \`$(basename "$inicial")\`"
+            echo
+            echo "| Arquivo | kB | gzip kB |"
+            echo "|---|---:|---:|"
+            for f in $(ls -S dist/assets/*.js dist/assets/*.css | head -12); do
+              awk -v n="$(basename "$f")" -v a="$(stat -c%s "$f")" -v b="$(gzip -9c "$f" | wc -c)" \
+                'BEGIN { printf "| %s | %.1f | %.1f |\n", n, a / 1000, b / 1000 }'
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Orçamento do chunk inicial (hoje ~800 kB): passar de 1.000 kB costuma ser import pesado fora do lazy
+          # (ex.: `import * as Icons from 'lucide-react'`, exceljs, recharts no shell).
+          tamanho="$(stat -c%s "dist/$inicial")"
+          if [ "$tamanho" -gt 1000000 ]; then
+            echo "::warning title=Chunk inicial grande::$(basename "$inicial") tem $((tamanho / 1000)) kB (orçamento: 1000 kB)"
+          fi
+
+  functions:
+    name: Edge functions (deno check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: deno check
+        run: scripts/deno/checar-functions.sh
+
+  banco:
+    name: Banco (migrações + testes SQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          # Os testes conectam como `authenticator` (como o PostgREST); o banco é descartável.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Aplicar migrações
+        run: |
+          scripts/db/apply-migrations.sh | tee migracoes.log
+          grep -q '^migrações aplicadas:' migracoes.log || { echo "::error::migrações não rodaram"; exit 1; }
+          # Três migrações antigas são inválidas e também não aplicaram em produção (AUDITORIA A-35);
+          # qualquer outra falha quebra o job.
+          conhecidas='20250827211918|20250918173518|20250920201928'
+          inesperadas="$(grep '^FALHOU' migracoes.log | grep -Ev "FALHOU ($conhecidas)_" || true)"
+          if [ -n "$inesperadas" ]; then
+            echo "::error title=Migração falhou::$inesperadas"
+            exit 1
+          fi
+
+      - name: Testes SQL (RLS, RPCs, paywall, recorrências, onboarding, cron)
+        run: scripts/db/testes/rodar.sh

@@ -33,6 +33,9 @@ Configurações, Ajuda e Suporte — e o banco garante isso (RLS restritiva de e
 - `npm run build` · `npm run lint` · `npm run typecheck` · `npm test` (Vitest via `npx`, sem mexer em lockfile).
 - Banco local: `PGHOST=/tmp PGPORT=54399 scripts/db/apply-migrations.sh && scripts/db/testes/rodar.sh`.
 - Functions: `scripts/deno/checar-functions.sh [nome ...]` (`deno check` com import map local; usa `npx deno` se preciso).
+- CI (`.github/workflows/ci.yml`): os mesmos comandos em todo PR, push na `main` e diariamente — front (lint,
+  typecheck, testes, build com tamanho dos chunks), `deno check` e banco (Postgres 16: migrações + testes SQL).
+  Instala com `npm install` porque `npm ci` falha com o lockfile atual (D-08).
 
 ## Convenções
 - Código por domínio em `src/features/<domínio>`; shell (providers, guardas, layout, rotas) em `src/app`;
